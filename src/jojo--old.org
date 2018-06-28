@@ -1,0 +1,151 @@
+#+property: tangle main.cpp
+#+title: jojo
+
+* [todo-stack]
+
+*** use Rc for GC
+
+* [note]
+
+* prolog
+
+*** use
+
+    #+begin_src rust
+    use std::collections::hash_map::HashMap;
+    use std::collections::hash_map::Entry;
+    #+end_src
+
+* Env
+
+*** NameMap
+
+    #+begin_src rust
+    type NameMap<'a> = HashMap<String, Den<'a>>;
+    #+end_src
+
+*** Env
+
+    #+begin_src rust
+    struct Env<'a> {
+        name_map: NameMap<'a>,
+        obj_stack: Vec<Obj<'a>>,
+        frame_stack: Vec<Frame<'a>>,
+    }
+    #+end_src
+
+*** Body
+
+    #+begin_src rust
+    type Body<'a> = Vec<Ins<'a>>;
+    #+end_src
+
+*** LocalMap
+
+    #+begin_src rust
+    type LocalMap<'a> = HashMap<Name<'a>, Obj<'a>>;
+    #+end_src
+
+*** Frame
+
+    #+begin_src rust
+    struct Frame<'a> {
+        index: usize,
+        body: Body<'a>,
+        local_map: LocalMap<'a>,
+    }
+    #+end_src
+
+*** Name
+
+    #+begin_src rust
+    type Name<'a> = Entry<'a, String, Obj<'a>>;
+    #+end_src
+
+*** step
+
+    #+begin_src rust
+    fn step(env: &mut Env) {
+        if let Some(mut frame) = env.frame_stack.pop() {
+            let ins = &frame.body[frame.index];
+            frame.index = frame.index + 1;
+            match ins {
+                Ins::Call(name) => {
+                    env.frame_stack.push(frame)
+                }
+                Ins::TailCall(name) => {
+                }
+                Ins::End => {
+                }
+                Ins::Get(local_name) => {
+                    env.frame_stack.push(frame)
+                }
+                Ins::Let(local_name) => {
+                    env.frame_stack.push(frame)
+                }
+                Ins::Clo(body) => {
+                    env.frame_stack.push(frame)
+                }
+            }
+        }
+        else {
+            panic!("- step : meet empty frame_stack!");
+        }
+    }
+    #+end_src
+
+*** eval
+
+    #+begin_src rust
+    fn eval(env: &mut Env) {
+
+    }
+    #+end_src
+
+* Den
+
+*** Den
+
+    #+begin_src rust
+    enum Den<'a> {
+       Prim(String, fn(&mut Env)),
+       Fun(String, Body<'a>),
+    }
+    #+end_src
+
+* Obj
+
+*** Obj
+
+    #+begin_src rust
+    enum Obj<'a> {
+        Clo(LocalMap<'a>, Body<'a>),
+        Int(isize),
+        Str(String),
+    }
+    #+end_src
+
+* Ins
+
+*** Ins
+
+    #+begin_src rust
+    enum Ins<'a> {
+        Call(Name<'a>),
+        TailCall(Name<'a>),
+        End,
+        Get(Name<'a>),
+        Let(Name<'a>),
+        Clo(Body<'a>),
+    }
+    #+end_src
+
+* epilog
+
+*** main
+
+    #+begin_src rust
+    fn main() {
+
+    }
+    #+end_src
