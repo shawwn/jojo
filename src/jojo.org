@@ -1,143 +1,66 @@
-#+property: tangle main.cpp
+#+property: tangle jojo.cpp
 #+title: jojo
 
 * [todo-stack]
-
-*** use Rc for GC
 
 * [note]
 
 * prolog
 
-*** use
+*** include
 
     #+begin_src cpp
-    use std::collections::hash_map::HashMap;
-    use std::collections::hash_map::Entry;
+    #include <iostream>
     #+end_src
 
-* Env
-
-*** NameMap
+*** using
 
     #+begin_src cpp
-    type NameMap<'a> = HashMap<String, Den<'a>>;
+    using namespace std;
     #+end_src
 
-*** Env
+* env
+
+*** env_s
 
     #+begin_src cpp
-    struct Env<'a> {
-        name_map: NameMap<'a>,
-        obj_stack: Vec<Obj<'a>>,
-        frame_stack: Vec<Frame<'a>>,
-    }
+    struct env_s {
+        string name_map;
+        string obj_stack;
+        string frame_stack;
+        void step();
+        void eval();
+    };
     #+end_src
 
-*** Body
+* den
+
+*** den_s
 
     #+begin_src cpp
-    type Body<'a> = Vec<Ins<'a>>;
+    struct den_s {
+
+    };
     #+end_src
 
-*** LocalMap
+* obj
+
+*** obj_s
 
     #+begin_src cpp
-    type LocalMap<'a> = HashMap<Name<'a>, Obj<'a>>;
+    struct obj_s {
+
+    };
     #+end_src
 
-*** Frame
+* ins
+
+*** ins_s
 
     #+begin_src cpp
-    struct Frame<'a> {
-        index: usize,
-        body: Body<'a>,
-        local_map: LocalMap<'a>,
-    }
-    #+end_src
+    struct ins_s {
 
-*** Name
-
-    #+begin_src cpp
-    type Name<'a> = Entry<'a, String, Obj<'a>>;
-    #+end_src
-
-*** step
-
-    #+begin_src cpp
-    fn step(env: &mut Env) {
-        if let Some(mut frame) = env.frame_stack.pop() {
-            let ins = &frame.body[frame.index];
-            frame.index = frame.index + 1;
-            match ins {
-                Ins::Call(name) => {
-                    env.frame_stack.push(frame)
-                }
-                Ins::TailCall(name) => {
-                }
-                Ins::End => {
-                }
-                Ins::Get(local_name) => {
-                    env.frame_stack.push(frame)
-                }
-                Ins::Let(local_name) => {
-                    env.frame_stack.push(frame)
-                }
-                Ins::Clo(body) => {
-                    env.frame_stack.push(frame)
-                }
-            }
-        }
-        else {
-            panic!("- step : meet empty frame_stack!");
-        }
-    }
-    #+end_src
-
-*** eval
-
-    #+begin_src cpp
-    fn eval(env: &mut Env) {
-
-    }
-    #+end_src
-
-* Den
-
-*** Den
-
-    #+begin_src cpp
-    enum Den<'a> {
-       Prim(String, fn(&mut Env)),
-       Fun(String, Body<'a>),
-    }
-    #+end_src
-
-* Obj
-
-*** Obj
-
-    #+begin_src cpp
-    enum Obj<'a> {
-        Clo(LocalMap<'a>, Body<'a>),
-        Int(isize),
-        Str(String),
-    }
-    #+end_src
-
-* Ins
-
-*** Ins
-
-    #+begin_src cpp
-    enum Ins<'a> {
-        Call(Name<'a>),
-        TailCall(Name<'a>),
-        End,
-        Get(Name<'a>),
-        Let(Name<'a>),
-        Clo(Body<'a>),
-    }
+    };
     #+end_src
 
 * epilog
@@ -145,7 +68,8 @@
 *** main
 
     #+begin_src cpp
-    fn main() {
+    int main()
+    {
 
     }
     #+end_src
