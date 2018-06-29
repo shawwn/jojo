@@ -3,7 +3,20 @@
 
 * [todo-stack]
 
+*** spec the imp
+
+*** form a coding style
+
+*** simplify den to obj
+
 * [note]
+
+*** [for now] use string instead of symbol
+
+    - to simplify the implementation
+      we use string instead of symbol
+      and we keep the implementation easy to change
+      and add symbol back only later
 
 * prolog
 
@@ -19,27 +32,26 @@
     using namespace std;
     #+end_src
 
+* name
+
+*** name_t
+
+    #+begin_src cpp
+    using name_t = string;
+    #+end_src
+
 * env
 
 *** env_s
 
     #+begin_src cpp
-    struct env_s {
-        string name_map;
-        string obj_stack;
-        string frame_stack;
+    struct env_s
+    {
+        map<name_t, obj_s> name_map;
+        name_t obj_stack;
+        name_t frame_stack;
         void step();
         void eval();
-    };
-    #+end_src
-
-* den
-
-*** den_s
-
-    #+begin_src cpp
-    struct den_s {
-
     };
     #+end_src
 
@@ -48,7 +60,35 @@
 *** obj_s
 
     #+begin_src cpp
-    struct obj_s {
+    struct obj_s
+    {
+
+    };
+    #+end_src
+
+*** >< clo_obj_s
+
+    #+begin_src cpp
+    struct clo_obj_s: public obj_s
+    {
+
+    };
+    #+end_src
+
+*** >< int_obj_s
+
+    #+begin_src cpp
+    struct int_obj_s: public obj_s
+    {
+
+    };
+    #+end_src
+
+*** >< str_obj_s
+
+    #+begin_src cpp
+    struct str_obj_s: public obj_s
+    {
 
     };
     #+end_src
@@ -58,7 +98,53 @@
 *** ins_s
 
     #+begin_src cpp
-    struct ins_s {
+    struct ins_s
+    {
+
+    };
+    #+end_src
+
+*** >< call_ins_s
+
+    #+begin_src cpp
+    struct call_ins_s: public ins_s
+    {
+
+    };
+    #+end_src
+
+*** >< end_ins_s
+
+    #+begin_src cpp
+    struct end_ins_s: public ins_s
+    {
+
+    };
+    #+end_src
+
+*** >< get_ins_s
+
+    #+begin_src cpp
+    struct get_ins_s: public ins_s
+    {
+
+    };
+    #+end_src
+
+*** >< let_ins_s
+
+    #+begin_src cpp
+    struct let_ins_s: public ins_s
+    {
+
+    };
+    #+end_src
+
+*** >< clo_ins_s
+
+    #+begin_src cpp
+    struct clo_ins_s: public ins_s
+    {
 
     };
     #+end_src
