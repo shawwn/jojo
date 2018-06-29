@@ -7,6 +7,7 @@ build ()
 }
 
 run () {
+    ./tangle.js
     build
     ./jojo
 }

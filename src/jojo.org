@@ -5,6 +5,8 @@
 
 *** spec the imp
 
+    - rm rust version
+
 *** form a coding style
 
 *** simplify den to obj
@@ -24,6 +26,10 @@
 
     #+begin_src cpp
     #include <iostream>
+    #include <vector>
+    #include <map>
+    #include <set>
+    #include <stack>
     #+end_src
 
 *** using
@@ -45,15 +51,41 @@
 *** env_s
 
     #+begin_src cpp
+    struct obj_s;
+    struct frame_s;
+
     struct env_s
     {
         map<name_t, obj_s> name_map;
-        name_t obj_stack;
-        name_t frame_stack;
-        void step();
-        void eval();
+        stack<obj_s> obj_stack;
+        stack<frame_s> frame_stack;
+        void step ();
+        void eval ();
     };
     #+end_src
+
+*** body_t
+
+    #+begin_src cpp
+    struct ins_s;
+
+    using body_t = vector<ins_s>;
+    #+end_src
+
+*** frame_s
+
+    #+begin_src cpp
+    struct frame_s
+    {
+       size_t index;
+       body_t body;
+       map<name_t, obj_s> local_map;
+    };
+    #+end_src
+
+*** step
+
+*** eval
 
 * obj
 
@@ -154,7 +186,7 @@
 *** main
 
     #+begin_src cpp
-    int main()
+    int main ()
     {
 
     }
