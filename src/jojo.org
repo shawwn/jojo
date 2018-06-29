@@ -5,8 +5,6 @@
 
 *** spec the imp
 
-    - rm rust version
-
 *** form a coding style
 
 *** simplify den to obj
@@ -48,17 +46,17 @@
 
 * env
 
-*** env_s
+*** env_t
 
     #+begin_src cpp
-    struct obj_s;
-    struct frame_s;
+    struct obj_t;
+    struct frame_t;
 
-    struct env_s
+    struct env_t
     {
-        map<name_t, obj_s> name_map;
-        stack<obj_s> obj_stack;
-        stack<frame_s> frame_stack;
+        map<name_t, obj_t> name_map;
+        stack<obj_t> obj_stack;
+        stack<frame_t> frame_stack;
         void step ();
         void eval ();
     };
@@ -67,117 +65,134 @@
 *** body_t
 
     #+begin_src cpp
-    struct ins_s;
+    struct ins_t;
 
-    using body_t = vector<ins_s>;
+    using body_t = vector<ins_t>;
     #+end_src
 
-*** frame_s
+*** frame_t
 
     #+begin_src cpp
-    struct frame_s
+    struct frame_t
     {
        size_t index;
        body_t body;
-       map<name_t, obj_s> local_map;
+       map<name_t, obj_t> local_map;
     };
     #+end_src
 
 *** step
 
+    #+begin_src cpp
+    void env_t::step ()
+    {
+        // handle proper tail call here
+        // obj_stack
+        // frame_stack
+    }
+    #+end_src
+
 *** eval
+
+    #+begin_src cpp
+    void env_t::eval ()
+    {
+
+    }
+    #+end_src
 
 * obj
 
-*** obj_s
+*** obj_t
 
     #+begin_src cpp
-    struct obj_s
+    struct obj_t
     {
 
     };
     #+end_src
 
-*** >< clo_obj_s
+*** clo_obj_t
 
     #+begin_src cpp
-    struct clo_obj_s: public obj_s
+    struct clo_obj_t: public obj_t
     {
-
+        map<name_t, obj_t> local_map;
+        body_t body;
     };
     #+end_src
 
-*** >< int_obj_s
+*** int_obj_t
 
     #+begin_src cpp
-    struct int_obj_s: public obj_s
+    struct int_obj_t: public obj_t
     {
-
+        int i;
     };
     #+end_src
 
-*** >< str_obj_s
+*** str_obj_t
 
     #+begin_src cpp
-    struct str_obj_s: public obj_s
+    struct str_obj_t: public obj_t
     {
-
+        string s;
     };
     #+end_src
 
 * ins
 
-*** ins_s
+*** ins_t
 
     #+begin_src cpp
-    struct ins_s
+    struct ins_t
     {
 
     };
     #+end_src
 
-*** >< call_ins_s
+*** call_ins_t
 
     #+begin_src cpp
-    struct call_ins_s: public ins_s
+    struct call_ins_t: public ins_t
+    {
+        name_t name;
+    };
+    #+end_src
+
+*** end_ins_t
+
+    #+begin_src cpp
+    struct end_ins_t: public ins_t
     {
 
     };
     #+end_src
 
-*** >< end_ins_s
+*** get_ins_t
 
     #+begin_src cpp
-    struct end_ins_s: public ins_s
+    struct get_ins_t: public ins_t
     {
-
+        name_t name;
     };
     #+end_src
 
-*** >< get_ins_s
+*** let_ins_t
 
     #+begin_src cpp
-    struct get_ins_s: public ins_s
+    struct let_ins_t: public ins_t
     {
-
+        name_t name;
     };
     #+end_src
 
-*** >< let_ins_s
+*** clo_ins_t
 
     #+begin_src cpp
-    struct let_ins_s: public ins_s
+    struct clo_ins_t: public ins_t
     {
-
-    };
-    #+end_src
-
-*** >< clo_ins_s
-
-    #+begin_src cpp
-    struct clo_ins_s: public ins_s
-    {
-
+        body_t body;
     };
     #+end_src
 

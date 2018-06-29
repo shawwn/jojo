@@ -5,65 +5,74 @@
     #include <stack>
     using namespace std;
     using name_t = string;
-    struct obj_s;
-    struct frame_s;
+    struct obj_t;
+    struct frame_t;
 
-    struct env_s
+    struct env_t
     {
-        map<name_t, obj_s> name_map;
-        stack<obj_s> obj_stack;
-        stack<frame_s> frame_stack;
+        map<name_t, obj_t> name_map;
+        stack<obj_t> obj_ttack;
+        stack<frame_t> frame_ttack;
         void step ();
         void eval ();
     };
-    struct ins_s;
+    struct ins_t;
 
-    using body_t = vector<ins_s>;
-    struct frame_s
+    using body_t = vector<ins_t>;
+    struct frame_t
     {
        size_t index;
        body_t body;
-       map<name_t, obj_s> local_map;
+       map<name_t, obj_t> local_map;
     };
-    struct obj_s
+    void env_t::step ()
+    {
+
+    }
+    void env_t::eval ()
+    {
+
+    }
+    struct obj_t
     {
 
     };
-    struct clo_obj_s: public obj_s
+    struct clo_obj_t: public obj_t
+    {
+        map<name_t, obj_t> local_map;
+        body_t body;
+    };
+    struct int_obj_t: public obj_t
+    {
+        int i;
+    };
+    struct str_obj_t: public obj_t
+    {
+        string s;
+    };
+    struct ins_t
     {
 
     };
-    struct int_obj_s: public obj_s
+    struct call_ins_t: public ins_t
+    {
+        name_t name;
+    };
+    struct end_ins_t: public ins_t
     {
 
     };
-    struct str_obj_s: public obj_s
+    struct get_ins_t: public ins_t
     {
-
+        name_t name;
     };
-    struct ins_s
+    struct let_ins_t: public ins_t
     {
-
+        name_t name;
     };
-    struct call_ins_s: public ins_s
+    struct clo_ins_t: public ins_t
     {
-
-    };
-    struct end_ins_s: public ins_s
-    {
-
-    };
-    struct get_ins_s: public ins_s
-    {
-
-    };
-    struct let_ins_s: public ins_s
-    {
-
-    };
-    struct clo_ins_s: public ins_s
-    {
-
+        body_t body;
     };
     int main ()
     {
