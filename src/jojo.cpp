@@ -280,8 +280,6 @@
             {"k1", &s1},
             {"k2", &s2},
         };
-        // env.name_map.insert (pair<name_t, obj_t *> ("k1", &s1));
-        // env.name_map.insert (pair<name_t, obj_t *> ("k2", &s2));
 
         frame_t frame;
         frame.index = 0;
