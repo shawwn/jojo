@@ -63,7 +63,7 @@
         stack<frame_t *> frame_stack;
 
         void step ();
-        void eval ();
+        void run ();
 
         void report_name_map ();
         void report_frame_stack ();
@@ -96,9 +96,10 @@
         //   as an extra argument.
         ins->exe (*this, frame->local_map);
     }
-    void env_t::eval ()
+    void env_t::run ()
     {
-
+        while (!this->frame_stack.empty ())
+            this->step ();
     }
       void obj_print (env_t &env, obj_t &obj)
       {
@@ -197,26 +198,33 @@
       {
           cout << "fatal error : unknown ins" << "\n";
       }
-      void obj_apply (env_t &env, obj_t &obj)
+      void obj_apply (env_t &env, obj_t *obj)
       {
-          // apply lambda
-          // ><><><
-
-          // push non lambda into obj_stack
-          env.obj_stack.push (&obj);
+          if (obj->t == "lambda-t") {
+              // apply lambda by push new frame to frame_stack
+              lambda_obj_t *obj = obj;
+              frame_t *frame = new frame_t;
+              frame->index = 0;
+              frame->body = obj->body;
+              frame->local_map = obj->local_map;
+              env.frame_stack.push (frame);
+          } else {
+              // push non lambda into obj_stack
+              env.obj_stack.push (obj);
+          }
       }
       void call_ins_t::exe (env_t &env, map<name_t, obj_t *> &local_map)
       {
           // local_map first
           auto it = local_map.find (this->name);
           if (it != local_map.end ()) {
-              obj_apply (env, *(it->second));
+              obj_apply (env, it->second);
               return;
           }
           // name_map second
           it = env.name_map.find (this->name);
           if (it != env.name_map.end ()) {
-              obj_apply (env, *(it->second));
+              obj_apply (env, it->second);
               return;
           }
           cout << "fatal error ! unknown name : "
@@ -231,8 +239,14 @@
       }
       void lambda_ins_t::exe (env_t &env, map<name_t, obj_t *> &local_map)
       {
-           // create lambda_obj_t by closure
-
+          // create lambda_obj_t by closure
+          // and push it to obj_stack
+          lambda_obj_t *lambda_obj = new lambda_obj_t;
+          lambda_obj->t = "lambda-t";
+          lambda_obj->body = this->body;
+          frame_t *frame = env.frame_stack.top ();
+          lambda_obj->local_map = frame->local_map;
+          env.obj_stack.push (lambda_obj);
       }
       string ins_t::repr (env_t &env)
       {
@@ -280,29 +294,24 @@
         call_ins_t call_v;
         call_v.name = "v";
 
-        frame.body.push_back (&call_k1);
-        frame.body.push_back (&call_k2);
+        lambda_ins_t lambda_f;
+        lambda_f.body = {
+            &call_k1,
+            &call_k2,
+        };
 
-        frame.body.push_back (&let_v);
-        frame.body.push_back (&call_v);
-        frame.body.push_back (&call_v);
+        frame.body = {
+            &call_k1,
+            &call_k2,
+            &let_v,
+            &call_v,
+            &lambda_f,
+            &call_v,
+        };
 
         env.frame_stack.push (&frame);
 
         env.report ();
-
-        env.step ();
-        env.report ();
-
-        env.step ();
-        env.report ();
-
-        env.step ();
-        env.report ();
-
-        env.step ();
-        env.report ();
-
-        env.step ();
+        env.run ();
         env.report ();
     }

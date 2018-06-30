@@ -9,8 +9,9 @@ build ()
 
 run () {
     ./tangle.js
+    rm -f jojo
     build
-    ./jojo
+    time ./jojo
 }
 
 run
