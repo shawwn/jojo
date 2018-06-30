@@ -3,11 +3,9 @@
 
 * [todo-stack]
 
-*** spec the imp
+*** exe
 
-*** form a coding style
-
-*** simplify den to obj
+*** eval
 
 * [note]
 
@@ -36,7 +34,7 @@
     using namespace std;
     #+end_src
 
-* name
+* datatype
 
 *** name_t
 
@@ -44,31 +42,87 @@
     using name_t = string;
     #+end_src
 
-* env
+*** ins
 
-*** env_t
+***** ins_t
 
-    #+begin_src cpp
-    struct obj_t;
-    struct frame_t;
+      #+begin_src cpp
+      struct env_t;
 
-    struct env_t
-    {
-        map<name_t, obj_t> name_map;
-        stack<obj_t> obj_stack;
-        stack<frame_t> frame_stack;
-        void step ();
-        void eval ();
-    };
-    #+end_src
+      struct ins_t
+      {
+          virtual void exe (env_t &env);
+      };
+      #+end_src
 
-*** body_t
+***** call_ins_t
 
-    #+begin_src cpp
-    struct ins_t;
+      #+begin_src cpp
+      struct call_ins_t: public ins_t
+      {
+          name_t name;
+          void exe (env_t &env);
+      };
+      #+end_src
 
-    using body_t = vector<ins_t>;
-    #+end_src
+***** let_ins_t
+
+      #+begin_src cpp
+      struct let_ins_t: public ins_t
+      {
+          name_t name;
+          void exe (env_t &env);
+      };
+      #+end_src
+
+***** lambda_ins_t
+
+      #+begin_src cpp
+      struct lambda_ins_t: public ins_t
+      {
+          vector<ins_t *> body;
+          void exe (env_t &env);
+      };
+      #+end_src
+
+*** obj
+
+***** obj_t
+
+      #+begin_src cpp
+      struct obj_t
+      {
+          string tagstr;
+      };
+      #+end_src
+
+***** lambda_obj_t
+
+      #+begin_src cpp
+      struct lambda_obj_t: public obj_t
+      {
+          map<name_t, obj_t> local_map;
+          vector<ins_t *> body;
+      };
+      #+end_src
+
+***** int_obj_t
+
+      #+begin_src cpp
+      struct int_obj_t: public obj_t
+      {
+          int i;
+      };
+      #+end_src
+
+***** str_obj_t
+
+      #+begin_src cpp
+      struct str_obj_t: public obj_t
+      {
+          string s;
+      };
+      #+end_src
 
 *** frame_t
 
@@ -76,23 +130,71 @@
     struct frame_t
     {
        size_t index;
-       body_t body;
+       vector<ins_t *> body;
        map<name_t, obj_t> local_map;
     };
     #+end_src
 
-*** step
+*** env_t
+
+    #+begin_src cpp
+    struct env_t
+    {
+        map<name_t, obj_t> name_map;
+        stack<obj_t *> obj_stack;
+        stack<frame_t *> frame_stack;
+        void step ();
+        void report ();
+        void eval ();
+    };
+    #+end_src
+
+* env
+
+*** env_t::step
 
     #+begin_src cpp
     void env_t::step ()
     {
-        // handle proper tail call here
-        // obj_stack
-        // frame_stack
+        frame_t *frame = this->frame_stack.top ();
+        size_t size = frame->body.size ();
+        size_t index = frame->index;
+
+        // handle empty function body
+        if (index >= size) {
+            this->frame_stack.pop ();
+            return;
+        }
+
+        // get ins only for non empty function body
+        ins_t *ins = frame->body[index];
+
+        frame->index++;
+
+        // handle proper tail call
+        if (index+1 == size)
+            frame_stack.pop ();
+
+        ins->exe (*this);
     }
     #+end_src
 
-*** eval
+*** env_t::report
+
+    #+begin_src cpp
+    void env_t::report ()
+    {
+        cout << this->name_map.size ()
+             << "\n";
+        cout << this->obj_stack.size ()
+             << "\n";
+        cout << this->frame_stack.size ()
+             << "\n";
+        cout << "\n";
+    }
+    #+end_src
+
+*** >< env_t::eval
 
     #+begin_src cpp
     void env_t::eval ()
@@ -101,100 +203,43 @@
     }
     #+end_src
 
-* obj
-
-*** obj_t
-
-    #+begin_src cpp
-    struct obj_t
-    {
-
-    };
-    #+end_src
-
-*** clo_obj_t
-
-    #+begin_src cpp
-    struct clo_obj_t: public obj_t
-    {
-        map<name_t, obj_t> local_map;
-        body_t body;
-    };
-    #+end_src
-
-*** int_obj_t
-
-    #+begin_src cpp
-    struct int_obj_t: public obj_t
-    {
-        int i;
-    };
-    #+end_src
-
-*** str_obj_t
-
-    #+begin_src cpp
-    struct str_obj_t: public obj_t
-    {
-        string s;
-    };
-    #+end_src
-
 * ins
 
-*** ins_t
+*** >< ins_t::exe
 
     #+begin_src cpp
-    struct ins_t
+    void ins_t::exe (env_t &env)
     {
-
-    };
+        cout << "unknown ins" << "\n";
+    }
     #+end_src
 
-*** call_ins_t
+*** call_ins_t::exe
 
     #+begin_src cpp
-    struct call_ins_t: public ins_t
+    void call_ins_t::exe (env_t &env)
     {
-        name_t name;
-    };
+        // local_map first
+        // ><><><
+
+        auto it = env.name_map.find (this->name);
+        if (it == env.name_map.end ()) {
+            cout << "error" << "\n";
+            return;
+        }
+        obj_t obj = it->second;
+        if (obj.tagstr == "-lambda-t")
+            // new frame
+            // ><><><
+            ;
+        else
+            env.obj_stack.push (&obj);
+    }
     #+end_src
 
-*** end_ins_t
+*** >< let_ins_t::exe
 
-    #+begin_src cpp
-    struct end_ins_t: public ins_t
-    {
-
-    };
-    #+end_src
-
-*** get_ins_t
-
-    #+begin_src cpp
-    struct get_ins_t: public ins_t
-    {
-        name_t name;
-    };
-    #+end_src
-
-*** let_ins_t
-
-    #+begin_src cpp
-    struct let_ins_t: public ins_t
-    {
-        name_t name;
-    };
-    #+end_src
-
-*** clo_ins_t
-
-    #+begin_src cpp
-    struct clo_ins_t: public ins_t
-    {
-        body_t body;
-    };
-    #+end_src
+*** >< lambda_ins_t::exe
 
 * epilog
 
@@ -203,6 +248,39 @@
     #+begin_src cpp
     int main ()
     {
+        env_t env;
 
+        str_obj_t s1;
+        s1.tagstr = "string-t";
+        s1.s = "s1";
+        // env.obj_stack.push (s1);
+
+        str_obj_t s2;
+        s2.tagstr = "string-t";
+        s2.s = "s2";
+        // env.obj_stack.push (s2);
+
+        env.name_map.insert (pair<name_t, obj_t> ("k1", s1));
+        env.name_map.insert (pair<name_t, obj_t> ("k2", s2));
+
+        frame_t frame;
+        frame.index = 0;
+
+        call_ins_t ins1;
+        ins1.name = "k1";
+
+        call_ins_t ins2;
+        ins2.name = "k2";
+
+        frame.body.push_back (&ins1);
+        frame.body.push_back (&ins2);
+
+        env.frame_stack.push (&frame);
+
+        env.report ();
+        env.step ();
+        env.report ();
+        env.step ();
+        env.report ();
     }
     #+end_src
