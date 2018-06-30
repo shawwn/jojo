@@ -132,10 +132,13 @@
     }
     void let_ins_t::exe (env_t &env, map<name_t, obj_t *> &local_map)
     {
-
+         obj_t *obj = env.obj_stack.top ();
+         env.obj_stack.pop ();
+         local_map.insert (pair<name_t, obj_t *> (this->name, obj));
     }
     void lambda_ins_t::exe (env_t &env, map<name_t, obj_t *> &local_map)
     {
+         // create lambda_obj_t by closure
 
     }
     int main ()
@@ -156,20 +159,41 @@
         frame_t frame;
         frame.index = 0;
 
-        call_ins_t ins1;
-        ins1.name = "k1";
+        call_ins_t call_k1;
+        call_k1.name = "k1";
 
-        call_ins_t ins2;
-        ins2.name = "k2";
+        call_ins_t call_k2;
+        call_k2.name = "k2";
 
-        frame.body.push_back (&ins1);
-        frame.body.push_back (&ins2);
+        let_ins_t let_v;
+        let_v.name = "v";
+
+        call_ins_t call_v;
+        call_v.name = "v";
+
+        frame.body.push_back (&call_k1);
+        frame.body.push_back (&call_k2);
+
+        frame.body.push_back (&let_v);
+        frame.body.push_back (&call_v);
+        frame.body.push_back (&call_v);
 
         env.frame_stack.push (&frame);
 
         env.report ();
+
         env.step ();
         env.report ();
+
+        env.step ();
+        env.report ();
+
+        env.step ();
+        env.report ();
+
+        env.step ();
+        env.report ();
+
         env.step ();
         env.report ();
     }
