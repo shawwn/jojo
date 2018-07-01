@@ -4,33 +4,36 @@
     #include <set>
     #include <stack>
     using namespace std;
+    struct env_t;
+    struct obj_t;
+    struct jo_t;
     using name_t = string;
-      struct env_t;
-      struct obj_t;
-      struct ins_t
+    using local_map_t = map<name_t, obj_t *>;
+    using jojo_t = vector<jo_t *>;
+      struct jo_t
       {
           virtual
-          void exe (env_t *env, map<name_t, obj_t *> *local_map);
+          void exe (env_t *env, local_map_t *local_map);
           virtual
           string repr (env_t *env);
 
       };
-      struct call_ins_t: ins_t
+      struct call_jo_t: jo_t
       {
           name_t name;
-          void exe (env_t *env, map<name_t, obj_t *> *local_map);
+          void exe (env_t *env, local_map_t *local_map);
           string repr (env_t *env);
       };
-      struct let_ins_t: ins_t
+      struct let_jo_t: jo_t
       {
           name_t name;
-          void exe (env_t *env, map<name_t, obj_t *> *local_map);
+          void exe (env_t *env, local_map_t *local_map);
           string repr (env_t *env);
       };
-      struct lambda_ins_t: ins_t
+      struct lambda_jo_t: jo_t
       {
-          vector<ins_t *> body;
-          void exe (env_t *env, map<name_t, obj_t *> *local_map);
+          jojo_t *jojo;
+          void exe (env_t *env, local_map_t *local_map);
           string repr (env_t *env);
       };
       using tag_t = string;
@@ -40,8 +43,8 @@
       };
       struct lambda_obj_t: obj_t
       {
-          map<name_t, obj_t *> local_map;
-          vector<ins_t *> body;
+          jojo_t *jojo;
+          local_map_t *local_map;
       };
       struct int_obj_t: obj_t
       {
@@ -54,24 +57,20 @@
     struct frame_t
     {
        size_t index;
-       vector<ins_t *> body;
-       map<name_t, obj_t *> local_map;
+       jojo_t *jojo;
+       local_map_t *local_map;
     };
+    using name_map_t = map<name_t, obj_t *>;
+    using obj_stack_t = stack<obj_t *>;
+    using frame_stack_t = stack<frame_t *>;
     struct env_t
     {
-        map<name_t, obj_t *> name_map;
-        stack<obj_t *> obj_stack;
-        stack<frame_t *> frame_stack;
-
-        void step ();
-        void run ();
-
-        void report_name_map ();
-        void report_frame_stack ();
-        void report_obj_stack ();
-        void report ();
+        name_map_t *name_map;
+        obj_stack_t *obj_stack;
+        frame_stack_t *frame_stack;
     };
-    void obj_print (env_t *env, obj_t *obj)
+    void
+    obj_print (env_t *env, obj_t *obj)
     {
         if (obj->t == "lambda-t") {
             cout << "lambda-t";
@@ -86,135 +85,233 @@
             cout << "<unknown-t>";
         }
     }
-    void obj_apply (env_t *env, obj_t *obj)
+    frame_t *
+    frame_new ();
+
+    frame_t *
+    frame_new (jojo_t *jojo, local_map_t *local_map);
+
+    void
+    obj_apply (env_t *env, obj_t *obj)
     {
         if (obj->t == "lambda-t") {
             // apply lambda by push new frame to frame_stack
             lambda_obj_t *obj = obj;
-            frame_t *frame = new frame_t;
-            frame->index = 0;
-            frame->body = obj->body;
-            frame->local_map = obj->local_map;
-            env->frame_stack.push (frame);
+            frame_t *frame =
+                frame_new (obj->jojo,
+                           obj->local_map);
+            env->frame_stack->push (frame);
         } else {
             // push non lambda into obj_stack
-            env->obj_stack.push (obj);
+            env->obj_stack->push (obj);
         }
     }
-    void body_print (env_t *env, vector<ins_t *> *body)
+      int_obj_t *
+      int_obj_new (int i)
+      {
+          int_obj_t *int_obj = new int_obj_t;
+          int_obj->t = "int-t";
+          int_obj->i = i;
+          return int_obj;
+      }
+      str_obj_t *
+      str_obj_new (string s)
+      {
+          str_obj_t *str_obj = new str_obj_t;
+          str_obj->t = "string-t";
+          str_obj->s = s;
+          return str_obj;
+      }
+      lambda_obj_t *
+      lambda_obj_new (jojo_t* jojo, local_map_t *local_map)
+      {
+          lambda_obj_t *lambda_obj = new lambda_obj_t;
+          lambda_obj->t = "lambda-t";
+          lambda_obj->jojo = jojo;
+          lambda_obj->local_map = local_map;
+          return lambda_obj;
+      }
+    jojo_t *
+    jojo_new ()
     {
-        for (auto &ins: *body)
-            cout << ins->repr (env) << " ";
+        return new vector<jo_t *>;
     }
-    void body_print_with_index (env_t *env, vector<ins_t *> *body,
-                                size_t index)
+    void
+    jojo_print (env_t *env,
+                jojo_t *jojo)
     {
-        vector<ins_t *>::iterator it;
-        for (it = body->begin ();
-             it != body->end ();
+        for (auto &jo: *jojo)
+            cout << jo->repr (env) << " ";
+    }
+    void
+    jojo_print_with_index (env_t *env,
+                           jojo_t *jojo,
+                           size_t index)
+    {
+        jojo_t::iterator it;
+        for (it = jojo->begin ();
+             it != jojo->end ();
              it++) {
-            size_t it_index = it - body->begin ();
-            ins_t *ins = *it;
+            size_t it_index = it - jojo->begin ();
+            jo_t *jo = *it;
             if (index == it_index) {
-                cout << "->> " << ins->repr (env) << " ";
+                cout << "->> " << jo->repr (env) << " ";
             }
             else {
-                cout << ins->repr (env) << " ";
+                cout << jo->repr (env) << " ";
             }
         }
     }
-    void frame_report (env_t *env, frame_t *frame)
+    local_map_t *
+    local_map_new ()
+    {
+        return new local_map_t;
+    }
+    frame_t *
+    frame_new ()
+    {
+        frame_t *frame = new frame_t;
+        frame->index = 0;
+        frame->jojo = jojo_new ();
+        frame->local_map = local_map_new ();
+        return frame;
+    }
+
+    frame_t *
+    frame_new (jojo_t *jojo, local_map_t *local_map)
+    {
+        frame_t *frame = new frame_t;
+        frame->index = 0;
+        frame->jojo = jojo;
+        frame->local_map = local_map;
+        return frame;
+    }
+    void
+    frame_report (env_t *env, frame_t *frame)
     {
         cout << "  - ["
              << frame->index+1
              << "/"
-             << frame->body.size ()
+             << frame->jojo->size ()
              << "] ";
-        body_print_with_index (env, &(frame->body), frame->index);
+        jojo_print_with_index (env, frame->jojo, frame->index);
         cout << "\n";
 
-        cout << "  - local_map # " << frame->local_map.size () << "\n";
-        for (auto &kv: frame->local_map) {
+        cout << "  - local_map # " << frame->local_map->size () << "\n";
+        for (auto &kv: *(frame->local_map)) {
             cout << "    " << kv.first << " : ";
             obj_print (env, kv.second);
             cout << "\n";
         }
     }
-    void env_t::step ()
+    name_map_t *
+    name_map_new ()
     {
-        frame_t *frame = this->frame_stack.top ();
-        size_t size = frame->body.size ();
+        return new name_map_t;
+    }
+    void
+    name_map_report (env_t *env)
+    {
+        cout << "- name_map # " << env->name_map->size () << "\n";
+        for (auto &kv: *(env->name_map)) {
+            cout << "  " << kv.first << " : ";
+            obj_print (env, kv.second);
+            cout << "\n";
+        }
+    }
+    obj_stack_t *
+    obj_stack_new ()
+    {
+        return new obj_stack_t;
+    }
+    void
+    frame_stack_report (env_t *env)
+    {
+        cout << "- frame_stack # " << env->frame_stack->size () << "\n";
+        frame_stack_t frame_stack = *(env->frame_stack);
+        while (!frame_stack.empty ()) {
+           frame_t *frame = frame_stack.top ();
+           frame_report (env, frame);
+           frame_stack.pop ();
+        }
+    }
+    frame_stack_t *
+    frame_stack_new ()
+    {
+        return new frame_stack_t;
+    }
+    void
+    obj_stack_report (env_t *env)
+    {
+        cout << "- obj_stack # " << env->obj_stack->size () << "\n";
+        cout << "  ";
+        obj_stack_t obj_stack = *(env->obj_stack);
+        while (!obj_stack.empty ()) {
+            obj_t *obj = obj_stack.top ();
+            obj_print (env, obj);
+            cout << " ";
+            obj_stack.pop ();
+        }
+        cout << "\n";
+    }
+    env_t *
+    env_new ()
+    {
+        env_t *env = new env_t;
+        env->name_map = name_map_new ();
+        env->obj_stack = obj_stack_new ();
+        env->frame_stack = frame_stack_new ();
+        return env;
+    }
+    void
+    env_step (env_t *env)
+    {
+        frame_t *frame = env->frame_stack->top ();
+        size_t size = frame->jojo->size ();
         size_t index = frame->index;
 
-        // handle empty function body
+        // handle empty jojo
         if (index >= size) {
-            this->frame_stack.pop ();
+            env->frame_stack->pop ();
             return;
         }
 
-        // get ins only for non empty function body
-        ins_t *ins = frame->body[index];
+        // get jo only for non empty jojo
+        jojo_t jojo = *(frame->jojo);
+        jo_t *jo = jojo [index];
 
         frame->index++;
 
         // handle proper tail call
         if (index+1 == size)
-            frame_stack.pop ();
+            env->frame_stack->pop ();
 
         // since the last frame might be drop,
         //   we pass local_map the last frame
         //   as an extra argument.
-        ins->exe (this, &(frame->local_map));
+        jo->exe (env, frame->local_map);
     }
-    void env_t::run ()
+    void
+    env_run (env_t *env)
     {
-        while (!this->frame_stack.empty ())
-            this->step ();
+        while (!env->frame_stack->empty ())
+            env_step (env);
     }
-      void env_t::report_name_map ()
+      void
+      env_report (env_t *env)
       {
-          cout << "- name_map # " << this->name_map.size () << "\n";
-          for (auto &kv: this->name_map) {
-              cout << "  " << kv.first << " : ";
-              obj_print (this, kv.second);
-              cout << "\n";
-          }
-      }
-      void env_t::report_frame_stack ()
-      {
-          cout << "- frame_stack # " << this->frame_stack.size () << "\n";
-          stack<frame_t *> frame_stack = this->frame_stack;
-          while (!frame_stack.empty ()) {
-             frame_t *frame = frame_stack.top ();
-             frame_report (this, frame);
-             frame_stack.pop ();
-          }
-      }
-      void env_t::report_obj_stack ()
-      {
-          cout << "- obj_stack # " << this->obj_stack.size () << "\n";
-          cout << "  ";
-          stack<obj_t *> obj_stack = this->obj_stack;
-          while (!obj_stack.empty ()) {
-              obj_t *obj = obj_stack.top ();
-              obj_print (this, obj);
-              cout << " ";
-              obj_stack.pop ();
-          }
+          name_map_report (env);
+          frame_stack_report (env);
+          obj_stack_report (env);
           cout << "\n";
       }
-      void env_t::report ()
+      void
+      jo_t::exe (env_t *env, local_map_t *local_map)
       {
-          this->report_name_map ();
-          this->report_frame_stack ();
-          this->report_obj_stack ();
-          cout << "\n";
+          cout << "fatal error : unknown jo" << "\n";
       }
-      void ins_t::exe (env_t *env, map<name_t, obj_t *> *local_map)
-      {
-          cout << "fatal error : unknown ins" << "\n";
-      }
-      void call_ins_t::exe (env_t *env, map<name_t, obj_t *> *local_map)
+      void
+      call_jo_t::exe (env_t *env, local_map_t *local_map)
       {
           // local_map first
           auto it = local_map->find (this->name);
@@ -223,8 +320,8 @@
               return;
           }
           // name_map second
-          it = env->name_map.find (this->name);
-          if (it != env->name_map.end ()) {
+          it = env->name_map->find (this->name);
+          if (it != env->name_map->end ()) {
               obj_apply (env, it->second);
               return;
           }
@@ -232,89 +329,103 @@
                << this->name
                << "\n";
       }
-      void let_ins_t::exe (env_t *env, map<name_t, obj_t *> *local_map)
+      void
+      let_jo_t::exe (env_t *env, local_map_t *local_map)
       {
-           obj_t *obj = env->obj_stack.top ();
-           env->obj_stack.pop ();
+           obj_t *obj = env->obj_stack->top ();
+           env->obj_stack->pop ();
            local_map->insert (pair<name_t, obj_t *> (this->name, obj));
       }
-      void lambda_ins_t::exe (env_t *env, map<name_t, obj_t *> *local_map)
+      void
+      lambda_jo_t::exe (env_t *env, local_map_t *local_map)
       {
           // create lambda_obj_t by closure
           // and push it to obj_stack
-          lambda_obj_t *lambda_obj = new lambda_obj_t;
-          lambda_obj->t = "lambda-t";
-          lambda_obj->body = this->body;
-          frame_t *frame = env->frame_stack.top ();
-          lambda_obj->local_map = frame->local_map;
-          env->obj_stack.push (lambda_obj);
+          frame_t *frame = env->frame_stack->top ();
+          lambda_obj_t *lambda_obj =
+              lambda_obj_new (this->jojo, frame->local_map);
+          env->obj_stack->push (lambda_obj);
       }
-      string ins_t::repr (env_t *env)
+      string
+      jo_t::repr (env_t *env)
       {
           return "(unknown)";
       }
-      string call_ins_t::repr (env_t *env)
+      string
+      call_jo_t::repr (env_t *env)
       {
           return "(call " + this->name + ")";
       }
-      string let_ins_t::repr (env_t *env)
+      string
+      let_jo_t::repr (env_t *env)
       {
           return "(let " + this->name + ")";
       }
-      string lambda_ins_t::repr (env_t *env)
+      string
+      lambda_jo_t::repr (env_t *env)
       {
           return "(lambda)";
       }
-    int main ()
+      call_jo_t *
+      call_jo_new (name_t name)
+      {
+          call_jo_t *call_jo = new call_jo_t;
+          call_jo->name = name;
+          return call_jo;
+      }
+      let_jo_t *
+      let_jo_new (name_t name)
+      {
+          let_jo_t *let_jo = new let_jo_t;
+          let_jo->name = name;
+          return let_jo;
+      }
+      lambda_jo_t *
+      lambda_jo_new (jojo_t *jojo)
+      {
+          lambda_jo_t *lambda_jo = new lambda_jo_t;
+          lambda_jo->jojo = jojo;
+          return lambda_jo;
+      }
+
+      lambda_jo_t *
+      lambda_jo_new (jojo_t jojo)
+      {
+          lambda_jo_t *lambda_jo = new lambda_jo_t;
+          lambda_jo->jojo = &jojo;
+          return lambda_jo;
+      }
+    int
+    main ()
     {
-        env_t env;
+        env_t *env = env_new ();
 
-        str_obj_t s1;
-        s1.t = "string-t";
-        s1.s = "s1";
+        str_obj_t *s1 = str_obj_new ("s1");
+        str_obj_t *s2 = str_obj_new ("s2");
 
-        str_obj_t s2;
-        s2.t = "string-t";
-        s2.s = "s2";
+        name_map_t env_name_map = {
+            {"k1", s1},
+            {"k2", s2},
+        };
+        env->name_map = &env_name_map;
 
-        env.name_map = {
-            {"k1", &s1},
-            {"k2", &s2},
+        jojo_t jojo = {
+            call_jo_new ("k1"),
+            call_jo_new ("k2"),
+            let_jo_new ("v"),
+            call_jo_new ("v"),
+            lambda_jo_new ({
+                call_jo_new ("k1"),
+                call_jo_new ("k2"),
+            }),
+            call_jo_new ("v"),
         };
 
-        frame_t frame;
-        frame.index = 0;
+        frame_t *frame = frame_new (&jojo, local_map_new ());
 
-        call_ins_t call_k1;
-        call_k1.name = "k1";
+        env->frame_stack->push (frame);
 
-        call_ins_t call_k2;
-        call_k2.name = "k2";
-
-        let_ins_t let_v;
-        let_v.name = "v";
-
-        call_ins_t call_v;
-        call_v.name = "v";
-
-        lambda_ins_t lambda_f;
-        lambda_f.body = {
-            &call_k1,
-            &call_k2,
-        };
-
-        frame.body = {
-            &call_k1,
-            &call_k2,
-            &let_v,
-            &call_v,
-            &lambda_f,
-            &call_v,
-        };
-
-        env.frame_stack.push (&frame);
-
-        env.report ();
-        env.run ();
-        env.report ();
+        env_report (env);
+        env_run (env);
+        env_report (env);
     }
