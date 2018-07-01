@@ -10,27 +10,28 @@
       struct ins_t
       {
           virtual
-          void exe (env_t &env, map<name_t, obj_t *> &local_map);
+          void exe (env_t *env, map<name_t, obj_t *> *local_map);
           virtual
-          string repr (env_t &env);
+          string repr (env_t *env);
+
       };
       struct call_ins_t: ins_t
       {
           name_t name;
-          void exe (env_t &env, map<name_t, obj_t *> &local_map);
-          string repr (env_t &env);
+          void exe (env_t *env, map<name_t, obj_t *> *local_map);
+          string repr (env_t *env);
       };
       struct let_ins_t: ins_t
       {
           name_t name;
-          void exe (env_t &env, map<name_t, obj_t *> &local_map);
-          string repr (env_t &env);
+          void exe (env_t *env, map<name_t, obj_t *> *local_map);
+          string repr (env_t *env);
       };
       struct lambda_ins_t: ins_t
       {
           vector<ins_t *> body;
-          void exe (env_t &env, map<name_t, obj_t *> &local_map);
-          string repr (env_t &env);
+          void exe (env_t *env, map<name_t, obj_t *> *local_map);
+          string repr (env_t *env);
       };
       using tag_t = string;
       struct obj_t
@@ -70,22 +71,22 @@
         void report_obj_stack ();
         void report ();
     };
-    void obj_print (env_t &env, obj_t &obj)
+    void obj_print (env_t *env, obj_t *obj)
     {
-        if (obj.t == "lambda-t") {
+        if (obj->t == "lambda-t") {
             cout << "lambda-t";
         }
-        else if (obj.t == "int-t") {
+        else if (obj->t == "int-t") {
             cout << "int-t";
         }
-        else if (obj.t == "string-t") {
+        else if (obj->t == "string-t") {
             cout << "string-t";
         }
         else {
             cout << "<unknown-t>";
         }
     }
-    void obj_apply (env_t &env, obj_t *obj)
+    void obj_apply (env_t *env, obj_t *obj)
     {
         if (obj->t == "lambda-t") {
             // apply lambda by push new frame to frame_stack
@@ -94,25 +95,25 @@
             frame->index = 0;
             frame->body = obj->body;
             frame->local_map = obj->local_map;
-            env.frame_stack.push (frame);
+            env->frame_stack.push (frame);
         } else {
             // push non lambda into obj_stack
-            env.obj_stack.push (obj);
+            env->obj_stack.push (obj);
         }
     }
-    void body_print (env_t &env, vector<ins_t *> &body)
+    void body_print (env_t *env, vector<ins_t *> *body)
     {
-        for (auto &ins: body)
+        for (auto &ins: *body)
             cout << ins->repr (env) << " ";
     }
-    void body_print_with_index (env_t &env, vector<ins_t *> &body,
+    void body_print_with_index (env_t *env, vector<ins_t *> *body,
                                 size_t index)
     {
         vector<ins_t *>::iterator it;
-        for (it = body.begin ();
-             it != body.end ();
+        for (it = body->begin ();
+             it != body->end ();
              it++) {
-            size_t it_index = it - body.begin();
+            size_t it_index = it - body->begin ();
             ins_t *ins = *it;
             if (index == it_index) {
                 cout << "->> " << ins->repr (env) << " ";
@@ -122,20 +123,20 @@
             }
         }
     }
-    void frame_report (env_t &env, frame_t &frame)
+    void frame_report (env_t *env, frame_t *frame)
     {
         cout << "  - ["
-             << frame.index+1
+             << frame->index+1
              << "/"
-             << frame.body.size()
+             << frame->body.size ()
              << "] ";
-        body_print_with_index (env, frame.body, frame.index);
+        body_print_with_index (env, &(frame->body), frame->index);
         cout << "\n";
 
-        cout << "  - local_map # " << frame.local_map.size () << "\n";
-        for (auto &kv: frame.local_map) {
+        cout << "  - local_map # " << frame->local_map.size () << "\n";
+        for (auto &kv: frame->local_map) {
             cout << "    " << kv.first << " : ";
-            obj_print (env, *(kv.second));
+            obj_print (env, kv.second);
             cout << "\n";
         }
     }
@@ -163,7 +164,7 @@
         // since the last frame might be drop,
         //   we pass local_map the last frame
         //   as an extra argument.
-        ins->exe (*this, frame->local_map);
+        ins->exe (this, &(frame->local_map));
     }
     void env_t::run ()
     {
@@ -175,7 +176,7 @@
           cout << "- name_map # " << this->name_map.size () << "\n";
           for (auto &kv: this->name_map) {
               cout << "  " << kv.first << " : ";
-              obj_print (*this, *(kv.second));
+              obj_print (this, kv.second);
               cout << "\n";
           }
       }
@@ -185,7 +186,7 @@
           stack<frame_t *> frame_stack = this->frame_stack;
           while (!frame_stack.empty ()) {
              frame_t *frame = frame_stack.top ();
-             frame_report (*this, *frame);
+             frame_report (this, frame);
              frame_stack.pop ();
           }
       }
@@ -196,7 +197,7 @@
           stack<obj_t *> obj_stack = this->obj_stack;
           while (!obj_stack.empty ()) {
               obj_t *obj = obj_stack.top ();
-              obj_print (*this, *obj);
+              obj_print (this, obj);
               cout << " ";
               obj_stack.pop ();
           }
@@ -209,21 +210,21 @@
           this->report_obj_stack ();
           cout << "\n";
       }
-      void ins_t::exe (env_t &env, map<name_t, obj_t *> &local_map)
+      void ins_t::exe (env_t *env, map<name_t, obj_t *> *local_map)
       {
           cout << "fatal error : unknown ins" << "\n";
       }
-      void call_ins_t::exe (env_t &env, map<name_t, obj_t *> &local_map)
+      void call_ins_t::exe (env_t *env, map<name_t, obj_t *> *local_map)
       {
           // local_map first
-          auto it = local_map.find (this->name);
-          if (it != local_map.end ()) {
+          auto it = local_map->find (this->name);
+          if (it != local_map->end ()) {
               obj_apply (env, it->second);
               return;
           }
           // name_map second
-          it = env.name_map.find (this->name);
-          if (it != env.name_map.end ()) {
+          it = env->name_map.find (this->name);
+          if (it != env->name_map.end ()) {
               obj_apply (env, it->second);
               return;
           }
@@ -231,36 +232,36 @@
                << this->name
                << "\n";
       }
-      void let_ins_t::exe (env_t &env, map<name_t, obj_t *> &local_map)
+      void let_ins_t::exe (env_t *env, map<name_t, obj_t *> *local_map)
       {
-           obj_t *obj = env.obj_stack.top ();
-           env.obj_stack.pop ();
-           local_map.insert (pair<name_t, obj_t *> (this->name, obj));
+           obj_t *obj = env->obj_stack.top ();
+           env->obj_stack.pop ();
+           local_map->insert (pair<name_t, obj_t *> (this->name, obj));
       }
-      void lambda_ins_t::exe (env_t &env, map<name_t, obj_t *> &local_map)
+      void lambda_ins_t::exe (env_t *env, map<name_t, obj_t *> *local_map)
       {
           // create lambda_obj_t by closure
           // and push it to obj_stack
           lambda_obj_t *lambda_obj = new lambda_obj_t;
           lambda_obj->t = "lambda-t";
           lambda_obj->body = this->body;
-          frame_t *frame = env.frame_stack.top ();
+          frame_t *frame = env->frame_stack.top ();
           lambda_obj->local_map = frame->local_map;
-          env.obj_stack.push (lambda_obj);
+          env->obj_stack.push (lambda_obj);
       }
-      string ins_t::repr (env_t &env)
+      string ins_t::repr (env_t *env)
       {
           return "(unknown)";
       }
-      string call_ins_t::repr (env_t &env)
+      string call_ins_t::repr (env_t *env)
       {
           return "(call " + this->name + ")";
       }
-      string let_ins_t::repr (env_t &env)
+      string let_ins_t::repr (env_t *env)
       {
           return "(let " + this->name + ")";
       }
-      string lambda_ins_t::repr (env_t &env)
+      string lambda_ins_t::repr (env_t *env)
       {
           return "(lambda)";
       }
