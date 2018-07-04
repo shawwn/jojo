@@ -36,6 +36,12 @@
           void exe (env_t *env, local_map_t *local_map);
           string repr (env_t *env);
       };
+      struct field_jo_t: jo_t
+      {
+          name_t name;
+          void exe (env_t *env, local_map_t *local_map);
+          string repr (env_t *env);
+      };
       using tag_t = string;
       struct obj_t
       {
@@ -58,6 +64,11 @@
       struct str_obj_t: obj_t
       {
           string s;
+      };
+      using field_map_t = map<name_t, obj_t *>;
+      struct data_obj_t: obj_t
+      {
+          field_map_t *field_map;
       };
     struct frame_t
     {
@@ -150,6 +161,19 @@
           primitive_obj->t = "primitive-t";
           primitive_obj->fn = fn;
           return primitive_obj;
+      }
+      field_map_t *
+      field_map_new ()
+      {
+          return new field_map_t;
+      }
+      data_obj_t *
+      data_obj_new (tag_t t, field_map_t *field_map)
+      {
+          data_obj_t *data_obj = new data_obj_t;
+          data_obj->t = t;
+          data_obj->field_map = field_map;
+          return data_obj;
       }
     jojo_t *
     jojo_new ()
@@ -366,6 +390,22 @@
               lambda_obj_new (this->jojo, frame->local_map);
           env->obj_stack->push (lambda_obj);
       }
+      void
+      field_jo_t::exe (env_t *env, local_map_t *local_map)
+      {
+          obj_t *obj = env->obj_stack->top ();
+          env->obj_stack->pop ();
+          data_obj_t *data_obj =
+              static_cast<data_obj_t *> (obj);
+          auto it = data_obj->field_map->find (this->name);
+          if (it != data_obj->field_map->end ()) {
+              obj_apply (env, it->second);
+              return;
+          }
+          cout << "fatal error ! unknown field : "
+               << this->name
+               << "\n";
+      }
       string
       jo_t::repr (env_t *env)
       {
@@ -385,6 +425,11 @@
       lambda_jo_t::repr (env_t *env)
       {
           return "(lambda)";
+      }
+      string
+      field_jo_t::repr (env_t *env)
+      {
+          return "(field " + this->name + ")";
       }
       call_jo_t *
       call_jo_new (name_t name)
@@ -415,6 +460,13 @@
           lambda_jo->jojo = &jojo;
           return lambda_jo;
       }
+      field_jo_t *
+      field_jo_new (name_t name)
+      {
+          field_jo_t *field_jo = new field_jo_t;
+          field_jo->name = name;
+          return field_jo;
+      }
       void
       p1 (env_t *env)
       {
@@ -430,17 +482,24 @@
     {
         env_t *env = env_new ();
 
+        field_map_t field_map = {
+            {"f1", str_obj_new ("fs1")},
+            {"f2", str_obj_new ("fs2")},
+        };
+
         name_map_t env_name_map = {
             {"k1", str_obj_new ("s1")},
             {"k2", str_obj_new ("s2")},
             {"p1", primitive_obj_new (p1)},
             {"p2", primitive_obj_new (p2)},
+            {"d1", data_obj_new ("d-t", &field_map)},
         };
         env->name_map = &env_name_map;
 
         jojo_t jojo = {
             call_jo_new ("p1"),
             call_jo_new ("p2"),
+
             call_jo_new ("k1"),
             call_jo_new ("k2"),
             let_jo_new ("v"),
@@ -450,6 +509,10 @@
                 call_jo_new ("k2"),
             }),
             call_jo_new ("v"),
+
+            call_jo_new ("d1"),
+            call_jo_new ("d1"),
+            field_jo_new ("f1"),
         };
         frame_t *frame = frame_new (&jojo, local_map_new ());
 

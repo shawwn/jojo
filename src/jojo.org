@@ -22,8 +22,6 @@
       - `==` and `=` [and more]
         need to be overloaded
 
-*** data_obj_t
-
 *** finish the inner interpreter
 
 * [note]
@@ -129,6 +127,17 @@
       };
       #+end_src
 
+***** field_jo_t
+
+      #+begin_src cpp
+      struct field_jo_t: jo_t
+      {
+          name_t name;
+          void exe (env_t *env, local_map_t *local_map);
+          string repr (env_t *env);
+      };
+      #+end_src
+
 *** obj
 
 ***** tag_t
@@ -186,6 +195,21 @@
       struct str_obj_t: obj_t
       {
           string s;
+      };
+      #+end_src
+
+***** field_map_t
+
+      #+begin_src cpp
+      using field_map_t = map<name_t, obj_t *>;
+      #+end_src
+
+***** data_obj_t
+
+      #+begin_src cpp
+      struct data_obj_t: obj_t
+      {
+          field_map_t *field_map;
       };
       #+end_src
 
@@ -337,6 +361,29 @@
           primitive_obj->t = "primitive-t";
           primitive_obj->fn = fn;
           return primitive_obj;
+      }
+      #+end_src
+
+***** field_map_new
+
+      #+begin_src cpp
+      field_map_t *
+      field_map_new ()
+      {
+          return new field_map_t;
+      }
+      #+end_src
+
+***** data_obj_new
+
+      #+begin_src cpp
+      data_obj_t *
+      data_obj_new (tag_t t, field_map_t *field_map)
+      {
+          data_obj_t *data_obj = new data_obj_t;
+          data_obj->t = t;
+          data_obj->field_map = field_map;
+          return data_obj;
       }
       #+end_src
 
@@ -675,6 +722,27 @@
       }
       #+end_src
 
+***** field_jo_t::exe
+
+      #+begin_src cpp
+      void
+      field_jo_t::exe (env_t *env, local_map_t *local_map)
+      {
+          obj_t *obj = env->obj_stack->top ();
+          env->obj_stack->pop ();
+          data_obj_t *data_obj =
+              static_cast<data_obj_t *> (obj);
+          auto it = data_obj->field_map->find (this->name);
+          if (it != data_obj->field_map->end ()) {
+              obj_apply (env, it->second);
+              return;
+          }
+          cout << "fatal error ! unknown field : "
+               << this->name
+               << "\n";
+      }
+      #+end_src
+
 *** repr
 
 ***** jo_t::repr
@@ -714,6 +782,16 @@
       lambda_jo_t::repr (env_t *env)
       {
           return "(lambda)";
+      }
+      #+end_src
+
+***** field_jo_t::repr
+
+      #+begin_src cpp
+      string
+      field_jo_t::repr (env_t *env)
+      {
+          return "(field " + this->name + ")";
       }
       #+end_src
 
@@ -763,6 +841,18 @@
       }
       #+end_src
 
+***** field_jo_new
+
+      #+begin_src cpp
+      field_jo_t *
+      field_jo_new (name_t name)
+      {
+          field_jo_t *field_jo = new field_jo_t;
+          field_jo->name = name;
+          return field_jo;
+      }
+      #+end_src
+
 * epilog
 
 *** play
@@ -795,17 +885,24 @@
     {
         env_t *env = env_new ();
 
+        field_map_t field_map = {
+            {"f1", str_obj_new ("fs1")},
+            {"f2", str_obj_new ("fs2")},
+        };
+
         name_map_t env_name_map = {
             {"k1", str_obj_new ("s1")},
             {"k2", str_obj_new ("s2")},
             {"p1", primitive_obj_new (p1)},
             {"p2", primitive_obj_new (p2)},
+            {"d1", data_obj_new ("d-t", &field_map)},
         };
         env->name_map = &env_name_map;
 
         jojo_t jojo = {
             call_jo_new ("p1"),
             call_jo_new ("p2"),
+
             call_jo_new ("k1"),
             call_jo_new ("k2"),
             let_jo_new ("v"),
@@ -815,6 +912,10 @@
                 call_jo_new ("k2"),
             }),
             call_jo_new ("v"),
+
+            call_jo_new ("d1"),
+            call_jo_new ("d1"),
+            field_jo_new ("f1"),
         };
         frame_t *frame = frame_new (&jojo, local_map_new ());
 
