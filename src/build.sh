@@ -3,8 +3,8 @@
 build ()
 {
     # -foptimize-sibling-calls
-    # time g++ -o jojo jojo.cpp
-    time clang++ -o jojo jojo.cpp
+    time g++ -o jojo jojo.cpp -Wall
+    # time clang++ -o jojo jojo.cpp -Wall
 }
 
 run () {

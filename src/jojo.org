@@ -13,7 +13,7 @@
 
 ***** gc
 
-      - `new` register a jojo object into gc
+      - constructor register a jojo object into gc
 
       - never use `delete` explicitly
 
@@ -22,9 +22,9 @@
       - `==` and `=` [and more]
         need to be overloaded
 
-*** primitive function
-
 *** data_obj_t
+
+*** finish the inner interpreter
 
 * [note]
 
@@ -156,6 +156,21 @@
       };
       #+end_src
 
+***** prim_fn
+
+      #+begin_src cpp
+      typedef void (*prim_fn) (env_t *);
+      #+end_src
+
+***** primitive_obj_t
+
+      #+begin_src cpp
+      struct primitive_obj_t: obj_t
+      {
+          prim_fn fn;
+      };
+      #+end_src
+
 ***** int_obj_t
 
       #+begin_src cpp
@@ -232,7 +247,7 @@
             cout << "string-t";
         }
         else {
-            cout << "<unknown-t>";
+            cout << obj->t;
         }
     }
     #+end_src
@@ -251,12 +266,19 @@
     {
         if (obj->t == "lambda-t") {
             // apply lambda by push new frame to frame_stack
-            lambda_obj_t *obj = obj;
+            lambda_obj_t *lambda_obj =
+                static_cast<lambda_obj_t *> (obj);
             frame_t *frame =
-                frame_new (obj->jojo,
-                           obj->local_map);
+                frame_new (lambda_obj->jojo,
+                           lambda_obj->local_map);
             env->frame_stack->push (frame);
-        } else {
+        }
+        else if (obj->t == "primitive-t") {
+            primitive_obj_t *primitive_obj =
+                static_cast<primitive_obj_t *> (obj);
+            primitive_obj->fn (env);
+        }
+        else {
             // push non lambda into obj_stack
             env->obj_stack->push (obj);
         }
@@ -302,6 +324,19 @@
           lambda_obj->jojo = jojo;
           lambda_obj->local_map = local_map;
           return lambda_obj;
+      }
+      #+end_src
+
+***** primitive_obj_new
+
+      #+begin_src cpp
+      primitive_obj_t *
+      primitive_obj_new (prim_fn fn)
+      {
+          primitive_obj_t *primitive_obj = new primitive_obj_t;
+          primitive_obj->t = "primitive-t";
+          primitive_obj->fn = fn;
+          return primitive_obj;
       }
       #+end_src
 
@@ -730,6 +765,28 @@
 
 * epilog
 
+*** play
+
+***** p1
+
+      #+begin_src cpp
+      void
+      p1 (env_t *env)
+      {
+           cout << "- p1\n";
+      }
+      #+end_src
+
+***** p2
+
+      #+begin_src cpp
+      void
+      p2 (env_t *env)
+      {
+           cout << "- p2\n";
+      }
+      #+end_src
+
 *** main
 
     #+begin_src cpp
@@ -738,16 +795,17 @@
     {
         env_t *env = env_new ();
 
-        str_obj_t *s1 = str_obj_new ("s1");
-        str_obj_t *s2 = str_obj_new ("s2");
-
         name_map_t env_name_map = {
-            {"k1", s1},
-            {"k2", s2},
+            {"k1", str_obj_new ("s1")},
+            {"k2", str_obj_new ("s2")},
+            {"p1", primitive_obj_new (p1)},
+            {"p2", primitive_obj_new (p2)},
         };
         env->name_map = &env_name_map;
 
         jojo_t jojo = {
+            call_jo_new ("p1"),
+            call_jo_new ("p2"),
             call_jo_new ("k1"),
             call_jo_new ("k2"),
             let_jo_new ("v"),
@@ -758,7 +816,6 @@
             }),
             call_jo_new ("v"),
         };
-
         frame_t *frame = frame_new (&jojo, local_map_new ());
 
         env->frame_stack->push (frame);
