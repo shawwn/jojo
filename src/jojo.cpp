@@ -46,16 +46,20 @@
       struct obj_t
       {
           tag_t t;
+          virtual
+          void apply (env_t *env);
       };
       struct lambda_obj_t: obj_t
       {
           jojo_t *jojo;
           local_map_t *local_map;
+          void apply (env_t *env);
       };
       typedef void (*prim_fn) (env_t *);
       struct primitive_obj_t: obj_t
       {
           prim_fn fn;
+          void apply (env_t *env);
       };
       struct int_obj_t: obj_t
       {
@@ -99,34 +103,6 @@
         }
         else {
             cout << obj->t;
-        }
-    }
-    frame_t *
-    frame_new ();
-
-    frame_t *
-    frame_new (jojo_t *jojo, local_map_t *local_map);
-
-    void
-    obj_apply (env_t *env, obj_t *obj)
-    {
-        if (obj->t == "lambda-t") {
-            // apply lambda by push new frame to frame_stack
-            lambda_obj_t *lambda_obj =
-                static_cast<lambda_obj_t *> (obj);
-            frame_t *frame =
-                frame_new (lambda_obj->jojo,
-                           lambda_obj->local_map);
-            env->frame_stack->push (frame);
-        }
-        else if (obj->t == "primitive-t") {
-            primitive_obj_t *primitive_obj =
-                static_cast<primitive_obj_t *> (obj);
-            primitive_obj->fn (env);
-        }
-        else {
-            // push non lambda into obj_stack
-            env->obj_stack->push (obj);
         }
     }
       int_obj_t *
@@ -174,6 +150,30 @@
           data_obj->t = t;
           data_obj->field_map = field_map;
           return data_obj;
+      }
+      void
+      obj_t::apply (env_t *env)
+      {
+          env->obj_stack->push (this);
+      }
+      frame_t *
+      frame_new ();
+
+      frame_t *
+      frame_new (jojo_t *jojo, local_map_t *local_map);
+
+      void
+      lambda_obj_t::apply (env_t *env)
+      {
+          frame_t *frame =
+              frame_new (this->jojo,
+                         this->local_map);
+          env->frame_stack->push (frame);
+      }
+      void
+      primitive_obj_t::apply (env_t *env)
+      {
+          this->fn (env);
       }
     jojo_t *
     jojo_new ()
@@ -360,13 +360,13 @@
           // local_map first
           auto it = local_map->find (this->name);
           if (it != local_map->end ()) {
-              obj_apply (env, it->second);
+              it->second->apply (env);
               return;
           }
           // name_map second
           it = env->name_map->find (this->name);
           if (it != env->name_map->end ()) {
-              obj_apply (env, it->second);
+              it->second->apply (env);
               return;
           }
           cout << "fatal error ! unknown name : "
@@ -399,7 +399,7 @@
               static_cast<data_obj_t *> (obj);
           auto it = data_obj->field_map->find (this->name);
           if (it != data_obj->field_map->end ()) {
-              obj_apply (env, it->second);
+              it->second->apply (env);
               return;
           }
           cout << "fatal error ! unknown field : "

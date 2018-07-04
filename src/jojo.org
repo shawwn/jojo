@@ -5,24 +5,20 @@
 
 *** test lambda_jo_t
 
-*** object model
+*** everything is object -- including int
 
-***** everything is object -- including int
+*** use multi-inherit to create class for jojo
 
-***** use multi-inherit to create class for jojo
+*** gc
 
-***** gc
+    - constructor register a jojo object into gc
 
-      - constructor register a jojo object into gc
+    - never use `delete` explicitly
 
-      - never use `delete` explicitly
+    - `new` and `delete` need to be overloaded for gc
 
-      - `new` and `delete` need to be overloaded for gc
-
-      - `==` and `=` [and more]
-        need to be overloaded
-
-*** finish the inner interpreter
+    - `==` and `=` [and more]
+      need to be overloaded
 
 * [note]
 
@@ -152,6 +148,8 @@
       struct obj_t
       {
           tag_t t;
+          virtual
+          void apply (env_t *env);
       };
       #+end_src
 
@@ -162,6 +160,7 @@
       {
           jojo_t *jojo;
           local_map_t *local_map;
+          void apply (env_t *env);
       };
       #+end_src
 
@@ -177,6 +176,7 @@
       struct primitive_obj_t: obj_t
       {
           prim_fn fn;
+          void apply (env_t *env);
       };
       #+end_src
 
@@ -276,39 +276,6 @@
     }
     #+end_src
 
-*** obj_apply
-
-    #+begin_src cpp
-    frame_t *
-    frame_new ();
-
-    frame_t *
-    frame_new (jojo_t *jojo, local_map_t *local_map);
-
-    void
-    obj_apply (env_t *env, obj_t *obj)
-    {
-        if (obj->t == "lambda-t") {
-            // apply lambda by push new frame to frame_stack
-            lambda_obj_t *lambda_obj =
-                static_cast<lambda_obj_t *> (obj);
-            frame_t *frame =
-                frame_new (lambda_obj->jojo,
-                           lambda_obj->local_map);
-            env->frame_stack->push (frame);
-        }
-        else if (obj->t == "primitive-t") {
-            primitive_obj_t *primitive_obj =
-                static_cast<primitive_obj_t *> (obj);
-            primitive_obj->fn (env);
-        }
-        else {
-            // push non lambda into obj_stack
-            env->obj_stack->push (obj);
-        }
-    }
-    #+end_src
-
 *** new
 
 ***** int_obj_new
@@ -384,6 +351,47 @@
           data_obj->t = t;
           data_obj->field_map = field_map;
           return data_obj;
+      }
+      #+end_src
+
+*** apply
+
+***** obj_t::apply
+
+      #+begin_src cpp
+      void
+      obj_t::apply (env_t *env)
+      {
+          env->obj_stack->push (this);
+      }
+      #+end_src
+
+***** lambda_obj_t::apply
+
+      #+begin_src cpp
+      frame_t *
+      frame_new ();
+
+      frame_t *
+      frame_new (jojo_t *jojo, local_map_t *local_map);
+
+      void
+      lambda_obj_t::apply (env_t *env)
+      {
+          frame_t *frame =
+              frame_new (this->jojo,
+                         this->local_map);
+          env->frame_stack->push (frame);
+      }
+      #+end_src
+
+***** primitive_obj_t::apply
+
+      #+begin_src cpp
+      void
+      primitive_obj_t::apply (env_t *env)
+      {
+          this->fn (env);
       }
       #+end_src
 
@@ -680,13 +688,13 @@
           // local_map first
           auto it = local_map->find (this->name);
           if (it != local_map->end ()) {
-              obj_apply (env, it->second);
+              it->second->apply (env);
               return;
           }
           // name_map second
           it = env->name_map->find (this->name);
           if (it != env->name_map->end ()) {
-              obj_apply (env, it->second);
+              it->second->apply (env);
               return;
           }
           cout << "fatal error ! unknown name : "
@@ -734,7 +742,7 @@
               static_cast<data_obj_t *> (obj);
           auto it = data_obj->field_map->find (this->name);
           if (it != data_obj->field_map->end ()) {
-              obj_apply (env, it->second);
+              it->second->apply (env);
               return;
           }
           cout << "fatal error ! unknown field : "
