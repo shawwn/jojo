@@ -40,7 +40,6 @@
           jojo_t *jojo;
 
           lambda_jo_t (jojo_t *jojo);
-          lambda_jo_t (jojo_t jojo);
 
           void exe (env_t *env, local_map_t *local_map);
           string repr (env_t *env);
@@ -51,6 +50,11 @@
 
           field_jo_t (name_t name);
 
+          void exe (env_t *env, local_map_t *local_map);
+          string repr (env_t *env);
+      };
+      struct apply_jo_t: jo_t
+      {
           void exe (env_t *env, local_map_t *local_map);
           string repr (env_t *env);
       };
@@ -376,6 +380,13 @@
                << this->name
                << "\n";
       }
+      void
+      apply_jo_t::exe (env_t *env, local_map_t *local_map)
+      {
+          obj_t *obj = env->obj_stack->top ();
+          env->obj_stack->pop ();
+          obj->apply (env);
+      }
       string
       jo_t::repr (env_t *env)
       {
@@ -401,6 +412,11 @@
       {
           return "(field " + this->name + ")";
       }
+      string
+      apply_jo_t::repr (env_t *env)
+      {
+          return "(apply)";
+      }
       call_jo_t::call_jo_t (name_t name)
       {
           this->name = name;
@@ -412,11 +428,6 @@
       lambda_jo_t::lambda_jo_t (jojo_t *jojo)
       {
           this->jojo = jojo;
-      }
-
-      lambda_jo_t::lambda_jo_t (jojo_t jojo)
-      {
-          this->jojo = &jojo;
       }
       field_jo_t::field_jo_t (name_t name)
       {
@@ -451,6 +462,12 @@
         };
         env->name_map = &env_name_map;
 
+        jojo_t lambda_jojo = {
+            new call_jo_t ("k1"),
+            new call_jo_t ("k2"),
+            new call_jo_t ("v"),
+        };
+
         jojo_t jojo = {
             new call_jo_t ("p1"),
             new call_jo_t ("p2"),
@@ -459,10 +476,8 @@
             new call_jo_t ("k2"),
             new let_jo_t ("v"),
             new call_jo_t ("v"),
-            new lambda_jo_t ({
-                new call_jo_t ("k1"),
-                new call_jo_t ("k2"),
-            }),
+            new lambda_jo_t (&lambda_jojo),
+            new apply_jo_t (),
             new call_jo_t ("v"),
 
             new call_jo_t ("d1"),

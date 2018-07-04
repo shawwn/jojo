@@ -3,13 +3,7 @@
 
 * [todo-stack]
 
-*** apply_jo_t
-
-*** test lambda_jo_t
-
-*** data_obj
-
-***** generic constructor
+*** data_obj -- generic constructor
 
 *** everything is object -- including int
 
@@ -128,7 +122,6 @@
           jojo_t *jojo;
 
           lambda_jo_t (jojo_t *jojo);
-          lambda_jo_t (jojo_t jojo);
 
           void exe (env_t *env, local_map_t *local_map);
           string repr (env_t *env);
@@ -144,6 +137,16 @@
 
           field_jo_t (name_t name);
 
+          void exe (env_t *env, local_map_t *local_map);
+          string repr (env_t *env);
+      };
+      #+end_src
+
+***** apply_jo_t
+
+      #+begin_src cpp
+      struct apply_jo_t: jo_t
+      {
           void exe (env_t *env, local_map_t *local_map);
           string repr (env_t *env);
       };
@@ -306,7 +309,7 @@
       }
       #+end_src
 
-***** str_obj_t
+***** str_obj_t::str_obj_t
 
       #+begin_src cpp
       str_obj_t::str_obj_t (string s)
@@ -699,6 +702,18 @@
       }
       #+end_src
 
+***** apply_jo_t::exe
+
+      #+begin_src cpp
+      void
+      apply_jo_t::exe (env_t *env, local_map_t *local_map)
+      {
+          obj_t *obj = env->obj_stack->top ();
+          env->obj_stack->pop ();
+          obj->apply (env);
+      }
+      #+end_src
+
 *** repr
 
 ***** jo_t::repr
@@ -751,6 +766,16 @@
       }
       #+end_src
 
+***** apply_jo_t::repr
+
+      #+begin_src cpp
+      string
+      apply_jo_t::repr (env_t *env)
+      {
+          return "(apply)";
+      }
+      #+end_src
+
 *** new
 
 ***** call_jo_t::call_jo_t
@@ -777,11 +802,6 @@
       lambda_jo_t::lambda_jo_t (jojo_t *jojo)
       {
           this->jojo = jojo;
-      }
-
-      lambda_jo_t::lambda_jo_t (jojo_t jojo)
-      {
-          this->jojo = &jojo;
       }
       #+end_src
 
@@ -840,6 +860,12 @@
         };
         env->name_map = &env_name_map;
 
+        jojo_t lambda_jojo = {
+            new call_jo_t ("k1"),
+            new call_jo_t ("k2"),
+            new call_jo_t ("v"),
+        };
+
         jojo_t jojo = {
             new call_jo_t ("p1"),
             new call_jo_t ("p2"),
@@ -848,10 +874,8 @@
             new call_jo_t ("k2"),
             new let_jo_t ("v"),
             new call_jo_t ("v"),
-            new lambda_jo_t ({
-                new call_jo_t ("k1"),
-                new call_jo_t ("k2"),
-            }),
+            new lambda_jo_t (&lambda_jojo),
+            new apply_jo_t (),
             new call_jo_t ("v"),
 
             new call_jo_t ("d1"),
