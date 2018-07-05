@@ -1,0 +1,41 @@
+#+title: prelude
+
+* [todo-stack]
+
+* [note]
+
+* ><
+
+  #+begin_src cicada
+  (: list-t (-- type-t -> type-t))
+  (= list-t (union null-t cons-t))
+
+  (: null-t (-- type-t -> type-t))
+  (= null-t (type))
+
+  (cons-@
+    (= car zero-c)
+    (= cdr null-c))
+
+  (: cons-t (-- type-t -> type-t))
+  (= cons-t
+     (type
+       (: car t)
+       (: cdr t list-t)))
+
+  (: list-length (-- t list-t -> nat-t))
+  (= list-length
+     (lambda
+        let list in
+        (case list
+          (null-t zero-c)
+          (cons-t list.cdr recur succ-c))))
+
+  (: list-append (-- t list-t t list-t -> t list-t))
+  (= list-append
+     (lambda
+        let ante succ in
+        (case succ
+          (null-t ante)
+          (cons-t succ.car ante succ.cdr recur cons-c))))
+  #+end_src

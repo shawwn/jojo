@@ -1,5 +1,6 @@
     #include <iostream>
     #include <vector>
+    #include <array>
     #include <map>
     #include <set>
     #include <stack>
@@ -115,6 +116,26 @@
     using name_map_t = map<name_t, obj_t *>;
     using obj_stack_t = stack<obj_t *>;
     using frame_stack_t = stack<frame_t *>;
+      enum cell_state_t
+          { CELL_STATE_USING,
+            CELL_STATE_GARBAGE };
+      struct cell_t
+      {
+          cell_state_t cell_state;
+          obj_t *obj;
+      };
+      const size_t cell_area_size = 1024;
+
+      struct garbage_collector_t
+      {
+          array<cell_t, cell_area_size> *cell_area;
+
+          garbage_collector_t ();
+
+          void mark (env_t * env);
+          void sweep (env_t * env);
+          void run (env_t * env);
+      };
     struct env_t
     {
         name_map_t *name_map;

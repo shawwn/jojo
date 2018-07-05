@@ -3,19 +3,32 @@
 
 * [todo-stack]
 
-*** data_obj -- generic constructor
-
-*** everything is object -- including int
-
-*** use multi-inherit to create class for jojo
-
 *** gc
 
     - constructor register a jojo object into gc
+      env as extra argument to constructor
 
     - never use `delete` explicitly
 
-    - overload `==` and `=` [and more]
+*** overload `==` and `=` [and more]
+
+*** inherit obj_t as ffi -- we need examples
+
+*** map-t
+
+*** data_obj
+
+***** type_obj_t
+
+***** data_constructor_obj_t -- data-c
+
+***** data_creator_obj_t -- data-cr
+
+*** bool-t
+
+*** data_predicate_obj_t - data-p
+
+*** sexp
 
 * [note]
 
@@ -33,6 +46,7 @@
     #+begin_src cpp
     #include <iostream>
     #include <vector>
+    #include <array>
     #include <map>
     #include <set>
     #include <stack>
@@ -276,6 +290,43 @@
     using frame_stack_t = stack<frame_t *>;
     #+end_src
 
+*** gc
+
+***** cell_state_t
+
+      #+begin_src cpp
+      enum cell_state_t
+          { CELL_STATE_USING,
+            CELL_STATE_GARBAGE };
+      #+end_src
+
+***** cell_t
+
+      #+begin_src cpp
+      struct cell_t
+      {
+          cell_state_t cell_state;
+          obj_t *obj;
+      };
+      #+end_src
+
+***** garbage_collector_t
+
+      #+begin_src cpp
+      const size_t cell_area_size = 1024;
+
+      struct garbage_collector_t
+      {
+          array<cell_t, cell_area_size> *cell_area;
+
+          garbage_collector_t ();
+
+          void mark (env_t * env);
+          void sweep (env_t * env);
+          void run (env_t * env);
+      };
+      #+end_src
+
 *** env_t
 
     #+begin_src cpp
@@ -294,8 +345,6 @@
     #+end_src
 
 * obj
-
-*** >< gc
 
 *** new
 
