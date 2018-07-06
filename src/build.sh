@@ -1,17 +1,21 @@
 #!/usr/bin/env bash
 
+# c="g++"
+c="clang++"
+
+f="-Wall -foptimize-sibling-calls"
+# f="-Wall -foptimize-sibling-calls -O2"
+
 build ()
 {
-    # -foptimize-sibling-calls
-    time g++ -o jojo jojo.cpp -Wall -O2
-    # time clang++ -o jojo jojo.cpp -Wall
+    time $c $f jojo.cpp -o jojo
 }
 
-run () {
+test () {
     ./tangle.js
     rm -f jojo
     build
     time ./jojo
 }
 
-run
+test
