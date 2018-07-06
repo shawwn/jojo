@@ -174,11 +174,16 @@
       lambda_obj_t::~lambda_obj_t ()
       {
           delete this->jojo;
+          this->local_map->clear ();
           delete this->local_map;
       }
       data_obj_t::~data_obj_t ()
       {
+          cout << "<a>" << "\n";
+          this->field_map->clear ();
+          cout << "<b>" << "\n";
           delete this->field_map;
+          cout << "<c>" << "\n";
       }
       void
       obj_t::mark (env_t *env)
@@ -367,8 +372,11 @@
       void
       gc_run (env_t *env)
       {
+          cout << "<1>\n";
           gc_mark (env);
+          cout << "<2>\n";
           gc_sweep (env);
+          cout << "<3>\n";
       }
       cell_t *
       gc_next_free_cell (env_t *env)
@@ -570,42 +578,54 @@
     main ()
     {
         env_t *env = new env_t;
-        field_map_t field_map = {
-            {"f1", new str_obj_t (env, "fs1")},
-            {"f2", new str_obj_t (env, "fs2")},
-        };
+        field_map_t *field_map = new field_map_t;
+        field_map->insert
+            (pair<name_t, obj_t *> ("f1", new str_obj_t (env, "fs1")));
+        field_map->insert
+            (pair<name_t, obj_t *> ("f2", new str_obj_t (env, "fs2")));
+
         name_map_t env_name_map = {
             {"k1", new str_obj_t (env, "s1")},
             {"k2", new str_obj_t (env, "s2")},
             {"p1", new primitive_obj_t (env, p1)},
             {"p2", new primitive_obj_t (env, p2)},
-            {"d1", new data_obj_t (env, "d-t", &field_map)},
+            {"d1", new data_obj_t (env, "d-t", field_map)},
         };
         env->name_map = &env_name_map;
-        jojo_t lambda_jojo = {
-            new call_jo_t ("k1"),
-            new call_jo_t ("k2"),
-            new call_jo_t ("v"),
-        };
-        jojo_t jojo = {
-            new call_jo_t ("p1"),
-            new call_jo_t ("p2"),
-            new call_jo_t ("k1"),
-            new call_jo_t ("k2"),
-            new let_jo_t ("v"),
-            new call_jo_t ("v"),
-            new lambda_jo_t (&lambda_jojo),
-            new apply_jo_t (),
-            new call_jo_t ("v"),
-            new call_jo_t ("d1"),
-            new call_jo_t ("d1"),
-            new field_jo_t ("f1"),
-        };
-        frame_t *frame = new frame_t (&jojo, new local_map_t);
+
+        jojo_t *lambda_jojo = new jojo_t;
+        lambda_jojo->push_back (new call_jo_t ("k1"));
+        lambda_jojo->push_back (new call_jo_t ("k2"));
+        lambda_jojo->push_back (new call_jo_t ("v"));
+        jojo_t *jojo = new jojo_t;
+        jojo->push_back (new call_jo_t ("p1"));
+        jojo->push_back (new call_jo_t ("p2"));
+        jojo->push_back (new call_jo_t ("k1"));
+        jojo->push_back (new call_jo_t ("k2"));
+        jojo->push_back (new let_jo_t ("v"));
+        jojo->push_back (new call_jo_t ("v"));
+        jojo->push_back (new lambda_jo_t (lambda_jojo));
+        jojo->push_back (new apply_jo_t ());
+        jojo->push_back (new call_jo_t ("v"));
+        jojo->push_back (new call_jo_t ("d1"));
+        jojo->push_back (new call_jo_t ("d1"));
+        jojo->push_back (new field_jo_t ("f1"));
+
+        frame_t *frame = new frame_t (jojo, new local_map_t);
         env->frame_stack->push (frame);
         env->report ();
         env->run ();
         env->report ();
 
-        env->report ();
+        size_t counter = 0;
+
+        while (counter < cell_area_size) {
+            new str_obj_t (env, "s");
+            counter++;
+        }
+
+        // while (counter < cell_area_size) {
+        //     new str_obj_t (env, "s");
+        //     counter++;
+        // }
     }
