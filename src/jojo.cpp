@@ -65,111 +65,15 @@
         void run ();
         void report ();
     };
-      struct lambda_obj_t: obj_t
-      {
-          jojo_t *jojo;
-          local_map_t *local_map;
-          lambda_obj_t (env_t *env, jojo_t* jojo, local_map_t *local_map);
-          virtual ~lambda_obj_t ();
-          void apply (env_t *env);
-          void mark (env_t *env);
-      };
-      typedef void (*prim_fn) (env_t *);
-      struct primitive_obj_t: obj_t
-      {
-          prim_fn fn;
-          primitive_obj_t (env_t *env, prim_fn fn);
-          void apply (env_t *env);
-      };
-      struct int_obj_t: obj_t
-      {
-          int i;
-          int_obj_t (env_t *env, int i);
-      };
-      struct str_obj_t: obj_t
-      {
-          string s;
-          str_obj_t (env_t *env, string s);
-      };
-      using field_map_t = map<name_t, obj_t *>;
-      struct data_obj_t: obj_t
-      {
-          field_map_t *field_map;
-          data_obj_t (env_t *env, tag_t t, field_map_t *field_map);
-          virtual ~data_obj_t ();
-          void mark (env_t *env);
-      };
-      void
-      gc_for (env_t *env, obj_t *obj);
-      int_obj_t::int_obj_t (env_t *env, int i)
-      {
-          this->t = "int-t";
-          this->i = i;
-          gc_for (env, this);
-      }
-      str_obj_t::str_obj_t (env_t *env, string s)
-      {
-          this->t = "string-t";
-          this->s = s;
-          gc_for (env, this);
-      }
-      lambda_obj_t::lambda_obj_t (env_t *env,
-                                  jojo_t* jojo,
-                                  local_map_t *local_map)
-      {
-          this->t = "lambda-t";
-          this->jojo = jojo;
-          this->local_map = local_map;
-          gc_for (env, this);
-      }
-      primitive_obj_t::primitive_obj_t (env_t *env, prim_fn fn)
-      {
-          this->t = "primitive-t";
-          this->fn = fn;
-          gc_for (env, this);
-      }
-      data_obj_t::data_obj_t (env_t *env, tag_t t, field_map_t *field_map)
-      {
-          this->t = t;
-          this->field_map = field_map;
-          gc_for (env, this);
-      }
+    void
+    gc_for (env_t *env, obj_t *obj);
       obj_t::~obj_t ()
       {
-      }
-      lambda_obj_t::~lambda_obj_t ()
-      {
-          delete this->jojo;
-          this->local_map->clear ();
-          delete this->local_map;
-      }
-      data_obj_t::~data_obj_t ()
-      {
-          this->field_map->clear ();
-          delete this->field_map;
       }
       void
       obj_t::mark (env_t *env)
       {
           this->cell->state = CELL_STATE_USED;
-      }
-      void
-      lambda_obj_t::mark (env_t *env)
-      {
-          this->cell->state = CELL_STATE_USED;
-          for (auto &kv: *(this->local_map)) {
-              obj_t *obj = kv.second;
-              obj->mark (env);
-          }
-      }
-      void
-      data_obj_t::mark (env_t *env)
-      {
-          this->cell->state = CELL_STATE_USED;
-          for (auto &kv: *(this->field_map)) {
-              obj_t *obj = kv.second;
-              obj->mark (env);
-          }
       }
       void
       obj_t::print (env_t *env)
@@ -181,16 +85,112 @@
       {
           env->obj_stack->push (this);
       }
+      struct lambda_obj_t: obj_t
+      {
+          jojo_t *jojo;
+          local_map_t *local_map;
+          lambda_obj_t (env_t *env, jojo_t* jojo, local_map_t *local_map);
+          virtual ~lambda_obj_t ();
+          void apply (env_t *env);
+          void mark (env_t *env);
+      };
+      lambda_obj_t::lambda_obj_t (env_t *env,
+                                  jojo_t* jojo,
+                                  local_map_t *local_map)
+      {
+          this->t = "lambda-t";
+          this->jojo = jojo;
+          this->local_map = local_map;
+          gc_for (env, this);
+      }
+      lambda_obj_t::~lambda_obj_t ()
+      {
+          delete this->jojo;
+          this->local_map->clear ();
+          delete this->local_map;
+      }
+      void
+      lambda_obj_t::mark (env_t *env)
+      {
+          this->cell->state = CELL_STATE_USED;
+          for (auto &kv: *(this->local_map)) {
+              obj_t *obj = kv.second;
+              obj->mark (env);
+          }
+      }
       void
       lambda_obj_t::apply (env_t *env)
       {
           frame_t *frame = new frame_t (this->jojo, this->local_map);
           env->frame_stack->push (frame);
       }
+      typedef void (*prim_fn) (env_t *);
+      struct primitive_obj_t: obj_t
+      {
+          prim_fn fn;
+          primitive_obj_t (env_t *env, prim_fn fn);
+          void apply (env_t *env);
+      };
+      primitive_obj_t::primitive_obj_t (env_t *env, prim_fn fn)
+      {
+          this->t = "primitive-t";
+          this->fn = fn;
+          gc_for (env, this);
+      }
       void
       primitive_obj_t::apply (env_t *env)
       {
           this->fn (env);
+      }
+      struct int_obj_t: obj_t
+      {
+          int i;
+          int_obj_t (env_t *env, int i);
+      };
+      int_obj_t::int_obj_t (env_t *env, int i)
+      {
+          this->t = "int-t";
+          this->i = i;
+          gc_for (env, this);
+      }
+      struct str_obj_t: obj_t
+      {
+          string s;
+          str_obj_t (env_t *env, string s);
+      };
+      str_obj_t::str_obj_t (env_t *env, string s)
+      {
+          this->t = "string-t";
+          this->s = s;
+          gc_for (env, this);
+      }
+      using field_map_t = map<name_t, obj_t *>;
+      struct data_obj_t: obj_t
+      {
+          field_map_t *field_map;
+          data_obj_t (env_t *env, tag_t t, field_map_t *field_map);
+          virtual ~data_obj_t ();
+          void mark (env_t *env);
+      };
+      data_obj_t::data_obj_t (env_t *env, tag_t t, field_map_t *field_map)
+      {
+          this->t = t;
+          this->field_map = field_map;
+          gc_for (env, this);
+      }
+      data_obj_t::~data_obj_t ()
+      {
+          this->field_map->clear ();
+          delete this->field_map;
+      }
+      void
+      data_obj_t::mark (env_t *env)
+      {
+          this->cell->state = CELL_STATE_USED;
+          for (auto &kv: *(this->field_map)) {
+              obj_t *obj = kv.second;
+              obj->mark (env);
+          }
       }
       void
       jojo_print (env_t *env,
@@ -412,6 +412,17 @@
         obj_stack_report (this);
         cout << "\n";
     }
+      void
+      jo_t::exe (env_t *env, local_map_t *local_map)
+      {
+          cout << "fatal error : unknown jo" << "\n";
+          exit (1);
+      }
+      string
+      jo_t::repr (env_t *env)
+      {
+          return "(unknown)";
+      }
       struct call_jo_t: jo_t
       {
           name_t name;
@@ -421,38 +432,6 @@
           void exe (env_t *env, local_map_t *local_map);
           string repr (env_t *env);
       };
-      struct let_jo_t: jo_t
-      {
-          name_t name;
-          let_jo_t (name_t name);
-          void exe (env_t *env, local_map_t *local_map);
-          string repr (env_t *env);
-      };
-      struct lambda_jo_t: jo_t
-      {
-          jojo_t *jojo;
-          lambda_jo_t (jojo_t *jojo);
-          void exe (env_t *env, local_map_t *local_map);
-          string repr (env_t *env);
-      };
-      struct field_jo_t: jo_t
-      {
-          name_t name;
-          field_jo_t (name_t name);
-          void exe (env_t *env, local_map_t *local_map);
-          string repr (env_t *env);
-      };
-      struct apply_jo_t: jo_t
-      {
-          void exe (env_t *env, local_map_t *local_map);
-          string repr (env_t *env);
-      };
-      void
-      jo_t::exe (env_t *env, local_map_t *local_map)
-      {
-          cout << "fatal error : unknown jo" << "\n";
-          exit (1);
-      }
       void
       call_jo_t::exe (env_t *env, local_map_t *local_map)
       {
@@ -473,6 +452,22 @@
                << "\n";
           exit (1);
       }
+      string
+      call_jo_t::repr (env_t *env)
+      {
+          return "(call " + this->name + ")";
+      }
+      call_jo_t::call_jo_t (name_t name)
+      {
+          this->name = name;
+      }
+      struct let_jo_t: jo_t
+      {
+          name_t name;
+          let_jo_t (name_t name);
+          void exe (env_t *env, local_map_t *local_map);
+          string repr (env_t *env);
+      };
       void
       let_jo_t::exe (env_t *env, local_map_t *local_map)
       {
@@ -480,6 +475,22 @@
            env->obj_stack->pop ();
            local_map->insert (pair<name_t, obj_t *> (this->name, obj));
       }
+      string
+      let_jo_t::repr (env_t *env)
+      {
+          return "(let " + this->name + ")";
+      }
+      let_jo_t::let_jo_t (name_t name)
+      {
+          this->name = name;
+      }
+      struct lambda_jo_t: jo_t
+      {
+          jojo_t *jojo;
+          lambda_jo_t (jojo_t *jojo);
+          void exe (env_t *env, local_map_t *local_map);
+          string repr (env_t *env);
+      };
       void
       lambda_jo_t::exe (env_t *env, local_map_t *local_map)
       {
@@ -490,6 +501,22 @@
               new lambda_obj_t (env, this->jojo, frame->local_map);
           env->obj_stack->push (lambda_obj);
       }
+      string
+      lambda_jo_t::repr (env_t *env)
+      {
+          return "(lambda)";
+      }
+      lambda_jo_t::lambda_jo_t (jojo_t *jojo)
+      {
+          this->jojo = jojo;
+      }
+      struct field_jo_t: jo_t
+      {
+          name_t name;
+          field_jo_t (name_t name);
+          void exe (env_t *env, local_map_t *local_map);
+          string repr (env_t *env);
+      };
       void
       field_jo_t::exe (env_t *env, local_map_t *local_map)
       {
@@ -507,6 +534,20 @@
                << "\n";
           exit (1);
       }
+      string
+      field_jo_t::repr (env_t *env)
+      {
+          return "(field " + this->name + ")";
+      }
+      field_jo_t::field_jo_t (name_t name)
+      {
+          this->name = name;
+      }
+      struct apply_jo_t: jo_t
+      {
+          void exe (env_t *env, local_map_t *local_map);
+          string repr (env_t *env);
+      };
       void
       apply_jo_t::exe (env_t *env, local_map_t *local_map)
       {
@@ -515,50 +556,9 @@
           obj->apply (env);
       }
       string
-      jo_t::repr (env_t *env)
-      {
-          return "(unknown)";
-      }
-      string
-      call_jo_t::repr (env_t *env)
-      {
-          return "(call " + this->name + ")";
-      }
-      string
-      let_jo_t::repr (env_t *env)
-      {
-          return "(let " + this->name + ")";
-      }
-      string
-      lambda_jo_t::repr (env_t *env)
-      {
-          return "(lambda)";
-      }
-      string
-      field_jo_t::repr (env_t *env)
-      {
-          return "(field " + this->name + ")";
-      }
-      string
       apply_jo_t::repr (env_t *env)
       {
           return "(apply)";
-      }
-      call_jo_t::call_jo_t (name_t name)
-      {
-          this->name = name;
-      }
-      let_jo_t::let_jo_t (name_t name)
-      {
-          this->name = name;
-      }
-      lambda_jo_t::lambda_jo_t (jojo_t *jojo)
-      {
-          this->jojo = jojo;
-      }
-      field_jo_t::field_jo_t (name_t name)
-      {
-          this->name = name;
       }
       void
       p1 (env_t *env)
