@@ -26,7 +26,7 @@
   (: list-length (-- t list-t -> nat-t))
   (= list-length
      (lambda
-        let list in
+        (let list)
         (case list
           (null-t zero-c)
           (cons-t list.cdr recur succ-c))))
@@ -34,7 +34,7 @@
   (: list-append (-- t list-t t list-t -> t list-t))
   (= list-append
      (lambda
-        let ante succ in
+        (let ante succ)
         (case succ
           (null-t ante)
           (cons-t succ.car ante succ.cdr recur cons-c))))

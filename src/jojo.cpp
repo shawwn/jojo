@@ -7,16 +7,15 @@
     using namespace std;
     struct env_t;
     struct obj_t;
+    struct cell_t;
     struct jo_t;
     using name_t = string;
     using local_map_t = map<name_t, obj_t *>;
     using jojo_t = vector<jo_t *>;
       struct jo_t
       {
-          virtual
-          void exe (env_t *env, local_map_t *local_map);
-          virtual
-          string repr (env_t *env);
+          virtual void exe (env_t *env, local_map_t *local_map);
+          virtual string repr (env_t *env);
       };
       struct call_jo_t: jo_t
       {
@@ -30,27 +29,21 @@
       struct let_jo_t: jo_t
       {
           name_t name;
-
           let_jo_t (name_t name);
-
           void exe (env_t *env, local_map_t *local_map);
           string repr (env_t *env);
       };
       struct lambda_jo_t: jo_t
       {
           jojo_t *jojo;
-
           lambda_jo_t (jojo_t *jojo);
-
           void exe (env_t *env, local_map_t *local_map);
           string repr (env_t *env);
       };
       struct field_jo_t: jo_t
       {
           name_t name;
-
           field_jo_t (name_t name);
-
           void exe (env_t *env, local_map_t *local_map);
           string repr (env_t *env);
       };
@@ -63,116 +56,152 @@
       struct obj_t
       {
           tag_t t;
-          virtual
-          void apply (env_t *env);
-          virtual
-          void print (env_t *env);
+          cell_t *cell;
+          virtual ~obj_t ();
+          virtual void apply (env_t *env);
+          virtual void print (env_t *env);
+          virtual void mark (env_t *env);
       };
       struct lambda_obj_t: obj_t
       {
           jojo_t *jojo;
           local_map_t *local_map;
-
-          lambda_obj_t (jojo_t* jojo, local_map_t *local_map);
-
+          lambda_obj_t (env_t *env, jojo_t* jojo, local_map_t *local_map);
+          virtual ~lambda_obj_t ();
           void apply (env_t *env);
+          void mark (env_t *env);
       };
       typedef void (*prim_fn) (env_t *);
       struct primitive_obj_t: obj_t
       {
           prim_fn fn;
-
-          primitive_obj_t (prim_fn fn);
-
+          primitive_obj_t (env_t *env, prim_fn fn);
           void apply (env_t *env);
       };
       struct int_obj_t: obj_t
       {
           int i;
-
-          int_obj_t (int i);
+          int_obj_t (env_t *env, int i);
       };
       struct str_obj_t: obj_t
       {
           string s;
-
-          str_obj_t (string s);
+          str_obj_t (env_t *env, string s);
       };
       using field_map_t = map<name_t, obj_t *>;
       struct data_obj_t: obj_t
       {
           field_map_t *field_map;
-
-          data_obj_t (tag_t t, field_map_t *field_map);
+          data_obj_t (env_t *env, tag_t t, field_map_t *field_map);
+          virtual ~data_obj_t ();
+          void mark (env_t *env);
       };
     struct frame_t
     {
-       size_t index;
-       jojo_t *jojo;
-       local_map_t *local_map;
-
-       frame_t (jojo_t *jojo, local_map_t *local_map);
+        size_t index;
+        jojo_t *jojo;
+        local_map_t *local_map;
+        frame_t (jojo_t *jojo, local_map_t *local_map);
     };
     using name_map_t = map<name_t, obj_t *>;
     using obj_stack_t = stack<obj_t *>;
     using frame_stack_t = stack<frame_t *>;
       enum cell_state_t
-          { CELL_STATE_USING,
-            CELL_STATE_GARBAGE };
+          { CELL_STATE_USED,
+            CELL_STATE_FREE };
       struct cell_t
       {
           cell_state_t cell_state;
           obj_t *obj;
       };
       const size_t cell_area_size = 1024;
-
-      struct garbage_collector_t
+      using cell_area_t = array<cell_t, cell_area_size>;
+      struct gc_t
       {
-          array<cell_t, cell_area_size> *cell_area;
-
-          garbage_collector_t ();
-
-          void mark (env_t * env);
-          void sweep (env_t * env);
-          void run (env_t * env);
+          size_t cursor;
+          cell_area_t *cell_area;
+          gc_t ();
       };
     struct env_t
     {
         name_map_t *name_map;
         obj_stack_t *obj_stack;
         frame_stack_t *frame_stack;
-
+        gc_t *gc;
         env_t ();
-
         void step ();
         void run ();
         void report ();
     };
-      int_obj_t::int_obj_t (int i)
+      void
+      gc_for (env_t *env, obj_t *obj);
+      int_obj_t::int_obj_t (env_t *env, int i)
       {
           this->t = "int-t";
           this->i = i;
+          gc_for (env, this);
       }
-      str_obj_t::str_obj_t (string s)
+      str_obj_t::str_obj_t (env_t *env, string s)
       {
           this->t = "string-t";
           this->s = s;
+          gc_for (env, this);
       }
-      lambda_obj_t::lambda_obj_t (jojo_t* jojo, local_map_t *local_map)
+      lambda_obj_t::lambda_obj_t (env_t *env,
+                                  jojo_t* jojo,
+                                  local_map_t *local_map)
       {
           this->t = "lambda-t";
           this->jojo = jojo;
           this->local_map = local_map;
+          gc_for (env, this);
       }
-      primitive_obj_t::primitive_obj_t (prim_fn fn)
+      primitive_obj_t::primitive_obj_t (env_t *env, prim_fn fn)
       {
           this->t = "primitive-t";
           this->fn = fn;
+          gc_for (env, this);
       }
-      data_obj_t::data_obj_t (tag_t t, field_map_t *field_map)
+      data_obj_t::data_obj_t (env_t *env, tag_t t, field_map_t *field_map)
       {
           this->t = t;
           this->field_map = field_map;
+          gc_for (env, this);
+      }
+      obj_t::~obj_t ()
+      {
+      }
+      lambda_obj_t::~lambda_obj_t ()
+      {
+          delete this->jojo;
+          delete this->local_map;
+      }
+      data_obj_t::~data_obj_t ()
+      {
+          delete this->field_map;
+      }
+      void
+      obj_t::mark (env_t *env)
+      {
+          this->cell->cell_state = CELL_STATE_USED;
+      }
+      void
+      lambda_obj_t::mark (env_t *env)
+      {
+          this->cell->cell_state = CELL_STATE_USED;
+          for (auto &kv: *(this->local_map)) {
+              obj_t *obj = kv.second;
+              obj->mark (env);
+          }
+      }
+      void
+      data_obj_t::mark (env_t *env)
+      {
+          this->cell->cell_state = CELL_STATE_USED;
+          for (auto &kv: *(this->field_map)) {
+              obj_t *obj = kv.second;
+              obj->mark (env);
+          }
       }
       void
       obj_t::print (env_t *env)
@@ -257,7 +286,8 @@
           cout << "  - local_map # " << frame->local_map->size () << "\n";
           for (auto &kv: *(frame->local_map)) {
               cout << "    " << kv.first << " : ";
-              kv.second->print (env);
+              obj_t *obj = kv.second;
+              obj->print (env);
               cout << "\n";
           }
       }
@@ -267,7 +297,8 @@
           cout << "- name_map # " << env->name_map->size () << "\n";
           for (auto &kv: *(env->name_map)) {
               cout << "  " << kv.first << " : ";
-              kv.second->print (env);
+              obj_t *obj = kv.second;
+              obj->print (env);
               cout << "\n";
           }
       }
@@ -296,11 +327,82 @@
           }
           cout << "\n";
       }
+      gc_t::gc_t ()
+      {
+          this->cursor = 0;
+          this->cell_area = new cell_area_t;
+          for (auto &it: *(this->cell_area))
+              it.cell_state = CELL_STATE_FREE;
+      }
+      void
+      gc_prepare (env_t *env)
+      {
+          gc_t *gc = env->gc;
+          gc->cursor = 0;
+          for (auto &it: *(gc->cell_area))
+              it.cell_state = CELL_STATE_FREE;
+      }
+      void
+      gc_mark (env_t *env)
+      {
+          gc_prepare (env);
+          for (auto &kv: *(env->name_map)) {
+              obj_t *obj = kv.second;
+              obj->mark (env);
+          }
+          obj_stack_t obj_stack = *(env->obj_stack);
+          while (!obj_stack.empty ()) {
+              obj_t *obj = obj_stack.top ();
+              obj->mark (env);
+              obj_stack.pop ();
+          }
+      }
+      void
+      gc_sweep (env_t *env)
+      {
+          for (auto &cell: *(env->gc->cell_area)) {
+              delete cell.obj;
+          }
+      }
+      void
+      gc_run (env_t *env)
+      {
+          gc_mark (env);
+          gc_sweep (env);
+      }
+      cell_t *
+      gc_next_free_cell (env_t *env)
+      {
+           size_t cursor = env->gc->cursor;
+           cell_t &cell = (*(env->gc->cell_area)) [cursor];
+           if (cursor >= cell_area_size) {
+               gc_run (env);
+               return gc_next_free_cell (env);
+           }
+
+           if (cell.cell_state == CELL_STATE_FREE) {
+               env->gc->cursor++;
+               return &cell;
+           }
+           else {
+               env->gc->cursor++;
+               return gc_next_free_cell (env);
+           }
+      }
+      void
+      gc_for (env_t *env, obj_t *obj)
+      {
+          cell_t *cell = gc_next_free_cell (env);
+          cell->cell_state = CELL_STATE_USED;
+          cell->obj = obj;
+          obj->cell = cell;
+      }
     env_t::env_t ()
     {
         this->name_map = new name_map_t;
         this->obj_stack = new obj_stack_t;
         this->frame_stack = new frame_stack_t;
+        this->gc = new gc_t;
     }
     void
     env_t::step ()
@@ -382,7 +484,7 @@
           // and push it to obj_stack
           frame_t *frame = env->frame_stack->top ();
           lambda_obj_t *lambda_obj =
-              new lambda_obj_t (this->jojo, frame->local_map);
+              new lambda_obj_t (env, this->jojo, frame->local_map);
           env->obj_stack->push (lambda_obj);
       }
       void
@@ -468,31 +570,26 @@
     main ()
     {
         env_t *env = new env_t;
-
         field_map_t field_map = {
-            {"f1", new str_obj_t ("fs1")},
-            {"f2", new str_obj_t ("fs2")},
+            {"f1", new str_obj_t (env, "fs1")},
+            {"f2", new str_obj_t (env, "fs2")},
         };
-
         name_map_t env_name_map = {
-            {"k1", new str_obj_t ("s1")},
-            {"k2", new str_obj_t ("s2")},
-            {"p1", new primitive_obj_t (p1)},
-            {"p2", new primitive_obj_t (p2)},
-            {"d1", new data_obj_t ("d-t", &field_map)},
+            {"k1", new str_obj_t (env, "s1")},
+            {"k2", new str_obj_t (env, "s2")},
+            {"p1", new primitive_obj_t (env, p1)},
+            {"p2", new primitive_obj_t (env, p2)},
+            {"d1", new data_obj_t (env, "d-t", &field_map)},
         };
         env->name_map = &env_name_map;
-
         jojo_t lambda_jojo = {
             new call_jo_t ("k1"),
             new call_jo_t ("k2"),
             new call_jo_t ("v"),
         };
-
         jojo_t jojo = {
             new call_jo_t ("p1"),
             new call_jo_t ("p2"),
-
             new call_jo_t ("k1"),
             new call_jo_t ("k2"),
             new let_jo_t ("v"),
@@ -500,16 +597,15 @@
             new lambda_jo_t (&lambda_jojo),
             new apply_jo_t (),
             new call_jo_t ("v"),
-
             new call_jo_t ("d1"),
             new call_jo_t ("d1"),
             new field_jo_t ("f1"),
         };
         frame_t *frame = new frame_t (&jojo, new local_map_t);
-
         env->frame_stack->push (frame);
-
         env->report ();
         env->run ();
+        env->report ();
+
         env->report ();
     }
