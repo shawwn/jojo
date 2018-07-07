@@ -1,1 +1,9 @@
 //// jojo's programming adventure
+
+- a practical dynamic language
+
+  - it is implemented as an indirected threaded code interpreter
+
+  - it uses sexp
+
+  - its syntax is optimized for function composition
