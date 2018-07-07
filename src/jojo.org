@@ -5,7 +5,19 @@
 
 *** model type as obj
 
+    - the relation between
+      type and data
+      type-constructor and data-constructor
+
+    - union_type_o
+      sub_type_o
+      data_type_o
+      sum_type_o
+
 *** sexp-t -- we need a parser, to do farther tests
+
+    - we need sum_type_o
+      to export sexp-t to jojo
 
 *** indirected threaded code
 
@@ -246,9 +258,10 @@
 ***** lambda_o::lambda_o
 
       #+begin_src cpp
-      lambda_o::lambda_o (env_t *env,
-                                  jojo_t* jojo,
-                                  local_map_t *local_map)
+      lambda_o::
+      lambda_o (env_t *env,
+                jojo_t* jojo,
+                local_map_t *local_map)
       {
           this->t = "lambda-t";
           this->jojo = jojo;
@@ -457,6 +470,62 @@
       }
       #+end_src
 
+*** type
+
+***** field_vector_t
+
+      #+begin_src cpp
+      using field_vector_t = vector<name_t>;
+      #+end_src
+
+***** type_o
+
+      #+begin_src cpp
+      struct type_o: obj_t
+      {
+          tag_t type_tag;
+          field_vector_t *field_vector;
+          type_o (env_t *env,
+                  tag_t type_tag,
+                  field_vector_t *field_vector);
+          virtual ~type_o ();
+      };
+      #+end_src
+
+***** type_o::type_o
+
+      #+begin_src cpp
+      type_o::
+      type_o (env_t *env,
+              tag_t type_tag,
+              field_vector_t *field_vector)
+      {
+          this->t = "type-t";
+          this->type_tag = type_tag;
+          this->field_vector = field_vector;
+      }
+      #+end_src
+
+***** type_o::~type_o
+
+      #+begin_src cpp
+      type_o::~type_o ()
+      {
+          delete this->field_vector;
+      }
+      #+end_src
+
+*** type_constructor
+
+***** type_constructor_o
+
+      #+begin_src cpp
+      struct type_constructor_o: obj_t
+      {
+
+      };
+      #+end_src
+
 *** data
 
 ***** field_map_t
@@ -512,55 +581,6 @@
       }
       #+end_src
 
-*** type
-
-***** [note] type-constructor
-
-      - do not allow type-constructor to be applied for now.
-
-***** field_vector_t
-
-      #+begin_src cpp
-      using field_vector_t = vector<name_t>;
-      #+end_src
-
-***** type_o
-
-      #+begin_src cpp
-      struct type_o: obj_t
-      {
-          tag_t type_tag;
-          field_vector_t *field_vector;
-          type_o (env_t *env,
-                      tag_t type_tag,
-                      field_vector_t *field_vector);
-          virtual ~type_o ();
-      };
-      #+end_src
-
-***** type_o::type_o
-
-      #+begin_src cpp
-      type_o::
-      type_o (env_t *env,
-                  tag_t type_tag,
-                  field_vector_t *field_vector)
-      {
-          this->t = "type-t";
-          this->type_tag = type_tag;
-          this->field_vector = field_vector;
-      }
-      #+end_src
-
-***** type_o::~type_o
-
-      #+begin_src cpp
-      type_o::~type_o ()
-      {
-          delete this->field_vector;
-      }
-      #+end_src
-
 *** data_constructor
 
 ***** data_constructor_o
@@ -605,8 +625,8 @@
           }
           data_o* data =
               new data_o (env,
-                              this->type->type_tag,
-                              field_map);
+                          this->type->type_tag,
+                          field_map);
           env->obj_stack->push (data);
       }
       #+end_src
@@ -647,8 +667,8 @@
           map_o *map = static_cast<map_o *> (obj);
           data_o* data =
               new data_o (env,
-                              this->type->type_tag,
-                              map->map);
+                          this->type->type_tag,
+                          map->map);
           env->obj_stack->push (data);
       }
       #+end_src
@@ -1325,10 +1345,8 @@
     {
         env_t *env = new env_t;
         field_map_t *field_map = new field_map_t;
-        field_map->insert
-            (pair<name_t, obj_t *> ("f1", new string_o (env, "fs1")));
-        field_map->insert
-            (pair<name_t, obj_t *> ("f2", new string_o (env, "fs2")));
+        field_map->insert (pair<name_t, obj_t *> ("f1", new string_o (env, "fs1")));
+        field_map->insert (pair<name_t, obj_t *> ("f2", new string_o (env, "fs2")));
 
         name_map_t *name_map = new name_map_t;
         name_map->insert (pair<name_t, obj_t *> ("k1", new string_o (env, "s1")));
