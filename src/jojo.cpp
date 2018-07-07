@@ -220,6 +220,34 @@
               obj->mark (env);
           }
       }
+      using field_vector_t = vector<name_t>;
+      struct type_obj_t: obj_t
+      {
+          field_vector_t *field_vector;
+          type_obj_t (env_t *env, field_vector_t *field_vector);
+          virtual ~type_obj_t ();
+      };
+      type_obj_t::type_obj_t (env_t *env, field_vector_t *field_vector)
+      {
+          this->t = "type-t";
+          this->field_vector = field_vector;
+      }
+      type_obj_t::~type_obj_t ()
+      {
+          delete this->field_vector;
+      }
+      struct data_constructor_obj_t: obj_t
+      {
+          type_obj_t *type_obj;
+          data_constructor_obj_t (env_t *env);
+          virtual ~data_constructor_obj_t ();
+          void apply (env_t *env);
+      };
+
+      struct data_creator_obj_t: obj_t
+      {
+
+      };
       void
       jojo_print (env_t *env,
                   jojo_t *jojo)

@@ -4,24 +4,39 @@
 
 * [note]
 
-* ><
+* sexp
+
+  #+begin_src cicada
+  (: sexp-t type-t)
+  (= sexp-t (+ string-t | string-t list-t))
+  #+end_src
+
+* list
 
   #+begin_src cicada
   (: list-t (-- type-t -> type-t))
-  (= list-t (union null-t cons-t))
+  (= list-t (+ null-t | cons-t))
 
   (: null-t (-- type-t -> type-t))
-  (= null-t (type))
+  (= null-t
+     (type
+       (@ t : type-t)))
+
+  (: cons-t (-- type-t -> type-t))
+  (= cons-t
+     (type
+       (@ t : type-t)
+       (: car t)
+       (: cdr t list-t)))
 
   (cons-@
     (= car zero-c)
     (= cdr null-c))
 
-  (: cons-t (-- type-t -> type-t))
-  (= cons-t
-     (type
-       (: car t)
-       (: cdr t list-t)))
+  (@
+    (= car zero-c)
+    (= cdr null-c))
+  cons-cr
 
   (: list-length (-- t list-t -> nat-t))
   (= list-length

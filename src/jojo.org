@@ -3,23 +3,19 @@
 
 * [todo-stack]
 
-*** data_obj
+*** data_constructor_obj_t -- data-c
 
-***** type_obj_t
-
-***** data_constructor_obj_t -- data-c
-
-***** data_creator_obj_t -- data-cr
+*** data_creator_obj_t -- data-cr
 
 *** bool-t
 
 *** data_predicate_obj_t - data-p
 
+*** sexp-t -- we need a parser, to do farther tests
+
 *** overload `==` and `=` [and more] -- for gc
 
 *** inherit obj_t as ffi -- we need examples
-
-*** sexp-t
 
 * [note]
 
@@ -503,6 +499,83 @@
           }
       }
       #+end_src
+
+*** type_obj
+
+***** [note] type-constructor
+
+      - do not allow type-constructor to be applied for now.
+
+***** field_vector_t
+
+      #+begin_src cpp
+      using field_vector_t = vector<name_t>;
+      #+end_src
+
+***** type_obj_t
+
+      #+begin_src cpp
+      struct type_obj_t: obj_t
+      {
+          field_vector_t *field_vector;
+          type_obj_t (env_t *env, field_vector_t *field_vector);
+          virtual ~type_obj_t ();
+      };
+      #+end_src
+
+***** type_obj_t::type_obj_t
+
+      #+begin_src cpp
+      type_obj_t::type_obj_t (env_t *env, field_vector_t *field_vector)
+      {
+          this->t = "type-t";
+          this->field_vector = field_vector;
+      }
+      #+end_src
+
+***** type_obj_t::~type_obj_t
+
+      #+begin_src cpp
+      type_obj_t::~type_obj_t ()
+      {
+          delete this->field_vector;
+      }
+      #+end_src
+
+*** data_constructor_obj
+
+***** data_constructor_obj_t
+
+      #+begin_src cpp
+      struct data_constructor_obj_t: obj_t
+      {
+          type_obj_t *type_obj;
+          data_constructor_obj_t (env_t *env);
+          virtual ~data_constructor_obj_t ();
+          void apply (env_t *env);
+      };
+      #+end_src
+
+***** ><
+
+      #+begin_src cpp
+
+      #+end_src
+
+*** data_creator_obj
+
+***** data_creator_obj_t
+
+      #+begin_src cpp
+      struct data_creator_obj_t: obj_t
+      {
+
+      };
+      #+end_src
+
+*** >< data_predicate_obj
+
+***** data_predicate_obj_t
 
 * env
 
