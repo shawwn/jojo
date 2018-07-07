@@ -153,16 +153,44 @@
           this->i = i;
           gc_for (env, this);
       }
-      struct str_obj_t: obj_t
+      struct string_obj_t: obj_t
       {
           string s;
-          str_obj_t (env_t *env, string s);
+          string_obj_t (env_t *env, string s);
       };
-      str_obj_t::str_obj_t (env_t *env, string s)
+      string_obj_t::string_obj_t (env_t *env, string s)
       {
           this->t = "string-t";
           this->s = s;
           gc_for (env, this);
+      }
+      using map_t = map<string, obj_t *>;
+      struct map_obj_t: obj_t
+      {
+          map_t *map;
+          map_obj_t (env_t *env, map_t *map);
+          virtual ~map_obj_t ();
+          void mark (env_t *env);
+      };
+      map_obj_t::map_obj_t (env_t *env, map_t *map)
+      {
+          this->t = "map-t";
+          this->map = map;
+          gc_for (env, this);
+      }
+      map_obj_t::~map_obj_t ()
+      {
+          this->map->clear ();
+          delete this->map;
+      }
+      void
+      map_obj_t::mark (env_t *env)
+      {
+          this->cell->state = CELL_STATE_USED;
+          for (auto &kv: *(this->map)) {
+              obj_t *obj = kv.second;
+              obj->mark (env);
+          }
       }
       using field_map_t = map<name_t, obj_t *>;
       struct data_obj_t: obj_t
@@ -576,13 +604,13 @@
         env_t *env = new env_t;
         field_map_t *field_map = new field_map_t;
         field_map->insert
-            (pair<name_t, obj_t *> ("f1", new str_obj_t (env, "fs1")));
+            (pair<name_t, obj_t *> ("f1", new string_obj_t (env, "fs1")));
         field_map->insert
-            (pair<name_t, obj_t *> ("f2", new str_obj_t (env, "fs2")));
+            (pair<name_t, obj_t *> ("f2", new string_obj_t (env, "fs2")));
 
         name_map_t *name_map = new name_map_t;
-        name_map->insert (pair<name_t, obj_t *> ("k1", new str_obj_t (env, "s1")));
-        name_map->insert (pair<name_t, obj_t *> ("k2", new str_obj_t (env, "s2")));
+        name_map->insert (pair<name_t, obj_t *> ("k1", new string_obj_t (env, "s1")));
+        name_map->insert (pair<name_t, obj_t *> ("k2", new string_obj_t (env, "s2")));
         name_map->insert (pair<name_t, obj_t *> ("p1", new primitive_obj_t (env, p1)));
         name_map->insert (pair<name_t, obj_t *> ("p2", new primitive_obj_t (env, p2)));
         name_map->insert (pair<name_t, obj_t *> ("d1", new data_obj_t (env, "d-t", field_map)));
@@ -615,19 +643,19 @@
 
         counter = 0;
         while (counter < cell_area_size) {
-            new str_obj_t (env, "s");
+            new string_obj_t (env, "s");
             counter++;
         }
 
         counter = 0;
         while (counter < cell_area_size) {
-            new str_obj_t (env, "s");
+            new string_obj_t (env, "s");
             counter++;
         }
 
         counter = 0;
         while (counter < cell_area_size) {
-            new str_obj_t (env, "s");
+            new string_obj_t (env, "s");
             counter++;
         }
 
