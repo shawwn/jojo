@@ -234,13 +234,20 @@
       using field_vector_t = vector<name_t>;
       struct type_obj_t: obj_t
       {
+          tag_t type_tag;
           field_vector_t *field_vector;
-          type_obj_t (env_t *env, field_vector_t *field_vector);
+          type_obj_t (env_t *env,
+                      tag_t type_tag,
+                      field_vector_t *field_vector);
           virtual ~type_obj_t ();
       };
-      type_obj_t::type_obj_t (env_t *env, field_vector_t *field_vector)
+      type_obj_t::
+      type_obj_t (env_t *env,
+                  tag_t type_tag,
+                  field_vector_t *field_vector)
       {
           this->t = "type-t";
+          this->type_tag = type_tag;
           this->field_vector = field_vector;
       }
       type_obj_t::~type_obj_t ()
@@ -250,15 +257,85 @@
       struct data_constructor_obj_t: obj_t
       {
           type_obj_t *type_obj;
-          data_constructor_obj_t (env_t *env);
-          virtual ~data_constructor_obj_t ();
+          data_constructor_obj_t (env_t *env, type_obj_t *type_obj);
           void apply (env_t *env);
       };
-
+      data_constructor_obj_t::
+      data_constructor_obj_t (env_t *env, type_obj_t *type_obj)
+      {
+          this->t = "data-constructor-t";
+          this->type_obj = type_obj;
+          gc_for (env, this);
+      }
+      void
+      data_constructor_obj_t::apply (env_t *env)
+      {
+          field_map_t *field_map = new field_map_t;
+          field_vector_t *field_vector = this->type_obj->field_vector;
+          field_vector_t::reverse_iterator it;
+          for (it = field_vector->rbegin();
+               it != field_vector->rend();
+               it++) {
+              name_t name = *it;
+              obj_t *obj = env->obj_stack->top ();
+              env->obj_stack->pop ();
+              field_map->insert (pair<name_t, obj_t *> (name, obj));
+          }
+          data_obj_t* data_obj =
+              new data_obj_t (env,
+                              this->type_obj->type_tag,
+                              field_map);
+          env->obj_stack->push (data_obj);
+      }
       struct data_creator_obj_t: obj_t
       {
-
+          type_obj_t *type_obj;
+          data_creator_obj_t (env_t *env, type_obj_t *type_obj);
+          void apply (env_t *env);
       };
+      data_creator_obj_t::
+      data_creator_obj_t (env_t *env, type_obj_t *type_obj)
+      {
+          this->t = "data-creator-t";
+          this->type_obj = type_obj;
+          gc_for (env, this);
+      }
+      void
+      data_creator_obj_t::apply (env_t *env)
+      {
+          obj_t *obj = env->obj_stack->top ();
+          env->obj_stack->pop ();
+          map_obj_t *map_obj = static_cast<map_obj_t *> (obj);
+          data_obj_t* data_obj =
+              new data_obj_t (env,
+                              this->type_obj->type_tag,
+                              map_obj->map);
+          env->obj_stack->push (data_obj);
+      }
+      struct data_predicate_obj_t: obj_t
+      {
+          type_obj_t *type_obj;
+          data_predicate_obj_t (env_t *env, type_obj_t *type_obj);
+          void apply (env_t *env);
+      };
+      data_predicate_obj_t::
+      data_predicate_obj_t (env_t *env, type_obj_t *type_obj)
+      {
+          this->t = "data-predicate-t";
+          this->type_obj = type_obj;
+          gc_for (env, this);
+      }
+      void
+      data_predicate_obj_t::apply (env_t *env)
+      {
+          tag_t tag = this->type_obj->type_tag;
+          obj_t *obj = env->obj_stack->top ();
+          env->obj_stack->pop ();
+          if (obj->t == tag)
+              env->obj_stack->push (new bool_obj_t (env, true));
+          else
+              env->obj_stack->push (new bool_obj_t (env, false));
+      }
       void
       jojo_print (env_t *env,
                   jojo_t *jojo)
@@ -589,8 +666,7 @@
       {
           obj_t *obj = env->obj_stack->top ();
           env->obj_stack->pop ();
-          data_obj_t *data_obj =
-              static_cast<data_obj_t *> (obj);
+          data_obj_t *data_obj = static_cast<data_obj_t *> (obj);
           auto it = data_obj->field_map->find (this->name);
           if (it != data_obj->field_map->end ()) {
               it->second->apply (env);
