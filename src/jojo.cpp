@@ -94,9 +94,10 @@
           void apply (env_t *env);
           void mark (env_t *env);
       };
-      lambda_o::lambda_o (env_t *env,
-                                  jojo_t* jojo,
-                                  local_map_t *local_map)
+      lambda_o::
+      lambda_o (env_t *env,
+                jojo_t* jojo,
+                local_map_t *local_map)
       {
           this->t = "lambda-t";
           this->jojo = jojo;
@@ -203,6 +204,33 @@
               obj->mark (env);
           }
       }
+      using field_vector_t = vector<name_t>;
+      struct type_o: obj_t
+      {
+          tag_t type_tag;
+          field_vector_t *field_vector;
+          type_o (env_t *env,
+                  tag_t type_tag,
+                  field_vector_t *field_vector);
+          virtual ~type_o ();
+      };
+      type_o::
+      type_o (env_t *env,
+              tag_t type_tag,
+              field_vector_t *field_vector)
+      {
+          this->t = "type-t";
+          this->type_tag = type_tag;
+          this->field_vector = field_vector;
+      }
+      type_o::~type_o ()
+      {
+          delete this->field_vector;
+      }
+      struct type_constructor_o: obj_t
+      {
+
+      };
       using field_map_t = map<name_t, obj_t *>;
       struct data_o: obj_t
       {
@@ -230,29 +258,6 @@
               obj_t *obj = kv.second;
               obj->mark (env);
           }
-      }
-      using field_vector_t = vector<name_t>;
-      struct type_o: obj_t
-      {
-          tag_t type_tag;
-          field_vector_t *field_vector;
-          type_o (env_t *env,
-                      tag_t type_tag,
-                      field_vector_t *field_vector);
-          virtual ~type_o ();
-      };
-      type_o::
-      type_o (env_t *env,
-                  tag_t type_tag,
-                  field_vector_t *field_vector)
-      {
-          this->t = "type-t";
-          this->type_tag = type_tag;
-          this->field_vector = field_vector;
-      }
-      type_o::~type_o ()
-      {
-          delete this->field_vector;
       }
       struct data_constructor_o: obj_t
       {
@@ -283,8 +288,8 @@
           }
           data_o* data =
               new data_o (env,
-                              this->type->type_tag,
-                              field_map);
+                          this->type->type_tag,
+                          field_map);
           env->obj_stack->push (data);
       }
       struct data_creator_o: obj_t
@@ -308,8 +313,8 @@
           map_o *map = static_cast<map_o *> (obj);
           data_o* data =
               new data_o (env,
-                              this->type->type_tag,
-                              map->map);
+                          this->type->type_tag,
+                          map->map);
           env->obj_stack->push (data);
       }
       struct data_predicate_o: obj_t
@@ -335,6 +340,34 @@
               env->obj_stack->push (new bool_o (env, true));
           else
               env->obj_stack->push (new bool_o (env, false));
+      }
+      struct null_o: obj_t
+      {
+          null_o (env_t *env);
+      };
+      null_o::null_o (env_t *env)
+      {
+          gc_for (env, this);
+      }
+      struct cons_o: obj_t
+      {
+          obj_t *car;
+          obj_t *cdr;
+          cons_o (env_t *env, obj_t *car, obj_t *cdr);
+          void mark (env_t *env);
+      };
+      cons_o::cons_o (env_t *env, obj_t *car, obj_t *cdr)
+      {
+          this->car = car;
+          this->cdr = cdr;
+          gc_for (env, this);
+      }
+      void
+      cons_o::mark (env_t *env)
+      {
+          this->cell->state = CELL_STATE_USED;
+          this->car->mark (env);
+          this->cdr->mark (env);
       }
       void
       jojo_print (env_t *env,
@@ -718,10 +751,8 @@
     {
         env_t *env = new env_t;
         field_map_t *field_map = new field_map_t;
-        field_map->insert
-            (pair<name_t, obj_t *> ("f1", new string_o (env, "fs1")));
-        field_map->insert
-            (pair<name_t, obj_t *> ("f2", new string_o (env, "fs2")));
+        field_map->insert (pair<name_t, obj_t *> ("f1", new string_o (env, "fs1")));
+        field_map->insert (pair<name_t, obj_t *> ("f2", new string_o (env, "fs2")));
 
         name_map_t *name_map = new name_map_t;
         name_map->insert (pair<name_t, obj_t *> ("k1", new string_o (env, "s1")));

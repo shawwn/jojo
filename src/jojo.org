@@ -3,21 +3,7 @@
 
 * [todo-stack]
 
-*** model type as obj
-
-    - the relation between
-      type and data
-      type-constructor and data-constructor
-
-    - union_type_o
-      sub_type_o
-      data_type_o
-      sum_type_o
-
 *** sexp-t -- we need a parser, to do farther tests
-
-    - we need sum_type_o
-      to export sexp-t to jojo
 
 *** indirected threaded code
 
@@ -714,7 +700,62 @@
       }
       #+end_src
 
-*** sexp
+*** null
+
+***** null_o
+
+      #+begin_src cpp
+      struct null_o: obj_t
+      {
+          null_o (env_t *env);
+      };
+      #+end_src
+
+***** null_o::null_o
+
+      #+begin_src cpp
+      null_o::null_o (env_t *env)
+      {
+          gc_for (env, this);
+      }
+      #+end_src
+
+*** cons
+
+***** cons_o
+
+      #+begin_src cpp
+      struct cons_o: obj_t
+      {
+          obj_t *car;
+          obj_t *cdr;
+          cons_o (env_t *env, obj_t *car, obj_t *cdr);
+          void mark (env_t *env);
+      };
+      #+end_src
+
+***** cons_o::cons_o
+
+      #+begin_src cpp
+      cons_o::cons_o (env_t *env, obj_t *car, obj_t *cdr)
+      {
+          this->car = car;
+          this->cdr = cdr;
+          gc_for (env, this);
+      }
+      #+end_src
+
+***** cons_o::mark
+
+      #+begin_src cpp
+      void
+      cons_o::mark (env_t *env)
+      {
+          this->cell->state = CELL_STATE_USED;
+          this->car->mark (env);
+          this->cdr->mark (env);
+      }
+      #+end_src
 
 * env
 
