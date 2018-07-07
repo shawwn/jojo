@@ -164,6 +164,17 @@
           this->s = s;
           gc_for (env, this);
       }
+      struct bool_obj_t: obj_t
+      {
+          bool b;
+          bool_obj_t (env_t *env, bool b);
+      };
+      bool_obj_t::bool_obj_t (env_t *env, bool b)
+      {
+          this->t = "bool-t";
+          this->b = b;
+          gc_for (env, this);
+      }
       using map_t = map<string, obj_t *>;
       struct map_obj_t: obj_t
       {

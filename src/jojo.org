@@ -3,13 +3,23 @@
 
 * [todo-stack]
 
-*** data_constructor_obj_t -- data-c
+*** data_constructor_obj_t
 
-*** data_creator_obj_t -- data-cr
+    - "data-constructor-t" as tag
 
-*** bool-t
+    - generate "<data-name>-c"
 
-*** data_predicate_obj_t - data-p
+*** data_creator_obj_t
+
+    - "data-creator-t" as tag
+
+    - generate "<data-name>-cr"
+
+*** data_predicate_obj_t
+
+    - "data-predicate-t" as tag
+
+    - generate "<data-name>-p"
 
 *** sexp-t -- we need a parser, to do farther tests
 
@@ -386,6 +396,29 @@
       {
           this->t = "string-t";
           this->s = s;
+          gc_for (env, this);
+      }
+      #+end_src
+
+*** bool_obj
+
+***** bool_obj_t
+
+      #+begin_src cpp
+      struct bool_obj_t: obj_t
+      {
+          bool b;
+          bool_obj_t (env_t *env, bool b);
+      };
+      #+end_src
+
+***** bool_obj_t::bool_obj_t
+
+      #+begin_src cpp
+      bool_obj_t::bool_obj_t (env_t *env, bool b)
+      {
+          this->t = "bool-t";
+          this->b = b;
           gc_for (env, this);
       }
       #+end_src
