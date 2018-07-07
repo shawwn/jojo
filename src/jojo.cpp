@@ -576,6 +576,10 @@
           void exe (env_t *env, local_map_t *local_map);
           string repr (env_t *env);
       };
+      call_jo_t::call_jo_t (name_t name)
+      {
+          this->name = name;
+      }
       void
       call_jo_t::exe (env_t *env, local_map_t *local_map)
       {
@@ -601,10 +605,6 @@
       {
           return "(call " + this->name + ")";
       }
-      call_jo_t::call_jo_t (name_t name)
-      {
-          this->name = name;
-      }
       struct let_jo_t: jo_t
       {
           name_t name;
@@ -612,6 +612,10 @@
           void exe (env_t *env, local_map_t *local_map);
           string repr (env_t *env);
       };
+      let_jo_t::let_jo_t (name_t name)
+      {
+          this->name = name;
+      }
       void
       let_jo_t::exe (env_t *env, local_map_t *local_map)
       {
@@ -624,10 +628,6 @@
       {
           return "(let " + this->name + ")";
       }
-      let_jo_t::let_jo_t (name_t name)
-      {
-          this->name = name;
-      }
       struct lambda_jo_t: jo_t
       {
           jojo_t *jojo;
@@ -635,6 +635,10 @@
           void exe (env_t *env, local_map_t *local_map);
           string repr (env_t *env);
       };
+      lambda_jo_t::lambda_jo_t (jojo_t *jojo)
+      {
+          this->jojo = jojo;
+      }
       void
       lambda_jo_t::exe (env_t *env, local_map_t *local_map)
       {
@@ -650,10 +654,6 @@
       {
           return "(lambda)";
       }
-      lambda_jo_t::lambda_jo_t (jojo_t *jojo)
-      {
-          this->jojo = jojo;
-      }
       struct field_jo_t: jo_t
       {
           name_t name;
@@ -661,6 +661,10 @@
           void exe (env_t *env, local_map_t *local_map);
           string repr (env_t *env);
       };
+      field_jo_t::field_jo_t (name_t name)
+      {
+          this->name = name;
+      }
       void
       field_jo_t::exe (env_t *env, local_map_t *local_map)
       {
@@ -681,10 +685,6 @@
       field_jo_t::repr (env_t *env)
       {
           return "(field " + this->name + ")";
-      }
-      field_jo_t::field_jo_t (name_t name)
-      {
-          this->name = name;
       }
       struct apply_jo_t: jo_t
       {

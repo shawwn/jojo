@@ -5,18 +5,13 @@
 
 *** sexp-t -- we need a parser, to do farther tests
 
+*** indirected threaded code
+
+    - name map is only used in definition
+
 *** overload `==` and `=` [and more] -- for gc
 
 *** inherit obj_t as ffi -- we need examples
-
-* [note]
-
-*** [for now] use string instead of symbol
-
-    - to simplify the implementation
-      we use string instead of symbol
-      and we keep the implementation easy to change
-      and add symbol back only later
 
 * prolog
 
@@ -697,6 +692,8 @@
       }
       #+end_src
 
+*** sexp_obj
+
 * env
 
 *** jojo
@@ -1067,6 +1064,15 @@
       };
       #+end_src
 
+***** call_jo_t::call_jo_t
+
+      #+begin_src cpp
+      call_jo_t::call_jo_t (name_t name)
+      {
+          this->name = name;
+      }
+      #+end_src
+
 ***** call_jo_t::exe
 
       #+begin_src cpp
@@ -1102,15 +1108,6 @@
       }
       #+end_src
 
-***** call_jo_t::call_jo_t
-
-      #+begin_src cpp
-      call_jo_t::call_jo_t (name_t name)
-      {
-          this->name = name;
-      }
-      #+end_src
-
 *** let_jo
 
 ***** let_jo_t
@@ -1123,6 +1120,15 @@
           void exe (env_t *env, local_map_t *local_map);
           string repr (env_t *env);
       };
+      #+end_src
+
+***** let_jo_t::let_jo_t
+
+      #+begin_src cpp
+      let_jo_t::let_jo_t (name_t name)
+      {
+          this->name = name;
+      }
       #+end_src
 
 ***** let_jo_t::exe
@@ -1147,15 +1153,6 @@
       }
       #+end_src
 
-***** let_jo_t::let_jo_t
-
-      #+begin_src cpp
-      let_jo_t::let_jo_t (name_t name)
-      {
-          this->name = name;
-      }
-      #+end_src
-
 *** lambda_jo
 
 ***** lambda_jo_t
@@ -1168,6 +1165,15 @@
           void exe (env_t *env, local_map_t *local_map);
           string repr (env_t *env);
       };
+      #+end_src
+
+***** lambda_jo_t::lambda_jo_t
+
+      #+begin_src cpp
+      lambda_jo_t::lambda_jo_t (jojo_t *jojo)
+      {
+          this->jojo = jojo;
+      }
       #+end_src
 
 ***** lambda_jo_t::exe
@@ -1195,15 +1201,6 @@
       }
       #+end_src
 
-***** lambda_jo_t::lambda_jo_t
-
-      #+begin_src cpp
-      lambda_jo_t::lambda_jo_t (jojo_t *jojo)
-      {
-          this->jojo = jojo;
-      }
-      #+end_src
-
 *** field_jo
 
 ***** field_jo_t
@@ -1216,6 +1213,15 @@
           void exe (env_t *env, local_map_t *local_map);
           string repr (env_t *env);
       };
+      #+end_src
+
+***** field_jo_t::field_jo_t
+
+      #+begin_src cpp
+      field_jo_t::field_jo_t (name_t name)
+      {
+          this->name = name;
+      }
       #+end_src
 
 ***** field_jo_t::exe
@@ -1246,15 +1252,6 @@
       field_jo_t::repr (env_t *env)
       {
           return "(field " + this->name + ")";
-      }
-      #+end_src
-
-***** field_jo_t::field_jo_t
-
-      #+begin_src cpp
-      field_jo_t::field_jo_t (name_t name)
-      {
-          this->name = name;
       }
       #+end_src
 
