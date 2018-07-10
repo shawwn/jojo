@@ -7,23 +7,23 @@
 * sexp
 
   #+begin_src cicada
-  (: sexp-t set-t)
-  (= sexp-t (union string-t, string-t list-t))
+  (: sexp-s set-t)
+  (= sexp-s (union string-s, string-s list-s))
   #+end_src
 
 * list
 
   #+begin_src cicada
-  (: list-t (-- set-t -> set-t))
-  (= list-t
+  (: list-s (-- set-t -> set-t))
+  (= list-s
      (sum
        (@ (: t set-t))
        (: null-c
-          (-- -> t null-t))
+          (-- -> t null-s))
        (: cons-c
           (-- (: car t)
-              (: cdr t list-t)
-           -> t cons-t))))
+              (: cdr t list-s)
+           -> t cons-s))))
 
   (note
     example data construction
@@ -36,46 +36,46 @@
     cons-cr
     zero-c null-c cons-c)
 
-  (: list-length (-- t list-t -> nat-t))
+  (: list-length (-- t list-s -> nat-s))
   (= list-length
      (lambda
        (let list)
        (case list
-         (null-t zero-c)
-         (cons-t list.cdr recur succ-c))))
+         (null-s zero-c)
+         (cons-s list.cdr recur succ-c))))
 
-  (: list-append (-- t list-t t list-t -> t list-t))
+  (: list-append (-- t list-s t list-s -> t list-s))
   (= list-append
      (lambda
        (let ante succ)
        (case succ
-         (null-t ante)
-         (cons-t succ.car ante succ.cdr recur cons-c))))
+         (null-s ante)
+         (cons-s succ.car ante succ.cdr recur cons-c))))
   #+end_src
 
 * ><
 
   #+begin_src cicada
-  (: list-t (-- set-t -> set-t))
-  (= list-t
+  (: list-s (-- set-t -> set-t))
+  (= list-s
      (sum
        (@ (: t set-t))
        null-c
        cons-c))
 
-  (: null-t (-- set-t -> set-t))
-  (= null-t
+  (: null-s (-- set-t -> set-t))
+  (= null-s
      (data
        (@ (: t set-t))
        (: null-c
-          (-- -> t null-t))))
+          (-- -> t null-s))))
 
-  (: cons-t (-- set-t -> set-t))
-  (= cons-t
+  (: cons-s (-- set-t -> set-t))
+  (= cons-s
      (data
        (@ (: t set-t))
        (: cons-c
           (-- (: car t)
-              (: cdr t list-t)
-           -> t cons-t))))
+              (: cdr t list-s)
+           -> t cons-s))))
   #+end_src
