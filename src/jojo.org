@@ -3,7 +3,15 @@
 
 * [todo-stack]
 
-*** external interpreter
+*** immediate_o
+
+*** repl
+
+    - need two modes in env
+
+    - if `repl` is only to be called once,
+      we should implement it as a special interface function
+      instead of a primitive.
 
 *** input_stream_t
 
@@ -1416,6 +1424,10 @@
         }
     }
     #+end_src
+
+* <fun>
+
+*** ><
 
 * epilog
 
