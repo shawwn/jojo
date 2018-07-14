@@ -1,81 +1,38 @@
 #+title: core
 
-* [todo-stack]
+* square
 
-* [note]
-
-* sexp
-
-  #+begin_src cicada
-  (: sexp-s set-t)
-  (= sexp-s (union string-s, string-s list-s))
+  #+begin_src xml
+  <fun> square dup mul </fun>
   #+end_src
 
 * list
 
-  #+begin_src cicada
-  (: list-s (-- set-t -> set-t))
-  (= list-s
-     (sum
-       (@ (: t set-t))
-       (: null-c
-          (-- -> t null-s))
-       (: cons-c
-          (-- (: car t)
-              (: cdr t list-s)
-           -> t cons-s))))
+  #+begin_src xml
+  <struct> null-s <field> </field> </struct>
+  <struct> cons-s <field> car cdr </field> </struct>
 
-  (note
-    example data construction
-    (cons-@
-      (= car zero-c)
-      (= cdr null-c))
-    (@
-      (= car zero-c)
-      (= cdr null-c))
-    cons-cr
-    zero-c null-c cons-c)
+  zero-c null-c cons-c
 
-  (: list-length (-- t list-s -> nat-s))
-  (= list-length
-     (lambda
-       (let list)
-       (case list
-         (null-s zero-c)
-         (cons-s list.cdr recur succ-c))))
+  <fun> list-length
+    <local> list </local>
+    <case> list
+      <of> null-s zero-c </of>
+      <of> cons-s list.cdr recur succ-c </of>
+    </case>
+  </fun>
 
-  (: list-append (-- t list-s t list-s -> t list-s))
-  (= list-append
-     (lambda
-       (let ante succ)
-       (case succ
-         (null-s ante)
-         (cons-s succ.car ante succ.cdr recur cons-c))))
-  #+end_src
+  <fun> list-append
+    <local> ante succ </local>
+    <case> ante
+      <of> null-s succ </of>
+      <of> cons-s ante.car ante.cdr succ recur cons-c </of>
+    </case>
+  </fun>
 
-* ><
+  <if>
 
-  #+begin_src cicada
-  (: list-s (-- set-t -> set-t))
-  (= list-s
-     (sum
-       (@ (: t set-t))
-       null-c
-       cons-c))
+  <else/> </if>
 
-  (: null-s (-- set-t -> set-t))
-  (= null-s
-     (data
-       (@ (: t set-t))
-       (: null-c
-          (-- -> t null-s))))
-
-  (: cons-s (-- set-t -> set-t))
-  (= cons-s
-     (data
-       (@ (: t set-t))
-       (: cons-c
-          (-- (: car t)
-              (: cdr t list-s)
-           -> t cons-s))))
+  </if>
   #+end_src

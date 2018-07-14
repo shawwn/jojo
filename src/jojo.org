@@ -3,10 +3,6 @@
 
 * [todo-stack]
 
-*** sexp-t
-
-    - we need a parser, to do farther tests
-
 *** indirected threaded code
 
     - name map is only used in definition
@@ -1353,14 +1349,6 @@
           return "(apply)";
       }
       #+end_src
-
-* scan
-
-* sexp
-
-* eval
-
-* compile
 
 * epilog
 
