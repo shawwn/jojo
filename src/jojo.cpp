@@ -59,6 +59,7 @@
         name_map_t *name_map;
         obj_stack_t *obj_stack;
         frame_stack_t *frame_stack;
+        // input_stream_t * input_stream;
         gc_t *gc;
         env_t ();
         void step ();
@@ -736,6 +737,40 @@
       {
           return "(apply)";
       }
+    void
+    word_read (env_t *env)
+    {
+        // -- -> word
+        string str;
+        cin >> str;
+        string_o *word = new string_o (env, str);
+        env->obj_stack->push (word);
+    }
+    void
+    string_print (env_t *env)
+    {
+        // -- word ->
+        obj_t *obj = env->obj_stack->top ();
+        env->obj_stack->pop ();
+        string_o *word = static_cast<string_o *> (obj);
+        cout << word->s;
+    }
+    void
+    repl (env_t *env)
+    {
+        while (true) {
+            word_read (env);
+            obj_t *obj = env->obj_stack->top ();
+            env->obj_stack->pop ();
+            string_o *word = static_cast<string_o *> (obj);
+            jojo_t *jojo = new jojo_t;
+            jojo->push_back (new call_jo_t (word->s));
+            frame_t *frame = new frame_t (jojo, new local_map_t);
+            env->frame_stack->push (frame);
+            env->run ();
+            env->report ();
+        }
+    }
       void
       p1 (env_t *env)
       {
@@ -760,6 +795,9 @@
         name_map->insert (pair<name_t, obj_t *> ("p1", new primitive_o (env, p1)));
         name_map->insert (pair<name_t, obj_t *> ("p2", new primitive_o (env, p2)));
         name_map->insert (pair<name_t, obj_t *> ("d1", new data_o (env, "d-t", field_map)));
+        name_map->insert (pair<name_t, obj_t *> ("word-read", new primitive_o (env, word_read)));
+        name_map->insert (pair<name_t, obj_t *> ("string-print", new primitive_o (env, string_print)));
+        name_map->insert (pair<name_t, obj_t *> ("repl", new primitive_o (env, repl)));
         env->name_map = name_map;
 
         jojo_t *lambda_jojo = new jojo_t;
@@ -779,6 +817,13 @@
         jojo->push_back (new call_jo_t ("d1"));
         jojo->push_back (new call_jo_t ("d1"));
         jojo->push_back (new field_jo_t ("f1"));
+
+        // jojo->push_back (new call_jo_t ("word-read"));
+        // jojo->push_back (new call_jo_t ("word-read"));
+        // jojo->push_back (new call_jo_t ("string-print"));
+        // jojo->push_back (new call_jo_t ("string-print"));
+
+        jojo->push_back (new call_jo_t ("repl"));
 
         frame_t *frame = new frame_t (jojo, new local_map_t);
         env->frame_stack->push (frame);
