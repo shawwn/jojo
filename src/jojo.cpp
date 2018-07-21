@@ -23,8 +23,8 @@
         tag_t t;
         cell_t *cell;
         virtual ~obj_t ();
-        virtual void apply (env_t *env);
         virtual void print (env_t *env);
+        virtual void apply (env_t *env);
         virtual void mark (env_t *env);
     };
     struct frame_t
@@ -83,7 +83,8 @@
       void
       obj_t::apply (env_t *env)
       {
-          env->obj_stack->push (this);
+          cout << "fatal error : applying non applicable obj" << "\n";
+          exit (1);
       }
       struct lambda_o: obj_t
       {
@@ -227,10 +228,6 @@
       {
           delete this->field_vector;
       }
-      struct type_constructor_o: obj_t
-      {
-
-      };
       using field_map_t = map<name_t, obj_t *>;
       struct data_o: obj_t
       {
@@ -619,13 +616,13 @@
           // local_map first
           auto it = local_map->find (this->name);
           if (it != local_map->end ()) {
-              it->second->apply (env);
+              env->obj_stack->push (it->second);
               return;
           }
           // name_map second
           it = env->name_map->find (this->name);
           if (it != env->name_map->end ()) {
-              it->second->apply (env);
+              env->obj_stack->push (it->second);
               return;
           }
           cout << "fatal error ! unknown name : "
@@ -637,29 +634,6 @@
       call_jo_t::repr (env_t *env)
       {
           return "(call " + this->name + ")";
-      }
-      struct let_jo_t: jo_t
-      {
-          name_t name;
-          let_jo_t (name_t name);
-          void exe (env_t *env, local_map_t *local_map);
-          string repr (env_t *env);
-      };
-      let_jo_t::let_jo_t (name_t name)
-      {
-          this->name = name;
-      }
-      void
-      let_jo_t::exe (env_t *env, local_map_t *local_map)
-      {
-           obj_t *obj = env->obj_stack->top ();
-           env->obj_stack->pop ();
-           local_map->insert (pair<name_t, obj_t *> (this->name, obj));
-      }
-      string
-      let_jo_t::repr (env_t *env)
-      {
-          return "(let " + this->name + ")";
       }
       struct lambda_jo_t: jo_t
       {
@@ -706,7 +680,7 @@
           data_o *data = static_cast<data_o *> (obj);
           auto it = data->field_map->find (this->name);
           if (it != data->field_map->end ()) {
-              it->second->apply (env);
+              env->obj_stack->push (it->second);
               return;
           }
           cout << "fatal error ! unknown field : "
@@ -785,17 +759,13 @@
         jojo_t *lambda_jojo = new jojo_t;
         lambda_jojo->push_back (new call_jo_t ("k1"));
         lambda_jojo->push_back (new call_jo_t ("k2"));
-        lambda_jojo->push_back (new call_jo_t ("v"));
         jojo_t *jojo = new jojo_t;
         jojo->push_back (new call_jo_t ("p1"));
         jojo->push_back (new call_jo_t ("p2"));
         jojo->push_back (new call_jo_t ("k1"));
         jojo->push_back (new call_jo_t ("k2"));
-        jojo->push_back (new let_jo_t ("v"));
-        jojo->push_back (new call_jo_t ("v"));
         jojo->push_back (new lambda_jo_t (lambda_jojo));
         jojo->push_back (new apply_jo_t ());
-        jojo->push_back (new call_jo_t ("v"));
         jojo->push_back (new call_jo_t ("d1"));
         jojo->push_back (new call_jo_t ("d1"));
         jojo->push_back (new field_jo_t ("f1"));
