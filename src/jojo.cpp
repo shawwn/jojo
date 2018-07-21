@@ -126,24 +126,6 @@
           frame_t *frame = new frame_t (this->jojo, this->local_map);
           env->frame_stack->push (frame);
       }
-      typedef void (*prim_fn) (env_t *);
-      struct primitive_o: obj_t
-      {
-          prim_fn fn;
-          primitive_o (env_t *env, prim_fn fn);
-          void apply (env_t *env);
-      };
-      primitive_o::primitive_o (env_t *env, prim_fn fn)
-      {
-          this->t = "primitive-t";
-          this->fn = fn;
-          gc_for (env, this);
-      }
-      void
-      primitive_o::apply (env_t *env)
-      {
-          this->fn (env);
-      }
       struct int_o: obj_t
       {
           int i;
@@ -205,29 +187,6 @@
               obj->mark (env);
           }
       }
-      using field_vector_t = vector<name_t>;
-      struct type_o: obj_t
-      {
-          tag_t type_tag;
-          field_vector_t *field_vector;
-          type_o (env_t *env,
-                  tag_t type_tag,
-                  field_vector_t *field_vector);
-          virtual ~type_o ();
-      };
-      type_o::
-      type_o (env_t *env,
-              tag_t type_tag,
-              field_vector_t *field_vector)
-      {
-          this->t = "type-t";
-          this->type_tag = type_tag;
-          this->field_vector = field_vector;
-      }
-      type_o::~type_o ()
-      {
-          delete this->field_vector;
-      }
       using field_map_t = map<name_t, obj_t *>;
       struct data_o: obj_t
       {
@@ -256,116 +215,111 @@
               obj->mark (env);
           }
       }
-      struct data_constructor_o: obj_t
-      {
-          type_o *type;
-          data_constructor_o (env_t *env, type_o *type);
-          void apply (env_t *env);
-      };
-      data_constructor_o::
-      data_constructor_o (env_t *env, type_o *type)
-      {
-          this->t = "data-constructor-t";
-          this->type = type;
-          gc_for (env, this);
-      }
-      void
-      data_constructor_o::apply (env_t *env)
-      {
-          field_map_t *field_map = new field_map_t;
-          field_vector_t *field_vector = this->type->field_vector;
-          field_vector_t::reverse_iterator it;
-          for (it = field_vector->rbegin();
-               it != field_vector->rend();
-               it++) {
-              name_t name = *it;
-              obj_t *obj = env->obj_stack->top ();
-              env->obj_stack->pop ();
-              field_map->insert (pair<name_t, obj_t *> (name, obj));
-          }
-          data_o* data =
-              new data_o (env,
-                          this->type->type_tag,
-                          field_map);
-          env->obj_stack->push (data);
-      }
-      struct data_creator_o: obj_t
-      {
-          type_o *type;
-          data_creator_o (env_t *env, type_o *type);
-          void apply (env_t *env);
-      };
-      data_creator_o::
-      data_creator_o (env_t *env, type_o *type)
-      {
-          this->t = "data-creator-t";
-          this->type = type;
-          gc_for (env, this);
-      }
-      void
-      data_creator_o::apply (env_t *env)
-      {
-          obj_t *obj = env->obj_stack->top ();
-          env->obj_stack->pop ();
-          map_o *map = static_cast<map_o *> (obj);
-          data_o* data =
-              new data_o (env,
-                          this->type->type_tag,
-                          map->map);
-          env->obj_stack->push (data);
-      }
-      struct data_predicate_o: obj_t
-      {
-          type_o *type;
-          data_predicate_o (env_t *env, type_o *type);
-          void apply (env_t *env);
-      };
-      data_predicate_o::
-      data_predicate_o (env_t *env, type_o *type)
-      {
-          this->t = "data-predicate-t";
-          this->type = type;
-          gc_for (env, this);
-      }
-      void
-      data_predicate_o::apply (env_t *env)
-      {
-          tag_t tag = this->type->type_tag;
-          obj_t *obj = env->obj_stack->top ();
-          env->obj_stack->pop ();
-          if (obj->t == tag)
-              env->obj_stack->push (new bool_o (env, true));
-          else
-              env->obj_stack->push (new bool_o (env, false));
-      }
-      struct null_o: obj_t
-      {
-          null_o (env_t *env);
-      };
-      null_o::null_o (env_t *env)
-      {
-          gc_for (env, this);
-      }
-      struct cons_o: obj_t
-      {
-          obj_t *car;
-          obj_t *cdr;
-          cons_o (env_t *env, obj_t *car, obj_t *cdr);
-          void mark (env_t *env);
-      };
-      cons_o::cons_o (env_t *env, obj_t *car, obj_t *cdr)
-      {
-          this->car = car;
-          this->cdr = cdr;
-          gc_for (env, this);
-      }
-      void
-      cons_o::mark (env_t *env)
-      {
-          this->cell->state = CELL_STATE_USED;
-          this->car->mark (env);
-          this->cdr->mark (env);
-      }
+        using field_vector_t = vector<name_t>;
+        struct type_o: obj_t
+        {
+            tag_t type_tag;
+            field_vector_t *field_vector;
+            type_o (env_t *env,
+                    tag_t type_tag,
+                    field_vector_t *field_vector);
+            virtual ~type_o ();
+        };
+        type_o::
+        type_o (env_t *env,
+                tag_t type_tag,
+                field_vector_t *field_vector)
+        {
+            this->t = "type-t";
+            this->type_tag = type_tag;
+            this->field_vector = field_vector;
+        }
+        type_o::~type_o ()
+        {
+            delete this->field_vector;
+        }
+        struct data_constructor_o: obj_t
+        {
+            type_o *type;
+            data_constructor_o (env_t *env, type_o *type);
+            void apply (env_t *env);
+        };
+        data_constructor_o::
+        data_constructor_o (env_t *env, type_o *type)
+        {
+            this->t = "data-constructor-t";
+            this->type = type;
+            gc_for (env, this);
+        }
+        void
+        data_constructor_o::apply (env_t *env)
+        {
+            field_map_t *field_map = new field_map_t;
+            field_vector_t *field_vector = this->type->field_vector;
+            field_vector_t::reverse_iterator it;
+            for (it = field_vector->rbegin();
+                 it != field_vector->rend();
+                 it++) {
+                name_t name = *it;
+                obj_t *obj = env->obj_stack->top ();
+                env->obj_stack->pop ();
+                field_map->insert (pair<name_t, obj_t *> (name, obj));
+            }
+            data_o* data =
+                new data_o (env,
+                            this->type->type_tag,
+                            field_map);
+            env->obj_stack->push (data);
+        }
+        struct data_creator_o: obj_t
+        {
+            type_o *type;
+            data_creator_o (env_t *env, type_o *type);
+            void apply (env_t *env);
+        };
+        data_creator_o::
+        data_creator_o (env_t *env, type_o *type)
+        {
+            this->t = "data-creator-t";
+            this->type = type;
+            gc_for (env, this);
+        }
+        void
+        data_creator_o::apply (env_t *env)
+        {
+            obj_t *obj = env->obj_stack->top ();
+            env->obj_stack->pop ();
+            map_o *map = static_cast<map_o *> (obj);
+            data_o* data =
+                new data_o (env,
+                            this->type->type_tag,
+                            map->map);
+            env->obj_stack->push (data);
+        }
+        struct data_predicate_o: obj_t
+        {
+            type_o *type;
+            data_predicate_o (env_t *env, type_o *type);
+            void apply (env_t *env);
+        };
+        data_predicate_o::
+        data_predicate_o (env_t *env, type_o *type)
+        {
+            this->t = "data-predicate-t";
+            this->type = type;
+            gc_for (env, this);
+        }
+        void
+        data_predicate_o::apply (env_t *env)
+        {
+            tag_t tag = this->type->type_tag;
+            obj_t *obj = env->obj_stack->top ();
+            env->obj_stack->pop ();
+            if (obj->t == tag)
+                env->obj_stack->push (new bool_o (env, true));
+            else
+                env->obj_stack->push (new bool_o (env, false));
+        }
       void
       jojo_print (env_t *env,
                   jojo_t *jojo)
@@ -710,34 +664,6 @@
       {
           return "(apply)";
       }
-    void
-    word_read (env_t *env)
-    {
-        // -- -> word
-        string str;
-        cin >> str;
-        string_o *word = new string_o (env, str);
-        env->obj_stack->push (word);
-    }
-    void
-    string_print (env_t *env)
-    {
-        // -- word ->
-        obj_t *obj = env->obj_stack->top ();
-        env->obj_stack->pop ();
-        string_o *word = static_cast<string_o *> (obj);
-        cout << word->s;
-    }
-      void
-      p1 (env_t *env)
-      {
-           cout << "- p1\n";
-      }
-      void
-      p2 (env_t *env)
-      {
-           cout << "- p2\n";
-      }
     int
     main ()
     {
@@ -749,19 +675,13 @@
         name_map_t *name_map = new name_map_t;
         name_map->insert (pair<name_t, obj_t *> ("k1", new string_o (env, "s1")));
         name_map->insert (pair<name_t, obj_t *> ("k2", new string_o (env, "s2")));
-        name_map->insert (pair<name_t, obj_t *> ("p1", new primitive_o (env, p1)));
-        name_map->insert (pair<name_t, obj_t *> ("p2", new primitive_o (env, p2)));
         name_map->insert (pair<name_t, obj_t *> ("d1", new data_o (env, "d-t", field_map)));
-        name_map->insert (pair<name_t, obj_t *> ("word-read", new primitive_o (env, word_read)));
-        name_map->insert (pair<name_t, obj_t *> ("string-print", new primitive_o (env, string_print)));
         env->name_map = name_map;
 
         jojo_t *lambda_jojo = new jojo_t;
         lambda_jojo->push_back (new call_jo_t ("k1"));
         lambda_jojo->push_back (new call_jo_t ("k2"));
         jojo_t *jojo = new jojo_t;
-        jojo->push_back (new call_jo_t ("p1"));
-        jojo->push_back (new call_jo_t ("p2"));
         jojo->push_back (new call_jo_t ("k1"));
         jojo->push_back (new call_jo_t ("k2"));
         jojo->push_back (new lambda_jo_t (lambda_jojo));
@@ -769,11 +689,6 @@
         jojo->push_back (new call_jo_t ("d1"));
         jojo->push_back (new call_jo_t ("d1"));
         jojo->push_back (new field_jo_t ("f1"));
-
-        // jojo->push_back (new call_jo_t ("word-read"));
-        // jojo->push_back (new call_jo_t ("word-read"));
-        // jojo->push_back (new call_jo_t ("string-print"));
-        // jojo->push_back (new call_jo_t ("string-print"));
 
         frame_t *frame = new frame_t (jojo, new local_map_t);
         env->frame_stack->push (frame);
