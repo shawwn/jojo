@@ -1,3 +1,31 @@
+#+property: tangle jojo.cpp
+#+title: jojo
+
+* [todo-stack]
+
+*** global name_t is box of obj_t
+
+*** handle local at compile time
+
+*** apply_jo be able to curry -- by generating lambda_o
+
+*** data_constructor be able to curry
+
+*** simple sexp -- using `vector <string>` -- without macro
+
+*** fix the use of tag_t
+
+    - a new state in env_t for mapping tag to string
+
+*** quit using org-mode and separate code into files
+
+*** use cpp header file
+
+* prolog
+
+*** include
+
+    #+begin_src cpp
     #include <iostream>
     #include <memory>
     #include <vector>
@@ -5,19 +33,61 @@
     #include <map>
     #include <set>
     #include <stack>
+    #+end_src
+
+*** using
+
+    #+begin_src cpp
     using namespace std;
+    #+end_src
+
+* datatype
+
+*** forward declaration
+
+    #+begin_src cpp
     struct env_t;
     struct obj_t;
     struct jo_t;
+    #+end_src
+
+*** name_t
+
+    #+begin_src cpp
     using name_t = string;
-    using local_map_t = map<name_t, shared_ptr<obj_t>>;
-    using jojo_t = vector<jo_t *>;
+    #+end_src
+
+*** local_map_t
+
+    #+begin_src cpp
+    using local_map_t = map <name_t, shared_ptr <obj_t>>;
+    #+end_src
+
+*** jojo_t
+
+    #+begin_src cpp
+    using jojo_t = vector <jo_t *>;
+    #+end_src
+
+*** jo_t
+
+    #+begin_src cpp
     struct jo_t
     {
         virtual void exe (env_t &env, local_map_t &local_map);
         virtual string repr (env_t &env);
     };
+    #+end_src
+
+*** tag_t
+
+    #+begin_src cpp
     using tag_t = string;
+    #+end_src
+
+*** obj_t
+
+    #+begin_src cpp
     struct obj_t
     {
         tag_t t;
@@ -25,6 +95,11 @@
         virtual void print (env_t &env);
         virtual void apply (env_t &env);
     };
+    #+end_src
+
+*** frame_t
+
+    #+begin_src cpp
     struct frame_t
     {
         size_t index;
@@ -32,9 +107,29 @@
         local_map_t local_map;
         frame_t (jojo_t jojo, local_map_t local_map);
     };
-    using name_map_t = map<name_t, shared_ptr<obj_t>>;
-    using obj_stack_t = stack<shared_ptr<obj_t>>;
-    using frame_stack_t = stack<frame_t>;
+    #+end_src
+
+*** name_map_t
+
+    #+begin_src cpp
+    using name_map_t = map <name_t, shared_ptr <obj_t>>;
+    #+end_src
+
+*** obj_stack_t
+
+    #+begin_src cpp
+    using obj_stack_t = stack <shared_ptr <obj_t>>;
+    #+end_src
+
+*** frame_stack_t
+
+    #+begin_src cpp
+    using frame_stack_t = stack <frame_t>;
+    #+end_src
+
+*** env_t
+
+    #+begin_src cpp
     struct env_t
     {
         name_map_t name_map;
@@ -44,6 +139,15 @@
         void run ();
         void report ();
     };
+    #+end_src
+
+* obj
+
+*** obj
+
+***** obj_t::~obj_t
+
+      #+begin_src cpp
       obj_t::~obj_t ()
       {
           // all classes that will be derived from
@@ -51,18 +155,40 @@
           // otherwise deleting an instance via a pointer
           // to a base class results in undefined behavior.
       }
+      #+end_src
+
+***** obj_t::print
+
+      #+begin_src cpp
       void
       obj_t::print (env_t &env)
       {
           cout << this->t;
       }
+      #+end_src
+
+***** obj_t::apply
+
+      #+begin_src cpp
       void
       obj_t::apply (env_t &env)
       {
           cout << "fatal error : applying non applicable object" << "\n";
           exit (1);
       }
-      using arg_vector_t = vector<name_t>;
+      #+end_src
+
+*** [todo] lambda
+
+***** arg_vector_t
+
+      #+begin_src cpp
+      using arg_vector_t = vector <name_t>;
+      #+end_src
+
+***** lambda_o
+
+      #+begin_src cpp
       struct lambda_o: obj_t
       {
           jojo_t jojo;
@@ -74,6 +200,11 @@
                     local_map_t local_map);
           void apply (env_t &env);
       };
+      #+end_src
+
+***** lambda_o::lambda_o
+
+      #+begin_src cpp
       lambda_o::
       lambda_o (env_t &env,
                 arg_vector_t arg_vector,
@@ -85,34 +216,80 @@
           this->jojo = jojo;
           this->local_map = local_map;
       }
+      #+end_src
+
+***** lambda_o::apply
+
+      #+begin_src cpp
       void
       lambda_o::apply (env_t &env)
       {
           auto frame = frame_t (this->jojo, this->local_map);
           env.frame_stack.push (frame);
       }
+      #+end_src
+
+*** string
+
+***** string_o
+
+      #+begin_src cpp
       struct string_o: obj_t
       {
           string s;
           string_o (env_t &env, string s);
       };
+      #+end_src
+
+***** string_o::string_o
+
+      #+begin_src cpp
       string_o::string_o (env_t &env, string s)
       {
           this->t = "string-t";
           this->s = s;
       }
-      using field_map_t = map<name_t, shared_ptr<obj_t>>;
+      #+end_src
+
+*** data
+
+***** field_map_t
+
+      #+begin_src cpp
+      using field_map_t = map <name_t, shared_ptr <obj_t>>;
+      #+end_src
+
+***** data_o
+
+      #+begin_src cpp
       struct data_o: obj_t
       {
           field_map_t field_map;
           data_o (env_t &env, tag_t t, field_map_t field_map);
       };
+      #+end_src
+
+***** data_o::data_o
+
+      #+begin_src cpp
       data_o::data_o (env_t &env, tag_t t, field_map_t field_map)
       {
           this->t = t;
           this->field_map = field_map;
       }
-      using field_vector_t = vector<name_t>;
+      #+end_src
+
+*** type
+
+***** field_vector_t
+
+      #+begin_src cpp
+      using field_vector_t = vector <name_t>;
+      #+end_src
+
+***** type_o
+
+      #+begin_src cpp
       struct type_o: obj_t
       {
           tag_t type_tag;
@@ -121,6 +298,11 @@
                   tag_t type_tag,
                   field_vector_t field_vector);
       };
+      #+end_src
+
+***** type_o::type_o
+
+      #+begin_src cpp
       type_o::
       type_o (env_t &env,
               tag_t type_tag,
@@ -130,18 +312,35 @@
           this->type_tag = type_tag;
           this->field_vector = field_vector;
       }
+      #+end_src
+
+*** [todo] data_constructor
+
+***** data_constructor_o
+
+      #+begin_src cpp
       struct data_constructor_o: obj_t
       {
-          shared_ptr<type_o> type;
-          data_constructor_o (env_t &env, shared_ptr<type_o> type);
+          shared_ptr <type_o> type;
+          data_constructor_o (env_t &env, shared_ptr <type_o> type);
           void apply (env_t &env);
       };
+      #+end_src
+
+***** data_constructor_o::data_constructor_o
+
+      #+begin_src cpp
       data_constructor_o::
-      data_constructor_o (env_t &env, shared_ptr<type_o> type)
+      data_constructor_o (env_t &env, shared_ptr <type_o> type)
       {
           this->t = "data-constructor-t";
           this->type = type;
       }
+      #+end_src
+
+***** data_constructor_o::apply
+
+      #+begin_src cpp
       void
       data_constructor_o::apply (env_t &env)
       {
@@ -151,14 +350,23 @@
                it != field_vector.rend();
                it++) {
               name_t name = *it;
-              shared_ptr<obj_t> obj = env.obj_stack.top ();
+              shared_ptr <obj_t> obj = env.obj_stack.top ();
               env.obj_stack.pop ();
               field_map.insert (make_pair (name, obj));
           }
-          auto data = make_shared<data_o>
+          auto data = make_shared <data_o>
               (env, this->type->type_tag, field_map);
           env.obj_stack.push (data);
       }
+      #+end_src
+
+* env
+
+*** jojo
+
+***** jojo_print
+
+      #+begin_src cpp
       void
       jojo_print (env_t &env,
                   jojo_t jojo)
@@ -166,6 +374,11 @@
           for (auto &jo: jojo)
               cout << jo->repr (env) << " ";
       }
+      #+end_src
+
+***** jojo_print_with_index
+
+      #+begin_src cpp
       void
       jojo_print_with_index (env_t &env,
                              jojo_t jojo,
@@ -184,12 +397,24 @@
               }
           }
       }
+      #+end_src
+
+*** frame
+
+***** frame_t::frame_t
+
+      #+begin_src cpp
       frame_t::frame_t (jojo_t jojo, local_map_t local_map)
       {
           this->index = 0;
           this->jojo = jojo;
           this->local_map = local_map;
       }
+      #+end_src
+
+***** frame_report
+
+      #+begin_src cpp
       void
       frame_report (env_t &env, frame_t frame)
       {
@@ -209,6 +434,13 @@
               cout << "\n";
           }
       }
+      #+end_src
+
+*** name_map
+
+***** name_map_report
+
+      #+begin_src cpp
       void
       name_map_report (env_t &env)
       {
@@ -220,6 +452,13 @@
               cout << "\n";
           }
       }
+      #+end_src
+
+*** obj_stack
+
+***** frame_stack_report
+
+      #+begin_src cpp
       void
       frame_stack_report (env_t &env)
       {
@@ -231,6 +470,13 @@
              frame_stack.pop ();
           }
       }
+      #+end_src
+
+*** frame_stack
+
+***** obj_stack_report
+
+      #+begin_src cpp
       void
       obj_stack_report (env_t &env)
       {
@@ -245,6 +491,11 @@
           }
           cout << "\n";
       }
+      #+end_src
+
+*** env_t::step
+
+    #+begin_src cpp
     void
     env_t::step ()
     {
@@ -272,6 +523,11 @@
         //   as an extra argument.
         jo->exe (*this, frame.local_map);
     }
+    #+end_src
+
+*** env_t::run
+
+    #+begin_src cpp
     void
     env_t::run ()
     {
@@ -280,6 +536,11 @@
             this->step ();
         }
     }
+    #+end_src
+
+*** env_t::report
+
+    #+begin_src cpp
     void
     env_t::report ()
     {
@@ -288,32 +549,61 @@
         obj_stack_report (*this);
         cout << "\n";
     }
+    #+end_src
+
+* jo
+
+*** jo
+
+***** jo_t::exe
+
+      #+begin_src cpp
       void
       jo_t::exe (env_t &env, local_map_t &local_map)
       {
           cout << "fatal error : unknown jo" << "\n";
           exit (1);
       }
+      #+end_src
+
+***** jo_t::repr
+
+      #+begin_src cpp
       string
       jo_t::repr (env_t &env)
       {
           return "(unknown)";
       }
-      struct call_jo_t: jo_t
+      #+end_src
+
+*** ref_jo
+
+***** ref_jo_t
+
+      #+begin_src cpp
+      struct ref_jo_t: jo_t
       {
           name_t name;
-
-          call_jo_t (name_t name);
-
+          ref_jo_t (name_t name);
           void exe (env_t &env, local_map_t &local_map);
           string repr (env_t &env);
       };
-      call_jo_t::call_jo_t (name_t name)
+      #+end_src
+
+***** ref_jo_t::ref_jo_t
+
+      #+begin_src cpp
+      ref_jo_t::ref_jo_t (name_t name)
       {
           this->name = name;
       }
+      #+end_src
+
+***** ref_jo_t::exe
+
+      #+begin_src cpp
       void
-      call_jo_t::exe (env_t &env, local_map_t &local_map)
+      ref_jo_t::exe (env_t &env, local_map_t &local_map)
       {
           // local_map first
           auto it = local_map.find (this->name);
@@ -332,40 +622,91 @@
                << "\n";
           exit (1);
       }
+      #+end_src
+
+***** ref_jo_t::repr
+
+      #+begin_src cpp
       string
-      call_jo_t::repr (env_t &env)
+      ref_jo_t::repr (env_t &env)
       {
-          return "(call " + this->name + ")";
+          return "(ref " + this->name + ")";
       }
+      #+end_src
+
+*** [todo] lambda_jo
+
+***** name_set_t
+
+      #+begin_src cpp
+      using name_set_t = set <name_t>;
+      #+end_src
+
+***** lambda_jo_t
+
+      #+begin_src cpp
       struct lambda_jo_t: jo_t
       {
           jojo_t jojo;
           arg_vector_t arg_vector;
+          name_set_t name_set;
           lambda_jo_t (arg_vector_t arg_vector, jojo_t jojo);
           void exe (env_t &env, local_map_t &local_map);
           string repr (env_t &env);
       };
+      #+end_src
+
+***** [todo] name_set_from_jojo
+
+      #+begin_src cpp
+      // name_set_t
+      // name_set_from_jojo (jojo_t &jojo)
+      // {
+
+      // }
+      #+end_src
+
+***** lambda_jo_t::lambda_jo_t
+
+      #+begin_src cpp
       lambda_jo_t::lambda_jo_t (arg_vector_t arg_vector, jojo_t jojo)
       {
           this->arg_vector = arg_vector;
           this->jojo = jojo;
+          // this->name_set = name_set_from_jojo (jojo);
       }
+      #+end_src
+
+***** lambda_jo_t::exe
+
+      #+begin_src cpp
       void
       lambda_jo_t::exe (env_t &env, local_map_t &local_map)
       {
-          // create lambda_o by closure
-          // and push it to obj_stack
+          // Create lambda_o by making closure,
+          //   and push it to obj_stack.
           auto frame = env.frame_stack.top ();
-          // ><><>< need to copy the local_map
-          auto lambda = make_shared<lambda_o>
+          auto lambda = make_shared <lambda_o>
               (env, this->arg_vector, this->jojo, frame.local_map);
           env.obj_stack.push (lambda);
       }
+      #+end_src
+
+***** lambda_jo_t::repr
+
+      #+begin_src cpp
       string
       lambda_jo_t::repr (env_t &env)
       {
           return "(lambda)";
       }
+      #+end_src
+
+*** field_jo
+
+***** field_jo_t
+
+      #+begin_src cpp
       struct field_jo_t: jo_t
       {
           name_t name;
@@ -373,10 +714,20 @@
           void exe (env_t &env, local_map_t &local_map);
           string repr (env_t &env);
       };
+      #+end_src
+
+***** field_jo_t::field_jo_t
+
+      #+begin_src cpp
       field_jo_t::field_jo_t (name_t name)
       {
           this->name = name;
       }
+      #+end_src
+
+***** field_jo_t::exe
+
+      #+begin_src cpp
       void
       field_jo_t::exe (env_t &env, local_map_t &local_map)
       {
@@ -393,16 +744,33 @@
                << "\n";
           exit (1);
       }
+      #+end_src
+
+***** field_jo_t::repr
+
+      #+begin_src cpp
       string
       field_jo_t::repr (env_t &env)
       {
           return "(field " + this->name + ")";
       }
+      #+end_src
+
+*** [todo] apply_jo
+
+***** apply_jo_t
+
+      #+begin_src cpp
       struct apply_jo_t: jo_t
       {
           void exe (env_t &env, local_map_t &local_map);
           string repr (env_t &env);
       };
+      #+end_src
+
+***** apply_jo_t::exe
+
+      #+begin_src cpp
       void
       apply_jo_t::exe (env_t &env, local_map_t &local_map)
       {
@@ -410,35 +778,47 @@
           env.obj_stack.pop ();
           obj->apply (env);
       }
+      #+end_src
+
+***** apply_jo_t::repr
+
+      #+begin_src cpp
       string
       apply_jo_t::repr (env_t &env)
       {
           return "(apply)";
       }
+      #+end_src
+
+* epilog
+
+*** main
+
+    #+begin_src cpp
     int
     main ()
     {
         auto env = env_t ();
         field_map_t field_map = {
-            {"f1", make_shared<string_o> (env, "fs1")},
-            {"f2", make_shared<string_o> (env, "fs2")},
+            {"f1", make_shared <string_o> (env, "fs1")},
+            {"f2", make_shared <string_o> (env, "fs2")},
         };
 
         env.name_map = {
-            {"k1", make_shared<string_o> (env, "s1")},
-            {"k2", make_shared<string_o> (env, "s2")},
-            {"d1", make_shared<data_o> (env, "d-t", field_map)},
+            {"k1", make_shared <string_o> (env, "s1")},
+            {"k2", make_shared <string_o> (env, "s2")},
+            {"d1", make_shared <data_o> (env, "d-t", field_map)},
         };
 
         jojo_t jojo = {
-            new call_jo_t ("k1"),
-            new call_jo_t ("k2"),
+            new ref_jo_t ("k1"),
+            new ref_jo_t ("k2"),
             new lambda_jo_t ({ "x", "y" },
-                             { new call_jo_t ("k1"),
-                               new call_jo_t ("k2") }),
+                             { new ref_jo_t ("k1"),
+                               new ref_jo_t ("k2") }),
             new apply_jo_t,
-            new call_jo_t ("d1"),
-            new call_jo_t ("d1"),
+            new ref_jo_t ("d1"),
+            new ref_jo_t ("d1"),
             new field_jo_t ("f1"),
         };
 
@@ -448,3 +828,4 @@
         env.run ();
         env.report ();
     }
+    #+end_src

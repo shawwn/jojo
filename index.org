@@ -1,0 +1,44 @@
+#+html_head: <link rel="stylesheet" href="css/org-page.css"/>
+#+title: Semantic of De Bruijn Notation and Bizarre Syntax Adventure
+
+* Semantic
+
+  - The direct semantic of De Bruijn notation,
+    is stack based postfix programming language.
+
+* Translating
+
+  - Note that,
+    I use `{...}` for De Bruijn's `(...)`,
+    and `(let ...)` for De Bruijn's `[]`.
+
+  - Suppose [ ] is a syntax translating function,
+    which translate normal lambda notation to De Bruijn notation.
+
+  - The rules :
+
+    1. [ v ] => v
+
+    2. [ (lambda (v) M) ] => (let v) [ M ]
+
+    3. [ (M N) ] => {[ N ]} [ M ]
+
+* Example
+
+  - in De Bruijn notation :
+    {M} {N} (let u) {P} (let v) (let w) {Q} z
+
+  - which is equal to (for example) :
+    {N} (let u) {P} (let v) {M} (let w) {Q} z
+
+* Advantage
+
+  - More equivalence between functions
+    are explicitly revealed by the syntax.
+
+  - Syntax A is better than syntax B,
+    if, when using A, it is easier to manipulate
+    the underlying semantics.
+
+  - Or say, the semantics will be easier to imagine,
+    when expressed in syntax A.
