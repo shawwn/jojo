@@ -3,7 +3,8 @@
 ------
 
 A programming language in postfix notation !
-Tis dynamic and object oriented, aiming to script C++.
+
+- Tis dynamic and object oriented, aiming to script C++.
 
 ------
 
