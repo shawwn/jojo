@@ -1,38 +1,20 @@
 #+title: core
 
-* square
-
-  #+begin_src xml
-  <fun> square dup mul </fun>
-  #+end_src
-
 * list
 
-  #+begin_src xml
-  <struct> null-s <field> </field> </struct>
-  <struct> cons-s <field> car cdr </field> </struct>
+  #+begin_src cicada
+  (= null-t (data))
+  (= cons-t (data car cdr))
 
-  zero-c null-c cons-c
+  (cons-c zero-c null-c)
 
-  <fun> list-length
-    <local> list </local>
-    <case> list
-      <of> null-s zero-c </of>
-      <of> cons-s list.cdr recur succ-c </of>
-    </case>
-  </fun>
+  (= (list-length list)
+     (case list
+       (null-t zero-c)
+       (cons-t (succ-c (recur list.cdr)))))
 
-  <fun> list-append
-    <local> ante succ </local>
-    <case> ante
-      <of> null-s succ </of>
-      <of> cons-s ante.car ante.cdr succ recur cons-c </of>
-    </case>
-  </fun>
-
-  <if>
-
-  <else/> </if>
-
-  </if>
+  (= (list-append ante succ)
+     (case ante
+       (null-t succ)
+       (cons-t (cons-c ante.car (recur ante.cdr succ)))))
   #+end_src
