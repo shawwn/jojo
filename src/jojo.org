@@ -3,13 +3,11 @@
 
 * [todo-stack]
 
-*** lambda with argument list
+*** fix gc for lambda_o -- local_map
 
 *** apply_jo be able to curry -- by generating lambda_o
 
 *** data_constructor be able to curry
-
-*** fix gc for lambda_o
 
 *** simple sexp -- without macro
 
@@ -76,7 +74,7 @@
     #+begin_src cpp
     struct jo_t
     {
-        virtual void exe (env_t &env, local_map_t *local_map);
+        virtual void exe (env_t &env, local_map_t &local_map);
         virtual string repr (env_t &env);
     };
     #+end_src
@@ -106,8 +104,8 @@
     {
         size_t index;
         jojo_t jojo;
-        local_map_t *local_map;
-        frame_t (jojo_t jojo, local_map_t *local_map);
+        local_map_t local_map;
+        frame_t (jojo_t jojo, local_map_t local_map);
     };
     #+end_src
 
@@ -182,14 +180,24 @@
 
 *** [todo] lambda
 
+***** arg_vector_t
+
+      #+begin_src cpp
+      using arg_vector_t = vector<name_t>;
+      #+end_src
+
 ***** lambda_o
 
       #+begin_src cpp
       struct lambda_o: obj_t
       {
           jojo_t jojo;
-          local_map_t *local_map;
-          lambda_o (env_t &env, jojo_t jojo, local_map_t *local_map);
+          arg_vector_t arg_vector;
+          local_map_t local_map;
+          lambda_o (env_t &env,
+                    arg_vector_t arg_vector,
+                    jojo_t jojo,
+                    local_map_t local_map);
           void apply (env_t &env);
       };
       #+end_src
@@ -199,10 +207,12 @@
       #+begin_src cpp
       lambda_o::
       lambda_o (env_t &env,
+                arg_vector_t arg_vector,
                 jojo_t jojo,
-                local_map_t *local_map)
+                local_map_t local_map)
       {
           this->t = "lambda-t";
+          this->arg_vector = arg_vector;
           this->jojo = jojo;
           this->local_map = local_map;
       }
@@ -394,7 +404,7 @@
 ***** frame_t::frame_t
 
       #+begin_src cpp
-      frame_t::frame_t (jojo_t jojo, local_map_t *local_map)
+      frame_t::frame_t (jojo_t jojo, local_map_t local_map)
       {
           this->index = 0;
           this->jojo = jojo;
@@ -416,8 +426,8 @@
           jojo_print_with_index (env, frame.jojo, frame.index);
           cout << "\n";
 
-          cout << "  - local_map # " << frame.local_map->size () << "\n";
-          for (auto &kv: *(frame.local_map)) {
+          cout << "  - local_map # " << frame.local_map.size () << "\n";
+          for (auto &kv: frame.local_map) {
               cout << "    " << kv.first << " : ";
               auto obj = kv.second;
               obj->print (env);
@@ -549,7 +559,7 @@
 
       #+begin_src cpp
       void
-      jo_t::exe (env_t &env, local_map_t *local_map)
+      jo_t::exe (env_t &env, local_map_t &local_map)
       {
           cout << "fatal error : unknown jo" << "\n";
           exit (1);
@@ -577,7 +587,7 @@
 
           call_jo_t (name_t name);
 
-          void exe (env_t &env, local_map_t *local_map);
+          void exe (env_t &env, local_map_t &local_map);
           string repr (env_t &env);
       };
       #+end_src
@@ -595,11 +605,11 @@
 
       #+begin_src cpp
       void
-      call_jo_t::exe (env_t &env, local_map_t *local_map)
+      call_jo_t::exe (env_t &env, local_map_t &local_map)
       {
           // local_map first
-          auto it = local_map->find (this->name);
-          if (it != local_map->end ()) {
+          auto it = local_map.find (this->name);
+          if (it != local_map.end ()) {
               env.obj_stack.push (it->second);
               return;
           }
@@ -634,8 +644,9 @@
       struct lambda_jo_t: jo_t
       {
           jojo_t jojo;
-          lambda_jo_t (jojo_t jojo);
-          void exe (env_t &env, local_map_t *local_map);
+          arg_vector_t arg_vector;
+          lambda_jo_t (arg_vector_t arg_vector, jojo_t jojo);
+          void exe (env_t &env, local_map_t &local_map);
           string repr (env_t &env);
       };
       #+end_src
@@ -643,8 +654,9 @@
 ***** lambda_jo_t::lambda_jo_t
 
       #+begin_src cpp
-      lambda_jo_t::lambda_jo_t (jojo_t jojo)
+      lambda_jo_t::lambda_jo_t (arg_vector_t arg_vector, jojo_t jojo)
       {
+          this->arg_vector = arg_vector;
           this->jojo = jojo;
       }
       #+end_src
@@ -653,14 +665,14 @@
 
       #+begin_src cpp
       void
-      lambda_jo_t::exe (env_t &env, local_map_t *local_map)
+      lambda_jo_t::exe (env_t &env, local_map_t &local_map)
       {
           // create lambda_o by closure
           // and push it to obj_stack
           auto frame = env.frame_stack.top ();
           // ><><>< need to copy the local_map
-          auto lambda =
-              make_shared<lambda_o> (env, this->jojo, frame.local_map);
+          auto lambda = make_shared<lambda_o>
+              (env, this->arg_vector, this->jojo, frame.local_map);
           env.obj_stack.push (lambda);
       }
       #+end_src
@@ -684,7 +696,7 @@
       {
           name_t name;
           field_jo_t (name_t name);
-          void exe (env_t &env, local_map_t *local_map);
+          void exe (env_t &env, local_map_t &local_map);
           string repr (env_t &env);
       };
       #+end_src
@@ -702,7 +714,7 @@
 
       #+begin_src cpp
       void
-      field_jo_t::exe (env_t &env, local_map_t *local_map)
+      field_jo_t::exe (env_t &env, local_map_t &local_map)
       {
           auto obj = env.obj_stack.top ();
           env.obj_stack.pop ();
@@ -736,7 +748,7 @@
       #+begin_src cpp
       struct apply_jo_t: jo_t
       {
-          void exe (env_t &env, local_map_t *local_map);
+          void exe (env_t &env, local_map_t &local_map);
           string repr (env_t &env);
       };
       #+end_src
@@ -745,7 +757,7 @@
 
       #+begin_src cpp
       void
-      apply_jo_t::exe (env_t &env, local_map_t *local_map)
+      apply_jo_t::exe (env_t &env, local_map_t &local_map)
       {
           auto obj = env.obj_stack.top ();
           env.obj_stack.pop ();
@@ -786,7 +798,8 @@
         jojo_t jojo = {
             new call_jo_t ("k1"),
             new call_jo_t ("k2"),
-            new lambda_jo_t ({ new call_jo_t ("k1"),
+            new lambda_jo_t ({ "x", "y" },
+                             { new call_jo_t ("k1"),
                                new call_jo_t ("k2") }),
             new apply_jo_t,
             new call_jo_t ("d1"),
@@ -794,7 +807,7 @@
             new field_jo_t ("f1"),
         };
 
-        auto frame = frame_t (jojo, new local_map_t);
+        auto frame = frame_t (jojo, local_map_t ());
         env.frame_stack.push (frame);
         env.report ();
         env.run ();
