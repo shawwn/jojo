@@ -1,5 +1,12 @@
 #+title: core
 
+* bool
+
+  #+begin_src cicada
+  (= true-t (data))
+  (= false-t (data))
+  #+end_src
+
 * list
 
   #+begin_src cicada

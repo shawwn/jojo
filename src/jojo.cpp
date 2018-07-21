@@ -1,4 +1,5 @@
     #include <iostream>
+    #include <memory>
     #include <vector>
     #include <array>
     #include <map>
@@ -7,10 +8,9 @@
     using namespace std;
     struct env_t;
     struct obj_t;
-    struct cell_t;
     struct jo_t;
     using name_t = string;
-    using local_map_t = map<name_t, obj_t *>;
+    using local_map_t = map<name_t, shared_ptr<obj_t>>;
     using jojo_t = vector<jo_t *>;
     struct jo_t
     {
@@ -21,11 +21,9 @@
     struct obj_t
     {
         tag_t t;
-        cell_t *cell;
         virtual ~obj_t ();
         virtual void print (env_t *env);
         virtual void apply (env_t *env);
-        virtual void mark (env_t *env);
     };
     struct frame_t
     {
@@ -34,46 +32,25 @@
         local_map_t *local_map;
         frame_t (jojo_t *jojo, local_map_t *local_map);
     };
-    using name_map_t = map<name_t, obj_t *>;
-    using obj_stack_t = stack<obj_t *>;
+    using name_map_t = map<name_t, shared_ptr<obj_t>>;
+    using obj_stack_t = stack<shared_ptr<obj_t>>;
     using frame_stack_t = stack<frame_t *>;
-      enum cell_state_t
-          { CELL_STATE_USED,
-            CELL_STATE_FREE };
-      struct cell_t
-      {
-          cell_state_t state;
-          obj_t *obj;
-      };
-      const size_t cell_area_size = 1024;
-      using cell_area_t = array<cell_t, cell_area_size>;
-      struct gc_t
-      {
-          size_t index;
-          size_t mark_counter;
-          cell_area_t *cell_area;
-          gc_t ();
-      };
     struct env_t
     {
         name_map_t *name_map;
         obj_stack_t *obj_stack;
         frame_stack_t *frame_stack;
-        gc_t *gc;
         env_t ();
         void step ();
         void run ();
         void report ();
     };
-    void
-    gc_for (env_t *env, obj_t *obj);
       obj_t::~obj_t ()
       {
-      }
-      void
-      obj_t::mark (env_t *env)
-      {
-          this->cell->state = CELL_STATE_USED;
+          // all classes that will be derived from
+          // should have a virtual or protected destructor,
+          // otherwise deleting an instance via a pointer
+          // to a base class results in undefined behavior.
       }
       void
       obj_t::print (env_t *env)
@@ -83,7 +60,7 @@
       void
       obj_t::apply (env_t *env)
       {
-          cout << "fatal error : applying non applicable obj" << "\n";
+          cout << "fatal error : applying non applicable object" << "\n";
           exit (1);
       }
       struct lambda_o: obj_t
@@ -91,9 +68,7 @@
           jojo_t *jojo;
           local_map_t *local_map;
           lambda_o (env_t *env, jojo_t* jojo, local_map_t *local_map);
-          virtual ~lambda_o ();
           void apply (env_t *env);
-          void mark (env_t *env);
       };
       lambda_o::
       lambda_o (env_t *env,
@@ -103,39 +78,12 @@
           this->t = "lambda-t";
           this->jojo = jojo;
           this->local_map = local_map;
-          gc_for (env, this);
-      }
-      lambda_o::~lambda_o ()
-      {
-          delete this->jojo;
-          this->local_map->clear ();
-          delete this->local_map;
-      }
-      void
-      lambda_o::mark (env_t *env)
-      {
-          this->cell->state = CELL_STATE_USED;
-          for (auto &kv: *(this->local_map)) {
-              obj_t *obj = kv.second;
-              obj->mark (env);
-          }
       }
       void
       lambda_o::apply (env_t *env)
       {
           frame_t *frame = new frame_t (this->jojo, this->local_map);
           env->frame_stack->push (frame);
-      }
-      struct int_o: obj_t
-      {
-          int i;
-          int_o (env_t *env, int i);
-      };
-      int_o::int_o (env_t *env, int i)
-      {
-          this->t = "int-t";
-          this->i = i;
-          gc_for (env, this);
       }
       struct string_o: obj_t
       {
@@ -146,180 +94,66 @@
       {
           this->t = "string-t";
           this->s = s;
-          gc_for (env, this);
       }
-      struct bool_o: obj_t
-      {
-          bool b;
-          bool_o (env_t *env, bool b);
-      };
-      bool_o::bool_o (env_t *env, bool b)
-      {
-          this->t = "bool-t";
-          this->b = b;
-          gc_for (env, this);
-      }
-      using map_t = map<string, obj_t *>;
-      struct map_o: obj_t
-      {
-          map_t *map;
-          map_o (env_t *env, map_t *map);
-          virtual ~map_o ();
-          void mark (env_t *env);
-      };
-      map_o::map_o (env_t *env, map_t *map)
-      {
-          this->t = "map-t";
-          this->map = map;
-          gc_for (env, this);
-      }
-      map_o::~map_o ()
-      {
-          this->map->clear ();
-          delete this->map;
-      }
-      void
-      map_o::mark (env_t *env)
-      {
-          this->cell->state = CELL_STATE_USED;
-          for (auto &kv: *(this->map)) {
-              obj_t *obj = kv.second;
-              obj->mark (env);
-          }
-      }
-      using field_map_t = map<name_t, obj_t *>;
+      using field_map_t = map<name_t, shared_ptr<obj_t>>;
       struct data_o: obj_t
       {
           field_map_t *field_map;
           data_o (env_t *env, tag_t t, field_map_t *field_map);
-          virtual ~data_o ();
-          void mark (env_t *env);
       };
       data_o::data_o (env_t *env, tag_t t, field_map_t *field_map)
       {
           this->t = t;
           this->field_map = field_map;
-          gc_for (env, this);
       }
-      data_o::~data_o ()
+      using field_vector_t = vector<name_t>;
+      struct type_o: obj_t
       {
-          this->field_map->clear ();
-          delete this->field_map;
+          tag_t type_tag;
+          field_vector_t *field_vector;
+          type_o (env_t *env,
+                  tag_t type_tag,
+                  field_vector_t *field_vector);
+      };
+      type_o::
+      type_o (env_t *env,
+              tag_t type_tag,
+              field_vector_t *field_vector)
+      {
+          this->t = "type-t";
+          this->type_tag = type_tag;
+          this->field_vector = field_vector;
+      }
+      struct data_constructor_o: obj_t
+      {
+          shared_ptr<type_o> type;
+          data_constructor_o (env_t *env, shared_ptr<type_o> type);
+          void apply (env_t *env);
+      };
+      data_constructor_o::
+      data_constructor_o (env_t *env, shared_ptr<type_o> type)
+      {
+          this->t = "data-constructor-t";
+          this->type = type;
       }
       void
-      data_o::mark (env_t *env)
+      data_constructor_o::apply (env_t *env)
       {
-          this->cell->state = CELL_STATE_USED;
-          for (auto &kv: *(this->field_map)) {
-              obj_t *obj = kv.second;
-              obj->mark (env);
+          field_map_t *field_map = new field_map_t;
+          field_vector_t *field_vector = this->type->field_vector;
+          field_vector_t::reverse_iterator it;
+          for (it = field_vector->rbegin();
+               it != field_vector->rend();
+               it++) {
+              name_t name = *it;
+              shared_ptr<obj_t> obj = env->obj_stack->top ();
+              env->obj_stack->pop ();
+              field_map->insert (make_pair (name, obj));
           }
+          auto data = make_shared<data_o>
+              (env, this->type->type_tag, field_map);
+          env->obj_stack->push (data);
       }
-        using field_vector_t = vector<name_t>;
-        struct type_o: obj_t
-        {
-            tag_t type_tag;
-            field_vector_t *field_vector;
-            type_o (env_t *env,
-                    tag_t type_tag,
-                    field_vector_t *field_vector);
-            virtual ~type_o ();
-        };
-        type_o::
-        type_o (env_t *env,
-                tag_t type_tag,
-                field_vector_t *field_vector)
-        {
-            this->t = "type-t";
-            this->type_tag = type_tag;
-            this->field_vector = field_vector;
-        }
-        type_o::~type_o ()
-        {
-            delete this->field_vector;
-        }
-        struct data_constructor_o: obj_t
-        {
-            type_o *type;
-            data_constructor_o (env_t *env, type_o *type);
-            void apply (env_t *env);
-        };
-        data_constructor_o::
-        data_constructor_o (env_t *env, type_o *type)
-        {
-            this->t = "data-constructor-t";
-            this->type = type;
-            gc_for (env, this);
-        }
-        void
-        data_constructor_o::apply (env_t *env)
-        {
-            field_map_t *field_map = new field_map_t;
-            field_vector_t *field_vector = this->type->field_vector;
-            field_vector_t::reverse_iterator it;
-            for (it = field_vector->rbegin();
-                 it != field_vector->rend();
-                 it++) {
-                name_t name = *it;
-                obj_t *obj = env->obj_stack->top ();
-                env->obj_stack->pop ();
-                field_map->insert (pair<name_t, obj_t *> (name, obj));
-            }
-            data_o* data =
-                new data_o (env,
-                            this->type->type_tag,
-                            field_map);
-            env->obj_stack->push (data);
-        }
-        struct data_creator_o: obj_t
-        {
-            type_o *type;
-            data_creator_o (env_t *env, type_o *type);
-            void apply (env_t *env);
-        };
-        data_creator_o::
-        data_creator_o (env_t *env, type_o *type)
-        {
-            this->t = "data-creator-t";
-            this->type = type;
-            gc_for (env, this);
-        }
-        void
-        data_creator_o::apply (env_t *env)
-        {
-            obj_t *obj = env->obj_stack->top ();
-            env->obj_stack->pop ();
-            map_o *map = static_cast<map_o *> (obj);
-            data_o* data =
-                new data_o (env,
-                            this->type->type_tag,
-                            map->map);
-            env->obj_stack->push (data);
-        }
-        struct data_predicate_o: obj_t
-        {
-            type_o *type;
-            data_predicate_o (env_t *env, type_o *type);
-            void apply (env_t *env);
-        };
-        data_predicate_o::
-        data_predicate_o (env_t *env, type_o *type)
-        {
-            this->t = "data-predicate-t";
-            this->type = type;
-            gc_for (env, this);
-        }
-        void
-        data_predicate_o::apply (env_t *env)
-        {
-            tag_t tag = this->type->type_tag;
-            obj_t *obj = env->obj_stack->top ();
-            env->obj_stack->pop ();
-            if (obj->t == tag)
-                env->obj_stack->push (new bool_o (env, true));
-            else
-                env->obj_stack->push (new bool_o (env, false));
-        }
       void
       jojo_print (env_t *env,
                   jojo_t *jojo)
@@ -366,7 +200,7 @@
           cout << "  - local_map # " << frame->local_map->size () << "\n";
           for (auto &kv: *(frame->local_map)) {
               cout << "    " << kv.first << " : ";
-              obj_t *obj = kv.second;
+              shared_ptr<obj_t> obj = kv.second;
               obj->print (env);
               cout << "\n";
           }
@@ -377,7 +211,7 @@
           cout << "- name_map # " << env->name_map->size () << "\n";
           for (auto &kv: *(env->name_map)) {
               cout << "  " << kv.first << " : ";
-              obj_t *obj = kv.second;
+              shared_ptr<obj_t> obj = kv.second;
               obj->print (env);
               cout << "\n";
           }
@@ -400,103 +234,18 @@
           cout << "  ";
           obj_stack_t obj_stack = *(env->obj_stack);
           while (!obj_stack.empty ()) {
-              obj_t *obj = obj_stack.top ();
+              shared_ptr<obj_t> obj = obj_stack.top ();
               obj->print (env);
               cout << " ";
               obj_stack.pop ();
           }
           cout << "\n";
       }
-      gc_t::gc_t ()
-      {
-          this->index = 0;
-          this->cell_area = new cell_area_t;
-          for (auto &it: *(this->cell_area))
-              it.state = CELL_STATE_FREE;
-      }
-      void
-      gc_prepare (env_t *env)
-      {
-          gc_t *gc = env->gc;
-          gc->index = 0;
-          gc->mark_counter = 0;
-          for (auto &it: *(gc->cell_area))
-              it.state = CELL_STATE_FREE;
-      }
-      void
-      gc_mark_one (env_t *env, obj_t *obj)
-      {
-          if (obj->cell->state == CELL_STATE_FREE) {
-              env->gc->mark_counter++;
-              obj->mark (env);
-          }
-      }
-      void
-      gc_mark (env_t *env)
-      {
-          for (auto &kv: *(env->name_map)) {
-              obj_t *obj = kv.second;
-              gc_mark_one (env, obj);
-          }
-          obj_stack_t obj_stack = *(env->obj_stack);
-          while (!obj_stack.empty ()) {
-              obj_t *obj = obj_stack.top ();
-              gc_mark_one (env, obj);
-              obj_stack.pop ();
-          }
-      }
-      void
-      gc_sweep (env_t *env)
-      {
-          for (auto &cell: *(env->gc->cell_area))
-              if (cell.state == CELL_STATE_FREE)
-                  delete cell.obj;
-      }
-      void
-      gc_run (env_t *env)
-      {
-          gc_prepare (env);
-          gc_mark (env);
-          gc_sweep (env);
-      }
-      cell_t *
-      gc_next_free_cell (env_t *env)
-      {
-           size_t index = env->gc->index;
-           if (index >= cell_area_size) {
-               gc_run (env);
-               if (env->gc->mark_counter == cell_area_size) {
-                   cout << "fatal error : cell_area fulled after gc" << "\n";
-                   exit (1);
-               }
-               else {
-                   return gc_next_free_cell (env);
-               }
-           }
-
-           cell_t &cell = (*(env->gc->cell_area)) [index];
-           if (cell.state == CELL_STATE_FREE) {
-               env->gc->index++;
-               return &cell;
-           }
-           else {
-               env->gc->index++;
-               return gc_next_free_cell (env);
-           }
-      }
-      void
-      gc_for (env_t *env, obj_t *obj)
-      {
-          cell_t *cell = gc_next_free_cell (env);
-          cell->obj = obj;
-          obj->cell = cell;
-      }
     env_t::env_t ()
     {
         this->name_map = new name_map_t;
         this->obj_stack = new obj_stack_t;
         this->frame_stack = new frame_stack_t;
-        this->gc = new gc_t;
     }
     void
     env_t::step ()
@@ -529,8 +278,10 @@
     void
     env_t::run ()
     {
-        while (!this->frame_stack->empty ())
+        while (!this->frame_stack->empty ()) {
+            this->report ();
             this->step ();
+        }
     }
     void
     env_t::report ()
@@ -606,8 +357,8 @@
           // create lambda_o by closure
           // and push it to obj_stack
           frame_t *frame = env->frame_stack->top ();
-          lambda_o *lambda =
-              new lambda_o (env, this->jojo, frame->local_map);
+          auto lambda =
+              make_shared<lambda_o> (env, this->jojo, frame->local_map);
           env->obj_stack->push (lambda);
       }
       string
@@ -629,9 +380,9 @@
       void
       field_jo_t::exe (env_t *env, local_map_t *local_map)
       {
-          obj_t *obj = env->obj_stack->top ();
+          auto obj = env->obj_stack->top ();
           env->obj_stack->pop ();
-          data_o *data = static_cast<data_o *> (obj);
+          auto data = static_pointer_cast<data_o> (obj);
           auto it = data->field_map->find (this->name);
           if (it != data->field_map->end ()) {
               env->obj_stack->push (it->second);
@@ -655,7 +406,7 @@
       void
       apply_jo_t::exe (env_t *env, local_map_t *local_map)
       {
-          obj_t *obj = env->obj_stack->top ();
+          shared_ptr<obj_t> obj = env->obj_stack->top ();
           env->obj_stack->pop ();
           obj->apply (env);
       }
@@ -669,13 +420,13 @@
     {
         env_t *env = new env_t;
         field_map_t *field_map = new field_map_t;
-        field_map->insert (pair<name_t, obj_t *> ("f1", new string_o (env, "fs1")));
-        field_map->insert (pair<name_t, obj_t *> ("f2", new string_o (env, "fs2")));
+        field_map->insert (make_pair ("f1", make_shared<string_o> (env, "fs1")));
+        field_map->insert (make_pair ("f2", make_shared<string_o> (env, "fs2")));
 
         name_map_t *name_map = new name_map_t;
-        name_map->insert (pair<name_t, obj_t *> ("k1", new string_o (env, "s1")));
-        name_map->insert (pair<name_t, obj_t *> ("k2", new string_o (env, "s2")));
-        name_map->insert (pair<name_t, obj_t *> ("d1", new data_o (env, "d-t", field_map)));
+        name_map->insert (make_pair ("k1", make_shared<string_o> (env, "s1")));
+        name_map->insert (make_pair ("k2", make_shared<string_o> (env, "s2")));
+        name_map->insert (make_pair ("d1", make_shared<data_o> (env, "d-t", field_map)));
         env->name_map = name_map;
 
         jojo_t *lambda_jojo = new jojo_t;
@@ -694,26 +445,5 @@
         env->frame_stack->push (frame);
         env->report ();
         env->run ();
-
-        size_t counter;
-
-        counter = 0;
-        while (counter < cell_area_size) {
-            new string_o (env, "s");
-            counter++;
-        }
-
-        counter = 0;
-        while (counter < cell_area_size) {
-            new string_o (env, "s");
-            counter++;
-        }
-
-        counter = 0;
-        while (counter < cell_area_size) {
-            new string_o (env, "s");
-            counter++;
-        }
-
         env->report ();
     }
