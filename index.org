@@ -1,6 +1,10 @@
 #+html_head: <link rel="stylesheet" href="css/org-page.css"/>
 #+title: Semantic of De Bruijn Notation and Bizarre Syntax Adventure
 
+- Author : [[https://xieyuheng.github.io][Xie Yuheng]]
+- Date : 2018-07-22
+- Keywords : Programming Language Design.
+
 * Semantic
 
   - The direct semantic of De Bruijn notation,
