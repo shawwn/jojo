@@ -3,10 +3,6 @@
 
 * [todo-stack]
 
-*** back to postfix notation -- just to tell a story
-
-*** about the story -- others's say about De Bruijn Notation
-
 *** global name_t is box of obj_t
 
 *** handle local at compile time
