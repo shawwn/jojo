@@ -799,12 +799,22 @@
               assert (env.obj_stack.size () == 0);
           }
       }
+      void
+      test_data_cons ()
+      {
+
+      }
+      void test_all ()
+      {
+          test_step ();
+          test_data ();
+          test_apply ();
+          test_curry ();
+          test_data_cons ();
+      }
     int
     main ()
     {
-        test_step ();
-        test_data ();
-        test_apply ();
-        test_curry ();
+        test_all ();
         return 0;
     }

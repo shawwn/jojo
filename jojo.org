@@ -3,17 +3,23 @@
 
 * [todo-stack]
 
-*** curry for data_cons_o::apply
-
-*** fix repr for *_o
-
 *** fix the use of tag_t
 
     - a new state in env_t for mapping tag to string
 
+*** curry for data_cons_o::apply
+
+    - zero arity constructor is special
+
+*** builtin true-t and false-t
+
+*** fix repr for *_o
+
 *** simple sexp -- using `vector <string>` -- without macro
 
 *** quit using org-mode and separate code into files
+
+    - to fix forward declarations
 
 *** use cpp header file
 
@@ -1287,16 +1293,36 @@
       }
       #+end_src
 
+***** test_data_cons
+
+      #+begin_src cpp
+      void
+      test_data_cons ()
+      {
+
+      }
+      #+end_src
+
+***** test_all
+
+      #+begin_src cpp
+      void test_all ()
+      {
+          test_step ();
+          test_data ();
+          test_apply ();
+          test_curry ();
+          test_data_cons ();
+      }
+      #+end_src
+
 *** main
 
     #+begin_src cpp
     int
     main ()
     {
-        test_step ();
-        test_data ();
-        test_apply ();
-        test_curry ();
+        test_all ();
         return 0;
     }
     #+end_src
