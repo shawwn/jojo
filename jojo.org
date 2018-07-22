@@ -1037,16 +1037,30 @@
               new ref_jo_t ("string-2"),
               new lambda_jo_t ({ "x", "y" },
                                { new local_ref_jo_t (0, 0),
-                                 new local_ref_jo_t (0, 0),
-                                 new local_ref_jo_t (0, 1),
-                                 new local_ref_jo_t (0, 0) }),
+                                 new local_ref_jo_t (0, 1) }),
               new apply_jo_t,
           };
           auto frame = make_shared <frame_t> (jojo, local_scope_t ());
           env.frame_stack.push (frame);
-          env.report ();
           env.run ();
-          env.report ();
+
+          assert (env.obj_stack.size () == 2);
+
+          auto string_2 = static_pointer_cast <string_o>
+              (env.obj_stack.top ());
+          assert (string_2->t == "string-t");
+          assert (string_2->s == "world");
+          env.obj_stack.pop ();
+
+          assert (env.obj_stack.size () == 1);
+
+          auto string_1 = static_pointer_cast <string_o>
+              (env.obj_stack.top ());
+          assert (string_1->t == "string-t");
+          assert (string_1->s == "bye");
+          env.obj_stack.pop ();
+
+          assert (env.obj_stack.size () == 0);
       }
       #+end_src
 
