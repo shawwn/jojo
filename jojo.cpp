@@ -1,4 +1,5 @@
     #include <iostream>
+    #include <algorithm>
     #include <cassert>
     #include <memory>
     #include <vector>
@@ -11,11 +12,12 @@
     struct obj_t;
     struct jo_t;
     using name_t = string;
+    using name_vector_t = vector <name_t>;
     using bind_t = pair <name_t, shared_ptr <obj_t>>;
     // index from end
-    using local_level_t = vector <bind_t>;
+    using bind_vector_t = vector <bind_t>;
     // index from end
-    using local_scope_t = vector <local_level_t>;
+    using local_scope_t = vector <bind_vector_t>;
     using jojo_t = vector <jo_t *>;
     struct jo_t
     {
@@ -28,8 +30,10 @@
         tag_t t;
         virtual ~obj_t ();
         virtual void print (env_t &env);
-        virtual void apply (env_t &env);
+        virtual void apply (env_t &env, size_t arity);
     };
+    using obj_map_t = map <name_t, shared_ptr <obj_t>>;
+    using obj_vector_t = vector <shared_ptr <obj_t>>;
     struct frame_t
     {
         size_t index;
@@ -44,26 +48,34 @@
         box_t ();
         box_t (shared_ptr <obj_t> obj);
     };
-    using name_map_t = map <name_t, box_t *>;
+    using box_map_t = map <name_t, box_t *>;
     using obj_stack_t = stack <shared_ptr <obj_t>>;
     using frame_stack_t = stack <shared_ptr <frame_t>>;
     struct env_t
     {
-        name_map_t name_map;
+        box_map_t box_map;
         obj_stack_t obj_stack;
         frame_stack_t frame_stack;
         void step ();
         void run ();
         void report ();
     };
-      void
-      local_level_print (env_t &env, local_level_t local_level)
+      struct lambda_jo_t: jo_t
       {
-          for (auto it = local_level.rbegin ();
-               it != local_level.rend ();
+          name_vector_t name_vector;
+          jojo_t jojo;
+          lambda_jo_t (name_vector_t name_vector, jojo_t jojo);
+          void exe (env_t &env, local_scope_t &local_scope);
+          string repr (env_t &env);
+      };
+      void
+      bind_vector_print (env_t &env, bind_vector_t bind_vector)
+      {
+          for (auto it = bind_vector.rbegin ();
+               it != bind_vector.rend ();
                it++) {
               cout << "(#"
-                   << distance(local_level.rbegin (), it)
+                   << distance(bind_vector.rbegin (), it)
                    << " ";
               cout << it->first
                    << " = ";
@@ -82,7 +94,7 @@
               cout << "  - level # "
                    << distance(local_scope.rbegin (), it)
                    << " : ";
-              local_level_print (env, *it);
+              bind_vector_print (env, *it);
               cout << "\n";
           }
       }
@@ -99,57 +111,129 @@
           cout << this->t;
       }
       void
-      obj_t::apply (env_t &env)
+      obj_t::apply (env_t &env, size_t arity)
       {
-          cout << "fatal error : applying non applicable object" << "\n";
+          cout << "- fatal error : applying non applicable object" << "\n";
           exit (1);
       }
-      using arg_vector_t = vector <name_t>;
-      local_level_t
-      local_level_from_arg_vector (env_t &env, arg_vector_t arg_vector)
+      size_t
+      number_of_obj_in_bind_vector (bind_vector_t &bind_vector)
       {
-          auto local_level = local_level_t ();
-          for (auto it = arg_vector.rbegin ();
-               it != arg_vector.rend ();
-               it++) {
-              name_t name = *it;
-              auto obj = env.obj_stack.top ();
-              env.obj_stack.pop ();
-              auto bind = make_pair (name, obj);
-              local_level.push_back (bind);
-          }
-          return local_level;
+          size_t sum = 0;
+          auto begin = bind_vector.begin ();
+          auto end = bind_vector.end ();
+          for (auto it = begin; it != end; it++)
+              if (it->second)
+                  sum++;
+          return sum;
       }
       struct lambda_o: obj_t
       {
-          jojo_t jojo;
-          arg_vector_t arg_vector;
+          lambda_jo_t *lambda_jo;
+          bind_vector_t bind_vector;
           local_scope_t local_scope;
           lambda_o (env_t &env,
-                    arg_vector_t arg_vector,
-                    jojo_t jojo,
+                    lambda_jo_t *lambda_jo,
+                    bind_vector_t bind_vector,
                     local_scope_t local_scope);
-          void apply (env_t &env);
+          void apply (env_t &env, size_t arity);
       };
       lambda_o::
       lambda_o (env_t &env,
-                arg_vector_t arg_vector,
-                jojo_t jojo,
+                lambda_jo_t *lambda_jo,
+                bind_vector_t bind_vector,
                 local_scope_t local_scope)
       {
           this->t = "lambda-t";
-          this->arg_vector = arg_vector;
-          this->jojo = jojo;
+          this->lambda_jo = lambda_jo;
+          this->bind_vector = bind_vector;
           this->local_scope = local_scope;
       }
       void
-      lambda_o::apply (env_t &env)
+      bind_vector_insert_obj (bind_vector_t &bind_vector,
+                              shared_ptr <obj_t> obj)
       {
-          auto local_scope = this->local_scope;
-          local_scope.push_back
-              (local_level_from_arg_vector (env, this->arg_vector));
-          auto frame = make_shared <frame_t> (this->jojo, local_scope);
-          env.frame_stack.push (frame);
+          auto begin = bind_vector.rbegin ();
+          auto end = bind_vector.rend ();
+          for (auto it = begin; it != end; it++) {
+              if (it->second == nullptr) {
+                  it->second = obj;
+                  return;
+              }
+          }
+          cout << "- fatal error ! bind_vector_insert_obj" << "\n"
+               << "  the bind_vector is filled" << "\n"
+               << "\n";
+          exit (1);
+      }
+      bind_vector_t
+      bind_vector_merge_obj_vector (bind_vector_t &old_bind_vector,
+                                    obj_vector_t &obj_vector)
+      {
+          auto bind_vector = old_bind_vector;
+          for (auto obj: obj_vector)
+              bind_vector_insert_obj (bind_vector, obj);
+          return bind_vector;
+      }
+      obj_vector_t
+      pick_up_obj_vector (env_t &env, size_t counter)
+      {
+          auto obj_vector = obj_vector_t ();
+          while (counter > 0) {
+              counter--;
+              auto obj = env.obj_stack.top ();
+              obj_vector.push_back (obj);
+              env.obj_stack.pop ();
+          }
+          reverse (obj_vector.begin (),
+                   obj_vector.end ());
+          return obj_vector;
+      }
+      local_scope_t
+      local_scope_extend (local_scope_t old_local_scope,
+                          bind_vector_t bind_vector)
+      {
+          auto local_scope = old_local_scope;
+          local_scope.push_back (bind_vector);
+          return local_scope;
+      }
+      void
+      lambda_o::apply (env_t &env, size_t arity)
+      {
+          auto size = this->lambda_jo->name_vector.size ();
+          auto have = number_of_obj_in_bind_vector (this->bind_vector);
+          auto lack = size - have;
+          if (lack == arity) {
+              auto obj_vector = pick_up_obj_vector
+                  (env, arity);
+              auto bind_vector = bind_vector_merge_obj_vector
+                   (this->bind_vector, obj_vector);
+              auto local_scope = local_scope_extend
+                  (this->local_scope, bind_vector);
+              auto frame = make_shared <frame_t>
+                  (this->lambda_jo->jojo, local_scope);
+              env.frame_stack.push (frame);
+          }
+          else if (arity < lack) {
+              auto obj_vector = pick_up_obj_vector
+                  (env, arity);
+              auto bind_vector = bind_vector_merge_obj_vector
+                  (this->bind_vector, obj_vector);
+              auto lambda = make_shared <lambda_o>
+                  (env,
+                   this->lambda_jo,
+                   bind_vector,
+                   this->local_scope);
+              env.obj_stack.push (lambda);
+          }
+          else {
+              cout << "- fatal error : over-arity apply" << "\n"
+                   << "  arity > lack" << "\n"
+                   << "  arity : " << arity << "\n"
+                   << "  lack : " << lack << "\n"
+                   << "\n";
+              exit (1);
+          }
       }
       struct string_o: obj_t
       {
@@ -166,63 +250,61 @@
       {
           cout << '"' << this->s << '"';
       }
-      using field_map_t = map <name_t, shared_ptr <obj_t>>;
       struct data_o: obj_t
       {
-          field_map_t field_map;
-          data_o (env_t &env, tag_t t, field_map_t field_map);
+          obj_map_t obj_map;
+          data_o (env_t &env, tag_t t, obj_map_t obj_map);
       };
-      data_o::data_o (env_t &env, tag_t t, field_map_t field_map)
+      data_o::data_o (env_t &env, tag_t t, obj_map_t obj_map)
       {
           this->t = t;
-          this->field_map = field_map;
+          this->obj_map = obj_map;
       }
-      using field_vector_t = vector <name_t>;
       struct type_o: obj_t
       {
           tag_t type_tag;
-          field_vector_t field_vector;
+          name_vector_t name_vector;
           type_o (env_t &env,
                   tag_t type_tag,
-                  field_vector_t field_vector);
+                  name_vector_t name_vector);
       };
       type_o::
       type_o (env_t &env,
               tag_t type_tag,
-              field_vector_t field_vector)
+              name_vector_t name_vector)
       {
           this->t = "type-t";
           this->type_tag = type_tag;
-          this->field_vector = field_vector;
+          this->name_vector = name_vector;
       }
-      struct data_constructor_o: obj_t
+      struct data_cons_o: obj_t
       {
           shared_ptr <type_o> type;
-          data_constructor_o (env_t &env, shared_ptr <type_o> type);
-          void apply (env_t &env);
+          data_cons_o (env_t &env, shared_ptr <type_o> type);
+          void apply (env_t &env, size_t arity);
       };
-      data_constructor_o::
-      data_constructor_o (env_t &env, shared_ptr <type_o> type)
+      data_cons_o::
+      data_cons_o (env_t &env, shared_ptr <type_o> type)
       {
-          this->t = "data-constructor-t";
+          this->t = "data-cons-t";
           this->type = type;
       }
       void
-      data_constructor_o::apply (env_t &env)
+      data_cons_o::apply (env_t &env, size_t arity)
       {
-          auto field_map = field_map_t ();
-          field_vector_t &field_vector = this->type->field_vector;
-          for (auto it = field_vector.rbegin();
-               it != field_vector.rend();
+          auto obj_map = obj_map_t ();
+          name_vector_t &name_vector = this->type->name_vector;
+          for (auto it = name_vector.rbegin();
+               it != name_vector.rend();
                it++) {
               name_t name = *it;
               auto obj = env.obj_stack.top ();
               env.obj_stack.pop ();
               auto bind = make_pair (name, obj);
-              field_map.insert (bind);
+              obj_map.insert (bind);
           }
           auto data = make_shared <data_o>
-              (env, this->type->type_tag, field_map);
+              (env, this->type->type_tag, obj_map);
           env.obj_stack.push (data);
       }
       void
@@ -281,20 +363,20 @@
       box_t *
       boxing (env_t &env, name_t name)
       {
-          auto it = env.name_map.find (name);
-          if (it != env.name_map.end ())
+          auto it = env.box_map.find (name);
+          if (it != env.box_map.end ())
               return it->second;
           else {
               auto box = new box_t ();
-              env.name_map.insert (make_pair (name, box));
+              env.box_map.insert (make_pair (name, box));
               return box;
           }
       }
       void
-      name_map_report (env_t &env)
+      box_map_report (env_t &env)
       {
-          cout << "- name_map # " << env.name_map.size () << "\n";
-          for (auto &kv: env.name_map) {
+          cout << "- box_map # " << env.box_map.size () << "\n";
+          for (auto &kv: env.box_map) {
               cout << "  " << kv.first << " : ";
               auto box = kv.second;
               box->obj->print (env);
@@ -355,7 +437,7 @@
     void
     env_t::report ()
     {
-        name_map_report (*this);
+        box_map_report (*this);
         frame_stack_report (*this);
         obj_stack_report (*this);
         cout << "\n";
@@ -363,7 +445,7 @@
       void
       jo_t::exe (env_t &env, local_scope_t &local_scope)
       {
-          cout << "fatal error : unknown jo" << "\n";
+          cout << "- fatal error : unknown jo" << "\n";
           exit (1);
       }
       string
@@ -421,10 +503,10 @@
       {
           // this is the only place where
           //   the local_scope in the arg of exe is uesd.
-          auto local_level =
+          auto bind_vector =
               vector_rev_ref (local_scope, this->level);
           auto bind =
-              vector_rev_ref (local_level, this->index);
+              vector_rev_ref (bind_vector, this->index);
           // {
           //     local_scope_print (env, local_scope);
           //     cout << "- local_ref_jo_t::exe\n"
@@ -446,27 +528,28 @@
               to_string (this->level) + " " +
               to_string (this->index) + ")";
       }
-      struct lambda_jo_t: jo_t
+      lambda_jo_t::lambda_jo_t (name_vector_t name_vector, jojo_t jojo)
       {
-          jojo_t jojo;
-          arg_vector_t arg_vector;
-          lambda_jo_t (arg_vector_t arg_vector, jojo_t jojo);
-          void exe (env_t &env, local_scope_t &local_scope);
-          string repr (env_t &env);
-      };
-      lambda_jo_t::lambda_jo_t (arg_vector_t arg_vector, jojo_t jojo)
-      {
-          this->arg_vector = arg_vector;
+          this->name_vector = name_vector;
           this->jojo = jojo;
+      }
+      bind_vector_t
+      bind_vector_from_name_vector (name_vector_t &name_vector)
+      {
+          auto bind_vector = bind_vector_t ();
+          auto begin = name_vector.begin ();
+          auto end = name_vector.end ();
+          for (auto it = begin; it != end; it++)
+              bind_vector.push_back (make_pair (*it, nullptr));
+          return bind_vector;
       }
       void
       lambda_jo_t::exe (env_t &env, local_scope_t &local_scope)
       {
           auto frame = env.frame_stack.top ();
           auto lambda = make_shared <lambda_o>
-              (env,
-               this->arg_vector,
-               this->jojo,
+              (env, this,
+               bind_vector_from_name_vector (this->name_vector),
                frame->local_scope);
           env.obj_stack.push (lambda);
       }
@@ -492,12 +575,12 @@
           auto obj = env.obj_stack.top ();
           env.obj_stack.pop ();
           auto data = static_pointer_cast <data_o> (obj);
-          auto it = data->field_map.find (this->name);
-          if (it != data->field_map.end ()) {
+          auto it = data->obj_map.find (this->name);
+          if (it != data->obj_map.end ()) {
               env.obj_stack.push (it->second);
               return;
           }
-          cout << "fatal error ! unknown field : "
+          cout << "- fatal error ! unknown field : "
                << this->name
                << "\n";
           exit (1);
@@ -509,15 +592,22 @@
       }
       struct apply_jo_t: jo_t
       {
+          size_t arity;
+          apply_jo_t (size_t arity);
           void exe (env_t &env, local_scope_t &local_scope);
           string repr (env_t &env);
       };
+      apply_jo_t::
+      apply_jo_t (size_t arity)
+      {
+          this->arity = arity;
+      }
       void
       apply_jo_t::exe (env_t &env, local_scope_t &local_scope)
       {
           auto obj = env.obj_stack.top ();
           env.obj_stack.pop ();
-          obj->apply (env);
+          obj->apply (env, this->arity);
       }
       string
       apply_jo_t::repr (env_t &env)
@@ -529,7 +619,7 @@
       {
           auto env = env_t ();
 
-          env.name_map = {
+          env.box_map = {
               {"string-1", new box_t (make_shared <string_o> (env, "bye"))},
               {"string-2", new box_t (make_shared <string_o> (env, "world"))},
           };
@@ -565,13 +655,13 @@
       {
           auto env = env_t ();
 
-          field_map_t field_map = {
+          obj_map_t obj_map = {
               {"field-1", make_shared <string_o> (env, "bye")},
               {"field-2", make_shared <string_o> (env, "world")},
           };
 
-          env.name_map = {
-              {"data-1", new box_t (make_shared <data_o> (env, "data-1-t", field_map))},
+          env.box_map = {
+              {"data-1", new box_t (make_shared <data_o> (env, "data-1-t", obj_map))},
           };
 
           jojo_t jojo = {
@@ -615,7 +705,7 @@
       {
           auto env = env_t ();
 
-          env.name_map = {
+          env.box_map = {
               {"string-1", new box_t (make_shared <string_o> (env, "bye"))},
               {"string-2", new box_t (make_shared <string_o> (env, "world"))},
           };
@@ -626,29 +716,88 @@
               new lambda_jo_t ({ "x", "y" },
                                { new local_ref_jo_t (0, 0),
                                  new local_ref_jo_t (0, 1) }),
-              new apply_jo_t,
+              new apply_jo_t (2),
           };
           auto frame = make_shared <frame_t> (jojo, local_scope_t ());
           env.frame_stack.push (frame);
-          env.run ();
 
-          assert (env.obj_stack.size () == 2);
+          // {
+          //     env.report ();
+          //     env.run ();
+          //     env.report ();
+          // }
 
-          auto string_2 = static_pointer_cast <string_o>
-              (env.obj_stack.top ());
-          assert (string_2->t == "string-t");
-          assert (string_2->s == "world");
-          env.obj_stack.pop ();
+          {
+              env.run ();
 
-          assert (env.obj_stack.size () == 1);
+              assert (env.obj_stack.size () == 2);
 
-          auto string_1 = static_pointer_cast <string_o>
-              (env.obj_stack.top ());
-          assert (string_1->t == "string-t");
-          assert (string_1->s == "bye");
-          env.obj_stack.pop ();
+              auto string_2 = static_pointer_cast <string_o>
+                  (env.obj_stack.top ());
+              assert (string_2->t == "string-t");
+              assert (string_2->s == "world");
+              env.obj_stack.pop ();
 
-          assert (env.obj_stack.size () == 0);
+              assert (env.obj_stack.size () == 1);
+
+              auto string_1 = static_pointer_cast <string_o>
+                  (env.obj_stack.top ());
+              assert (string_1->t == "string-t");
+              assert (string_1->s == "bye");
+              env.obj_stack.pop ();
+
+              assert (env.obj_stack.size () == 0);
+          }
+      }
+      void
+      test_curry ()
+      {
+          auto env = env_t ();
+
+          env.box_map = {
+              {"string-1", new box_t (make_shared <string_o> (env, "bye"))},
+              {"string-2", new box_t (make_shared <string_o> (env, "world"))},
+          };
+
+          jojo_t jojo = {
+              new ref_jo_t (boxing (env, "string-1")),
+              new ref_jo_t (boxing (env, "string-2")),
+              new lambda_jo_t ({ "x", "y" },
+                               { new local_ref_jo_t (0, 0),
+                                 new local_ref_jo_t (0, 1) }),
+              new apply_jo_t (1),
+              new apply_jo_t (1),
+          };
+          auto frame = make_shared <frame_t> (jojo, local_scope_t ());
+          env.frame_stack.push (frame);
+
+          // {
+          //     env.report ();
+          //     env.run ();
+          //     env.report ();
+          // }
+
+          {
+              env.run ();
+
+              assert (env.obj_stack.size () == 2);
+
+              auto string_1 = static_pointer_cast <string_o>
+                  (env.obj_stack.top ());
+              assert (string_1->t == "string-t");
+              assert (string_1->s == "bye");
+              env.obj_stack.pop ();
+
+              assert (env.obj_stack.size () == 1);
+
+              auto string_2 = static_pointer_cast <string_o>
+                  (env.obj_stack.top ());
+              assert (string_2->t == "string-t");
+              assert (string_2->s == "world");
+              env.obj_stack.pop ();
+
+              assert (env.obj_stack.size () == 0);
+          }
       }
     int
     main ()
@@ -656,5 +805,6 @@
         test_step ();
         test_data ();
         test_apply ();
+        test_curry ();
         return 0;
     }
