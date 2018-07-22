@@ -37,7 +37,14 @@
         local_scope_t local_scope;
         frame_t (jojo_t jojo, local_scope_t local_scope);
     };
-    using name_map_t = map <name_t, shared_ptr <obj_t>>;
+    struct box_t
+    {
+        shared_ptr <obj_t> obj;
+        bool empty_p;
+        box_t ();
+        box_t (shared_ptr <obj_t> obj);
+    };
+    using name_map_t = map <name_t, box_t *>;
     using obj_stack_t = stack <shared_ptr <obj_t>>;
     using frame_stack_t = stack <shared_ptr <frame_t>>;
     struct env_t
@@ -261,14 +268,36 @@
                << frame->local_scope.size ()
                << "\n";
       }
+      box_t::box_t ()
+      {
+          this->empty_p = true;
+      }
+
+      box_t::box_t (shared_ptr <obj_t> obj)
+      {
+          this->empty_p = false;
+          this->obj = obj;
+      }
+      box_t *
+      boxing (env_t &env, name_t name)
+      {
+          auto it = env.name_map.find (name);
+          if (it != env.name_map.end ())
+              return it->second;
+          else {
+              auto box = new box_t ();
+              env.name_map.insert (make_pair (name, box));
+              return box;
+          }
+      }
       void
       name_map_report (env_t &env)
       {
           cout << "- name_map # " << env.name_map.size () << "\n";
           for (auto &kv: env.name_map) {
               cout << "  " << kv.first << " : ";
-              auto obj = kv.second;
-              obj->print (env);
+              auto box = kv.second;
+              box->obj->print (env);
               cout << "\n";
           }
       }
@@ -313,8 +342,7 @@
         // handle proper tail call
         if (index+1 == size) this->frame_stack.pop ();
         // since the last frame might be drop,
-        //   we pass local_scope the last frame
-        //   as an extra argument.
+        //   we pass last local_scope as an extra argument.
         jo->exe (*this, frame->local_scope);
     }
     void
@@ -345,32 +373,26 @@
       }
       struct ref_jo_t: jo_t
       {
-          name_t name;
-          ref_jo_t (name_t name);
+          box_t *box;
+          ref_jo_t (box_t *box);
           void exe (env_t &env, local_scope_t &local_scope);
           string repr (env_t &env);
       };
-      ref_jo_t::ref_jo_t (name_t name)
+      ref_jo_t::ref_jo_t (box_t *box)
       {
-          this->name = name;
+          this->box = box;
       }
       void
       ref_jo_t::exe (env_t &env, local_scope_t &local_scope)
       {
-          auto it = env.name_map.find (this->name);
-          if (it != env.name_map.end ()) {
-              env.obj_stack.push (it->second);
-              return;
-          }
-          cout << "fatal error ! unknown name : "
-               << this->name
-               << "\n";
-          exit (1);
+          assert (! this->box->empty_p);
+          env.obj_stack.push (this->box->obj);
       }
       string
       ref_jo_t::repr (env_t &env)
       {
-          return "(ref " + this->name + ")";
+          // return "(ref " + this->name + ")";
+          return "(ref)";
       }
       struct local_ref_jo_t: jo_t
       {
@@ -508,13 +530,13 @@
           auto env = env_t ();
 
           env.name_map = {
-              {"string-1", make_shared <string_o> (env, "bye")},
-              {"string-2", make_shared <string_o> (env, "world")},
+              {"string-1", new box_t (make_shared <string_o> (env, "bye"))},
+              {"string-2", new box_t (make_shared <string_o> (env, "world"))},
           };
 
           jojo_t jojo = {
-              new ref_jo_t ("string-1"),
-              new ref_jo_t ("string-2"),
+              new ref_jo_t (boxing (env, "string-1")),
+              new ref_jo_t (boxing (env, "string-2")),
           };
           auto frame = make_shared <frame_t> (jojo, local_scope_t ());
           env.frame_stack.push (frame);
@@ -549,15 +571,15 @@
           };
 
           env.name_map = {
-              {"data-1", make_shared <data_o> (env, "data-1-t", field_map)},
+              {"data-1", new box_t (make_shared <data_o> (env, "data-1-t", field_map))},
           };
 
           jojo_t jojo = {
-              new ref_jo_t ("data-1"),
+              new ref_jo_t (boxing (env, "data-1")),
               new field_jo_t ("field-1"),
-              new ref_jo_t ("data-1"),
+              new ref_jo_t (boxing (env, "data-1")),
               new field_jo_t ("field-2"),
-              new ref_jo_t ("data-1"),
+              new ref_jo_t (boxing (env, "data-1")),
           };
           auto frame = make_shared <frame_t> (jojo, local_scope_t ());
           env.frame_stack.push (frame);
@@ -594,13 +616,13 @@
           auto env = env_t ();
 
           env.name_map = {
-              {"string-1", make_shared <string_o> (env, "bye")},
-              {"string-2", make_shared <string_o> (env, "world")},
+              {"string-1", new box_t (make_shared <string_o> (env, "bye"))},
+              {"string-2", new box_t (make_shared <string_o> (env, "world"))},
           };
 
           jojo_t jojo = {
-              new ref_jo_t ("string-1"),
-              new ref_jo_t ("string-2"),
+              new ref_jo_t (boxing (env, "string-1")),
+              new ref_jo_t (boxing (env, "string-2")),
               new lambda_jo_t ({ "x", "y" },
                                { new local_ref_jo_t (0, 0),
                                  new local_ref_jo_t (0, 1) }),
