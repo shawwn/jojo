@@ -39,7 +39,7 @@
     };
     using name_map_t = map <name_t, shared_ptr <obj_t>>;
     using obj_stack_t = stack <shared_ptr <obj_t>>;
-    using frame_stack_t = stack <frame_t>;
+    using frame_stack_t = stack <shared_ptr <frame_t>>;
     struct env_t
     {
         name_map_t name_map;
@@ -141,7 +141,7 @@
           auto local_scope = this->local_scope;
           local_scope.push_back
               (local_level_from_arg_vector (env, this->arg_vector));
-          auto frame = frame_t (this->jojo, local_scope);
+          auto frame = make_shared <frame_t> (this->jojo, local_scope);
           env.frame_stack.push (frame);
       }
       struct string_o: obj_t
@@ -247,18 +247,18 @@
           this->local_scope = local_scope;
       }
       void
-      frame_report (env_t &env, frame_t frame)
+      frame_report (env_t &env, shared_ptr <frame_t> frame)
       {
           cout << "  - ["
-               << frame.index+1
+               << frame->index+1
                << "/"
-               << frame.jojo.size ()
+               << frame->jojo.size ()
                << "] ";
-          jojo_print_with_index (env, frame.jojo, frame.index);
+          jojo_print_with_index (env, frame->jojo, frame->index);
           cout << "\n";
 
           cout << "  - local_scope # "
-               << frame.local_scope.size ()
+               << frame->local_scope.size ()
                << "\n";
       }
       void
@@ -304,19 +304,18 @@
     void
     env_t::step ()
     {
-        frame_t &frame = this->frame_stack.top ();
-        size_t size = frame.jojo.size ();
-        size_t index = frame.index;
+        auto frame = this->frame_stack.top ();
+        size_t size = frame->jojo.size ();
+        size_t index = frame->index;
         // it is assumed that jojo in frame are not empty
-        jo_t *jo = frame.jojo [index];
-        frame.index++;
+        jo_t *jo = frame->jojo [index];
+        frame->index++;
         // handle proper tail call
-        if (index+1 == size)
-            this->frame_stack.pop ();
+        if (index+1 == size) this->frame_stack.pop ();
         // since the last frame might be drop,
         //   we pass local_scope the last frame
         //   as an extra argument.
-        jo->exe (*this, frame.local_scope);
+        jo->exe (*this, frame->local_scope);
     }
     void
     env_t::run ()
@@ -446,7 +445,7 @@
               (env,
                this->arg_vector,
                this->jojo,
-               frame.local_scope);
+               frame->local_scope);
           env.obj_stack.push (lambda);
       }
       string
@@ -517,7 +516,7 @@
               new ref_jo_t ("string-1"),
               new ref_jo_t ("string-2"),
           };
-          auto frame = frame_t (jojo, local_scope_t ());
+          auto frame = make_shared <frame_t> (jojo, local_scope_t ());
           env.frame_stack.push (frame);
           env.run ();
 
@@ -560,7 +559,7 @@
               new field_jo_t ("field-2"),
               new ref_jo_t ("data-1"),
           };
-          auto frame = frame_t (jojo, local_scope_t ());
+          auto frame = make_shared <frame_t> (jojo, local_scope_t ());
           env.frame_stack.push (frame);
           env.run ();
 
@@ -609,7 +608,7 @@
                                  new local_ref_jo_t (0, 0) }),
               new apply_jo_t,
           };
-          auto frame = frame_t (jojo, local_scope_t ());
+          auto frame = make_shared <frame_t> (jojo, local_scope_t ());
           env.frame_stack.push (frame);
           env.report ();
           env.run ();
