@@ -1,0 +1,2899 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN"
+"http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml" lang="en" xml:lang="en">
+<head>
+<!-- 2018-07-24 Tue 04:10 -->
+<meta http-equiv="Content-Type" content="text/html;charset=utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>jojo</title>
+<meta name="generator" content="Org-mode" />
+<link rel="stylesheet" href="css/org-page.css"/>
+<script type="text/javascript">
+/*
+@licstart  The following is the entire license notice for the
+JavaScript code in this tag.
+
+Copyright (C) 2012-2013 Free Software Foundation, Inc.
+
+The JavaScript code in this tag is free software: you can
+redistribute it and/or modify it under the terms of the GNU
+General Public License (GNU GPL) as published by the Free Software
+Foundation, either version 3 of the License, or (at your option)
+any later version.  The code is distributed WITHOUT ANY WARRANTY;
+without even the implied warranty of MERCHANTABILITY or FITNESS
+FOR A PARTICULAR PURPOSE.  See the GNU GPL for more details.
+
+As additional permission under GNU GPL version 3 section 7, you
+may distribute non-source (e.g., minimized or compacted) forms of
+that code without the copy of the GNU GPL normally required by
+section 4, provided you include this license notice and a URL
+through which recipients can access the Corresponding Source.
+
+
+@licend  The above is the entire license notice
+for the JavaScript code in this tag.
+*/
+<!--/*--><![CDATA[/*><!--*/
+ function CodeHighlightOn(elem, id)
+ {
+   var target = document.getElementById(id);
+   if(null != target) {
+     elem.cacheClassElem = elem.className;
+     elem.cacheClassTarget = target.className;
+     target.className = "code-highlighted";
+     elem.className   = "code-highlighted";
+   }
+ }
+ function CodeHighlightOff(elem, id)
+ {
+   var target = document.getElementById(id);
+   if(elem.cacheClassElem)
+     elem.className = elem.cacheClassElem;
+   if(elem.cacheClassTarget)
+     target.className = elem.cacheClassTarget;
+ }
+/*]]>*///-->
+</script>
+</head>
+<body>
+<div id="content">
+<h1 class="title">jojo</h1>
+<div id="table-of-contents">
+<h2>overview</h2>
+<div id="text-table-of-contents">
+<ul>
+<li><a href="#org8f64b57"><span class="done _todo_stack_">[todo-stack]</span> </a>
+<ul>
+<li><a href="#org96a0918">fix repr for *_o</a></li>
+<li><a href="#org284f190">data_pred_o &#x2013; for `&lt;data&gt;-p`</a></li>
+<li><a href="#org3314d07">sexp</a></li>
+<li><a href="#orgae12139">case_jo_t</a></li>
+<li><a href="#org7c11ec3"><span class="done _maybe_">[maybe]</span> quit using org-mode &#x2013; use cpp header file</a></li>
+</ul>
+</li>
+<li><a href="#org626f0c">prolog</a>
+<ul>
+<li><a href="#org70e414d">include</a></li>
+<li><a href="#orgb815385">using</a></li>
+</ul>
+</li>
+<li><a href="#org27305cc">datatype</a>
+<ul>
+<li><a href="#org5f8ba1d">forward declaration</a></li>
+<li><a href="#org1b8f514">name_t</a></li>
+<li><a href="#orgb497139">name_vector_t</a></li>
+<li><a href="#orge0b4dd">bind_t</a></li>
+<li><a href="#orgaedbe5c">bind_vector_t</a></li>
+<li><a href="#org1bb3e33">local_scope_t</a></li>
+<li><a href="#orgbcf724b">jojo_t</a></li>
+<li><a href="#org3f43880">jo_t</a></li>
+<li><a href="#org1c8ae49">tag_t</a></li>
+<li><a href="#org37c923">tag_name_vector</a></li>
+<li><a href="#org81d9d27">tag_map</a></li>
+<li><a href="#org3506227">obj_t</a></li>
+<li><a href="#org13a715f">obj_map_t</a></li>
+<li><a href="#org30d2b69">obj_vector_t</a></li>
+<li><a href="#orgc0c98c6">frame_t</a></li>
+<li><a href="#org463ac8d">box_t</a></li>
+<li><a href="#orgecad9f5">box_map_t</a></li>
+<li><a href="#org6bfa367">obj_stack_t</a></li>
+<li><a href="#org6533420">frame_stack_t</a></li>
+<li><a href="#org5a963eb">env_t</a></li>
+<li><a href="#org1f0edb5">jo</a>
+<ul>
+<li><a href="#orga4a9986">lambda_jo_t</a></li>
+</ul>
+</li>
+</ul>
+</li>
+<li><a href="#orgdaa9db7">obj</a>
+<ul>
+<li><a href="#orgbcfbacd">tag</a>
+<ul>
+<li><a href="#org930f3a0">tagging</a></li>
+<li><a href="#orge39f9b3">name_of_tag</a></li>
+</ul>
+</li>
+<li><a href="#org43367ce">local</a>
+<ul>
+<li><a href="#orgc573663">bind_vector_print</a></li>
+<li><a href="#orgef56c1a">local_scope_print</a></li>
+</ul>
+</li>
+<li><a href="#org1d9da97">obj</a>
+<ul>
+<li><a href="#orga198c30">obj_t::~obj_t</a></li>
+<li><a href="#org4019845">obj_t::print</a></li>
+<li><a href="#org86c17be">obj_t::equal</a></li>
+<li><a href="#org65b5875">obj_t::apply</a></li>
+</ul>
+</li>
+<li><a href="#org77c5fa">lambda</a>
+<ul>
+<li><a href="#org3dd266c">number_of_obj_in_bind_vector</a></li>
+<li><a href="#org1fa7597">lambda_o</a></li>
+<li><a href="#orgb436ef2">lambda_o::lambda_o</a></li>
+<li><a href="#orgf67e770">bind_vector_insert_obj</a></li>
+<li><a href="#org197954c">bind_vector_merge_obj_vector</a></li>
+<li><a href="#org13595c2">pick_up_obj_vector</a></li>
+<li><a href="#org869c972">local_scope_extend</a></li>
+<li><a href="#orgc4a3af2">lambda_o::apply</a></li>
+<li><a href="#org22fc519">lambda_o::equal</a></li>
+</ul>
+</li>
+<li><a href="#orgc960992">string</a>
+<ul>
+<li><a href="#org37d0c0d">string_o</a></li>
+<li><a href="#org2799743">string_o::string_o</a></li>
+<li><a href="#org8aff3ab">string_o::print</a></li>
+<li><a href="#orgaad9674">string_o::equal</a></li>
+</ul>
+</li>
+<li><a href="#org274a157">data</a>
+<ul>
+<li><a href="#orgb8a75df">data_o</a></li>
+<li><a href="#orgfeb1aa5">data_o::data_o</a></li>
+<li><a href="#org2064359">obj_map_equal</a></li>
+<li><a href="#orgc496365">data_o::equal</a></li>
+</ul>
+</li>
+<li><a href="#org5e77c2b">data_cons</a>
+<ul>
+<li><a href="#orgc289ed8">data_cons_o</a></li>
+<li><a href="#orgbba6cb6">data_cons_o::data_cons_o</a></li>
+<li><a href="#orgb08e10f">name_vector_obj_map_lack</a></li>
+<li><a href="#org905668f">name_vector_obj_map_arity_lack</a></li>
+<li><a href="#org93117e9">data_cons_o::apply</a></li>
+<li><a href="#orgd04c0da">data_cons_o::equal</a></li>
+</ul>
+</li>
+</ul>
+</li>
+<li><a href="#org3bb6f9e">env</a>
+<ul>
+<li><a href="#org49b00ba">jojo</a>
+<ul>
+<li><a href="#org99ba9b3">jojo_print</a></li>
+<li><a href="#org41add0a">jojo_print_with_index</a></li>
+</ul>
+</li>
+<li><a href="#org774d13d">frame</a>
+<ul>
+<li><a href="#orgf6da992">frame_t::frame_t</a></li>
+<li><a href="#org28c5722">frame_report</a></li>
+</ul>
+</li>
+<li><a href="#org613aaa0">box</a>
+<ul>
+<li><a href="#org684c25c">box_t::box_t</a></li>
+<li><a href="#orgab7e5f1">boxing</a></li>
+</ul>
+</li>
+<li><a href="#orgf60dd76">box_map</a>
+<ul>
+<li><a href="#orga06839f">box_map_report</a></li>
+</ul>
+</li>
+<li><a href="#org81bb87a">obj_stack</a>
+<ul>
+<li><a href="#org22eaba2">frame_stack_report</a></li>
+</ul>
+</li>
+<li><a href="#org624e9fa">frame_stack</a>
+<ul>
+<li><a href="#orgfa9bbc0">obj_stack_report</a></li>
+</ul>
+</li>
+<li><a href="#org7432027">env_t::step</a></li>
+<li><a href="#orge56ecfb">env_t::run</a></li>
+<li><a href="#org38a879f">env_t::report</a></li>
+</ul>
+</li>
+<li><a href="#org5266e8b">jo</a>
+<ul>
+<li><a href="#orgcb6b3b9">jo</a>
+<ul>
+<li><a href="#org734b22d">jo_t::exe</a></li>
+<li><a href="#org4cd9064">jo_t::repr</a></li>
+</ul>
+</li>
+<li><a href="#org8b697a7">ref_jo</a>
+<ul>
+<li><a href="#org359930f">ref_jo_t</a></li>
+<li><a href="#org57eb704">ref_jo_t::ref_jo_t</a></li>
+<li><a href="#org6031ee7">ref_jo_t::exe</a></li>
+<li><a href="#org1c344c6">ref_jo_t::repr</a></li>
+</ul>
+</li>
+<li><a href="#org999ac77">local_ref_jo</a>
+<ul>
+<li><a href="#orgb9fb9e4">local_ref_jo_t</a></li>
+<li><a href="#org88e54f8">local_ref_jo_t::local_ref_jo_t</a></li>
+<li><a href="#orgd06fad0">vector_rev_ref</a></li>
+<li><a href="#orga064794">local_ref_jo_t::exe</a></li>
+<li><a href="#orge532ebe">local_ref_jo_t::repr</a></li>
+</ul>
+</li>
+<li><a href="#org817a7c3">lambda_jo</a>
+<ul>
+<li><a href="#org7721a98">lambda_jo_t::lambda_jo_t</a></li>
+<li><a href="#org618836a">bind_vector_from_name_vector</a></li>
+<li><a href="#orgf3f7405">lambda_jo_t::exe</a></li>
+<li><a href="#orge6d3aca">lambda_jo_t::repr</a></li>
+</ul>
+</li>
+<li><a href="#orgd66401c">field_jo</a>
+<ul>
+<li><a href="#orgb7af0e3">field_jo_t</a></li>
+<li><a href="#orge41a11d">field_jo_t::field_jo_t</a></li>
+<li><a href="#orgd740163">field_jo_t::exe</a></li>
+<li><a href="#orgcf1a67b">field_jo_t::repr</a></li>
+</ul>
+</li>
+<li><a href="#orgf29a86a">apply_jo</a>
+<ul>
+<li><a href="#orgec1969c">apply_jo_t</a></li>
+<li><a href="#org14fc144">apply_jo_t::apply_jo_t</a></li>
+<li><a href="#orga45f3d3">apply_jo_t::exe</a></li>
+<li><a href="#orgb8fa73e">apply_jo_t::repr</a></li>
+</ul>
+</li>
+</ul>
+</li>
+<li><a href="#org997496e">bool</a>
+<ul>
+<li><a href="#org27f3ae2">define</a></li>
+<li><a href="#org7d31bd1">true_c</a></li>
+<li><a href="#org494b1ba">false_c</a></li>
+<li><a href="#orgdb96173">import_bool</a></li>
+</ul>
+</li>
+<li><a href="#orge654e1">list</a>
+<ul>
+<li><a href="#org7114f01">null_c</a></li>
+<li><a href="#orgf239e55">cons_c</a></li>
+<li><a href="#org4d74e0a">import_list</a></li>
+</ul>
+</li>
+<li><a href="#org7904327">scan</a>
+<ul>
+<li><a href="#orge37f2ab">string_vector_t</a></li>
+<li><a href="#orgcf496b9">space_char_p</a></li>
+<li><a href="#orge69828f">delimiter_char_p</a></li>
+<li><a href="#orgb9dd18a">string_from_char</a></li>
+<li><a href="#org6771cd5">doublequote_char_p</a></li>
+<li><a href="#orgeed083">find_word_length</a></li>
+<li><a href="#org2c19646">code_scan</a></li>
+</ul>
+</li>
+<li><a href="#orgd19c996">sexp</a>
+<ul>
+<li><a href="#org9afdbfa">sexp_t</a></li>
+<li><a href="#orgd8a96bd">null_t</a></li>
+<li><a href="#org69d8677">cons_t</a></li>
+</ul>
+</li>
+<li><a href="#orgb64d962">epilog</a>
+<ul>
+<li><a href="#org736607b">new_frame</a></li>
+<li><a href="#org1a0f6e5">assert</a>
+<ul>
+<li><a href="#orge20916">assert_pop_eq</a></li>
+<li><a href="#org4ffbacc">assert_tos_eq</a></li>
+<li><a href="#orgbdd2477">assert_stack_size</a></li>
+</ul>
+</li>
+<li><a href="#org79e0108">test</a>
+<ul>
+<li><a href="#org8dff44c">test_step</a></li>
+<li><a href="#org34390d0">test_data</a></li>
+<li><a href="#orgf8e4638">test_apply</a></li>
+<li><a href="#orga49e2a6">test_lambda_curry</a></li>
+<li><a href="#org63d6fa5">test_data_cons</a></li>
+<li><a href="#orgeeeb050">test_data_cons_curry</a></li>
+<li><a href="#org9f99cb4">test_bool</a></li>
+<li><a href="#orge88d86f">test_list</a></li>
+<li><a href="#org16063d5">test_scan</a></li>
+<li><a href="#orge2f6b9f">test_all</a></li>
+</ul>
+</li>
+<li><a href="#org6f06204">main</a></li>
+</ul>
+</li>
+</ul>
+</div>
+</div>
+
+<div id="outline-container-org8f64b57" class="outline-2">
+<h2 id="org8f64b57"><span class="done _todo_stack_">[todo-stack]</span> </h2>
+<div class="outline-text-2" id="text-org8f64b57">
+</div><div id="outline-container-org96a0918" class="outline-3">
+<h3 id="org96a0918">fix repr for *_o</h3>
+</div>
+
+<div id="outline-container-org284f190" class="outline-3">
+<h3 id="org284f190">data_pred_o &#x2013; for `&lt;data&gt;-p`</h3>
+</div>
+
+<div id="outline-container-org3314d07" class="outline-3">
+<h3 id="org3314d07">sexp</h3>
+</div>
+
+<div id="outline-container-orgae12139" class="outline-3">
+<h3 id="orgae12139">case_jo_t</h3>
+</div>
+
+<div id="outline-container-org7c11ec3" class="outline-3">
+<h3 id="org7c11ec3"><span class="done _maybe_">[maybe]</span> quit using org-mode &#x2013; use cpp header file</h3>
+<div class="outline-text-3" id="text-org7c11ec3">
+<ul class="org-ul">
+<li><p>to fix forward declarations</p></li></ul>
+</div>
+</div>
+</div>
+
+<div id="outline-container-org626f0c" class="outline-2">
+<h2 id="org626f0c">prolog</h2>
+<div class="outline-text-2" id="text-org626f0c">
+</div><div id="outline-container-org70e414d" class="outline-3">
+<h3 id="org70e414d">include</h3>
+<div class="outline-text-3" id="text-org70e414d">
+<div class="org-src-container">
+
+<pre class="src src-cpp"><span style="color: #94BFF3;">#include</span> <span style="color: #CC9393;">&lt;iostream&gt;</span>
+<span style="color: #94BFF3;">#include</span> <span style="color: #CC9393;">&lt;algorithm&gt;</span>
+<span style="color: #94BFF3;">#include</span> <span style="color: #CC9393;">&lt;cassert&gt;</span>
+<span style="color: #94BFF3;">#include</span> <span style="color: #CC9393;">&lt;memory&gt;</span>
+<span style="color: #94BFF3;">#include</span> <span style="color: #CC9393;">&lt;vector&gt;</span>
+<span style="color: #94BFF3;">#include</span> <span style="color: #CC9393;">&lt;array&gt;</span>
+<span style="color: #94BFF3;">#include</span> <span style="color: #CC9393;">&lt;map&gt;</span>
+<span style="color: #94BFF3;">#include</span> <span style="color: #CC9393;">&lt;set&gt;</span>
+<span style="color: #94BFF3;">#include</span> <span style="color: #CC9393;">&lt;stack&gt;</span>
+</pre>
+</div>
+</div>
+</div>
+
+<div id="outline-container-orgb815385" class="outline-3">
+<h3 id="orgb815385">using</h3>
+<div class="outline-text-3" id="text-orgb815385">
+<div class="org-src-container">
+
+<pre class="src src-cpp"><span style="color: #F0DFAF; font-weight: bold;">using</span> <span style="color: #F0DFAF; font-weight: bold;">namespace</span> <span style="color: #BFEBBF;">std</span>;
+</pre>
+</div>
+</div>
+</div>
+</div>
+
+<div id="outline-container-org27305cc" class="outline-2">
+<h2 id="org27305cc">datatype</h2>
+<div class="outline-text-2" id="text-org27305cc">
+</div><div id="outline-container-org5f8ba1d" class="outline-3">
+<h3 id="org5f8ba1d">forward declaration</h3>
+<div class="outline-text-3" id="text-org5f8ba1d">
+<div class="org-src-container">
+
+<pre class="src src-cpp"><span style="color: #F0DFAF; font-weight: bold;">struct</span> <span style="color: #7CB8BB;">env_t</span>;
+<span style="color: #F0DFAF; font-weight: bold;">struct</span> <span style="color: #7CB8BB;">obj_t</span>;
+<span style="color: #F0DFAF; font-weight: bold;">struct</span> <span style="color: #7CB8BB;">jo_t</span>;
+</pre>
+</div>
+</div>
+</div>
+
+<div id="outline-container-org1b8f514" class="outline-3">
+<h3 id="org1b8f514">name_t</h3>
+<div class="outline-text-3" id="text-org1b8f514">
+<div class="org-src-container">
+
+<pre class="src src-cpp"><span style="color: #F0DFAF; font-weight: bold;">using</span> <span style="color: #7CB8BB;">name_t</span> = string;
+</pre>
+</div>
+</div>
+</div>
+
+<div id="outline-container-orgb497139" class="outline-3">
+<h3 id="orgb497139">name_vector_t</h3>
+<div class="outline-text-3" id="text-orgb497139">
+<div class="org-src-container">
+
+<pre class="src src-cpp"><span style="color: #F0DFAF; font-weight: bold;">using</span> <span style="color: #7CB8BB;">name_vector_t</span> = <span style="color: #7CB8BB;">vector</span> &lt;<span style="color: #7CB8BB;">name_t</span>&gt;;
+</pre>
+</div>
+</div>
+</div>
+
+<div id="outline-container-orge0b4dd" class="outline-3">
+<h3 id="orge0b4dd">bind_t</h3>
+<div class="outline-text-3" id="text-orge0b4dd">
+<div class="org-src-container">
+
+<pre class="src src-cpp"><span style="color: #F0DFAF; font-weight: bold;">using</span> <span style="color: #7CB8BB;">bind_t</span> = <span style="color: #7CB8BB;">pair</span> &lt;<span style="color: #7CB8BB;">name_t</span>, <span style="color: #7CB8BB;">shared_ptr</span> &lt;<span style="color: #7CB8BB;">obj_t</span>&gt;&gt;;
+</pre>
+</div>
+</div>
+</div>
+
+<div id="outline-container-orgaedbe5c" class="outline-3">
+<h3 id="orgaedbe5c">bind_vector_t</h3>
+<div class="outline-text-3" id="text-orgaedbe5c">
+<div class="org-src-container">
+
+<pre class="src src-cpp"><span style="color: #5F7F5F;">// </span><span style="color: #7F9F7F;">index from end</span>
+<span style="color: #F0DFAF; font-weight: bold;">using</span> <span style="color: #7CB8BB;">bind_vector_t</span> = <span style="color: #7CB8BB;">vector</span> &lt;<span style="color: #7CB8BB;">bind_t</span>&gt;;
+</pre>
+</div>
+</div>
+</div>
+
+<div id="outline-container-org1bb3e33" class="outline-3">
+<h3 id="org1bb3e33">local_scope_t</h3>
+<div class="outline-text-3" id="text-org1bb3e33">
+<div class="org-src-container">
+
+<pre class="src src-cpp"><span style="color: #5F7F5F;">// </span><span style="color: #7F9F7F;">index from end</span>
+<span style="color: #F0DFAF; font-weight: bold;">using</span> <span style="color: #7CB8BB;">local_scope_t</span> = <span style="color: #7CB8BB;">vector</span> &lt;<span style="color: #7CB8BB;">bind_vector_t</span>&gt;;
+</pre>
+</div>
+</div>
+</div>
+
+<div id="outline-container-orgbcf724b" class="outline-3">
+<h3 id="orgbcf724b">jojo_t</h3>
+<div class="outline-text-3" id="text-orgbcf724b">
+<div class="org-src-container">
+
+<pre class="src src-cpp"><span style="color: #F0DFAF; font-weight: bold;">using</span> <span style="color: #7CB8BB;">jojo_t</span> = <span style="color: #7CB8BB;">vector</span> &lt;<span style="color: #7CB8BB;">jo_t</span> *&gt;;
+</pre>
+</div>
+</div>
+</div>
+
+<div id="outline-container-org3f43880" class="outline-3">
+<h3 id="org3f43880">jo_t</h3>
+<div class="outline-text-3" id="text-org3f43880">
+<div class="org-src-container">
+
+<pre class="src src-cpp"><span style="color: #F0DFAF; font-weight: bold;">struct</span> <span style="color: #7CB8BB;">jo_t</span>
+{
+    <span style="color: #F0DFAF; font-weight: bold;">virtual</span> <span style="color: #7CB8BB;">void</span> <span style="color: #93E0E3;">exe</span> (<span style="color: #7CB8BB;">env_t</span> &amp;<span style="color: #DFAF8F;">env</span>, <span style="color: #7CB8BB;">local_scope_t</span> &amp;<span style="color: #DFAF8F;">local_scope</span>);
+    <span style="color: #F0DFAF; font-weight: bold;">virtual</span> <span style="color: #7CB8BB;">string</span> <span style="color: #93E0E3;">repr</span> (<span style="color: #7CB8BB;">env_t</span> &amp;<span style="color: #DFAF8F;">env</span>);
+};
+</pre>
+</div>
+</div>
+</div>
+
+<div id="outline-container-org1c8ae49" class="outline-3">
+<h3 id="org1c8ae49">tag_t</h3>
+<div class="outline-text-3" id="text-org1c8ae49">
+<div class="org-src-container">
+
+<pre class="src src-cpp"><span style="color: #F0DFAF; font-weight: bold;">using</span> <span style="color: #7CB8BB;">tag_t</span> = size_t;
+</pre>
+</div>
+</div>
+</div>
+
+<div id="outline-container-org37c923" class="outline-3">
+<h3 id="org37c923">tag_name_vector</h3>
+<div class="outline-text-3" id="text-org37c923">
+<div class="org-src-container">
+
+<pre class="src src-cpp"><span style="color: #F0DFAF; font-weight: bold;">using</span> <span style="color: #7CB8BB;">tag_name_vector_t</span> = <span style="color: #7CB8BB;">vector</span> &lt;<span style="color: #7CB8BB;">name_t</span>&gt;;
+</pre>
+</div>
+</div>
+</div>
+
+<div id="outline-container-org81d9d27" class="outline-3">
+<h3 id="org81d9d27">tag_map</h3>
+<div class="outline-text-3" id="text-org81d9d27">
+<div class="org-src-container">
+
+<pre class="src src-cpp"><span style="color: #F0DFAF; font-weight: bold;">using</span> <span style="color: #7CB8BB;">tag_map_t</span> = <span style="color: #7CB8BB;">map</span> &lt;<span style="color: #7CB8BB;">name_t</span>, <span style="color: #7CB8BB;">tag_t</span>&gt;;
+</pre>
+</div>
+</div>
+</div>
+
+<div id="outline-container-org3506227" class="outline-3">
+<h3 id="org3506227">obj_t</h3>
+<div class="outline-text-3" id="text-org3506227">
+<div class="org-src-container">
+
+<pre class="src src-cpp"><span style="color: #F0DFAF; font-weight: bold;">struct</span> <span style="color: #7CB8BB;">obj_t</span>
+{
+    <span style="color: #7CB8BB;">tag_t</span> <span style="color: #DFAF8F;">tag</span>;
+    <span style="color: #F0DFAF; font-weight: bold;">virtual</span> ~<span style="color: #93E0E3;">obj_t</span> ();
+    <span style="color: #F0DFAF; font-weight: bold;">virtual</span> <span style="color: #7CB8BB;">void</span> <span style="color: #93E0E3;">print</span> (<span style="color: #7CB8BB;">env_t</span> &amp;<span style="color: #DFAF8F;">env</span>);
+    <span style="color: #F0DFAF; font-weight: bold;">virtual</span> <span style="color: #7CB8BB;">bool</span> <span style="color: #93E0E3;">equal</span> (<span style="color: #7CB8BB;">env_t</span> &amp;<span style="color: #DFAF8F;">env</span>, <span style="color: #7CB8BB;">shared_ptr</span> &lt;<span style="color: #7CB8BB;">obj_t</span>&gt; <span style="color: #DFAF8F;">obj</span>);
+    <span style="color: #F0DFAF; font-weight: bold;">virtual</span> <span style="color: #7CB8BB;">void</span> <span style="color: #93E0E3;">apply</span> (<span style="color: #7CB8BB;">env_t</span> &amp;<span style="color: #DFAF8F;">env</span>, <span style="color: #7CB8BB;">size_t</span> <span style="color: #DFAF8F;">arity</span>);
+};
+</pre>
+</div>
+</div>
+</div>
+
+<div id="outline-container-org13a715f" class="outline-3">
+<h3 id="org13a715f">obj_map_t</h3>
+<div class="outline-text-3" id="text-org13a715f">
+<div class="org-src-container">
+
+<pre class="src src-cpp"><span style="color: #F0DFAF; font-weight: bold;">using</span> <span style="color: #7CB8BB;">obj_map_t</span> = <span style="color: #7CB8BB;">map</span> &lt;<span style="color: #7CB8BB;">name_t</span>, <span style="color: #7CB8BB;">shared_ptr</span> &lt;<span style="color: #7CB8BB;">obj_t</span>&gt;&gt;;
+</pre>
+</div>
+</div>
+</div>
+
+<div id="outline-container-org30d2b69" class="outline-3">
+<h3 id="org30d2b69">obj_vector_t</h3>
+<div class="outline-text-3" id="text-org30d2b69">
+<div class="org-src-container">
+
+<pre class="src src-cpp"><span style="color: #F0DFAF; font-weight: bold;">using</span> <span style="color: #7CB8BB;">obj_vector_t</span> = <span style="color: #7CB8BB;">vector</span> &lt;<span style="color: #7CB8BB;">shared_ptr</span> &lt;<span style="color: #7CB8BB;">obj_t</span>&gt;&gt;;
+</pre>
+</div>
+</div>
+</div>
+
+<div id="outline-container-orgc0c98c6" class="outline-3">
+<h3 id="orgc0c98c6">frame_t</h3>
+<div class="outline-text-3" id="text-orgc0c98c6">
+<div class="org-src-container">
+
+<pre class="src src-cpp"><span style="color: #F0DFAF; font-weight: bold;">struct</span> <span style="color: #7CB8BB;">frame_t</span>
+{
+    <span style="color: #7CB8BB;">size_t</span> <span style="color: #DFAF8F;">index</span>;
+    <span style="color: #7CB8BB;">jojo_t</span> <span style="color: #DFAF8F;">jojo</span>;
+    <span style="color: #7CB8BB;">local_scope_t</span> <span style="color: #DFAF8F;">local_scope</span>;
+    <span style="color: #93E0E3;">frame_t</span> (<span style="color: #7CB8BB;">jojo_t</span> <span style="color: #DFAF8F;">jojo</span>, <span style="color: #7CB8BB;">local_scope_t</span> <span style="color: #DFAF8F;">local_scope</span>);
+};
+</pre>
+</div>
+</div>
+</div>
+
+<div id="outline-container-org463ac8d" class="outline-3">
+<h3 id="org463ac8d">box_t</h3>
+<div class="outline-text-3" id="text-org463ac8d">
+<div class="org-src-container">
+
+<pre class="src src-cpp"><span style="color: #F0DFAF; font-weight: bold;">struct</span> <span style="color: #7CB8BB;">box_t</span>
+{
+    <span style="color: #7CB8BB;">shared_ptr</span> &lt;<span style="color: #7CB8BB;">obj_t</span>&gt; <span style="color: #DFAF8F;">obj</span>;
+    <span style="color: #7CB8BB;">bool</span> <span style="color: #DFAF8F;">empty_p</span>;
+    <span style="color: #93E0E3;">box_t</span> ();
+    <span style="color: #93E0E3;">box_t</span> (<span style="color: #7CB8BB;">shared_ptr</span> &lt;<span style="color: #7CB8BB;">obj_t</span>&gt; <span style="color: #DFAF8F;">obj</span>);
+};
+</pre>
+</div>
+</div>
+</div>
+
+<div id="outline-container-orgecad9f5" class="outline-3">
+<h3 id="orgecad9f5">box_map_t</h3>
+<div class="outline-text-3" id="text-orgecad9f5">
+<div class="org-src-container">
+
+<pre class="src src-cpp"><span style="color: #F0DFAF; font-weight: bold;">using</span> <span style="color: #7CB8BB;">box_map_t</span> = <span style="color: #7CB8BB;">map</span> &lt;<span style="color: #7CB8BB;">name_t</span>, <span style="color: #7CB8BB;">box_t</span> *&gt;;
+</pre>
+</div>
+</div>
+</div>
+
+<div id="outline-container-org6bfa367" class="outline-3">
+<h3 id="org6bfa367">obj_stack_t</h3>
+<div class="outline-text-3" id="text-org6bfa367">
+<div class="org-src-container">
+
+<pre class="src src-cpp"><span style="color: #F0DFAF; font-weight: bold;">using</span> <span style="color: #7CB8BB;">obj_stack_t</span> = <span style="color: #7CB8BB;">stack</span> &lt;<span style="color: #7CB8BB;">shared_ptr</span> &lt;<span style="color: #7CB8BB;">obj_t</span>&gt;&gt;;
+</pre>
+</div>
+</div>
+</div>
+
+<div id="outline-container-org6533420" class="outline-3">
+<h3 id="org6533420">frame_stack_t</h3>
+<div class="outline-text-3" id="text-org6533420">
+<div class="org-src-container">
+
+<pre class="src src-cpp"><span style="color: #F0DFAF; font-weight: bold;">using</span> <span style="color: #7CB8BB;">frame_stack_t</span> = <span style="color: #7CB8BB;">stack</span> &lt;<span style="color: #7CB8BB;">shared_ptr</span> &lt;<span style="color: #7CB8BB;">frame_t</span>&gt;&gt;;
+</pre>
+</div>
+</div>
+</div>
+
+<div id="outline-container-org5a963eb" class="outline-3">
+<h3 id="org5a963eb">env_t</h3>
+<div class="outline-text-3" id="text-org5a963eb">
+<div class="org-src-container">
+
+<pre class="src src-cpp"><span style="color: #F0DFAF; font-weight: bold;">struct</span> <span style="color: #7CB8BB;">env_t</span>
+{
+    <span style="color: #7CB8BB;">box_map_t</span> <span style="color: #DFAF8F;">box_map</span>;
+    <span style="color: #7CB8BB;">obj_stack_t</span> <span style="color: #DFAF8F;">obj_stack</span>;
+    <span style="color: #7CB8BB;">frame_stack_t</span> <span style="color: #DFAF8F;">frame_stack</span>;
+    <span style="color: #7CB8BB;">tag_name_vector_t</span> <span style="color: #DFAF8F;">tag_name_vector</span>;
+    <span style="color: #7CB8BB;">tag_map_t</span> <span style="color: #DFAF8F;">tag_map</span>;
+    <span style="color: #7CB8BB;">void</span> <span style="color: #93E0E3;">step</span> ();
+    <span style="color: #7CB8BB;">void</span> <span style="color: #93E0E3;">run</span> ();
+    <span style="color: #7CB8BB;">void</span> <span style="color: #93E0E3;">report</span> ();
+};
+</pre>
+</div>
+</div>
+</div>
+
+<div id="outline-container-org1f0edb5" class="outline-3">
+<h3 id="org1f0edb5">jo</h3>
+<div class="outline-text-3" id="text-org1f0edb5">
+</div><div id="outline-container-orga4a9986" class="outline-4">
+<h4 id="orga4a9986">lambda_jo_t</h4>
+<div class="outline-text-4" id="text-orga4a9986">
+<div class="org-src-container">
+
+<pre class="src src-cpp"><span style="color: #F0DFAF; font-weight: bold;">struct</span> <span style="color: #7CB8BB;">lambda_jo_t</span>: <span style="color: #7CB8BB;">jo_t</span>
+{
+    <span style="color: #7CB8BB;">name_vector_t</span> <span style="color: #DFAF8F;">name_vector</span>;
+    <span style="color: #7CB8BB;">jojo_t</span> <span style="color: #DFAF8F;">jojo</span>;
+    <span style="color: #93E0E3;">lambda_jo_t</span> (<span style="color: #7CB8BB;">name_vector_t</span> <span style="color: #DFAF8F;">name_vector</span>, <span style="color: #7CB8BB;">jojo_t</span> <span style="color: #DFAF8F;">jojo</span>);
+    <span style="color: #7CB8BB;">void</span> <span style="color: #93E0E3;">exe</span> (<span style="color: #7CB8BB;">env_t</span> &amp;<span style="color: #DFAF8F;">env</span>, <span style="color: #7CB8BB;">local_scope_t</span> &amp;<span style="color: #DFAF8F;">local_scope</span>);
+    <span style="color: #7CB8BB;">string</span> <span style="color: #93E0E3;">repr</span> (<span style="color: #7CB8BB;">env_t</span> &amp;<span style="color: #DFAF8F;">env</span>);
+};
+</pre>
+</div>
+</div>
+</div>
+</div>
+</div>
+
+<div id="outline-container-orgdaa9db7" class="outline-2">
+<h2 id="orgdaa9db7">obj</h2>
+<div class="outline-text-2" id="text-orgdaa9db7">
+</div><div id="outline-container-orgbcfbacd" class="outline-3">
+<h3 id="orgbcfbacd">tag</h3>
+<div class="outline-text-3" id="text-orgbcfbacd">
+</div><div id="outline-container-org930f3a0" class="outline-4">
+<h4 id="org930f3a0">tagging</h4>
+<div class="outline-text-4" id="text-org930f3a0">
+<div class="org-src-container">
+
+<pre class="src src-cpp"><span style="color: #7CB8BB;">tag_t</span>
+<span style="color: #93E0E3;">tagging</span> (<span style="color: #7CB8BB;">env_t</span> &amp;<span style="color: #DFAF8F;">env</span>, <span style="color: #7CB8BB;">name_t</span> <span style="color: #DFAF8F;">name</span>)
+{
+    <span style="color: #F0DFAF; font-weight: bold;">auto</span> <span style="color: #DFAF8F;">it</span> = env.tag_map.find (name);
+    <span style="color: #F0DFAF; font-weight: bold;">if</span> (it != env.tag_map.end ()) {
+        <span style="color: #7CB8BB;">tag_t</span> <span style="color: #DFAF8F;">tag</span> = it-&gt;second;
+        <span style="color: #F0DFAF; font-weight: bold;">return</span> tag;
+    }
+    <span style="color: #F0DFAF; font-weight: bold;">else</span> {
+        <span style="color: #F0DFAF; font-weight: bold;">auto</span> <span style="color: #DFAF8F;">tag</span> = env.tag_name_vector.size ();
+        env.tag_map [name] = tag;
+        env.tag_name_vector.push_back (name);
+        <span style="color: #F0DFAF; font-weight: bold;">return</span> tag;
+    }
+}
+</pre>
+</div>
+</div>
+</div>
+
+<div id="outline-container-orge39f9b3" class="outline-4">
+<h4 id="orge39f9b3">name_of_tag</h4>
+<div class="outline-text-4" id="text-orge39f9b3">
+<div class="org-src-container">
+
+<pre class="src src-cpp"><span style="color: #7CB8BB;">name_t</span>
+<span style="color: #93E0E3;">name_of_tag</span> (<span style="color: #7CB8BB;">env_t</span> &amp;<span style="color: #DFAF8F;">env</span>, <span style="color: #7CB8BB;">tag_t</span> <span style="color: #DFAF8F;">tag</span>)
+{
+    <span style="color: #F0DFAF; font-weight: bold;">return</span> env.tag_name_vector [tag];
+}
+</pre>
+</div>
+</div>
+</div>
+</div>
+
+<div id="outline-container-org43367ce" class="outline-3">
+<h3 id="org43367ce">local</h3>
+<div class="outline-text-3" id="text-org43367ce">
+</div><div id="outline-container-orgc573663" class="outline-4">
+<h4 id="orgc573663">bind_vector_print</h4>
+<div class="outline-text-4" id="text-orgc573663">
+<div class="org-src-container">
+
+<pre class="src src-cpp"><span style="color: #7CB8BB;">void</span>
+<span style="color: #93E0E3;">bind_vector_print</span> (<span style="color: #7CB8BB;">env_t</span> &amp;<span style="color: #DFAF8F;">env</span>, <span style="color: #7CB8BB;">bind_vector_t</span> <span style="color: #DFAF8F;">bind_vector</span>)
+{
+    <span style="color: #F0DFAF; font-weight: bold;">for</span> (<span style="color: #F0DFAF; font-weight: bold;">auto</span> <span style="color: #DFAF8F;">it</span> = bind_vector.rbegin ();
+         it != bind_vector.rend ();
+         it++) {
+        cout &lt;&lt; <span style="color: #CC9393;">"(#"</span>
+             &lt;&lt; distance(bind_vector.rbegin (), it)
+             &lt;&lt; <span style="color: #CC9393;">" "</span>;
+        cout &lt;&lt; it-&gt;first
+             &lt;&lt; <span style="color: #CC9393;">" = "</span>;
+        <span style="color: #F0DFAF; font-weight: bold;">auto</span> <span style="color: #DFAF8F;">obj</span> = it-&gt;second;
+        obj-&gt;print (env);
+        cout &lt;&lt; <span style="color: #CC9393;">") "</span>;
+    }
+}
+</pre>
+</div>
+</div>
+</div>
+
+<div id="outline-container-orgef56c1a" class="outline-4">
+<h4 id="orgef56c1a">local_scope_print</h4>
+<div class="outline-text-4" id="text-orgef56c1a">
+<div class="org-src-container">
+
+<pre class="src src-cpp"><span style="color: #7CB8BB;">void</span>
+<span style="color: #93E0E3;">local_scope_print</span> (<span style="color: #7CB8BB;">env_t</span> &amp;<span style="color: #DFAF8F;">env</span>, <span style="color: #7CB8BB;">local_scope_t</span> <span style="color: #DFAF8F;">local_scope</span>)
+{
+    cout &lt;&lt; <span style="color: #CC9393;">"- local_scope\n"</span>;
+    <span style="color: #F0DFAF; font-weight: bold;">for</span> (<span style="color: #F0DFAF; font-weight: bold;">auto</span> <span style="color: #DFAF8F;">it</span> = local_scope.rbegin ();
+         it != local_scope.rend ();
+         it++) {
+        cout &lt;&lt; <span style="color: #CC9393;">"  - level # "</span>
+             &lt;&lt; distance(local_scope.rbegin (), it)
+             &lt;&lt; <span style="color: #CC9393;">" : "</span>;
+        bind_vector_print (env, *it);
+        cout &lt;&lt; <span style="color: #CC9393;">"\n"</span>;
+    }
+}
+</pre>
+</div>
+</div>
+</div>
+</div>
+
+<div id="outline-container-org1d9da97" class="outline-3">
+<h3 id="org1d9da97">obj</h3>
+<div class="outline-text-3" id="text-org1d9da97">
+</div><div id="outline-container-orga198c30" class="outline-4">
+<h4 id="orga198c30">obj_t::~obj_t</h4>
+<div class="outline-text-4" id="text-orga198c30">
+<div class="org-src-container">
+
+<pre class="src src-cpp"><span style="color: #BFEBBF;">obj_t</span>::~<span style="color: #93E0E3;">obj_t</span> ()
+{
+    <span style="color: #5F7F5F;">// </span><span style="color: #7F9F7F;">all classes that will be derived from</span>
+    <span style="color: #5F7F5F;">// </span><span style="color: #7F9F7F;">should have a virtual or protected destructor,</span>
+    <span style="color: #5F7F5F;">// </span><span style="color: #7F9F7F;">otherwise deleting an instance via a pointer</span>
+    <span style="color: #5F7F5F;">// </span><span style="color: #7F9F7F;">to a base class results in undefined behavior.</span>
+}
+</pre>
+</div>
+</div>
+</div>
+
+<div id="outline-container-org4019845" class="outline-4">
+<h4 id="org4019845">obj_t::print</h4>
+<div class="outline-text-4" id="text-org4019845">
+<div class="org-src-container">
+
+<pre class="src src-cpp"><span style="color: #7CB8BB;">void</span>
+<span style="color: #BFEBBF;">obj_t</span>::<span style="color: #93E0E3;">print</span> (<span style="color: #7CB8BB;">env_t</span> &amp;<span style="color: #DFAF8F;">env</span>)
+{
+    cout &lt;&lt; <span style="color: #CC9393;">"#&lt;"</span>
+         &lt;&lt; name_of_tag (env, <span style="color: #F0DFAF; font-weight: bold;">this</span>-&gt;tag)
+         &lt;&lt; <span style="color: #CC9393;">"&gt;"</span>;
+}
+</pre>
+</div>
+</div>
+</div>
+
+<div id="outline-container-org86c17be" class="outline-4">
+<h4 id="org86c17be">obj_t::equal</h4>
+<div class="outline-text-4" id="text-org86c17be">
+<div class="org-src-container">
+
+<pre class="src src-cpp"><span style="color: #7CB8BB;">bool</span>
+<span style="color: #BFEBBF;">obj_t</span>::<span style="color: #93E0E3;">equal</span> (<span style="color: #7CB8BB;">env_t</span> &amp;<span style="color: #DFAF8F;">env</span>, <span style="color: #7CB8BB;">shared_ptr</span> &lt;<span style="color: #7CB8BB;">obj_t</span>&gt; <span style="color: #DFAF8F;">obj</span>)
+{
+    <span style="color: #F0DFAF; font-weight: bold;">if</span> (<span style="color: #F0DFAF; font-weight: bold;">this</span>-&gt;tag != <span style="color: #F0DFAF; font-weight: bold;">this</span>-&gt;tag)
+        <span style="color: #F0DFAF; font-weight: bold;">return</span> <span style="color: #BFEBBF;">false</span>;
+    <span style="color: #F0DFAF; font-weight: bold;">else</span> {
+        cout &lt;&lt; <span style="color: #CC9393;">"- fatal error : obj_t::equal"</span> &lt;&lt; <span style="color: #CC9393;">"\n"</span>
+             &lt;&lt; <span style="color: #CC9393;">"  equal is not implemented for  : "</span>
+             &lt;&lt; name_of_tag (env, obj-&gt;tag) &lt;&lt; <span style="color: #CC9393;">"\n"</span>
+             &lt;&lt; <span style="color: #CC9393;">"\n"</span>;
+        exit (1);
+    }
+}
+</pre>
+</div>
+</div>
+</div>
+
+<div id="outline-container-org65b5875" class="outline-4">
+<h4 id="org65b5875">obj_t::apply</h4>
+<div class="outline-text-4" id="text-org65b5875">
+<div class="org-src-container">
+
+<pre class="src src-cpp"><span style="color: #7CB8BB;">void</span>
+<span style="color: #BFEBBF;">obj_t</span>::<span style="color: #93E0E3;">apply</span> (<span style="color: #7CB8BB;">env_t</span> &amp;<span style="color: #DFAF8F;">env</span>, <span style="color: #7CB8BB;">size_t</span> <span style="color: #DFAF8F;">arity</span>)
+{
+    cout &lt;&lt; <span style="color: #CC9393;">"- fatal error : applying non applicable object"</span> &lt;&lt; <span style="color: #CC9393;">"\n"</span>;
+    exit (1);
+}
+</pre>
+</div>
+</div>
+</div>
+</div>
+
+<div id="outline-container-org77c5fa" class="outline-3">
+<h3 id="org77c5fa">lambda</h3>
+<div class="outline-text-3" id="text-org77c5fa">
+</div><div id="outline-container-org3dd266c" class="outline-4">
+<h4 id="org3dd266c">number_of_obj_in_bind_vector</h4>
+<div class="outline-text-4" id="text-org3dd266c">
+<div class="org-src-container">
+
+<pre class="src src-cpp"><span style="color: #7CB8BB;">size_t</span>
+<span style="color: #93E0E3;">number_of_obj_in_bind_vector</span> (<span style="color: #7CB8BB;">bind_vector_t</span> &amp;<span style="color: #DFAF8F;">bind_vector</span>)
+{
+    <span style="color: #7CB8BB;">size_t</span> <span style="color: #DFAF8F;">sum</span> = 0;
+    <span style="color: #F0DFAF; font-weight: bold;">auto</span> <span style="color: #DFAF8F;">begin</span> = bind_vector.begin ();
+    <span style="color: #F0DFAF; font-weight: bold;">auto</span> <span style="color: #DFAF8F;">end</span> = bind_vector.end ();
+    <span style="color: #F0DFAF; font-weight: bold;">for</span> (<span style="color: #F0DFAF; font-weight: bold;">auto</span> <span style="color: #DFAF8F;">it</span> = begin; it != end; it++)
+        <span style="color: #F0DFAF; font-weight: bold;">if</span> (it-&gt;second)
+            sum++;
+    <span style="color: #F0DFAF; font-weight: bold;">return</span> sum;
+}
+</pre>
+</div>
+</div>
+</div>
+
+<div id="outline-container-org1fa7597" class="outline-4">
+<h4 id="org1fa7597">lambda_o</h4>
+<div class="outline-text-4" id="text-org1fa7597">
+<div class="org-src-container">
+
+<pre class="src src-cpp"><span style="color: #F0DFAF; font-weight: bold;">struct</span> <span style="color: #7CB8BB;">lambda_o</span>: <span style="color: #7CB8BB;">obj_t</span>
+{
+    <span style="color: #7CB8BB;">lambda_jo_t</span> *<span style="color: #DFAF8F;">lambda_jo</span>;
+    <span style="color: #7CB8BB;">bind_vector_t</span> <span style="color: #DFAF8F;">bind_vector</span>;
+    <span style="color: #7CB8BB;">local_scope_t</span> <span style="color: #DFAF8F;">local_scope</span>;
+    <span style="color: #93E0E3;">lambda_o</span> (<span style="color: #7CB8BB;">env_t</span> &amp;<span style="color: #DFAF8F;">env</span>,
+              <span style="color: #7CB8BB;">lambda_jo_t</span> *<span style="color: #DFAF8F;">lambda_jo</span>,
+              <span style="color: #7CB8BB;">bind_vector_t</span> <span style="color: #DFAF8F;">bind_vector</span>,
+              <span style="color: #7CB8BB;">local_scope_t</span> <span style="color: #DFAF8F;">local_scope</span>);
+    <span style="color: #7CB8BB;">bool</span> <span style="color: #93E0E3;">equal</span> (<span style="color: #7CB8BB;">env_t</span> &amp;<span style="color: #DFAF8F;">env</span>, <span style="color: #7CB8BB;">shared_ptr</span> &lt;<span style="color: #7CB8BB;">obj_t</span>&gt; <span style="color: #DFAF8F;">obj</span>);
+    <span style="color: #7CB8BB;">void</span> <span style="color: #93E0E3;">apply</span> (<span style="color: #7CB8BB;">env_t</span> &amp;<span style="color: #DFAF8F;">env</span>, <span style="color: #7CB8BB;">size_t</span> <span style="color: #DFAF8F;">arity</span>);
+};
+</pre>
+</div>
+</div>
+</div>
+
+<div id="outline-container-orgb436ef2" class="outline-4">
+<h4 id="orgb436ef2">lambda_o::lambda_o</h4>
+<div class="outline-text-4" id="text-orgb436ef2">
+<div class="org-src-container">
+
+<pre class="src src-cpp"><span style="color: #BFEBBF;">lambda_o</span>::
+<span style="color: #93E0E3;">lambda_o</span> (<span style="color: #7CB8BB;">env_t</span> &amp;<span style="color: #DFAF8F;">env</span>,
+          <span style="color: #7CB8BB;">lambda_jo_t</span> *<span style="color: #DFAF8F;">lambda_jo</span>,
+          <span style="color: #7CB8BB;">bind_vector_t</span> <span style="color: #DFAF8F;">bind_vector</span>,
+          <span style="color: #7CB8BB;">local_scope_t</span> <span style="color: #DFAF8F;">local_scope</span>)
+{
+    <span style="color: #F0DFAF; font-weight: bold;">this</span>-&gt;tag = tagging (env, <span style="color: #CC9393;">"lambda-t"</span>);
+    <span style="color: #F0DFAF; font-weight: bold;">this</span>-&gt;lambda_jo = lambda_jo;
+    <span style="color: #F0DFAF; font-weight: bold;">this</span>-&gt;bind_vector = bind_vector;
+    <span style="color: #F0DFAF; font-weight: bold;">this</span>-&gt;local_scope = local_scope;
+}
+</pre>
+</div>
+</div>
+</div>
+
+<div id="outline-container-orgf67e770" class="outline-4">
+<h4 id="orgf67e770">bind_vector_insert_obj</h4>
+<div class="outline-text-4" id="text-orgf67e770">
+<div class="org-src-container">
+
+<pre class="src src-cpp"><span style="color: #7CB8BB;">void</span>
+<span style="color: #93E0E3;">bind_vector_insert_obj</span> (<span style="color: #7CB8BB;">bind_vector_t</span> &amp;<span style="color: #DFAF8F;">bind_vector</span>,
+                        <span style="color: #7CB8BB;">shared_ptr</span> &lt;<span style="color: #7CB8BB;">obj_t</span>&gt; <span style="color: #DFAF8F;">obj</span>)
+{
+    <span style="color: #F0DFAF; font-weight: bold;">auto</span> <span style="color: #DFAF8F;">begin</span> = bind_vector.rbegin ();
+    <span style="color: #F0DFAF; font-weight: bold;">auto</span> <span style="color: #DFAF8F;">end</span> = bind_vector.rend ();
+    <span style="color: #F0DFAF; font-weight: bold;">for</span> (<span style="color: #F0DFAF; font-weight: bold;">auto</span> <span style="color: #DFAF8F;">it</span> = begin; it != end; it++) {
+        <span style="color: #F0DFAF; font-weight: bold;">if</span> (it-&gt;second == <span style="color: #BFEBBF;">nullptr</span>) {
+            it-&gt;second = obj;
+            <span style="color: #F0DFAF; font-weight: bold;">return</span>;
+        }
+    }
+    cout &lt;&lt; <span style="color: #CC9393;">"- fatal error ! bind_vector_insert_obj"</span> &lt;&lt; <span style="color: #CC9393;">"\n"</span>
+         &lt;&lt; <span style="color: #CC9393;">"  the bind_vector is filled"</span> &lt;&lt; <span style="color: #CC9393;">"\n"</span>
+         &lt;&lt; <span style="color: #CC9393;">"\n"</span>;
+    exit (1);
+}
+</pre>
+</div>
+</div>
+</div>
+
+<div id="outline-container-org197954c" class="outline-4">
+<h4 id="org197954c">bind_vector_merge_obj_vector</h4>
+<div class="outline-text-4" id="text-org197954c">
+<div class="org-src-container">
+
+<pre class="src src-cpp"><span style="color: #7CB8BB;">bind_vector_t</span>
+<span style="color: #93E0E3;">bind_vector_merge_obj_vector</span> (<span style="color: #7CB8BB;">bind_vector_t</span> &amp;<span style="color: #DFAF8F;">old_bind_vector</span>,
+                              <span style="color: #7CB8BB;">obj_vector_t</span> &amp;<span style="color: #DFAF8F;">obj_vector</span>)
+{
+    <span style="color: #F0DFAF; font-weight: bold;">auto</span> <span style="color: #DFAF8F;">bind_vector</span> = old_bind_vector;
+    <span style="color: #F0DFAF; font-weight: bold;">for</span> (<span style="color: #F0DFAF; font-weight: bold;">auto</span> <span style="color: #DFAF8F;">obj</span>: obj_vector)
+        bind_vector_insert_obj (bind_vector, obj);
+    <span style="color: #F0DFAF; font-weight: bold;">return</span> bind_vector;
+}
+</pre>
+</div>
+</div>
+</div>
+
+<div id="outline-container-org13595c2" class="outline-4">
+<h4 id="org13595c2">pick_up_obj_vector</h4>
+<div class="outline-text-4" id="text-org13595c2">
+<div class="org-src-container">
+
+<pre class="src src-cpp"><span style="color: #7CB8BB;">obj_vector_t</span>
+<span style="color: #93E0E3;">pick_up_obj_vector</span> (<span style="color: #7CB8BB;">env_t</span> &amp;<span style="color: #DFAF8F;">env</span>, <span style="color: #7CB8BB;">size_t</span> <span style="color: #DFAF8F;">counter</span>)
+{
+    <span style="color: #F0DFAF; font-weight: bold;">auto</span> <span style="color: #DFAF8F;">obj_vector</span> = obj_vector_t ();
+    <span style="color: #F0DFAF; font-weight: bold;">while</span> (counter &gt; 0) {
+        counter--;
+        <span style="color: #F0DFAF; font-weight: bold;">auto</span> <span style="color: #DFAF8F;">obj</span> = env.obj_stack.top ();
+        obj_vector.push_back (obj);
+        env.obj_stack.pop ();
+    }
+    reverse (obj_vector.begin (),
+             obj_vector.end ());
+    <span style="color: #F0DFAF; font-weight: bold;">return</span> obj_vector;
+}
+</pre>
+</div>
+</div>
+</div>
+
+<div id="outline-container-org869c972" class="outline-4">
+<h4 id="org869c972">local_scope_extend</h4>
+<div class="outline-text-4" id="text-org869c972">
+<div class="org-src-container">
+
+<pre class="src src-cpp"><span style="color: #7CB8BB;">local_scope_t</span>
+<span style="color: #93E0E3;">local_scope_extend</span> (<span style="color: #7CB8BB;">local_scope_t</span> <span style="color: #DFAF8F;">old_local_scope</span>,
+                    <span style="color: #7CB8BB;">bind_vector_t</span> <span style="color: #DFAF8F;">bind_vector</span>)
+{
+    <span style="color: #F0DFAF; font-weight: bold;">auto</span> <span style="color: #DFAF8F;">local_scope</span> = old_local_scope;
+    local_scope.push_back (bind_vector);
+    <span style="color: #F0DFAF; font-weight: bold;">return</span> local_scope;
+}
+</pre>
+</div>
+</div>
+</div>
+
+<div id="outline-container-orgc4a3af2" class="outline-4">
+<h4 id="orgc4a3af2">lambda_o::apply</h4>
+<div class="outline-text-4" id="text-orgc4a3af2">
+<div class="org-src-container">
+
+<pre class="src src-cpp"><span style="color: #7CB8BB;">void</span>
+<span style="color: #BFEBBF;">lambda_o</span>::<span style="color: #93E0E3;">apply</span> (<span style="color: #7CB8BB;">env_t</span> &amp;<span style="color: #DFAF8F;">env</span>, <span style="color: #7CB8BB;">size_t</span> <span style="color: #DFAF8F;">arity</span>)
+{
+    <span style="color: #F0DFAF; font-weight: bold;">auto</span> <span style="color: #DFAF8F;">size</span> = <span style="color: #F0DFAF; font-weight: bold;">this</span>-&gt;lambda_jo-&gt;name_vector.size ();
+    <span style="color: #F0DFAF; font-weight: bold;">auto</span> <span style="color: #DFAF8F;">have</span> = number_of_obj_in_bind_vector (<span style="color: #F0DFAF; font-weight: bold;">this</span>-&gt;bind_vector);
+    <span style="color: #F0DFAF; font-weight: bold;">auto</span> <span style="color: #DFAF8F;">lack</span> = size - have;
+    <span style="color: #F0DFAF; font-weight: bold;">if</span> (lack == arity) {
+        <span style="color: #F0DFAF; font-weight: bold;">auto</span> <span style="color: #DFAF8F;">obj_vector</span> = pick_up_obj_vector
+            (env, arity);
+        <span style="color: #F0DFAF; font-weight: bold;">auto</span> <span style="color: #DFAF8F;">bind_vector</span> = bind_vector_merge_obj_vector
+             (<span style="color: #F0DFAF; font-weight: bold;">this</span>-&gt;bind_vector, obj_vector);
+        <span style="color: #F0DFAF; font-weight: bold;">auto</span> <span style="color: #DFAF8F;">local_scope</span> = local_scope_extend
+            (<span style="color: #F0DFAF; font-weight: bold;">this</span>-&gt;local_scope, bind_vector);
+        <span style="color: #F0DFAF; font-weight: bold;">auto</span> <span style="color: #DFAF8F;">frame</span> = make_shared &lt;<span style="color: #7CB8BB;">frame_t</span>&gt;
+            (<span style="color: #F0DFAF; font-weight: bold;">this</span>-&gt;lambda_jo-&gt;jojo, local_scope);
+        env.frame_stack.push (frame);
+    }
+    <span style="color: #F0DFAF; font-weight: bold;">else</span> <span style="color: #F0DFAF; font-weight: bold;">if</span> (arity &lt; lack) {
+        <span style="color: #F0DFAF; font-weight: bold;">auto</span> <span style="color: #DFAF8F;">obj_vector</span> = pick_up_obj_vector
+            (env, arity);
+        <span style="color: #F0DFAF; font-weight: bold;">auto</span> <span style="color: #DFAF8F;">bind_vector</span> = bind_vector_merge_obj_vector
+            (<span style="color: #F0DFAF; font-weight: bold;">this</span>-&gt;bind_vector, obj_vector);
+        <span style="color: #F0DFAF; font-weight: bold;">auto</span> <span style="color: #DFAF8F;">lambda</span> = make_shared &lt;lambda_o&gt;
+            (env,
+             <span style="color: #F0DFAF; font-weight: bold;">this</span>-&gt;lambda_jo,
+             bind_vector,
+             <span style="color: #F0DFAF; font-weight: bold;">this</span>-&gt;local_scope);
+        env.obj_stack.push (lambda);
+    }
+    <span style="color: #F0DFAF; font-weight: bold;">else</span> {
+        cout &lt;&lt; <span style="color: #CC9393;">"- fatal error : lambda_o::apply"</span> &lt;&lt; <span style="color: #CC9393;">"\n"</span>
+             &lt;&lt; <span style="color: #CC9393;">"  over-arity apply"</span> &lt;&lt; <span style="color: #CC9393;">"\n"</span>
+             &lt;&lt; <span style="color: #CC9393;">"  arity &gt; lack"</span> &lt;&lt; <span style="color: #CC9393;">"\n"</span>
+             &lt;&lt; <span style="color: #CC9393;">"  arity : "</span> &lt;&lt; arity &lt;&lt; <span style="color: #CC9393;">"\n"</span>
+             &lt;&lt; <span style="color: #CC9393;">"  lack : "</span> &lt;&lt; lack &lt;&lt; <span style="color: #CC9393;">"\n"</span>
+             &lt;&lt; <span style="color: #CC9393;">"\n"</span>;
+        exit (1);
+    }
+}
+</pre>
+</div>
+</div>
+</div>
+
+<div id="outline-container-org22fc519" class="outline-4">
+<h4 id="org22fc519">lambda_o::equal</h4>
+<div class="outline-text-4" id="text-org22fc519">
+<div class="org-src-container">
+
+<pre class="src src-cpp"><span style="color: #7CB8BB;">bool</span>
+<span style="color: #BFEBBF;">lambda_o</span>::<span style="color: #93E0E3;">equal</span> (<span style="color: #7CB8BB;">env_t</span> &amp;<span style="color: #DFAF8F;">env</span>, <span style="color: #7CB8BB;">shared_ptr</span> &lt;<span style="color: #7CB8BB;">obj_t</span>&gt; <span style="color: #DFAF8F;">obj</span>)
+{
+    <span style="color: #5F7F5F;">// </span><span style="color: #7F9F7F;">only equivalence between raw pointers.</span>
+    <span style="color: #F0DFAF; font-weight: bold;">return</span> <span style="color: #F0DFAF; font-weight: bold;">this</span> == obj.get ();
+}
+</pre>
+</div>
+</div>
+</div>
+</div>
+
+<div id="outline-container-orgc960992" class="outline-3">
+<h3 id="orgc960992">string</h3>
+<div class="outline-text-3" id="text-orgc960992">
+</div><div id="outline-container-org37d0c0d" class="outline-4">
+<h4 id="org37d0c0d">string_o</h4>
+<div class="outline-text-4" id="text-org37d0c0d">
+<div class="org-src-container">
+
+<pre class="src src-cpp"><span style="color: #F0DFAF; font-weight: bold;">struct</span> <span style="color: #7CB8BB;">string_o</span>: <span style="color: #7CB8BB;">obj_t</span>
+{
+    <span style="color: #7CB8BB;">string</span> <span style="color: #DFAF8F;">str</span>;
+    <span style="color: #93E0E3;">string_o</span> (<span style="color: #7CB8BB;">env_t</span> &amp;<span style="color: #DFAF8F;">env</span>, <span style="color: #7CB8BB;">string</span> <span style="color: #DFAF8F;">str</span>);
+    <span style="color: #7CB8BB;">bool</span> <span style="color: #93E0E3;">equal</span> (<span style="color: #7CB8BB;">env_t</span> &amp;<span style="color: #DFAF8F;">env</span>, <span style="color: #7CB8BB;">shared_ptr</span> &lt;<span style="color: #7CB8BB;">obj_t</span>&gt; <span style="color: #DFAF8F;">obj</span>);
+    <span style="color: #7CB8BB;">void</span> <span style="color: #93E0E3;">print</span> (<span style="color: #7CB8BB;">env_t</span> &amp;<span style="color: #DFAF8F;">env</span>);
+};
+</pre>
+</div>
+</div>
+</div>
+
+<div id="outline-container-org2799743" class="outline-4">
+<h4 id="org2799743">string_o::string_o</h4>
+<div class="outline-text-4" id="text-org2799743">
+<div class="org-src-container">
+
+<pre class="src src-cpp"><span style="color: #BFEBBF;">string_o</span>::<span style="color: #93E0E3;">string_o</span> (<span style="color: #7CB8BB;">env_t</span> &amp;<span style="color: #DFAF8F;">env</span>, <span style="color: #7CB8BB;">string</span> <span style="color: #DFAF8F;">str</span>)
+{
+    <span style="color: #F0DFAF; font-weight: bold;">this</span>-&gt;tag = tagging (env, <span style="color: #CC9393;">"string-t"</span>);
+    <span style="color: #F0DFAF; font-weight: bold;">this</span>-&gt;str = str;
+}
+</pre>
+</div>
+</div>
+</div>
+
+<div id="outline-container-org8aff3ab" class="outline-4">
+<h4 id="org8aff3ab">string_o::print</h4>
+<div class="outline-text-4" id="text-org8aff3ab">
+<div class="org-src-container">
+
+<pre class="src src-cpp"><span style="color: #7CB8BB;">void</span> <span style="color: #BFEBBF;">string_o</span>::<span style="color: #93E0E3;">print</span> (<span style="color: #7CB8BB;">env_t</span> &amp;<span style="color: #DFAF8F;">env</span>)
+{
+    cout &lt;&lt; <span style="color: #DCDCCC; background-color: #3F3F3F;">'"'</span> &lt;&lt; <span style="color: #F0DFAF; font-weight: bold;">this</span>-&gt;str &lt;&lt; <span style="color: #DCDCCC; background-color: #3F3F3F;">'"</span><span style="color: #D0BF8F; font-weight: bold;">'</span>;
+}
+</pre>
+</div>
+</div>
+</div>
+
+<div id="outline-container-orgaad9674" class="outline-4">
+<h4 id="orgaad9674">string_o::equal</h4>
+<div class="outline-text-4" id="text-orgaad9674">
+<div class="org-src-container">
+
+<pre class="src src-cpp"><span style="color: #7CB8BB;">bool</span>
+<span style="color: #BFEBBF;">string_o</span>::<span style="color: #93E0E3;">equal</span> (<span style="color: #7CB8BB;">env_t</span> &amp;<span style="color: #DFAF8F;">env</span>, <span style="color: #7CB8BB;">shared_ptr</span> &lt;<span style="color: #7CB8BB;">obj_t</span>&gt; <span style="color: #DFAF8F;">obj</span>)
+{
+    <span style="color: #F0DFAF; font-weight: bold;">if</span> (<span style="color: #F0DFAF; font-weight: bold;">this</span>-&gt;tag != obj-&gt;tag) <span style="color: #F0DFAF; font-weight: bold;">return</span> <span style="color: #BFEBBF;">false</span>;
+    <span style="color: #F0DFAF; font-weight: bold;">auto</span> <span style="color: #DFAF8F;">that</span> = static_pointer_cast &lt;string_o&gt; (obj);
+    <span style="color: #F0DFAF; font-weight: bold;">return</span> (<span style="color: #F0DFAF; font-weight: bold;">this</span>-&gt;str == that-&gt;str);
+}
+</pre>
+</div>
+</div>
+</div>
+</div>
+
+<div id="outline-container-org274a157" class="outline-3">
+<h3 id="org274a157">data</h3>
+<div class="outline-text-3" id="text-org274a157">
+</div><div id="outline-container-orgb8a75df" class="outline-4">
+<h4 id="orgb8a75df">data_o</h4>
+<div class="outline-text-4" id="text-orgb8a75df">
+<div class="org-src-container">
+
+<pre class="src src-cpp"><span style="color: #F0DFAF; font-weight: bold;">struct</span> <span style="color: #7CB8BB;">data_o</span>: <span style="color: #7CB8BB;">obj_t</span>
+{
+    <span style="color: #7CB8BB;">obj_map_t</span> <span style="color: #DFAF8F;">obj_map</span>;
+    <span style="color: #93E0E3;">data_o</span> (<span style="color: #7CB8BB;">env_t</span> &amp;<span style="color: #DFAF8F;">env</span>,
+            <span style="color: #7CB8BB;">tag_t</span> <span style="color: #DFAF8F;">tag</span>,
+            <span style="color: #7CB8BB;">obj_map_t</span> <span style="color: #DFAF8F;">obj_map</span>);
+    <span style="color: #7CB8BB;">bool</span> <span style="color: #93E0E3;">equal</span> (<span style="color: #7CB8BB;">env_t</span> &amp;<span style="color: #DFAF8F;">env</span>, <span style="color: #7CB8BB;">shared_ptr</span> &lt;<span style="color: #7CB8BB;">obj_t</span>&gt; <span style="color: #DFAF8F;">obj</span>);
+};
+</pre>
+</div>
+</div>
+</div>
+
+<div id="outline-container-orgfeb1aa5" class="outline-4">
+<h4 id="orgfeb1aa5">data_o::data_o</h4>
+<div class="outline-text-4" id="text-orgfeb1aa5">
+<div class="org-src-container">
+
+<pre class="src src-cpp"><span style="color: #BFEBBF;">data_o</span>::
+<span style="color: #93E0E3;">data_o</span> (<span style="color: #7CB8BB;">env_t</span> &amp;<span style="color: #DFAF8F;">env</span>,
+        <span style="color: #7CB8BB;">tag_t</span> <span style="color: #DFAF8F;">tag</span>,
+        <span style="color: #7CB8BB;">obj_map_t</span> <span style="color: #DFAF8F;">obj_map</span>)
+{
+    <span style="color: #F0DFAF; font-weight: bold;">this</span>-&gt;tag = tag;
+    <span style="color: #F0DFAF; font-weight: bold;">this</span>-&gt;obj_map = obj_map;
+}
+</pre>
+</div>
+</div>
+</div>
+
+<div id="outline-container-org2064359" class="outline-4">
+<h4 id="org2064359">obj_map_equal</h4>
+<div class="outline-text-4" id="text-org2064359">
+<div class="org-src-container">
+
+<pre class="src src-cpp"><span style="color: #7CB8BB;">bool</span>
+<span style="color: #93E0E3;">obj_map_equal</span> (<span style="color: #7CB8BB;">env_t</span> &amp;<span style="color: #DFAF8F;">env</span>, <span style="color: #7CB8BB;">obj_map_t</span> &amp;<span style="color: #DFAF8F;">lhs</span>, <span style="color: #7CB8BB;">obj_map_t</span> &amp;<span style="color: #DFAF8F;">rhs</span>)
+{
+    <span style="color: #F0DFAF; font-weight: bold;">if</span> (lhs.size () != rhs.size ()) <span style="color: #F0DFAF; font-weight: bold;">return</span> <span style="color: #BFEBBF;">false</span>;
+    <span style="color: #F0DFAF; font-weight: bold;">for</span> (<span style="color: #F0DFAF; font-weight: bold;">auto</span> &amp;<span style="color: #DFAF8F;">kv</span>: lhs) {
+        <span style="color: #F0DFAF; font-weight: bold;">auto</span> <span style="color: #DFAF8F;">name</span> = kv.first;
+        <span style="color: #F0DFAF; font-weight: bold;">auto</span> <span style="color: #DFAF8F;">it</span> = rhs.find (name);
+        <span style="color: #F0DFAF; font-weight: bold;">if</span> (it == rhs.end ()) <span style="color: #F0DFAF; font-weight: bold;">return</span> <span style="color: #BFEBBF;">false</span>;
+        <span style="color: #F0DFAF; font-weight: bold;">if</span> (<span style="color: #F0DFAF; font-weight: bold;">!</span> kv.second-&gt;equal (env, it-&gt;second)) <span style="color: #F0DFAF; font-weight: bold;">return</span> <span style="color: #BFEBBF;">false</span>;
+    }
+    <span style="color: #F0DFAF; font-weight: bold;">return</span> <span style="color: #BFEBBF;">true</span>;
+}
+</pre>
+</div>
+</div>
+</div>
+
+<div id="outline-container-orgc496365" class="outline-4">
+<h4 id="orgc496365">data_o::equal</h4>
+<div class="outline-text-4" id="text-orgc496365">
+<div class="org-src-container">
+
+<pre class="src src-cpp"><span style="color: #7CB8BB;">bool</span>
+<span style="color: #BFEBBF;">data_o</span>::<span style="color: #93E0E3;">equal</span> (<span style="color: #7CB8BB;">env_t</span> &amp;<span style="color: #DFAF8F;">env</span>, <span style="color: #7CB8BB;">shared_ptr</span> &lt;<span style="color: #7CB8BB;">obj_t</span>&gt; <span style="color: #DFAF8F;">obj</span>)
+{
+    <span style="color: #F0DFAF; font-weight: bold;">if</span> (<span style="color: #F0DFAF; font-weight: bold;">this</span>-&gt;tag != obj-&gt;tag) <span style="color: #F0DFAF; font-weight: bold;">return</span> <span style="color: #BFEBBF;">false</span>;
+    <span style="color: #F0DFAF; font-weight: bold;">auto</span> <span style="color: #DFAF8F;">that</span> = static_pointer_cast &lt;data_o&gt; (obj);
+    <span style="color: #F0DFAF; font-weight: bold;">return</span> obj_map_equal (env, <span style="color: #F0DFAF; font-weight: bold;">this</span>-&gt;obj_map, that-&gt;obj_map);
+
+}
+</pre>
+</div>
+</div>
+</div>
+</div>
+
+<div id="outline-container-org5e77c2b" class="outline-3">
+<h3 id="org5e77c2b">data_cons</h3>
+<div class="outline-text-3" id="text-org5e77c2b">
+</div><div id="outline-container-orgc289ed8" class="outline-4">
+<h4 id="orgc289ed8">data_cons_o</h4>
+<div class="outline-text-4" id="text-orgc289ed8">
+<div class="org-src-container">
+
+<pre class="src src-cpp"><span style="color: #F0DFAF; font-weight: bold;">struct</span> <span style="color: #7CB8BB;">data_cons_o</span>: <span style="color: #7CB8BB;">obj_t</span>
+{
+    <span style="color: #7CB8BB;">tag_t</span> <span style="color: #DFAF8F;">type_tag</span>;
+    <span style="color: #7CB8BB;">name_vector_t</span> <span style="color: #DFAF8F;">name_vector</span>;
+    <span style="color: #7CB8BB;">obj_map_t</span> <span style="color: #DFAF8F;">obj_map</span>;
+    <span style="color: #93E0E3;">data_cons_o</span> (<span style="color: #7CB8BB;">env_t</span> &amp;<span style="color: #DFAF8F;">env</span>,
+                 <span style="color: #7CB8BB;">tag_t</span> <span style="color: #DFAF8F;">type_tag</span>,
+                 <span style="color: #7CB8BB;">name_vector_t</span> <span style="color: #DFAF8F;">name_vector</span>,
+                 <span style="color: #7CB8BB;">obj_map_t</span> <span style="color: #DFAF8F;">obj_map</span>);
+    <span style="color: #7CB8BB;">void</span> <span style="color: #93E0E3;">apply</span> (<span style="color: #7CB8BB;">env_t</span> &amp;<span style="color: #DFAF8F;">env</span>, <span style="color: #7CB8BB;">size_t</span> <span style="color: #DFAF8F;">arity</span>);
+    <span style="color: #7CB8BB;">bool</span> <span style="color: #93E0E3;">equal</span> (<span style="color: #7CB8BB;">env_t</span> &amp;<span style="color: #DFAF8F;">env</span>, <span style="color: #7CB8BB;">shared_ptr</span> &lt;<span style="color: #7CB8BB;">obj_t</span>&gt; <span style="color: #DFAF8F;">obj</span>);
+};
+</pre>
+</div>
+</div>
+</div>
+
+<div id="outline-container-orgbba6cb6" class="outline-4">
+<h4 id="orgbba6cb6">data_cons_o::data_cons_o</h4>
+<div class="outline-text-4" id="text-orgbba6cb6">
+<div class="org-src-container">
+
+<pre class="src src-cpp"><span style="color: #BFEBBF;">data_cons_o</span>::
+<span style="color: #93E0E3;">data_cons_o</span> (<span style="color: #7CB8BB;">env_t</span> &amp;<span style="color: #DFAF8F;">env</span>,
+             <span style="color: #7CB8BB;">tag_t</span> <span style="color: #DFAF8F;">type_tag</span>,
+             <span style="color: #7CB8BB;">name_vector_t</span> <span style="color: #DFAF8F;">name_vector</span>,
+             <span style="color: #7CB8BB;">obj_map_t</span> <span style="color: #DFAF8F;">obj_map</span>)
+{
+    <span style="color: #F0DFAF; font-weight: bold;">this</span>-&gt;tag = tagging (env, <span style="color: #CC9393;">"data-cons-t"</span>);
+    <span style="color: #F0DFAF; font-weight: bold;">this</span>-&gt;type_tag = type_tag;
+    <span style="color: #F0DFAF; font-weight: bold;">this</span>-&gt;name_vector = name_vector;
+    <span style="color: #F0DFAF; font-weight: bold;">this</span>-&gt;obj_map = obj_map;
+}
+</pre>
+</div>
+</div>
+</div>
+
+<div id="outline-container-orgb08e10f" class="outline-4">
+<h4 id="orgb08e10f">name_vector_obj_map_lack</h4>
+<div class="outline-text-4" id="text-orgb08e10f">
+<div class="org-src-container">
+
+<pre class="src src-cpp"><span style="color: #7CB8BB;">name_vector_t</span>
+<span style="color: #93E0E3;">name_vector_obj_map_lack</span> (<span style="color: #7CB8BB;">name_vector_t</span> &amp;<span style="color: #DFAF8F;">old_name_vector</span>,
+                          <span style="color: #7CB8BB;">obj_map_t</span> &amp;<span style="color: #DFAF8F;">obj_map</span>)
+{
+    <span style="color: #F0DFAF; font-weight: bold;">auto</span> <span style="color: #DFAF8F;">name_vector</span> = name_vector_t ();
+    <span style="color: #F0DFAF; font-weight: bold;">for</span> (<span style="color: #F0DFAF; font-weight: bold;">auto</span> <span style="color: #DFAF8F;">name</span>: old_name_vector) {
+        <span style="color: #F0DFAF; font-weight: bold;">auto</span> <span style="color: #DFAF8F;">it</span> = obj_map.find (name);
+        <span style="color: #5F7F5F;">// </span><span style="color: #7F9F7F;">not found == lack</span>
+        <span style="color: #F0DFAF; font-weight: bold;">if</span> (it == obj_map.end ())
+            name_vector.push_back (name);
+    }
+    <span style="color: #F0DFAF; font-weight: bold;">return</span> name_vector;
+}
+</pre>
+</div>
+</div>
+</div>
+
+<div id="outline-container-org905668f" class="outline-4">
+<h4 id="org905668f">name_vector_obj_map_arity_lack</h4>
+<div class="outline-text-4" id="text-org905668f">
+<div class="org-src-container">
+
+<pre class="src src-cpp"><span style="color: #7CB8BB;">name_vector_t</span>
+<span style="color: #93E0E3;">name_vector_obj_map_arity_lack</span> (<span style="color: #7CB8BB;">name_vector_t</span> &amp;<span style="color: #DFAF8F;">old_name_vector</span>,
+                                <span style="color: #7CB8BB;">obj_map_t</span> &amp;<span style="color: #DFAF8F;">obj_map</span>,
+                                <span style="color: #7CB8BB;">size_t</span> <span style="color: #DFAF8F;">arity</span>)
+{
+    <span style="color: #F0DFAF; font-weight: bold;">auto</span> <span style="color: #DFAF8F;">name_vector</span> = name_vector_obj_map_lack
+        (old_name_vector, obj_map);
+    <span style="color: #F0DFAF; font-weight: bold;">auto</span> <span style="color: #DFAF8F;">lack</span> = name_vector.size ();
+    <span style="color: #F0DFAF; font-weight: bold;">auto</span> <span style="color: #DFAF8F;">counter</span> = lack - arity;
+    <span style="color: #F0DFAF; font-weight: bold;">while</span> (counter &gt; 0) {
+        counter--;
+        name_vector.pop_back ();
+    }
+    <span style="color: #F0DFAF; font-weight: bold;">return</span> name_vector;
+}
+</pre>
+</div>
+</div>
+</div>
+
+<div id="outline-container-org93117e9" class="outline-4">
+<h4 id="org93117e9">data_cons_o::apply</h4>
+<div class="outline-text-4" id="text-org93117e9">
+<div class="org-src-container">
+
+<pre class="src src-cpp"><span style="color: #7CB8BB;">void</span>
+<span style="color: #BFEBBF;">data_cons_o</span>::<span style="color: #93E0E3;">apply</span> (<span style="color: #7CB8BB;">env_t</span> &amp;<span style="color: #DFAF8F;">env</span>, <span style="color: #7CB8BB;">size_t</span> <span style="color: #DFAF8F;">arity</span>)
+{
+    <span style="color: #F0DFAF; font-weight: bold;">auto</span> <span style="color: #DFAF8F;">size</span> = <span style="color: #F0DFAF; font-weight: bold;">this</span>-&gt;name_vector.size ();
+    <span style="color: #F0DFAF; font-weight: bold;">auto</span> <span style="color: #DFAF8F;">have</span> = <span style="color: #F0DFAF; font-weight: bold;">this</span>-&gt;obj_map.size ();
+    <span style="color: #F0DFAF; font-weight: bold;">auto</span> <span style="color: #DFAF8F;">lack</span> = size - have;
+    <span style="color: #F0DFAF; font-weight: bold;">if</span> (lack == arity) {
+        <span style="color: #F0DFAF; font-weight: bold;">auto</span> <span style="color: #DFAF8F;">lack_name_vector</span> = name_vector_obj_map_lack
+            (<span style="color: #F0DFAF; font-weight: bold;">this</span>-&gt;name_vector, obj_map);
+        <span style="color: #F0DFAF; font-weight: bold;">auto</span> <span style="color: #DFAF8F;">obj_map</span> = <span style="color: #F0DFAF; font-weight: bold;">this</span>-&gt;obj_map;
+        <span style="color: #F0DFAF; font-weight: bold;">auto</span> <span style="color: #DFAF8F;">begin</span> = lack_name_vector.rbegin ();
+        <span style="color: #F0DFAF; font-weight: bold;">auto</span> <span style="color: #DFAF8F;">end</span> = lack_name_vector.rend ();
+        <span style="color: #F0DFAF; font-weight: bold;">for</span> (<span style="color: #F0DFAF; font-weight: bold;">auto</span> <span style="color: #DFAF8F;">it</span> = begin; it != end; it++) {
+            <span style="color: #7CB8BB;">name_t</span> <span style="color: #DFAF8F;">name</span> = *it;
+            <span style="color: #F0DFAF; font-weight: bold;">auto</span> <span style="color: #DFAF8F;">obj</span> = env.obj_stack.top ();
+            env.obj_stack.pop ();
+            obj_map [name] = obj;
+        }
+        <span style="color: #F0DFAF; font-weight: bold;">auto</span> <span style="color: #DFAF8F;">data</span> = make_shared &lt;data_o&gt;
+            (env,
+             <span style="color: #F0DFAF; font-weight: bold;">this</span>-&gt;type_tag,
+             obj_map);
+        env.obj_stack.push (data);
+    }
+    <span style="color: #F0DFAF; font-weight: bold;">else</span> <span style="color: #F0DFAF; font-weight: bold;">if</span> (arity &lt; lack) {
+        <span style="color: #F0DFAF; font-weight: bold;">auto</span> <span style="color: #DFAF8F;">lack_name_vector</span> = name_vector_obj_map_arity_lack
+            (<span style="color: #F0DFAF; font-weight: bold;">this</span>-&gt;name_vector, obj_map, arity);
+        <span style="color: #F0DFAF; font-weight: bold;">auto</span> <span style="color: #DFAF8F;">obj_map</span> = <span style="color: #F0DFAF; font-weight: bold;">this</span>-&gt;obj_map;
+        <span style="color: #F0DFAF; font-weight: bold;">auto</span> <span style="color: #DFAF8F;">begin</span> = lack_name_vector.rbegin ();
+        <span style="color: #F0DFAF; font-weight: bold;">auto</span> <span style="color: #DFAF8F;">end</span> = lack_name_vector.rend ();
+        <span style="color: #F0DFAF; font-weight: bold;">for</span> (<span style="color: #F0DFAF; font-weight: bold;">auto</span> <span style="color: #DFAF8F;">it</span> = begin; it != end; it++) {
+            <span style="color: #7CB8BB;">name_t</span> <span style="color: #DFAF8F;">name</span> = *it;
+            <span style="color: #F0DFAF; font-weight: bold;">auto</span> <span style="color: #DFAF8F;">obj</span> = env.obj_stack.top ();
+            env.obj_stack.pop ();
+            obj_map [name] = obj;
+        }
+        <span style="color: #F0DFAF; font-weight: bold;">auto</span> <span style="color: #DFAF8F;">data_cons</span> = make_shared &lt;data_cons_o&gt;
+            (env,
+             <span style="color: #F0DFAF; font-weight: bold;">this</span>-&gt;type_tag,
+             <span style="color: #F0DFAF; font-weight: bold;">this</span>-&gt;name_vector,
+             obj_map);
+        env.obj_stack.push (data_cons);
+    }
+    <span style="color: #F0DFAF; font-weight: bold;">else</span> {
+        cout &lt;&lt; <span style="color: #CC9393;">"- fatal error : data_cons_o::apply"</span> &lt;&lt; <span style="color: #CC9393;">"\n"</span>
+             &lt;&lt; <span style="color: #CC9393;">"  over-arity apply"</span> &lt;&lt; <span style="color: #CC9393;">"\n"</span>
+             &lt;&lt; <span style="color: #CC9393;">"  arity &gt; lack"</span> &lt;&lt; <span style="color: #CC9393;">"\n"</span>
+             &lt;&lt; <span style="color: #CC9393;">"  arity : "</span> &lt;&lt; arity &lt;&lt; <span style="color: #CC9393;">"\n"</span>
+             &lt;&lt; <span style="color: #CC9393;">"  lack : "</span> &lt;&lt; lack &lt;&lt; <span style="color: #CC9393;">"\n"</span>
+             &lt;&lt; <span style="color: #CC9393;">"\n"</span>;
+        exit (1);
+    }
+}
+</pre>
+</div>
+</div>
+</div>
+
+<div id="outline-container-orgd04c0da" class="outline-4">
+<h4 id="orgd04c0da">data_cons_o::equal</h4>
+<div class="outline-text-4" id="text-orgd04c0da">
+<div class="org-src-container">
+
+<pre class="src src-cpp"><span style="color: #7CB8BB;">bool</span>
+<span style="color: #BFEBBF;">data_cons_o</span>::<span style="color: #93E0E3;">equal</span> (<span style="color: #7CB8BB;">env_t</span> &amp;<span style="color: #DFAF8F;">env</span>, <span style="color: #7CB8BB;">shared_ptr</span> &lt;<span style="color: #7CB8BB;">obj_t</span>&gt; <span style="color: #DFAF8F;">obj</span>)
+{
+    <span style="color: #F0DFAF; font-weight: bold;">if</span> (<span style="color: #F0DFAF; font-weight: bold;">this</span>-&gt;tag != obj-&gt;tag) <span style="color: #F0DFAF; font-weight: bold;">return</span> <span style="color: #BFEBBF;">false</span>;
+    <span style="color: #F0DFAF; font-weight: bold;">auto</span> <span style="color: #DFAF8F;">that</span> = static_pointer_cast &lt;data_cons_o&gt; (obj);
+    <span style="color: #F0DFAF; font-weight: bold;">if</span> (<span style="color: #F0DFAF; font-weight: bold;">this</span>-&gt;type_tag != that-&gt;type_tag) <span style="color: #F0DFAF; font-weight: bold;">return</span> <span style="color: #BFEBBF;">false</span>;
+    <span style="color: #F0DFAF; font-weight: bold;">return</span> obj_map_equal (env, <span style="color: #F0DFAF; font-weight: bold;">this</span>-&gt;obj_map, that-&gt;obj_map);
+
+}
+</pre>
+</div>
+</div>
+</div>
+</div>
+</div>
+
+<div id="outline-container-org3bb6f9e" class="outline-2">
+<h2 id="org3bb6f9e">env</h2>
+<div class="outline-text-2" id="text-org3bb6f9e">
+</div><div id="outline-container-org49b00ba" class="outline-3">
+<h3 id="org49b00ba">jojo</h3>
+<div class="outline-text-3" id="text-org49b00ba">
+</div><div id="outline-container-org99ba9b3" class="outline-4">
+<h4 id="org99ba9b3">jojo_print</h4>
+<div class="outline-text-4" id="text-org99ba9b3">
+<div class="org-src-container">
+
+<pre class="src src-cpp"><span style="color: #7CB8BB;">void</span>
+<span style="color: #93E0E3;">jojo_print</span> (<span style="color: #7CB8BB;">env_t</span> &amp;<span style="color: #DFAF8F;">env</span>, <span style="color: #7CB8BB;">jojo_t</span> <span style="color: #DFAF8F;">jojo</span>)
+{
+    <span style="color: #F0DFAF; font-weight: bold;">for</span> (<span style="color: #F0DFAF; font-weight: bold;">auto</span> &amp;<span style="color: #DFAF8F;">jo</span>: jojo)
+        cout &lt;&lt; jo-&gt;repr (env) &lt;&lt; <span style="color: #CC9393;">" "</span>;
+}
+</pre>
+</div>
+</div>
+</div>
+
+<div id="outline-container-org41add0a" class="outline-4">
+<h4 id="org41add0a">jojo_print_with_index</h4>
+<div class="outline-text-4" id="text-org41add0a">
+<div class="org-src-container">
+
+<pre class="src src-cpp"><span style="color: #7CB8BB;">void</span>
+<span style="color: #93E0E3;">jojo_print_with_index</span> (<span style="color: #7CB8BB;">env_t</span> &amp;<span style="color: #DFAF8F;">env</span>, <span style="color: #7CB8BB;">jojo_t</span> <span style="color: #DFAF8F;">jojo</span>, <span style="color: #7CB8BB;">size_t</span> <span style="color: #DFAF8F;">index</span>)
+{
+    <span style="color: #F0DFAF; font-weight: bold;">for</span> (<span style="color: #F0DFAF; font-weight: bold;">auto</span> <span style="color: #DFAF8F;">it</span> = jojo.begin ();
+         it != jojo.end ();
+         it++) {
+        <span style="color: #7CB8BB;">size_t</span> <span style="color: #DFAF8F;">it_index</span> = it - jojo.begin ();
+        <span style="color: #7CB8BB;">jo_t</span> *<span style="color: #DFAF8F;">jo</span> = *it;
+        <span style="color: #F0DFAF; font-weight: bold;">if</span> (index == it_index) {
+            cout &lt;&lt; <span style="color: #CC9393;">"-&gt;&gt; "</span> &lt;&lt; jo-&gt;repr (env) &lt;&lt; <span style="color: #CC9393;">" "</span>;
+        }
+        <span style="color: #F0DFAF; font-weight: bold;">else</span> {
+            cout &lt;&lt; jo-&gt;repr (env) &lt;&lt; <span style="color: #CC9393;">" "</span>;
+        }
+    }
+}
+</pre>
+</div>
+</div>
+</div>
+</div>
+
+<div id="outline-container-org774d13d" class="outline-3">
+<h3 id="org774d13d">frame</h3>
+<div class="outline-text-3" id="text-org774d13d">
+</div><div id="outline-container-orgf6da992" class="outline-4">
+<h4 id="orgf6da992">frame_t::frame_t</h4>
+<div class="outline-text-4" id="text-orgf6da992">
+<div class="org-src-container">
+
+<pre class="src src-cpp"><span style="color: #BFEBBF;">frame_t</span>::<span style="color: #93E0E3;">frame_t</span> (<span style="color: #7CB8BB;">jojo_t</span> <span style="color: #DFAF8F;">jojo</span>, <span style="color: #7CB8BB;">local_scope_t</span> <span style="color: #DFAF8F;">local_scope</span>)
+{
+    <span style="color: #F0DFAF; font-weight: bold;">this</span>-&gt;index = 0;
+    <span style="color: #F0DFAF; font-weight: bold;">this</span>-&gt;jojo = jojo;
+    <span style="color: #F0DFAF; font-weight: bold;">this</span>-&gt;local_scope = local_scope;
+}
+</pre>
+</div>
+</div>
+</div>
+
+<div id="outline-container-org28c5722" class="outline-4">
+<h4 id="org28c5722">frame_report</h4>
+<div class="outline-text-4" id="text-org28c5722">
+<div class="org-src-container">
+
+<pre class="src src-cpp"><span style="color: #7CB8BB;">void</span>
+<span style="color: #93E0E3;">frame_report</span> (<span style="color: #7CB8BB;">env_t</span> &amp;<span style="color: #DFAF8F;">env</span>, <span style="color: #7CB8BB;">shared_ptr</span> &lt;<span style="color: #7CB8BB;">frame_t</span>&gt; <span style="color: #DFAF8F;">frame</span>)
+{
+    cout &lt;&lt; <span style="color: #CC9393;">"  - ["</span>
+         &lt;&lt; frame-&gt;index+1
+         &lt;&lt; <span style="color: #CC9393;">"/"</span>
+         &lt;&lt; frame-&gt;jojo.size ()
+         &lt;&lt; <span style="color: #CC9393;">"] "</span>;
+    jojo_print_with_index (env, frame-&gt;jojo, frame-&gt;index);
+    cout &lt;&lt; <span style="color: #CC9393;">"\n"</span>;
+
+    cout &lt;&lt; <span style="color: #CC9393;">"  - local_scope # "</span>
+         &lt;&lt; frame-&gt;local_scope.size ()
+         &lt;&lt; <span style="color: #CC9393;">"\n"</span>;
+}
+</pre>
+</div>
+</div>
+</div>
+</div>
+
+<div id="outline-container-org613aaa0" class="outline-3">
+<h3 id="org613aaa0">box</h3>
+<div class="outline-text-3" id="text-org613aaa0">
+</div><div id="outline-container-org684c25c" class="outline-4">
+<h4 id="org684c25c">box_t::box_t</h4>
+<div class="outline-text-4" id="text-org684c25c">
+<div class="org-src-container">
+
+<pre class="src src-cpp"><span style="color: #BFEBBF;">box_t</span>::<span style="color: #93E0E3;">box_t</span> ()
+{
+    <span style="color: #F0DFAF; font-weight: bold;">this</span>-&gt;empty_p = <span style="color: #BFEBBF;">true</span>;
+}
+
+<span style="color: #BFEBBF;">box_t</span>::<span style="color: #93E0E3;">box_t</span> (<span style="color: #7CB8BB;">shared_ptr</span> &lt;<span style="color: #7CB8BB;">obj_t</span>&gt; <span style="color: #DFAF8F;">obj</span>)
+{
+    <span style="color: #F0DFAF; font-weight: bold;">this</span>-&gt;empty_p = <span style="color: #BFEBBF;">false</span>;
+    <span style="color: #F0DFAF; font-weight: bold;">this</span>-&gt;obj = obj;
+}
+</pre>
+</div>
+</div>
+</div>
+
+<div id="outline-container-orgab7e5f1" class="outline-4">
+<h4 id="orgab7e5f1">boxing</h4>
+<div class="outline-text-4" id="text-orgab7e5f1">
+<div class="org-src-container">
+
+<pre class="src src-cpp"><span style="color: #7CB8BB;">box_t</span> *
+<span style="color: #93E0E3;">boxing</span> (<span style="color: #7CB8BB;">env_t</span> &amp;<span style="color: #DFAF8F;">env</span>, <span style="color: #7CB8BB;">name_t</span> <span style="color: #DFAF8F;">name</span>)
+{
+    <span style="color: #F0DFAF; font-weight: bold;">auto</span> <span style="color: #DFAF8F;">it</span> = env.box_map.find (name);
+    <span style="color: #F0DFAF; font-weight: bold;">if</span> (it != env.box_map.end ())
+        <span style="color: #F0DFAF; font-weight: bold;">return</span> it-&gt;second;
+    <span style="color: #F0DFAF; font-weight: bold;">else</span> {
+        <span style="color: #F0DFAF; font-weight: bold;">auto</span> <span style="color: #DFAF8F;">box</span> = <span style="color: #F0DFAF; font-weight: bold;">new</span> <span style="color: #7CB8BB;">box_t</span> ();
+        env.box_map [name] = box;
+        <span style="color: #F0DFAF; font-weight: bold;">return</span> box;
+    }
+}
+</pre>
+</div>
+</div>
+</div>
+</div>
+
+<div id="outline-container-orgf60dd76" class="outline-3">
+<h3 id="orgf60dd76">box_map</h3>
+<div class="outline-text-3" id="text-orgf60dd76">
+</div><div id="outline-container-orga06839f" class="outline-4">
+<h4 id="orga06839f">box_map_report</h4>
+<div class="outline-text-4" id="text-orga06839f">
+<div class="org-src-container">
+
+<pre class="src src-cpp"><span style="color: #7CB8BB;">void</span>
+<span style="color: #93E0E3;">box_map_report</span> (<span style="color: #7CB8BB;">env_t</span> &amp;<span style="color: #DFAF8F;">env</span>)
+{
+    cout &lt;&lt; <span style="color: #CC9393;">"- box_map # "</span> &lt;&lt; env.box_map.size () &lt;&lt; <span style="color: #CC9393;">"\n"</span>;
+    <span style="color: #F0DFAF; font-weight: bold;">for</span> (<span style="color: #F0DFAF; font-weight: bold;">auto</span> &amp;<span style="color: #DFAF8F;">kv</span>: env.box_map) {
+        cout &lt;&lt; <span style="color: #CC9393;">"  "</span> &lt;&lt; kv.first &lt;&lt; <span style="color: #CC9393;">" : "</span>;
+        <span style="color: #F0DFAF; font-weight: bold;">auto</span> <span style="color: #DFAF8F;">box</span> = kv.second;
+        box-&gt;obj-&gt;print (env);
+        cout &lt;&lt; <span style="color: #CC9393;">"\n"</span>;
+    }
+}
+</pre>
+</div>
+</div>
+</div>
+</div>
+
+<div id="outline-container-org81bb87a" class="outline-3">
+<h3 id="org81bb87a">obj_stack</h3>
+<div class="outline-text-3" id="text-org81bb87a">
+</div><div id="outline-container-org22eaba2" class="outline-4">
+<h4 id="org22eaba2">frame_stack_report</h4>
+<div class="outline-text-4" id="text-org22eaba2">
+<div class="org-src-container">
+
+<pre class="src src-cpp"><span style="color: #7CB8BB;">void</span>
+<span style="color: #93E0E3;">frame_stack_report</span> (<span style="color: #7CB8BB;">env_t</span> &amp;<span style="color: #DFAF8F;">env</span>)
+{
+    cout &lt;&lt; <span style="color: #CC9393;">"- frame_stack # "</span>
+         &lt;&lt; env.frame_stack.size ()
+         &lt;&lt; <span style="color: #CC9393;">"\n"</span>;
+    <span style="color: #7CB8BB;">frame_stack_t</span> <span style="color: #DFAF8F;">frame_stack</span> = env.frame_stack;
+    <span style="color: #F0DFAF; font-weight: bold;">while</span> (<span style="color: #F0DFAF; font-weight: bold;">!</span> frame_stack.empty ()) {
+       <span style="color: #F0DFAF; font-weight: bold;">auto</span> <span style="color: #DFAF8F;">frame</span> = frame_stack.top ();
+       frame_report (env, frame);
+       frame_stack.pop ();
+    }
+}
+</pre>
+</div>
+</div>
+</div>
+</div>
+
+<div id="outline-container-org624e9fa" class="outline-3">
+<h3 id="org624e9fa">frame_stack</h3>
+<div class="outline-text-3" id="text-org624e9fa">
+</div><div id="outline-container-orgfa9bbc0" class="outline-4">
+<h4 id="orgfa9bbc0">obj_stack_report</h4>
+<div class="outline-text-4" id="text-orgfa9bbc0">
+<div class="org-src-container">
+
+<pre class="src src-cpp"><span style="color: #7CB8BB;">void</span>
+<span style="color: #93E0E3;">obj_stack_report</span> (<span style="color: #7CB8BB;">env_t</span> &amp;<span style="color: #DFAF8F;">env</span>)
+{
+    cout &lt;&lt; <span style="color: #CC9393;">"- obj_stack # "</span>
+         &lt;&lt; env.obj_stack.size ()
+         &lt;&lt; <span style="color: #CC9393;">"\n"</span>;
+    cout &lt;&lt; <span style="color: #CC9393;">"  "</span>;
+    <span style="color: #F0DFAF; font-weight: bold;">auto</span> <span style="color: #DFAF8F;">obj_stack</span> = env.obj_stack;
+    <span style="color: #F0DFAF; font-weight: bold;">while</span> (<span style="color: #F0DFAF; font-weight: bold;">!</span> obj_stack.empty ()) {
+        <span style="color: #F0DFAF; font-weight: bold;">auto</span> <span style="color: #DFAF8F;">obj</span> = obj_stack.top ();
+        obj-&gt;print (env);
+        cout &lt;&lt; <span style="color: #CC9393;">" "</span>;
+        obj_stack.pop ();
+    }
+    cout &lt;&lt; <span style="color: #CC9393;">"\n"</span>;
+}
+</pre>
+</div>
+</div>
+</div>
+</div>
+
+<div id="outline-container-org7432027" class="outline-3">
+<h3 id="org7432027">env_t::step</h3>
+<div class="outline-text-3" id="text-org7432027">
+<div class="org-src-container">
+
+<pre class="src src-cpp"><span style="color: #7CB8BB;">void</span>
+<span style="color: #BFEBBF;">env_t</span>::<span style="color: #93E0E3;">step</span> ()
+{
+    <span style="color: #F0DFAF; font-weight: bold;">auto</span> <span style="color: #DFAF8F;">frame</span> = <span style="color: #F0DFAF; font-weight: bold;">this</span>-&gt;frame_stack.top ();
+    <span style="color: #7CB8BB;">size_t</span> <span style="color: #DFAF8F;">size</span> = frame-&gt;jojo.size ();
+    <span style="color: #7CB8BB;">size_t</span> <span style="color: #DFAF8F;">index</span> = frame-&gt;index;
+    <span style="color: #5F7F5F;">// </span><span style="color: #7F9F7F;">it is assumed that jojo in frame are not empty</span>
+    <span style="color: #7CB8BB;">jo_t</span> *<span style="color: #DFAF8F;">jo</span> = frame-&gt;jojo [index];
+    frame-&gt;index++;
+    <span style="color: #5F7F5F;">// </span><span style="color: #7F9F7F;">handle proper tail call</span>
+    <span style="color: #F0DFAF; font-weight: bold;">if</span> (index+1 == size) <span style="color: #F0DFAF; font-weight: bold;">this</span>-&gt;frame_stack.pop ();
+    <span style="color: #5F7F5F;">// </span><span style="color: #7F9F7F;">since the last frame might be drop,</span>
+    <span style="color: #5F7F5F;">//   </span><span style="color: #7F9F7F;">we pass last local_scope as an extra argument.</span>
+    jo-&gt;exe (*<span style="color: #F0DFAF; font-weight: bold;">this</span>, frame-&gt;local_scope);
+}
+</pre>
+</div>
+</div>
+</div>
+
+<div id="outline-container-orge56ecfb" class="outline-3">
+<h3 id="orge56ecfb">env_t::run</h3>
+<div class="outline-text-3" id="text-orge56ecfb">
+<div class="org-src-container">
+
+<pre class="src src-cpp"><span style="color: #7CB8BB;">void</span>
+<span style="color: #BFEBBF;">env_t</span>::<span style="color: #93E0E3;">run</span> ()
+{
+    <span style="color: #F0DFAF; font-weight: bold;">while</span> (<span style="color: #F0DFAF; font-weight: bold;">!</span><span style="color: #F0DFAF; font-weight: bold;">this</span>-&gt;frame_stack.empty ()) {
+        <span style="color: #F0DFAF; font-weight: bold;">this</span>-&gt;step ();
+    }
+}
+</pre>
+</div>
+</div>
+</div>
+
+<div id="outline-container-org38a879f" class="outline-3">
+<h3 id="org38a879f">env_t::report</h3>
+<div class="outline-text-3" id="text-org38a879f">
+<div class="org-src-container">
+
+<pre class="src src-cpp"><span style="color: #7CB8BB;">void</span>
+<span style="color: #BFEBBF;">env_t</span>::<span style="color: #93E0E3;">report</span> ()
+{
+    box_map_report (*<span style="color: #F0DFAF; font-weight: bold;">this</span>);
+    frame_stack_report (*<span style="color: #F0DFAF; font-weight: bold;">this</span>);
+    obj_stack_report (*<span style="color: #F0DFAF; font-weight: bold;">this</span>);
+    cout &lt;&lt; <span style="color: #CC9393;">"\n"</span>;
+}
+</pre>
+</div>
+</div>
+</div>
+</div>
+
+<div id="outline-container-org5266e8b" class="outline-2">
+<h2 id="org5266e8b">jo</h2>
+<div class="outline-text-2" id="text-org5266e8b">
+</div><div id="outline-container-orgcb6b3b9" class="outline-3">
+<h3 id="orgcb6b3b9">jo</h3>
+<div class="outline-text-3" id="text-orgcb6b3b9">
+</div><div id="outline-container-org734b22d" class="outline-4">
+<h4 id="org734b22d">jo_t::exe</h4>
+<div class="outline-text-4" id="text-org734b22d">
+<div class="org-src-container">
+
+<pre class="src src-cpp"><span style="color: #7CB8BB;">void</span>
+<span style="color: #BFEBBF;">jo_t</span>::<span style="color: #93E0E3;">exe</span> (<span style="color: #7CB8BB;">env_t</span> &amp;<span style="color: #DFAF8F;">env</span>, <span style="color: #7CB8BB;">local_scope_t</span> &amp;<span style="color: #DFAF8F;">local_scope</span>)
+{
+    cout &lt;&lt; <span style="color: #CC9393;">"- fatal error : unknown jo"</span> &lt;&lt; <span style="color: #CC9393;">"\n"</span>;
+    exit (1);
+}
+</pre>
+</div>
+</div>
+</div>
+
+<div id="outline-container-org4cd9064" class="outline-4">
+<h4 id="org4cd9064">jo_t::repr</h4>
+<div class="outline-text-4" id="text-org4cd9064">
+<div class="org-src-container">
+
+<pre class="src src-cpp"><span style="color: #7CB8BB;">string</span>
+<span style="color: #BFEBBF;">jo_t</span>::<span style="color: #93E0E3;">repr</span> (<span style="color: #7CB8BB;">env_t</span> &amp;<span style="color: #DFAF8F;">env</span>)
+{
+    <span style="color: #F0DFAF; font-weight: bold;">return</span> <span style="color: #CC9393;">"(unknown)"</span>;
+}
+</pre>
+</div>
+</div>
+</div>
+</div>
+
+<div id="outline-container-org8b697a7" class="outline-3">
+<h3 id="org8b697a7">ref_jo</h3>
+<div class="outline-text-3" id="text-org8b697a7">
+</div><div id="outline-container-org359930f" class="outline-4">
+<h4 id="org359930f">ref_jo_t</h4>
+<div class="outline-text-4" id="text-org359930f">
+<div class="org-src-container">
+
+<pre class="src src-cpp"><span style="color: #F0DFAF; font-weight: bold;">struct</span> <span style="color: #7CB8BB;">ref_jo_t</span>: <span style="color: #7CB8BB;">jo_t</span>
+{
+    <span style="color: #7CB8BB;">box_t</span> *<span style="color: #DFAF8F;">box</span>;
+    <span style="color: #93E0E3;">ref_jo_t</span> (<span style="color: #7CB8BB;">box_t</span> *<span style="color: #DFAF8F;">box</span>);
+    <span style="color: #7CB8BB;">void</span> <span style="color: #93E0E3;">exe</span> (<span style="color: #7CB8BB;">env_t</span> &amp;<span style="color: #DFAF8F;">env</span>, <span style="color: #7CB8BB;">local_scope_t</span> &amp;<span style="color: #DFAF8F;">local_scope</span>);
+    <span style="color: #7CB8BB;">string</span> <span style="color: #93E0E3;">repr</span> (<span style="color: #7CB8BB;">env_t</span> &amp;<span style="color: #DFAF8F;">env</span>);
+};
+</pre>
+</div>
+</div>
+</div>
+
+<div id="outline-container-org57eb704" class="outline-4">
+<h4 id="org57eb704">ref_jo_t::ref_jo_t</h4>
+<div class="outline-text-4" id="text-org57eb704">
+<div class="org-src-container">
+
+<pre class="src src-cpp"><span style="color: #BFEBBF;">ref_jo_t</span>::<span style="color: #93E0E3;">ref_jo_t</span> (<span style="color: #7CB8BB;">box_t</span> *<span style="color: #DFAF8F;">box</span>)
+{
+    <span style="color: #F0DFAF; font-weight: bold;">this</span>-&gt;box = box;
+}
+</pre>
+</div>
+</div>
+</div>
+
+<div id="outline-container-org6031ee7" class="outline-4">
+<h4 id="org6031ee7">ref_jo_t::exe</h4>
+<div class="outline-text-4" id="text-org6031ee7">
+<div class="org-src-container">
+
+<pre class="src src-cpp"><span style="color: #7CB8BB;">void</span>
+<span style="color: #BFEBBF;">ref_jo_t</span>::<span style="color: #93E0E3;">exe</span> (<span style="color: #7CB8BB;">env_t</span> &amp;<span style="color: #DFAF8F;">env</span>, <span style="color: #7CB8BB;">local_scope_t</span> &amp;<span style="color: #DFAF8F;">local_scope</span>)
+{
+    assert (<span style="color: #F0DFAF; font-weight: bold;">!</span> <span style="color: #F0DFAF; font-weight: bold;">this</span>-&gt;box-&gt;empty_p);
+    env.obj_stack.push (<span style="color: #F0DFAF; font-weight: bold;">this</span>-&gt;box-&gt;obj);
+}
+</pre>
+</div>
+</div>
+</div>
+
+<div id="outline-container-org1c344c6" class="outline-4">
+<h4 id="org1c344c6">ref_jo_t::repr</h4>
+<div class="outline-text-4" id="text-org1c344c6">
+<div class="org-src-container">
+
+<pre class="src src-cpp"><span style="color: #7CB8BB;">string</span>
+<span style="color: #BFEBBF;">ref_jo_t</span>::<span style="color: #93E0E3;">repr</span> (<span style="color: #7CB8BB;">env_t</span> &amp;<span style="color: #DFAF8F;">env</span>)
+{
+    <span style="color: #5F7F5F;">// </span><span style="color: #7F9F7F;">return "(ref " + this-&gt;name + ")";</span>
+    <span style="color: #F0DFAF; font-weight: bold;">return</span> <span style="color: #CC9393;">"(ref)"</span>;
+}
+</pre>
+</div>
+</div>
+</div>
+</div>
+
+<div id="outline-container-org999ac77" class="outline-3">
+<h3 id="org999ac77">local_ref_jo</h3>
+<div class="outline-text-3" id="text-org999ac77">
+</div><div id="outline-container-orgb9fb9e4" class="outline-4">
+<h4 id="orgb9fb9e4">local_ref_jo_t</h4>
+<div class="outline-text-4" id="text-orgb9fb9e4">
+<div class="org-src-container">
+
+<pre class="src src-cpp"><span style="color: #F0DFAF; font-weight: bold;">struct</span> <span style="color: #7CB8BB;">local_ref_jo_t</span>: <span style="color: #7CB8BB;">jo_t</span>
+{
+    <span style="color: #7CB8BB;">size_t</span> <span style="color: #DFAF8F;">level</span>;
+    <span style="color: #7CB8BB;">size_t</span> <span style="color: #DFAF8F;">index</span>;
+    <span style="color: #93E0E3;">local_ref_jo_t</span> (<span style="color: #7CB8BB;">size_t</span> <span style="color: #DFAF8F;">level</span>, <span style="color: #7CB8BB;">size_t</span> <span style="color: #DFAF8F;">index</span>);
+    <span style="color: #7CB8BB;">void</span> <span style="color: #93E0E3;">exe</span> (<span style="color: #7CB8BB;">env_t</span> &amp;<span style="color: #DFAF8F;">env</span>, <span style="color: #7CB8BB;">local_scope_t</span> &amp;<span style="color: #DFAF8F;">local_scope</span>);
+    <span style="color: #7CB8BB;">string</span> <span style="color: #93E0E3;">repr</span> (<span style="color: #7CB8BB;">env_t</span> &amp;<span style="color: #DFAF8F;">env</span>);
+};
+</pre>
+</div>
+</div>
+</div>
+
+<div id="outline-container-org88e54f8" class="outline-4">
+<h4 id="org88e54f8">local_ref_jo_t::local_ref_jo_t</h4>
+<div class="outline-text-4" id="text-org88e54f8">
+<div class="org-src-container">
+
+<pre class="src src-cpp"><span style="color: #BFEBBF;">local_ref_jo_t</span>::
+<span style="color: #93E0E3;">local_ref_jo_t</span> (<span style="color: #7CB8BB;">size_t</span> <span style="color: #DFAF8F;">level</span>, <span style="color: #7CB8BB;">size_t</span> <span style="color: #DFAF8F;">index</span>)
+{
+    <span style="color: #F0DFAF; font-weight: bold;">this</span>-&gt;level = level;
+    <span style="color: #F0DFAF; font-weight: bold;">this</span>-&gt;index = index;
+}
+</pre>
+</div>
+</div>
+</div>
+
+<div id="outline-container-orgd06fad0" class="outline-4">
+<h4 id="orgd06fad0">vector_rev_ref</h4>
+<div class="outline-text-4" id="text-orgd06fad0">
+<div class="org-src-container">
+
+<pre class="src src-cpp"><span style="color: #F0DFAF; font-weight: bold;">template</span> &lt;<span style="color: #F0DFAF; font-weight: bold;">class</span> <span style="color: #7CB8BB;">T</span>&gt;
+<span style="color: #7CB8BB;">T</span>
+<span style="color: #93E0E3;">vector_rev_ref</span> (<span style="color: #7CB8BB;">vector</span> &lt;<span style="color: #7CB8BB;">T</span>&gt; <span style="color: #DFAF8F;">vect</span>, <span style="color: #7CB8BB;">size_t</span> <span style="color: #DFAF8F;">rev_index</span>)
+{
+    <span style="color: #7CB8BB;">size_t</span> <span style="color: #DFAF8F;">size</span> = vect.size ();
+    <span style="color: #7CB8BB;">size_t</span> <span style="color: #DFAF8F;">index</span> = size - rev_index - 1;
+    <span style="color: #F0DFAF; font-weight: bold;">return</span> vect [index];
+}
+</pre>
+</div>
+</div>
+</div>
+
+<div id="outline-container-orga064794" class="outline-4">
+<h4 id="orga064794">local_ref_jo_t::exe</h4>
+<div class="outline-text-4" id="text-orga064794">
+<div class="org-src-container">
+
+<pre class="src src-cpp"><span style="color: #7CB8BB;">void</span>
+<span style="color: #BFEBBF;">local_ref_jo_t</span>::<span style="color: #93E0E3;">exe</span> (<span style="color: #7CB8BB;">env_t</span> &amp;<span style="color: #DFAF8F;">env</span>, <span style="color: #7CB8BB;">local_scope_t</span> &amp;<span style="color: #DFAF8F;">local_scope</span>)
+{
+    <span style="color: #5F7F5F;">// </span><span style="color: #7F9F7F;">this is the only place where</span>
+    <span style="color: #5F7F5F;">//   </span><span style="color: #7F9F7F;">the local_scope in the arg of exe is uesd.</span>
+    <span style="color: #F0DFAF; font-weight: bold;">auto</span> <span style="color: #DFAF8F;">bind_vector</span> =
+        vector_rev_ref (local_scope, <span style="color: #F0DFAF; font-weight: bold;">this</span>-&gt;level);
+    <span style="color: #F0DFAF; font-weight: bold;">auto</span> <span style="color: #DFAF8F;">bind</span> =
+        vector_rev_ref (bind_vector, <span style="color: #F0DFAF; font-weight: bold;">this</span>-&gt;index);
+    <span style="color: #5F7F5F;">// </span><span style="color: #7F9F7F;">{</span>
+    <span style="color: #5F7F5F;">//     </span><span style="color: #7F9F7F;">local_scope_print (env, local_scope);</span>
+    <span style="color: #5F7F5F;">//     </span><span style="color: #7F9F7F;">cout &lt;&lt; "- local_ref_jo_t::exe\n"</span>
+    <span style="color: #5F7F5F;">//          </span><span style="color: #7F9F7F;">&lt;&lt; "  this-&gt;level : " &lt;&lt; this-&gt;level &lt;&lt; "\n"</span>
+    <span style="color: #5F7F5F;">//          </span><span style="color: #7F9F7F;">&lt;&lt; "  this-&gt;index : " &lt;&lt; this-&gt;index &lt;&lt; "\n"</span>
+    <span style="color: #5F7F5F;">//          </span><span style="color: #7F9F7F;">&lt;&lt; "  bind.first : " &lt;&lt; bind.first &lt;&lt; "\n";</span>
+    <span style="color: #5F7F5F;">//     </span><span style="color: #7F9F7F;">cout &lt;&lt; "  bind.second-&gt;print () : ";</span>
+    <span style="color: #5F7F5F;">//     </span><span style="color: #7F9F7F;">bind.second-&gt;print (env);</span>
+    <span style="color: #5F7F5F;">//     </span><span style="color: #7F9F7F;">cout &lt;&lt; "\n";</span>
+    <span style="color: #5F7F5F;">//     </span><span style="color: #7F9F7F;">cout &lt;&lt; "\n";</span>
+    <span style="color: #5F7F5F;">// </span><span style="color: #7F9F7F;">}</span>
+    <span style="color: #F0DFAF; font-weight: bold;">auto</span> <span style="color: #DFAF8F;">obj</span> = bind.second;
+    env.obj_stack.push (obj);
+}
+</pre>
+</div>
+</div>
+</div>
+
+<div id="outline-container-orge532ebe" class="outline-4">
+<h4 id="orge532ebe">local_ref_jo_t::repr</h4>
+<div class="outline-text-4" id="text-orge532ebe">
+<div class="org-src-container">
+
+<pre class="src src-cpp"><span style="color: #7CB8BB;">string</span>
+<span style="color: #BFEBBF;">local_ref_jo_t</span>::<span style="color: #93E0E3;">repr</span> (<span style="color: #7CB8BB;">env_t</span> &amp;<span style="color: #DFAF8F;">env</span>)
+{
+    <span style="color: #F0DFAF; font-weight: bold;">return</span> <span style="color: #CC9393;">"(local-ref "</span> +
+        to_string (<span style="color: #F0DFAF; font-weight: bold;">this</span>-&gt;level) + <span style="color: #CC9393;">" "</span> +
+        to_string (<span style="color: #F0DFAF; font-weight: bold;">this</span>-&gt;index) + <span style="color: #CC9393;">")"</span>;
+}
+</pre>
+</div>
+</div>
+</div>
+</div>
+
+<div id="outline-container-org817a7c3" class="outline-3">
+<h3 id="org817a7c3">lambda_jo</h3>
+<div class="outline-text-3" id="text-org817a7c3">
+</div><div id="outline-container-org7721a98" class="outline-4">
+<h4 id="org7721a98">lambda_jo_t::lambda_jo_t</h4>
+<div class="outline-text-4" id="text-org7721a98">
+<div class="org-src-container">
+
+<pre class="src src-cpp"><span style="color: #BFEBBF;">lambda_jo_t</span>::<span style="color: #93E0E3;">lambda_jo_t</span> (<span style="color: #7CB8BB;">name_vector_t</span> <span style="color: #DFAF8F;">name_vector</span>, <span style="color: #7CB8BB;">jojo_t</span> <span style="color: #DFAF8F;">jojo</span>)
+{
+    <span style="color: #F0DFAF; font-weight: bold;">this</span>-&gt;name_vector = name_vector;
+    <span style="color: #F0DFAF; font-weight: bold;">this</span>-&gt;jojo = jojo;
+}
+</pre>
+</div>
+</div>
+</div>
+
+<div id="outline-container-org618836a" class="outline-4">
+<h4 id="org618836a">bind_vector_from_name_vector</h4>
+<div class="outline-text-4" id="text-org618836a">
+<div class="org-src-container">
+
+<pre class="src src-cpp"><span style="color: #7CB8BB;">bind_vector_t</span>
+<span style="color: #93E0E3;">bind_vector_from_name_vector</span> (<span style="color: #7CB8BB;">name_vector_t</span> &amp;<span style="color: #DFAF8F;">name_vector</span>)
+{
+    <span style="color: #F0DFAF; font-weight: bold;">auto</span> <span style="color: #DFAF8F;">bind_vector</span> = bind_vector_t ();
+    <span style="color: #F0DFAF; font-weight: bold;">auto</span> <span style="color: #DFAF8F;">begin</span> = name_vector.begin ();
+    <span style="color: #F0DFAF; font-weight: bold;">auto</span> <span style="color: #DFAF8F;">end</span> = name_vector.end ();
+    <span style="color: #F0DFAF; font-weight: bold;">for</span> (<span style="color: #F0DFAF; font-weight: bold;">auto</span> <span style="color: #DFAF8F;">it</span> = begin; it != end; it++)
+        bind_vector.push_back (make_pair (*it, <span style="color: #BFEBBF;">nullptr</span>));
+    <span style="color: #F0DFAF; font-weight: bold;">return</span> bind_vector;
+}
+</pre>
+</div>
+</div>
+</div>
+
+<div id="outline-container-orgf3f7405" class="outline-4">
+<h4 id="orgf3f7405">lambda_jo_t::exe</h4>
+<div class="outline-text-4" id="text-orgf3f7405">
+<div class="org-src-container">
+
+<pre class="src src-cpp"><span style="color: #7CB8BB;">void</span>
+<span style="color: #BFEBBF;">lambda_jo_t</span>::<span style="color: #93E0E3;">exe</span> (<span style="color: #7CB8BB;">env_t</span> &amp;<span style="color: #DFAF8F;">env</span>, <span style="color: #7CB8BB;">local_scope_t</span> &amp;<span style="color: #DFAF8F;">local_scope</span>)
+{
+    <span style="color: #F0DFAF; font-weight: bold;">auto</span> <span style="color: #DFAF8F;">frame</span> = env.frame_stack.top ();
+    <span style="color: #F0DFAF; font-weight: bold;">auto</span> <span style="color: #DFAF8F;">lambda</span> = make_shared &lt;lambda_o&gt;
+        (env, <span style="color: #F0DFAF; font-weight: bold;">this</span>,
+         bind_vector_from_name_vector (<span style="color: #F0DFAF; font-weight: bold;">this</span>-&gt;name_vector),
+         frame-&gt;local_scope);
+    env.obj_stack.push (lambda);
+}
+</pre>
+</div>
+</div>
+</div>
+
+<div id="outline-container-orge6d3aca" class="outline-4">
+<h4 id="orge6d3aca">lambda_jo_t::repr</h4>
+<div class="outline-text-4" id="text-orge6d3aca">
+<div class="org-src-container">
+
+<pre class="src src-cpp"><span style="color: #7CB8BB;">string</span>
+<span style="color: #BFEBBF;">lambda_jo_t</span>::<span style="color: #93E0E3;">repr</span> (<span style="color: #7CB8BB;">env_t</span> &amp;<span style="color: #DFAF8F;">env</span>)
+{
+    <span style="color: #F0DFAF; font-weight: bold;">return</span> <span style="color: #CC9393;">"(lambda)"</span>;
+}
+</pre>
+</div>
+</div>
+</div>
+</div>
+
+<div id="outline-container-orgd66401c" class="outline-3">
+<h3 id="orgd66401c">field_jo</h3>
+<div class="outline-text-3" id="text-orgd66401c">
+</div><div id="outline-container-orgb7af0e3" class="outline-4">
+<h4 id="orgb7af0e3">field_jo_t</h4>
+<div class="outline-text-4" id="text-orgb7af0e3">
+<div class="org-src-container">
+
+<pre class="src src-cpp"><span style="color: #F0DFAF; font-weight: bold;">struct</span> <span style="color: #7CB8BB;">field_jo_t</span>: <span style="color: #7CB8BB;">jo_t</span>
+{
+    <span style="color: #7CB8BB;">name_t</span> <span style="color: #DFAF8F;">name</span>;
+    <span style="color: #93E0E3;">field_jo_t</span> (<span style="color: #7CB8BB;">name_t</span> <span style="color: #DFAF8F;">name</span>);
+    <span style="color: #7CB8BB;">void</span> <span style="color: #93E0E3;">exe</span> (<span style="color: #7CB8BB;">env_t</span> &amp;<span style="color: #DFAF8F;">env</span>, <span style="color: #7CB8BB;">local_scope_t</span> &amp;<span style="color: #DFAF8F;">local_scope</span>);
+    <span style="color: #7CB8BB;">string</span> <span style="color: #93E0E3;">repr</span> (<span style="color: #7CB8BB;">env_t</span> &amp;<span style="color: #DFAF8F;">env</span>);
+};
+</pre>
+</div>
+</div>
+</div>
+
+<div id="outline-container-orge41a11d" class="outline-4">
+<h4 id="orge41a11d">field_jo_t::field_jo_t</h4>
+<div class="outline-text-4" id="text-orge41a11d">
+<div class="org-src-container">
+
+<pre class="src src-cpp"><span style="color: #BFEBBF;">field_jo_t</span>::<span style="color: #93E0E3;">field_jo_t</span> (<span style="color: #7CB8BB;">name_t</span> <span style="color: #DFAF8F;">name</span>)
+{
+    <span style="color: #F0DFAF; font-weight: bold;">this</span>-&gt;name = name;
+}
+</pre>
+</div>
+</div>
+</div>
+
+<div id="outline-container-orgd740163" class="outline-4">
+<h4 id="orgd740163">field_jo_t::exe</h4>
+<div class="outline-text-4" id="text-orgd740163">
+<div class="org-src-container">
+
+<pre class="src src-cpp"><span style="color: #7CB8BB;">void</span>
+<span style="color: #BFEBBF;">field_jo_t</span>::<span style="color: #93E0E3;">exe</span> (<span style="color: #7CB8BB;">env_t</span> &amp;<span style="color: #DFAF8F;">env</span>, <span style="color: #7CB8BB;">local_scope_t</span> &amp;<span style="color: #DFAF8F;">local_scope</span>)
+{
+    <span style="color: #F0DFAF; font-weight: bold;">auto</span> <span style="color: #DFAF8F;">obj</span> = env.obj_stack.top ();
+    env.obj_stack.pop ();
+    <span style="color: #F0DFAF; font-weight: bold;">auto</span> <span style="color: #DFAF8F;">data</span> = static_pointer_cast &lt;data_o&gt; (obj);
+    <span style="color: #F0DFAF; font-weight: bold;">auto</span> <span style="color: #DFAF8F;">it</span> = data-&gt;obj_map.find (<span style="color: #F0DFAF; font-weight: bold;">this</span>-&gt;name);
+    <span style="color: #F0DFAF; font-weight: bold;">if</span> (it != data-&gt;obj_map.end ()) {
+        env.obj_stack.push (it-&gt;second);
+        <span style="color: #F0DFAF; font-weight: bold;">return</span>;
+    }
+    cout &lt;&lt; <span style="color: #CC9393;">"- fatal error ! unknown field : "</span>
+         &lt;&lt; <span style="color: #F0DFAF; font-weight: bold;">this</span>-&gt;name
+         &lt;&lt; <span style="color: #CC9393;">"\n"</span>;
+    exit (1);
+}
+</pre>
+</div>
+</div>
+</div>
+
+<div id="outline-container-orgcf1a67b" class="outline-4">
+<h4 id="orgcf1a67b">field_jo_t::repr</h4>
+<div class="outline-text-4" id="text-orgcf1a67b">
+<div class="org-src-container">
+
+<pre class="src src-cpp"><span style="color: #7CB8BB;">string</span>
+<span style="color: #BFEBBF;">field_jo_t</span>::<span style="color: #93E0E3;">repr</span> (<span style="color: #7CB8BB;">env_t</span> &amp;<span style="color: #DFAF8F;">env</span>)
+{
+    <span style="color: #F0DFAF; font-weight: bold;">return</span> <span style="color: #CC9393;">"(field "</span> + <span style="color: #F0DFAF; font-weight: bold;">this</span>-&gt;name + <span style="color: #CC9393;">")"</span>;
+}
+</pre>
+</div>
+</div>
+</div>
+</div>
+
+<div id="outline-container-orgf29a86a" class="outline-3">
+<h3 id="orgf29a86a">apply_jo</h3>
+<div class="outline-text-3" id="text-orgf29a86a">
+</div><div id="outline-container-orgec1969c" class="outline-4">
+<h4 id="orgec1969c">apply_jo_t</h4>
+<div class="outline-text-4" id="text-orgec1969c">
+<div class="org-src-container">
+
+<pre class="src src-cpp"><span style="color: #F0DFAF; font-weight: bold;">struct</span> <span style="color: #7CB8BB;">apply_jo_t</span>: <span style="color: #7CB8BB;">jo_t</span>
+{
+    <span style="color: #7CB8BB;">size_t</span> <span style="color: #DFAF8F;">arity</span>;
+    <span style="color: #93E0E3;">apply_jo_t</span> (<span style="color: #7CB8BB;">size_t</span> <span style="color: #DFAF8F;">arity</span>);
+    <span style="color: #7CB8BB;">void</span> <span style="color: #93E0E3;">exe</span> (<span style="color: #7CB8BB;">env_t</span> &amp;<span style="color: #DFAF8F;">env</span>, <span style="color: #7CB8BB;">local_scope_t</span> &amp;<span style="color: #DFAF8F;">local_scope</span>);
+    <span style="color: #7CB8BB;">string</span> <span style="color: #93E0E3;">repr</span> (<span style="color: #7CB8BB;">env_t</span> &amp;<span style="color: #DFAF8F;">env</span>);
+};
+</pre>
+</div>
+</div>
+</div>
+
+<div id="outline-container-org14fc144" class="outline-4">
+<h4 id="org14fc144">apply_jo_t::apply_jo_t</h4>
+<div class="outline-text-4" id="text-org14fc144">
+<div class="org-src-container">
+
+<pre class="src src-cpp"><span style="color: #BFEBBF;">apply_jo_t</span>::
+<span style="color: #93E0E3;">apply_jo_t</span> (<span style="color: #7CB8BB;">size_t</span> <span style="color: #DFAF8F;">arity</span>)
+{
+    <span style="color: #F0DFAF; font-weight: bold;">this</span>-&gt;arity = arity;
+}
+</pre>
+</div>
+</div>
+</div>
+
+<div id="outline-container-orga45f3d3" class="outline-4">
+<h4 id="orga45f3d3">apply_jo_t::exe</h4>
+<div class="outline-text-4" id="text-orga45f3d3">
+<div class="org-src-container">
+
+<pre class="src src-cpp"><span style="color: #7CB8BB;">void</span>
+<span style="color: #BFEBBF;">apply_jo_t</span>::<span style="color: #93E0E3;">exe</span> (<span style="color: #7CB8BB;">env_t</span> &amp;<span style="color: #DFAF8F;">env</span>, <span style="color: #7CB8BB;">local_scope_t</span> &amp;<span style="color: #DFAF8F;">local_scope</span>)
+{
+    <span style="color: #F0DFAF; font-weight: bold;">auto</span> <span style="color: #DFAF8F;">obj</span> = env.obj_stack.top ();
+    env.obj_stack.pop ();
+    obj-&gt;apply (env, <span style="color: #F0DFAF; font-weight: bold;">this</span>-&gt;arity);
+}
+</pre>
+</div>
+</div>
+</div>
+
+<div id="outline-container-orgb8fa73e" class="outline-4">
+<h4 id="orgb8fa73e">apply_jo_t::repr</h4>
+<div class="outline-text-4" id="text-orgb8fa73e">
+<div class="org-src-container">
+
+<pre class="src src-cpp"><span style="color: #7CB8BB;">string</span>
+<span style="color: #BFEBBF;">apply_jo_t</span>::<span style="color: #93E0E3;">repr</span> (<span style="color: #7CB8BB;">env_t</span> &amp;<span style="color: #DFAF8F;">env</span>)
+{
+    <span style="color: #F0DFAF; font-weight: bold;">return</span> <span style="color: #CC9393;">"(apply)"</span>;
+}
+</pre>
+</div>
+</div>
+</div>
+</div>
+</div>
+
+<div id="outline-container-org997496e" class="outline-2">
+<h2 id="org997496e">bool</h2>
+<div class="outline-text-2" id="text-org997496e">
+</div><div id="outline-container-org27f3ae2" class="outline-3">
+<h3 id="org27f3ae2">define</h3>
+<div class="outline-text-3" id="text-org27f3ae2">
+<div class="org-src-container">
+
+<pre class="src src-cpp"><span style="color: #7CB8BB;">void</span>
+<span style="color: #93E0E3;">define</span> (<span style="color: #7CB8BB;">env_t</span> &amp;<span style="color: #DFAF8F;">env</span>, <span style="color: #7CB8BB;">name_t</span> <span style="color: #DFAF8F;">name</span>, <span style="color: #7CB8BB;">shared_ptr</span> &lt;<span style="color: #7CB8BB;">obj_t</span>&gt; <span style="color: #DFAF8F;">obj</span>)
+{
+    env.box_map [name] = <span style="color: #F0DFAF; font-weight: bold;">new</span> <span style="color: #7CB8BB;">box_t</span> (obj);
+}
+</pre>
+</div>
+</div>
+</div>
+
+<div id="outline-container-org7d31bd1" class="outline-3">
+<h3 id="org7d31bd1">true_c</h3>
+<div class="outline-text-3" id="text-org7d31bd1">
+<div class="org-src-container">
+
+<pre class="src src-cpp"><span style="color: #7CB8BB;">shared_ptr</span> &lt;data_o&gt;
+<span style="color: #93E0E3;">true_c</span> (<span style="color: #7CB8BB;">env_t</span> &amp;<span style="color: #DFAF8F;">env</span>)
+{
+   <span style="color: #F0DFAF; font-weight: bold;">return</span> make_shared &lt;data_o&gt;
+       (env,
+        tagging (env, <span style="color: #CC9393;">"true-t"</span>),
+        <span style="color: #7CB8BB;">obj_map_t</span> ());
+}
+</pre>
+</div>
+</div>
+</div>
+
+<div id="outline-container-org494b1ba" class="outline-3">
+<h3 id="org494b1ba">false_c</h3>
+<div class="outline-text-3" id="text-org494b1ba">
+<div class="org-src-container">
+
+<pre class="src src-cpp"><span style="color: #7CB8BB;">shared_ptr</span> &lt;data_o&gt;
+<span style="color: #93E0E3;">false_c</span> (<span style="color: #7CB8BB;">env_t</span> &amp;<span style="color: #DFAF8F;">env</span>)
+{
+   <span style="color: #F0DFAF; font-weight: bold;">return</span> make_shared &lt;data_o&gt;
+       (env,
+        tagging (env, <span style="color: #CC9393;">"false-t"</span>),
+        <span style="color: #7CB8BB;">obj_map_t</span> ());
+}
+</pre>
+</div>
+</div>
+</div>
+
+<div id="outline-container-orgdb96173" class="outline-3">
+<h3 id="orgdb96173">import_bool</h3>
+<div class="outline-text-3" id="text-orgdb96173">
+<div class="org-src-container">
+
+<pre class="src src-cpp"><span style="color: #7CB8BB;">void</span> <span style="color: #93E0E3;">import_bool</span> (<span style="color: #7CB8BB;">env_t</span> &amp;<span style="color: #DFAF8F;">env</span>)
+{
+    define (env, <span style="color: #CC9393;">"true-c"</span>, true_c (env));
+    define (env, <span style="color: #CC9393;">"false-c"</span>, false_c (env));
+}
+</pre>
+</div>
+</div>
+</div>
+</div>
+
+<div id="outline-container-orge654e1" class="outline-2">
+<h2 id="orge654e1">list</h2>
+<div class="outline-text-2" id="text-orge654e1">
+</div><div id="outline-container-org7114f01" class="outline-3">
+<h3 id="org7114f01">null_c</h3>
+<div class="outline-text-3" id="text-org7114f01">
+<div class="org-src-container">
+
+<pre class="src src-cpp"><span style="color: #7CB8BB;">shared_ptr</span> &lt;data_o&gt;
+<span style="color: #93E0E3;">null_c</span> (<span style="color: #7CB8BB;">env_t</span> &amp;<span style="color: #DFAF8F;">env</span>)
+{
+   <span style="color: #F0DFAF; font-weight: bold;">return</span> make_shared &lt;data_o&gt;
+       (env,
+        tagging (env, <span style="color: #CC9393;">"null-t"</span>),
+        <span style="color: #7CB8BB;">obj_map_t</span> ());
+}
+</pre>
+</div>
+</div>
+</div>
+
+<div id="outline-container-orgf239e55" class="outline-3">
+<h3 id="orgf239e55">cons_c</h3>
+<div class="outline-text-3" id="text-orgf239e55">
+<div class="org-src-container">
+
+<pre class="src src-cpp"><span style="color: #7CB8BB;">shared_ptr</span> &lt;data_cons_o&gt;
+<span style="color: #93E0E3;">cons_c</span> (<span style="color: #7CB8BB;">env_t</span> &amp;<span style="color: #DFAF8F;">env</span>)
+{
+    <span style="color: #F0DFAF; font-weight: bold;">return</span> make_shared &lt;data_cons_o&gt;
+        (env,
+         tagging (env, <span style="color: #CC9393;">"cons-t"</span>),
+         name_vector_t ({ <span style="color: #CC9393;">"car"</span>, <span style="color: #CC9393;">"cdr"</span> }),
+         <span style="color: #7CB8BB;">obj_map_t</span> ());
+}
+</pre>
+</div>
+</div>
+</div>
+
+<div id="outline-container-org4d74e0a" class="outline-3">
+<h3 id="org4d74e0a">import_list</h3>
+<div class="outline-text-3" id="text-org4d74e0a">
+<div class="org-src-container">
+
+<pre class="src src-cpp"><span style="color: #7CB8BB;">void</span> <span style="color: #93E0E3;">import_list</span> (<span style="color: #7CB8BB;">env_t</span> &amp;<span style="color: #DFAF8F;">env</span>)
+{
+    define (env, <span style="color: #CC9393;">"null-c"</span>, null_c (env));
+    define (env, <span style="color: #CC9393;">"cons-c"</span>, cons_c (env));
+}
+</pre>
+</div>
+</div>
+</div>
+</div>
+
+<div id="outline-container-org7904327" class="outline-2">
+<h2 id="org7904327">scan</h2>
+<div class="outline-text-2" id="text-org7904327">
+</div><div id="outline-container-orge37f2ab" class="outline-3">
+<h3 id="orge37f2ab">string_vector_t</h3>
+<div class="outline-text-3" id="text-orge37f2ab">
+<div class="org-src-container">
+
+<pre class="src src-cpp"><span style="color: #F0DFAF; font-weight: bold;">using</span> <span style="color: #7CB8BB;">string_vector_t</span> = <span style="color: #7CB8BB;">vector</span> &lt;<span style="color: #7CB8BB;">string</span>&gt; ;
+</pre>
+</div>
+</div>
+</div>
+
+<div id="outline-container-orgcf496b9" class="outline-3">
+<h3 id="orgcf496b9">space_char_p</h3>
+<div class="outline-text-3" id="text-orgcf496b9">
+<div class="org-src-container">
+
+<pre class="src src-cpp"><span style="color: #7CB8BB;">bool</span> <span style="color: #93E0E3;">space_char_p</span> (<span style="color: #7CB8BB;">char</span> <span style="color: #DFAF8F;">c</span>)
+{
+    <span style="color: #F0DFAF; font-weight: bold;">return</span> (c == <span style="color: #DCDCCC; background-color: #3F3F3F;">' </span><span style="color: #D0BF8F; font-weight: bold;">'</span>  ||
+            c == <span style="color: #DCDCCC; background-color: #3F3F3F;">'\n</span><span style="color: #D0BF8F; font-weight: bold;">'</span> ||
+            c == <span style="color: #DCDCCC; background-color: #3F3F3F;">'\t</span><span style="color: #D0BF8F; font-weight: bold;">'</span>);
+}
+</pre>
+</div>
+</div>
+</div>
+
+<div id="outline-container-orge69828f" class="outline-3">
+<h3 id="orge69828f">delimiter_char_p</h3>
+<div class="outline-text-3" id="text-orge69828f">
+<div class="org-src-container">
+
+<pre class="src src-cpp"><span style="color: #7CB8BB;">bool</span> <span style="color: #93E0E3;">delimiter_char_p</span> (<span style="color: #7CB8BB;">char</span> <span style="color: #DFAF8F;">c</span>)
+{
+    <span style="color: #F0DFAF; font-weight: bold;">return</span> (c == <span style="color: #DCDCCC; background-color: #3F3F3F;">'(</span><span style="color: #D0BF8F; font-weight: bold;">'</span> ||
+            c == <span style="color: #DCDCCC; background-color: #3F3F3F;">')</span><span style="color: #D0BF8F; font-weight: bold;">'</span> ||
+            c == <span style="color: #DCDCCC; background-color: #3F3F3F;">'[</span><span style="color: #D0BF8F; font-weight: bold;">'</span> ||
+            c == <span style="color: #DCDCCC; background-color: #3F3F3F;">']</span><span style="color: #D0BF8F; font-weight: bold;">'</span> ||
+            c == <span style="color: #DCDCCC; background-color: #3F3F3F;">'{</span><span style="color: #D0BF8F; font-weight: bold;">'</span> ||
+            c == <span style="color: #DCDCCC; background-color: #3F3F3F;">'}</span><span style="color: #D0BF8F; font-weight: bold;">'</span> ||
+            c == <span style="color: #DCDCCC; background-color: #3F3F3F;">',</span><span style="color: #D0BF8F; font-weight: bold;">'</span> ||
+            c == <span style="color: #DCDCCC; background-color: #3F3F3F;">';</span><span style="color: #D0BF8F; font-weight: bold;">'</span> ||
+            c == <span style="color: #DCDCCC; background-color: #3F3F3F;">'`</span><span style="color: #D0BF8F; font-weight: bold;">'</span> ||
+            c == <span style="color: #DCDCCC; background-color: #3F3F3F;">'\''</span>);
+}
+</pre>
+</div>
+</div>
+</div>
+
+<div id="outline-container-orgb9dd18a" class="outline-3">
+<h3 id="orgb9dd18a">string_from_char</h3>
+<div class="outline-text-3" id="text-orgb9dd18a">
+<div class="org-src-container">
+
+<pre class="src src-cpp"><span style="color: #7CB8BB;">string</span>
+<span style="color: #93E0E3;">string_from_char</span> (<span style="color: #7CB8BB;">char</span> <span style="color: #DFAF8F;">c</span>)
+{
+    <span style="color: #7CB8BB;">string</span> <span style="color: #DFAF8F;">str</span> = <span style="color: #CC9393;">""</span>;
+    str.push_back (c);
+    <span style="color: #F0DFAF; font-weight: bold;">return</span> str;
+}
+</pre>
+</div>
+</div>
+</div>
+
+<div id="outline-container-org6771cd5" class="outline-3">
+<h3 id="org6771cd5">doublequote_char_p</h3>
+<div class="outline-text-3" id="text-org6771cd5">
+<div class="org-src-container">
+
+<pre class="src src-cpp"><span style="color: #7CB8BB;">bool</span> <span style="color: #93E0E3;">doublequote_char_p</span> (<span style="color: #7CB8BB;">char</span> <span style="color: #DFAF8F;">c</span>)
+{
+    <span style="color: #F0DFAF; font-weight: bold;">return</span> c == <span style="color: #DCDCCC; background-color: #3F3F3F;">'"</span><span style="color: #D0BF8F; font-weight: bold;">'</span>;
+}
+</pre>
+</div>
+</div>
+</div>
+
+<div id="outline-container-orgeed083" class="outline-3">
+<h3 id="orgeed083">find_word_length</h3>
+<div class="outline-text-3" id="text-orgeed083">
+<div class="org-src-container">
+
+<pre class="src src-cpp"><span style="color: #7CB8BB;">size_t</span> <span style="color: #93E0E3;">find_word_length</span> (<span style="color: #7CB8BB;">string</span> <span style="color: #DFAF8F;">code</span>, <span style="color: #7CB8BB;">size_t</span> <span style="color: #DFAF8F;">begin</span>)
+{
+    <span style="color: #7CB8BB;">size_t</span> <span style="color: #DFAF8F;">length</span> = code.length ();
+    <span style="color: #7CB8BB;">size_t</span> <span style="color: #DFAF8F;">index</span> = begin;
+    <span style="color: #F0DFAF; font-weight: bold;">while</span> (<span style="color: #BFEBBF;">true</span>) {
+        <span style="color: #F0DFAF; font-weight: bold;">if</span> (index == length)
+            <span style="color: #F0DFAF; font-weight: bold;">return</span> index - begin;
+        <span style="color: #7CB8BB;">char</span> <span style="color: #DFAF8F;">c</span> = code [index];
+        <span style="color: #F0DFAF; font-weight: bold;">if</span> (space_char_p (c) <span style="color: #F0DFAF; font-weight: bold;">or</span>
+            doublequote_char_p (c) <span style="color: #F0DFAF; font-weight: bold;">or</span>
+            delimiter_char_p (c))
+            <span style="color: #F0DFAF; font-weight: bold;">return</span> index - begin;
+        index++;
+    }
+}
+</pre>
+</div>
+</div>
+</div>
+
+<div id="outline-container-org2c19646" class="outline-3">
+<h3 id="org2c19646">code_scan</h3>
+<div class="outline-text-3" id="text-org2c19646">
+<div class="org-src-container">
+
+<pre class="src src-cpp"><span style="color: #7CB8BB;">string_vector_t</span>
+<span style="color: #93E0E3;">code_scan</span> (<span style="color: #7CB8BB;">string</span> <span style="color: #DFAF8F;">code</span>)
+{
+    <span style="color: #F0DFAF; font-weight: bold;">auto</span> <span style="color: #DFAF8F;">string_vector</span> = string_vector_t ();
+    <span style="color: #7CB8BB;">size_t</span> <span style="color: #DFAF8F;">i</span> = 0;
+    <span style="color: #7CB8BB;">size_t</span> <span style="color: #DFAF8F;">length</span> = code.length ();
+    <span style="color: #F0DFAF; font-weight: bold;">while</span> (i &lt; length) {
+        <span style="color: #7CB8BB;">char</span> <span style="color: #DFAF8F;">c</span> = code [i];
+        <span style="color: #F0DFAF; font-weight: bold;">if</span> (space_char_p (c)) i++;
+        <span style="color: #F0DFAF; font-weight: bold;">else</span> <span style="color: #F0DFAF; font-weight: bold;">if</span> (delimiter_char_p (c)) {
+            string_vector.push_back (string_from_char (c));
+            i++;
+        }
+        <span style="color: #5F7F5F;">// </span><span style="color: #7F9F7F;">else if (doublequote_char_p (c)) {</span>
+        <span style="color: #5F7F5F;">// </span><span style="color: #7F9F7F;">}</span>
+        <span style="color: #F0DFAF; font-weight: bold;">else</span> {
+            <span style="color: #F0DFAF; font-weight: bold;">auto</span> <span style="color: #DFAF8F;">word_length</span> = find_word_length (code, i);
+            <span style="color: #7CB8BB;">string</span> <span style="color: #DFAF8F;">word</span> = code.substr (i, word_length);
+            string_vector.push_back (word);
+            i += word_length;
+        }
+    }
+    <span style="color: #F0DFAF; font-weight: bold;">return</span> string_vector;
+}
+</pre>
+</div>
+</div>
+</div>
+</div>
+
+<div id="outline-container-orgd19c996" class="outline-2">
+<h2 id="orgd19c996">sexp</h2>
+<div class="outline-text-2" id="text-orgd19c996">
+</div><div id="outline-container-org9afdbfa" class="outline-3">
+<h3 id="org9afdbfa">sexp_t</h3>
+<div class="outline-text-3" id="text-org9afdbfa">
+<div class="org-src-container">
+
+<pre class="src src-cpp"></pre>
+</div>
+</div>
+</div>
+
+<div id="outline-container-orgd8a96bd" class="outline-3">
+<h3 id="orgd8a96bd">null_t</h3>
+<div class="outline-text-3" id="text-orgd8a96bd">
+<div class="org-src-container">
+
+<pre class="src src-cpp"></pre>
+</div>
+</div>
+</div>
+
+<div id="outline-container-org69d8677" class="outline-3">
+<h3 id="org69d8677">cons_t</h3>
+<div class="outline-text-3" id="text-org69d8677">
+<div class="org-src-container">
+
+<pre class="src src-cpp"></pre>
+</div>
+</div>
+</div>
+</div>
+
+<div id="outline-container-orgb64d962" class="outline-2">
+<h2 id="orgb64d962">epilog</h2>
+<div class="outline-text-2" id="text-orgb64d962">
+</div><div id="outline-container-org736607b" class="outline-3">
+<h3 id="org736607b">new_frame</h3>
+<div class="outline-text-3" id="text-org736607b">
+<div class="org-src-container">
+
+<pre class="src src-cpp"><span style="color: #7CB8BB;">shared_ptr</span> &lt;<span style="color: #7CB8BB;">frame_t</span>&gt;
+<span style="color: #93E0E3;">new_frame</span> (<span style="color: #7CB8BB;">jojo_t</span> <span style="color: #DFAF8F;">jojo</span>)
+{
+    <span style="color: #F0DFAF; font-weight: bold;">return</span> make_shared &lt;<span style="color: #7CB8BB;">frame_t</span>&gt;
+        (jojo, <span style="color: #7CB8BB;">local_scope_t</span> ());
+}
+</pre>
+</div>
+</div>
+</div>
+
+<div id="outline-container-org1a0f6e5" class="outline-3">
+<h3 id="org1a0f6e5">assert</h3>
+<div class="outline-text-3" id="text-org1a0f6e5">
+</div><div id="outline-container-orge20916" class="outline-4">
+<h4 id="orge20916">assert_pop_eq</h4>
+<div class="outline-text-4" id="text-orge20916">
+<div class="org-src-container">
+
+<pre class="src src-cpp"><span style="color: #7CB8BB;">void</span>
+<span style="color: #93E0E3;">assert_pop_eq</span> (<span style="color: #7CB8BB;">env_t</span> &amp;<span style="color: #DFAF8F;">env</span>, <span style="color: #7CB8BB;">shared_ptr</span> &lt;<span style="color: #7CB8BB;">obj_t</span>&gt; <span style="color: #DFAF8F;">obj</span>)
+{
+    <span style="color: #F0DFAF; font-weight: bold;">auto</span> <span style="color: #DFAF8F;">that</span> = env.obj_stack.top ();
+    assert (obj-&gt;equal (env, that));
+    env.obj_stack.pop ();
+}
+</pre>
+</div>
+</div>
+</div>
+
+<div id="outline-container-org4ffbacc" class="outline-4">
+<h4 id="org4ffbacc">assert_tos_eq</h4>
+<div class="outline-text-4" id="text-org4ffbacc">
+<div class="org-src-container">
+
+<pre class="src src-cpp"><span style="color: #7CB8BB;">void</span>
+<span style="color: #93E0E3;">assert_tos_eq</span> (<span style="color: #7CB8BB;">env_t</span> &amp;<span style="color: #DFAF8F;">env</span>, <span style="color: #7CB8BB;">shared_ptr</span> &lt;<span style="color: #7CB8BB;">obj_t</span>&gt; <span style="color: #DFAF8F;">obj</span>)
+{
+    <span style="color: #F0DFAF; font-weight: bold;">auto</span> <span style="color: #DFAF8F;">that</span> = env.obj_stack.top ();
+    assert (obj-&gt;equal (env, that));
+}
+</pre>
+</div>
+</div>
+</div>
+
+<div id="outline-container-orgbdd2477" class="outline-4">
+<h4 id="orgbdd2477">assert_stack_size</h4>
+<div class="outline-text-4" id="text-orgbdd2477">
+<div class="org-src-container">
+
+<pre class="src src-cpp"><span style="color: #7CB8BB;">void</span>
+<span style="color: #93E0E3;">assert_stack_size</span> (<span style="color: #7CB8BB;">env_t</span> &amp;<span style="color: #DFAF8F;">env</span>, <span style="color: #7CB8BB;">size_t</span> <span style="color: #DFAF8F;">size</span>)
+{
+    assert (env.obj_stack.size () == size);
+}
+</pre>
+</div>
+</div>
+</div>
+</div>
+
+<div id="outline-container-org79e0108" class="outline-3">
+<h3 id="org79e0108">test</h3>
+<div class="outline-text-3" id="text-org79e0108">
+</div><div id="outline-container-org8dff44c" class="outline-4">
+<h4 id="org8dff44c">test_step</h4>
+<div class="outline-text-4" id="text-org8dff44c">
+<div class="org-src-container">
+
+<pre class="src src-cpp"><span style="color: #7CB8BB;">void</span>
+<span style="color: #93E0E3;">test_step</span> ()
+{
+    <span style="color: #F0DFAF; font-weight: bold;">auto</span> <span style="color: #DFAF8F;">env</span> = env_t ();
+
+    define (env, <span style="color: #CC9393;">"s1"</span>, make_shared &lt;string_o&gt; (env, <span style="color: #CC9393;">"bye"</span>));
+    define (env, <span style="color: #CC9393;">"s2"</span>, make_shared &lt;string_o&gt; (env, <span style="color: #CC9393;">"world"</span>));
+
+    <span style="color: #7CB8BB;">jojo_t</span> <span style="color: #DFAF8F;">jojo</span> = {
+        <span style="color: #F0DFAF; font-weight: bold;">new</span> <span style="color: #7CB8BB;">ref_jo_t</span> (boxing (env, <span style="color: #CC9393;">"s1"</span>)),
+        <span style="color: #F0DFAF; font-weight: bold;">new</span> <span style="color: #7CB8BB;">ref_jo_t</span> (boxing (env, <span style="color: #CC9393;">"s2"</span>)),
+    };
+
+    env.frame_stack.push (new_frame (jojo));
+
+    {
+        env.run ();
+        assert_stack_size (env, 2);
+        assert_pop_eq (env, make_shared &lt;string_o&gt; (env, <span style="color: #CC9393;">"world"</span>));
+        assert_pop_eq (env, make_shared &lt;string_o&gt; (env, <span style="color: #CC9393;">"bye"</span>));
+        assert_stack_size (env, 0);
+    }
+}
+</pre>
+</div>
+</div>
+</div>
+
+<div id="outline-container-org34390d0" class="outline-4">
+<h4 id="org34390d0">test_data</h4>
+<div class="outline-text-4" id="text-org34390d0">
+<div class="org-src-container">
+
+<pre class="src src-cpp"><span style="color: #7CB8BB;">void</span>
+<span style="color: #93E0E3;">test_data</span> ()
+{
+    <span style="color: #F0DFAF; font-weight: bold;">auto</span> <span style="color: #DFAF8F;">env</span> = env_t ();
+
+    <span style="color: #7CB8BB;">obj_map_t</span> <span style="color: #DFAF8F;">obj_map</span> = {
+        {<span style="color: #CC9393;">"car"</span>, make_shared &lt;string_o&gt; (env, <span style="color: #CC9393;">"bye"</span>)},
+        {<span style="color: #CC9393;">"cdr"</span>, make_shared &lt;string_o&gt; (env, <span style="color: #CC9393;">"world"</span>)},
+    };
+
+    define (env, <span style="color: #CC9393;">"last-cry"</span>, make_shared &lt;data_o&gt;
+            (env, tagging (env, <span style="color: #CC9393;">"cons-t"</span>), obj_map));
+
+    <span style="color: #7CB8BB;">jojo_t</span> <span style="color: #DFAF8F;">jojo</span> = {
+        <span style="color: #F0DFAF; font-weight: bold;">new</span> <span style="color: #7CB8BB;">ref_jo_t</span> (boxing (env, <span style="color: #CC9393;">"last-cry"</span>)),
+        <span style="color: #F0DFAF; font-weight: bold;">new</span> <span style="color: #7CB8BB;">field_jo_t</span> (<span style="color: #CC9393;">"car"</span>),
+        <span style="color: #F0DFAF; font-weight: bold;">new</span> <span style="color: #7CB8BB;">ref_jo_t</span> (boxing (env, <span style="color: #CC9393;">"last-cry"</span>)),
+        <span style="color: #F0DFAF; font-weight: bold;">new</span> <span style="color: #7CB8BB;">field_jo_t</span> (<span style="color: #CC9393;">"cdr"</span>),
+        <span style="color: #F0DFAF; font-weight: bold;">new</span> <span style="color: #7CB8BB;">ref_jo_t</span> (boxing (env, <span style="color: #CC9393;">"last-cry"</span>)),
+    };
+
+    env.frame_stack.push (new_frame (jojo));
+
+    {
+        env.run ();
+
+        assert_stack_size (env, 3);
+        assert_pop_eq (env, make_shared &lt;data_o&gt;
+                       (env,
+                        tagging (env, <span style="color: #CC9393;">"cons-t"</span>),
+                        obj_map));
+        assert_pop_eq (env, make_shared &lt;string_o&gt; (env, <span style="color: #CC9393;">"world"</span>));
+        assert_pop_eq (env, make_shared &lt;string_o&gt; (env, <span style="color: #CC9393;">"bye"</span>));
+        assert_stack_size (env, 0);
+    }
+}
+</pre>
+</div>
+</div>
+</div>
+
+<div id="outline-container-orgf8e4638" class="outline-4">
+<h4 id="orgf8e4638">test_apply</h4>
+<div class="outline-text-4" id="text-orgf8e4638">
+<div class="org-src-container">
+
+<pre class="src src-cpp"><span style="color: #7CB8BB;">void</span>
+<span style="color: #93E0E3;">test_apply</span> ()
+{
+    <span style="color: #F0DFAF; font-weight: bold;">auto</span> <span style="color: #DFAF8F;">env</span> = env_t ();
+
+    define (env, <span style="color: #CC9393;">"s1"</span>, make_shared &lt;string_o&gt; (env, <span style="color: #CC9393;">"bye"</span>));
+    define (env, <span style="color: #CC9393;">"s2"</span>, make_shared &lt;string_o&gt; (env, <span style="color: #CC9393;">"world"</span>));
+
+    <span style="color: #7CB8BB;">jojo_t</span> <span style="color: #DFAF8F;">jojo</span> = {
+        <span style="color: #F0DFAF; font-weight: bold;">new</span> <span style="color: #7CB8BB;">ref_jo_t</span> (boxing (env, <span style="color: #CC9393;">"s1"</span>)),
+        <span style="color: #F0DFAF; font-weight: bold;">new</span> <span style="color: #7CB8BB;">ref_jo_t</span> (boxing (env, <span style="color: #CC9393;">"s2"</span>)),
+        <span style="color: #F0DFAF; font-weight: bold;">new</span> <span style="color: #7CB8BB;">lambda_jo_t</span> ({ <span style="color: #CC9393;">"x"</span>, <span style="color: #CC9393;">"y"</span> },
+                         { <span style="color: #F0DFAF; font-weight: bold;">new</span> <span style="color: #7CB8BB;">local_ref_jo_t</span> (0, 0),
+                           <span style="color: #F0DFAF; font-weight: bold;">new</span> <span style="color: #7CB8BB;">local_ref_jo_t</span> (0, 1) }),
+        <span style="color: #F0DFAF; font-weight: bold;">new</span> <span style="color: #7CB8BB;">apply_jo_t</span> (2),
+    };
+
+    env.frame_stack.push (new_frame (jojo));
+
+    <span style="color: #5F7F5F;">// </span><span style="color: #7F9F7F;">{</span>
+    <span style="color: #5F7F5F;">//     </span><span style="color: #7F9F7F;">env.report ();</span>
+    <span style="color: #5F7F5F;">//     </span><span style="color: #7F9F7F;">env.run ();</span>
+    <span style="color: #5F7F5F;">//     </span><span style="color: #7F9F7F;">env.report ();</span>
+    <span style="color: #5F7F5F;">// </span><span style="color: #7F9F7F;">}</span>
+
+    {
+        env.run ();
+        assert_stack_size (env, 2);
+        assert_pop_eq (env, make_shared &lt;string_o&gt; (env, <span style="color: #CC9393;">"world"</span>));
+        assert_pop_eq (env, make_shared &lt;string_o&gt; (env, <span style="color: #CC9393;">"bye"</span>));
+        assert_stack_size (env, 0);
+    }
+}
+</pre>
+</div>
+</div>
+</div>
+
+<div id="outline-container-orga49e2a6" class="outline-4">
+<h4 id="orga49e2a6">test_lambda_curry</h4>
+<div class="outline-text-4" id="text-orga49e2a6">
+<div class="org-src-container">
+
+<pre class="src src-cpp"><span style="color: #7CB8BB;">void</span>
+<span style="color: #93E0E3;">test_lambda_curry</span> ()
+{
+    <span style="color: #F0DFAF; font-weight: bold;">auto</span> <span style="color: #DFAF8F;">env</span> = env_t ();
+
+    define (env, <span style="color: #CC9393;">"s1"</span>, make_shared &lt;string_o&gt; (env, <span style="color: #CC9393;">"bye"</span>));
+    define (env, <span style="color: #CC9393;">"s2"</span>, make_shared &lt;string_o&gt; (env, <span style="color: #CC9393;">"world"</span>));
+
+    <span style="color: #7CB8BB;">jojo_t</span> <span style="color: #DFAF8F;">jojo</span> = {
+        <span style="color: #F0DFAF; font-weight: bold;">new</span> <span style="color: #7CB8BB;">ref_jo_t</span> (boxing (env, <span style="color: #CC9393;">"s1"</span>)),
+        <span style="color: #F0DFAF; font-weight: bold;">new</span> <span style="color: #7CB8BB;">ref_jo_t</span> (boxing (env, <span style="color: #CC9393;">"s2"</span>)),
+        <span style="color: #F0DFAF; font-weight: bold;">new</span> <span style="color: #7CB8BB;">lambda_jo_t</span> ({ <span style="color: #CC9393;">"x"</span>, <span style="color: #CC9393;">"y"</span> },
+                         { <span style="color: #F0DFAF; font-weight: bold;">new</span> <span style="color: #7CB8BB;">local_ref_jo_t</span> (0, 0),
+                           <span style="color: #F0DFAF; font-weight: bold;">new</span> <span style="color: #7CB8BB;">local_ref_jo_t</span> (0, 1) }),
+        <span style="color: #F0DFAF; font-weight: bold;">new</span> <span style="color: #7CB8BB;">apply_jo_t</span> (1),
+        <span style="color: #F0DFAF; font-weight: bold;">new</span> <span style="color: #7CB8BB;">apply_jo_t</span> (1),
+    };
+
+    env.frame_stack.push (new_frame (jojo));
+
+    <span style="color: #5F7F5F;">// </span><span style="color: #7F9F7F;">{</span>
+    <span style="color: #5F7F5F;">//     </span><span style="color: #7F9F7F;">env.report ();</span>
+    <span style="color: #5F7F5F;">//     </span><span style="color: #7F9F7F;">env.run ();</span>
+    <span style="color: #5F7F5F;">//     </span><span style="color: #7F9F7F;">env.report ();</span>
+    <span style="color: #5F7F5F;">// </span><span style="color: #7F9F7F;">}</span>
+
+    {
+        env.run ();
+        assert_stack_size (env, 2);
+        assert_pop_eq (env, make_shared &lt;string_o&gt; (env, <span style="color: #CC9393;">"bye"</span>));
+        assert_pop_eq (env, make_shared &lt;string_o&gt; (env, <span style="color: #CC9393;">"world"</span>));
+        assert_stack_size (env, 0);
+    }
+}
+</pre>
+</div>
+</div>
+</div>
+
+<div id="outline-container-org63d6fa5" class="outline-4">
+<h4 id="org63d6fa5">test_data_cons</h4>
+<div class="outline-text-4" id="text-org63d6fa5">
+<div class="org-src-container">
+
+<pre class="src src-cpp"><span style="color: #7CB8BB;">void</span>
+<span style="color: #93E0E3;">test_data_cons</span> ()
+{
+    <span style="color: #F0DFAF; font-weight: bold;">auto</span> <span style="color: #DFAF8F;">env</span> = env_t ();
+
+    define (env, <span style="color: #CC9393;">"s1"</span>, make_shared &lt;string_o&gt; (env, <span style="color: #CC9393;">"bye"</span>));
+    define (env, <span style="color: #CC9393;">"s2"</span>, make_shared &lt;string_o&gt; (env, <span style="color: #CC9393;">"world"</span>));
+    define (env, <span style="color: #CC9393;">"cons-c"</span>, make_shared &lt;data_cons_o&gt;
+            (env,
+             tagging (env, <span style="color: #CC9393;">"cons-t"</span>),
+             name_vector_t ({ <span style="color: #CC9393;">"car"</span>, <span style="color: #CC9393;">"cdr"</span> }),
+             <span style="color: #7CB8BB;">obj_map_t</span> ()));
+
+    <span style="color: #7CB8BB;">jojo_t</span> <span style="color: #DFAF8F;">jojo</span> = {
+        <span style="color: #F0DFAF; font-weight: bold;">new</span> <span style="color: #7CB8BB;">ref_jo_t</span> (boxing (env, <span style="color: #CC9393;">"s1"</span>)),
+        <span style="color: #F0DFAF; font-weight: bold;">new</span> <span style="color: #7CB8BB;">ref_jo_t</span> (boxing (env, <span style="color: #CC9393;">"s2"</span>)),
+        <span style="color: #F0DFAF; font-weight: bold;">new</span> <span style="color: #7CB8BB;">ref_jo_t</span> (boxing (env, <span style="color: #CC9393;">"cons-c"</span>)),
+        <span style="color: #F0DFAF; font-weight: bold;">new</span> <span style="color: #7CB8BB;">apply_jo_t</span> (2),
+        <span style="color: #F0DFAF; font-weight: bold;">new</span> <span style="color: #7CB8BB;">field_jo_t</span> (<span style="color: #CC9393;">"cdr"</span>),
+    };
+
+    env.frame_stack.push (new_frame (jojo));
+
+    <span style="color: #5F7F5F;">// </span><span style="color: #7F9F7F;">{</span>
+    <span style="color: #5F7F5F;">//     </span><span style="color: #7F9F7F;">env.report ();</span>
+    <span style="color: #5F7F5F;">//     </span><span style="color: #7F9F7F;">env.run ();</span>
+    <span style="color: #5F7F5F;">//     </span><span style="color: #7F9F7F;">env.report ();</span>
+    <span style="color: #5F7F5F;">// </span><span style="color: #7F9F7F;">}</span>
+
+    {
+        env.run ();
+        assert_stack_size (env, 1);
+        assert_pop_eq (env, make_shared &lt;string_o&gt; (env, <span style="color: #CC9393;">"world"</span>));
+        assert_stack_size (env, 0);
+    }
+}
+</pre>
+</div>
+</div>
+</div>
+
+<div id="outline-container-orgeeeb050" class="outline-4">
+<h4 id="orgeeeb050">test_data_cons_curry</h4>
+<div class="outline-text-4" id="text-orgeeeb050">
+<div class="org-src-container">
+
+<pre class="src src-cpp"><span style="color: #7CB8BB;">void</span>
+<span style="color: #93E0E3;">test_data_cons_curry</span> ()
+{
+    <span style="color: #F0DFAF; font-weight: bold;">auto</span> <span style="color: #DFAF8F;">env</span> = env_t ();
+
+    define (env, <span style="color: #CC9393;">"s1"</span>, make_shared &lt;string_o&gt; (env, <span style="color: #CC9393;">"bye"</span>));
+    define (env, <span style="color: #CC9393;">"s2"</span>, make_shared &lt;string_o&gt; (env, <span style="color: #CC9393;">"world"</span>));
+    define (env, <span style="color: #CC9393;">"cons-c"</span>, make_shared &lt;data_cons_o&gt;
+            (env,
+             tagging (env, <span style="color: #CC9393;">"cons-t"</span>),
+             name_vector_t ({ <span style="color: #CC9393;">"car"</span>, <span style="color: #CC9393;">"cdr"</span> }),
+             <span style="color: #7CB8BB;">obj_map_t</span> ()));
+
+    <span style="color: #7CB8BB;">jojo_t</span> <span style="color: #DFAF8F;">jojo</span> = {
+        <span style="color: #F0DFAF; font-weight: bold;">new</span> <span style="color: #7CB8BB;">ref_jo_t</span> (boxing (env, <span style="color: #CC9393;">"s1"</span>)),
+        <span style="color: #F0DFAF; font-weight: bold;">new</span> <span style="color: #7CB8BB;">ref_jo_t</span> (boxing (env, <span style="color: #CC9393;">"s2"</span>)),
+        <span style="color: #F0DFAF; font-weight: bold;">new</span> <span style="color: #7CB8BB;">ref_jo_t</span> (boxing (env, <span style="color: #CC9393;">"cons-c"</span>)),
+        <span style="color: #F0DFAF; font-weight: bold;">new</span> <span style="color: #7CB8BB;">apply_jo_t</span> (1),
+        <span style="color: #F0DFAF; font-weight: bold;">new</span> <span style="color: #7CB8BB;">apply_jo_t</span> (1),
+        <span style="color: #F0DFAF; font-weight: bold;">new</span> <span style="color: #7CB8BB;">field_jo_t</span> (<span style="color: #CC9393;">"car"</span>),
+    };
+
+    env.frame_stack.push (new_frame (jojo));
+
+    <span style="color: #5F7F5F;">// </span><span style="color: #7F9F7F;">{</span>
+    <span style="color: #5F7F5F;">//     </span><span style="color: #7F9F7F;">env.report ();</span>
+    <span style="color: #5F7F5F;">//     </span><span style="color: #7F9F7F;">env.run ();</span>
+    <span style="color: #5F7F5F;">//     </span><span style="color: #7F9F7F;">env.report ();</span>
+    <span style="color: #5F7F5F;">// </span><span style="color: #7F9F7F;">}</span>
+
+    {
+        env.run ();
+        assert_stack_size (env, 1);
+        assert_pop_eq (env, make_shared &lt;string_o&gt; (env, <span style="color: #CC9393;">"world"</span>));
+        assert_stack_size (env, 0);
+    }
+}
+</pre>
+</div>
+</div>
+</div>
+
+<div id="outline-container-org9f99cb4" class="outline-4">
+<h4 id="org9f99cb4">test_bool</h4>
+<div class="outline-text-4" id="text-org9f99cb4">
+<div class="org-src-container">
+
+<pre class="src src-cpp"><span style="color: #7CB8BB;">void</span>
+<span style="color: #93E0E3;">test_bool</span> ()
+{
+    <span style="color: #F0DFAF; font-weight: bold;">auto</span> <span style="color: #DFAF8F;">env</span> = env_t ();
+
+    import_bool (env);
+
+    <span style="color: #7CB8BB;">jojo_t</span> <span style="color: #DFAF8F;">jojo</span> = {
+        <span style="color: #F0DFAF; font-weight: bold;">new</span> <span style="color: #7CB8BB;">ref_jo_t</span> (boxing (env, <span style="color: #CC9393;">"true-c"</span>)),
+        <span style="color: #F0DFAF; font-weight: bold;">new</span> <span style="color: #7CB8BB;">ref_jo_t</span> (boxing (env, <span style="color: #CC9393;">"false-c"</span>)),
+    };
+
+    env.frame_stack.push (new_frame (jojo));
+
+    <span style="color: #5F7F5F;">// </span><span style="color: #7F9F7F;">{</span>
+    <span style="color: #5F7F5F;">//     </span><span style="color: #7F9F7F;">env.report ();</span>
+    <span style="color: #5F7F5F;">//     </span><span style="color: #7F9F7F;">env.run ();</span>
+    <span style="color: #5F7F5F;">//     </span><span style="color: #7F9F7F;">env.report ();</span>
+    <span style="color: #5F7F5F;">// </span><span style="color: #7F9F7F;">}</span>
+
+    {
+        env.run ();
+        assert_stack_size (env, 2);
+        assert_pop_eq (env, false_c (env));
+        assert_pop_eq (env, true_c (env));
+        assert_stack_size (env, 0);
+    }
+}
+</pre>
+</div>
+</div>
+</div>
+
+<div id="outline-container-orge88d86f" class="outline-4">
+<h4 id="orge88d86f">test_list</h4>
+<div class="outline-text-4" id="text-orge88d86f">
+<div class="org-src-container">
+
+<pre class="src src-cpp"><span style="color: #7CB8BB;">void</span>
+<span style="color: #93E0E3;">test_list</span> ()
+{
+    <span style="color: #F0DFAF; font-weight: bold;">auto</span> <span style="color: #DFAF8F;">env</span> = env_t ();
+
+    import_list (env);
+
+    define (env, <span style="color: #CC9393;">"s1"</span>, make_shared &lt;string_o&gt; (env, <span style="color: #CC9393;">"bye"</span>));
+    define (env, <span style="color: #CC9393;">"s2"</span>, make_shared &lt;string_o&gt; (env, <span style="color: #CC9393;">"world"</span>));
+
+    <span style="color: #7CB8BB;">jojo_t</span> <span style="color: #DFAF8F;">jojo</span> = {
+        <span style="color: #F0DFAF; font-weight: bold;">new</span> <span style="color: #7CB8BB;">ref_jo_t</span> (boxing (env, <span style="color: #CC9393;">"s1"</span>)),
+        <span style="color: #F0DFAF; font-weight: bold;">new</span> <span style="color: #7CB8BB;">ref_jo_t</span> (boxing (env, <span style="color: #CC9393;">"s2"</span>)),
+        <span style="color: #F0DFAF; font-weight: bold;">new</span> <span style="color: #7CB8BB;">ref_jo_t</span> (boxing (env, <span style="color: #CC9393;">"cons-c"</span>)),
+        <span style="color: #F0DFAF; font-weight: bold;">new</span> <span style="color: #7CB8BB;">apply_jo_t</span> (2),
+        <span style="color: #F0DFAF; font-weight: bold;">new</span> <span style="color: #7CB8BB;">field_jo_t</span> (<span style="color: #CC9393;">"cdr"</span>),
+    };
+
+    env.frame_stack.push (new_frame (jojo));
+
+    <span style="color: #5F7F5F;">// </span><span style="color: #7F9F7F;">{</span>
+    <span style="color: #5F7F5F;">//     </span><span style="color: #7F9F7F;">env.report ();</span>
+    <span style="color: #5F7F5F;">//     </span><span style="color: #7F9F7F;">env.run ();</span>
+    <span style="color: #5F7F5F;">//     </span><span style="color: #7F9F7F;">env.report ();</span>
+    <span style="color: #5F7F5F;">// </span><span style="color: #7F9F7F;">}</span>
+
+    {
+        env.run ();
+        assert_stack_size (env, 1);
+        assert_pop_eq (env, make_shared &lt;string_o&gt; (env, <span style="color: #CC9393;">"world"</span>));
+        assert_stack_size (env, 0);
+    }
+}
+</pre>
+</div>
+</div>
+</div>
+
+<div id="outline-container-org16063d5" class="outline-4">
+<h4 id="org16063d5">test_scan</h4>
+<div class="outline-text-4" id="text-org16063d5">
+<div class="org-src-container">
+
+<pre class="src src-cpp"><span style="color: #7CB8BB;">void</span>
+<span style="color: #93E0E3;">test_scan</span> ()
+{
+    <span style="color: #F0DFAF; font-weight: bold;">auto</span> <span style="color: #DFAF8F;">code</span> = <span style="color: #CC9393;">"(cons-c &lt;car&gt; &lt;cdr&gt;)"</span>;
+    <span style="color: #F0DFAF; font-weight: bold;">auto</span> <span style="color: #DFAF8F;">string_vector</span> = code_scan (code);
+    assert (string_vector.size () == 5);
+    assert (string_vector [0] == <span style="color: #CC9393;">"("</span>);
+    assert (string_vector [1] == <span style="color: #CC9393;">"cons-c"</span>);
+    assert (string_vector [2] == <span style="color: #CC9393;">"&lt;car&gt;"</span>);
+    assert (string_vector [3] == <span style="color: #CC9393;">"&lt;cdr&gt;"</span>);
+    assert (string_vector [4] == <span style="color: #CC9393;">")"</span>);
+}
+</pre>
+</div>
+</div>
+</div>
+
+<div id="outline-container-orge2f6b9f" class="outline-4">
+<h4 id="orge2f6b9f">test_all</h4>
+<div class="outline-text-4" id="text-orge2f6b9f">
+<div class="org-src-container">
+
+<pre class="src src-cpp"><span style="color: #7CB8BB;">void</span>
+<span style="color: #93E0E3;">test_all</span> ()
+{
+    <span style="color: #5F7F5F;">// </span><span style="color: #7F9F7F;">core</span>
+    test_step ();
+    test_data ();
+    test_apply ();
+    test_lambda_curry ();
+    test_data_cons ();
+    test_data_cons_curry ();
+    <span style="color: #5F7F5F;">// </span><span style="color: #7F9F7F;">data</span>
+    test_bool ();
+    test_list ();
+    <span style="color: #5F7F5F;">// </span><span style="color: #7F9F7F;">parser</span>
+    test_scan ();
+}
+</pre>
+</div>
+</div>
+</div>
+</div>
+
+<div id="outline-container-org6f06204" class="outline-3">
+<h3 id="org6f06204">main</h3>
+<div class="outline-text-3" id="text-org6f06204">
+<div class="org-src-container">
+
+<pre class="src src-cpp"><span style="color: #7CB8BB;">int</span>
+<span style="color: #93E0E3;">main</span> ()
+{
+    test_all ();
+    <span style="color: #F0DFAF; font-weight: bold;">return</span> 0;
+}
+</pre>
+</div>
+</div>
+</div>
+</div>
+</div>
+<div id="postamble" class="status">
+<p class="date">Created: 2018-07-24 Tue 04:10</p>
+<p class="validation"><a href="http://validator.w3.org/check?uri=referer">Validate</a></p>
+</div>
+</body>
+</html>

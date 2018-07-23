@@ -1,23 +1,20 @@
+#+html_head: <link rel="stylesheet" href="css/org-page.css"/>
 #+property: tangle jojo.cpp
 #+title: jojo
 
 * [todo-stack]
 
-*** data_pred_o -- for `data-p`
+*** fix repr for *_o
+
+*** data_pred_o -- for `<data>-p`
 
 *** sexp
 
-*** zero arity constructor is a global var stores the data
-
-*** fix repr for *_o
-
 *** case_jo_t
 
-*** quit using org-mode and separate code into files
+*** [maybe] quit using org-mode -- use cpp header file
 
     - to fix forward declarations
-
-*** use cpp header file
 
 * prolog
 
