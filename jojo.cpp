@@ -762,7 +762,6 @@
       {
           return "(apply)";
       }
-    auto unique_empty_obj_map = obj_map_t ();
     void
     define (env_t &env, name_t name, shared_ptr <obj_t> obj)
     {
@@ -774,7 +773,7 @@
        return make_shared <data_o>
            (env,
             tagging (env, "true-t"),
-            unique_empty_obj_map);
+            obj_map_t ());
     }
     shared_ptr <data_o>
     false_c (env_t &env)
@@ -782,12 +781,34 @@
        return make_shared <data_o>
            (env,
             tagging (env, "false-t"),
-            unique_empty_obj_map);
+            obj_map_t ());
     }
     void import_bool (env_t &env)
     {
-       define (env, "true-c", true_c (env));
-       define (env, "false-c", false_c (env));
+        define (env, "true-c", true_c (env));
+        define (env, "false-c", false_c (env));
+    }
+    shared_ptr <data_o>
+    null_c (env_t &env)
+    {
+       return make_shared <data_o>
+           (env,
+            tagging (env, "null-t"),
+            obj_map_t ());
+    }
+    shared_ptr <data_cons_o>
+    cons_c (env_t &env)
+    {
+        return make_shared <data_cons_o>
+            (env,
+             tagging (env, "cons-t"),
+             name_vector_t ({ "car", "cdr" }),
+             obj_map_t ());
+    }
+    void import_list (env_t &env)
+    {
+        define (env, "null-c", null_c (env));
+        define (env, "cons-c", cons_c (env));
     }
     using string_vector_t = vector <string> ;
     bool space_char_p (char c)
@@ -1017,13 +1038,12 @@
       {
           auto env = env_t ();
 
-          name_vector_t name_vector = { "car", "cdr" };
           define (env, "s1", make_shared <string_o> (env, "bye"));
           define (env, "s2", make_shared <string_o> (env, "world"));
           define (env, "cons-c", make_shared <data_cons_o>
                   (env,
                    tagging (env, "cons-t"),
-                   name_vector,
+                   name_vector_t ({ "car", "cdr" }),
                    obj_map_t ()));
 
           jojo_t jojo = {
@@ -1054,13 +1074,12 @@
       {
           auto env = env_t ();
 
-          name_vector_t name_vector = { "car", "cdr" };
           define (env, "s1", make_shared <string_o> (env, "bye"));
           define (env, "s2", make_shared <string_o> (env, "world"));
           define (env, "cons-c", make_shared <data_cons_o>
                   (env,
                    tagging (env, "cons-t"),
-                   name_vector,
+                   name_vector_t ({ "car", "cdr" }),
                    obj_map_t ()));
 
           jojo_t jojo = {
@@ -1091,6 +1110,7 @@
       test_bool ()
       {
           auto env = env_t ();
+
           import_bool (env);
 
           jojo_t jojo = {
@@ -1111,6 +1131,39 @@
               assert_stack_size (env, 2);
               assert_pop_eq (env, false_c (env));
               assert_pop_eq (env, true_c (env));
+              assert_stack_size (env, 0);
+          }
+      }
+      void
+      test_list ()
+      {
+          auto env = env_t ();
+
+          import_list (env);
+
+          define (env, "s1", make_shared <string_o> (env, "bye"));
+          define (env, "s2", make_shared <string_o> (env, "world"));
+
+          jojo_t jojo = {
+              new ref_jo_t (boxing (env, "s1")),
+              new ref_jo_t (boxing (env, "s2")),
+              new ref_jo_t (boxing (env, "cons-c")),
+              new apply_jo_t (2),
+              new field_jo_t ("cdr"),
+          };
+
+          env.frame_stack.push (new_frame (jojo));
+
+          // {
+          //     env.report ();
+          //     env.run ();
+          //     env.report ();
+          // }
+
+          {
+              env.run ();
+              assert_stack_size (env, 1);
+              assert_pop_eq (env, make_shared <string_o> (env, "world"));
               assert_stack_size (env, 0);
           }
       }
@@ -1138,6 +1191,7 @@
           test_data_cons_curry ();
           // data
           test_bool ();
+          test_list ();
           // parser
           test_scan ();
       }

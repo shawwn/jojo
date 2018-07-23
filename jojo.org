@@ -5,8 +5,6 @@
 
 *** data_pred_o -- for `data-p`
 
-*** builtin -- null-t cons-t
-
 *** sexp
 
 *** zero arity constructor is a global var stores the data
@@ -1282,12 +1280,6 @@
 
 * bool
 
-*** unique_empty_obj_map
-
-    #+begin_src cpp
-    auto unique_empty_obj_map = obj_map_t ();
-    #+end_src
-
 *** define
 
     #+begin_src cpp
@@ -1307,7 +1299,7 @@
        return make_shared <data_o>
            (env,
             tagging (env, "true-t"),
-            unique_empty_obj_map);
+            obj_map_t ());
     }
     #+end_src
 
@@ -1320,7 +1312,7 @@
        return make_shared <data_o>
            (env,
             tagging (env, "false-t"),
-            unique_empty_obj_map);
+            obj_map_t ());
     }
     #+end_src
 
@@ -1334,7 +1326,44 @@
     }
     #+end_src
 
-* >< list
+* list
+
+*** null_c
+
+    #+begin_src cpp
+    shared_ptr <data_o>
+    null_c (env_t &env)
+    {
+       return make_shared <data_o>
+           (env,
+            tagging (env, "null-t"),
+            obj_map_t ());
+    }
+    #+end_src
+
+*** cons_c
+
+    #+begin_src cpp
+    shared_ptr <data_cons_o>
+    cons_c (env_t &env)
+    {
+        return make_shared <data_cons_o>
+            (env,
+             tagging (env, "cons-t"),
+             name_vector_t ({ "car", "cdr" }),
+             obj_map_t ());
+    }
+    #+end_src
+
+*** import_list
+
+    #+begin_src cpp
+    void import_list (env_t &env)
+    {
+        define (env, "null-c", null_c (env));
+        define (env, "cons-c", cons_c (env));
+    }
+    #+end_src
 
 * scan
 
@@ -1667,13 +1696,12 @@
       {
           auto env = env_t ();
 
-          name_vector_t name_vector = { "car", "cdr" };
           define (env, "s1", make_shared <string_o> (env, "bye"));
           define (env, "s2", make_shared <string_o> (env, "world"));
           define (env, "cons-c", make_shared <data_cons_o>
                   (env,
                    tagging (env, "cons-t"),
-                   name_vector,
+                   name_vector_t ({ "car", "cdr" }),
                    obj_map_t ()));
 
           jojo_t jojo = {
@@ -1709,13 +1737,12 @@
       {
           auto env = env_t ();
 
-          name_vector_t name_vector = { "car", "cdr" };
           define (env, "s1", make_shared <string_o> (env, "bye"));
           define (env, "s2", make_shared <string_o> (env, "world"));
           define (env, "cons-c", make_shared <data_cons_o>
                   (env,
                    tagging (env, "cons-t"),
-                   name_vector,
+                   name_vector_t ({ "car", "cdr" }),
                    obj_map_t ()));
 
           jojo_t jojo = {
@@ -1751,6 +1778,7 @@
       test_bool ()
       {
           auto env = env_t ();
+
           import_bool (env);
 
           jojo_t jojo = {
@@ -1771,6 +1799,44 @@
               assert_stack_size (env, 2);
               assert_pop_eq (env, false_c (env));
               assert_pop_eq (env, true_c (env));
+              assert_stack_size (env, 0);
+          }
+      }
+      #+end_src
+
+***** test_list
+
+      #+begin_src cpp
+      void
+      test_list ()
+      {
+          auto env = env_t ();
+
+          import_list (env);
+
+          define (env, "s1", make_shared <string_o> (env, "bye"));
+          define (env, "s2", make_shared <string_o> (env, "world"));
+
+          jojo_t jojo = {
+              new ref_jo_t (boxing (env, "s1")),
+              new ref_jo_t (boxing (env, "s2")),
+              new ref_jo_t (boxing (env, "cons-c")),
+              new apply_jo_t (2),
+              new field_jo_t ("cdr"),
+          };
+
+          env.frame_stack.push (new_frame (jojo));
+
+          // {
+          //     env.report ();
+          //     env.run ();
+          //     env.report ();
+          // }
+
+          {
+              env.run ();
+              assert_stack_size (env, 1);
+              assert_pop_eq (env, make_shared <string_o> (env, "world"));
               assert_stack_size (env, 0);
           }
       }
@@ -1808,6 +1874,7 @@
           test_data_cons_curry ();
           // data
           test_bool ();
+          test_list ();
           // parser
           test_scan ();
       }
