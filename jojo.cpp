@@ -32,6 +32,7 @@
         tag_t tag;
         virtual ~obj_t ();
         virtual void print (env_t &env);
+        virtual bool equal (env_t &env, shared_ptr <obj_t> obj);
         virtual void apply (env_t &env, size_t arity);
     };
     using obj_map_t = map <name_t, shared_ptr <obj_t>>;
@@ -132,7 +133,22 @@
       void
       obj_t::print (env_t &env)
       {
-          cout << name_of_tag (env, this->tag);
+          cout << "#<"
+               << name_of_tag (env, this->tag)
+               << ">";
+      }
+      bool
+      obj_t::equal (env_t &env, shared_ptr <obj_t> obj)
+      {
+          if (this->tag != this->tag)
+              return false;
+          else {
+              cout << "- fatal error : obj_t::equal" << "\n"
+                   << "  equal is not implemented for  : "
+                   << name_of_tag (env, obj->tag) << "\n"
+                   << "\n";
+              exit (1);
+          }
       }
       void
       obj_t::apply (env_t &env, size_t arity)
@@ -160,6 +176,7 @@
                     lambda_jo_t *lambda_jo,
                     bind_vector_t bind_vector,
                     local_scope_t local_scope);
+          bool equal (env_t &env, shared_ptr <obj_t> obj);
           void apply (env_t &env, size_t arity);
       };
       lambda_o::
@@ -260,10 +277,17 @@
               exit (1);
           }
       }
+      bool
+      lambda_o::equal (env_t &env, shared_ptr <obj_t> obj)
+      {
+          // only equivalence between raw pointers.
+          return this == obj.get ();
+      }
       struct string_o: obj_t
       {
           string str;
           string_o (env_t &env, string str);
+          bool equal (env_t &env, shared_ptr <obj_t> obj);
           void print (env_t &env);
       };
       string_o::string_o (env_t &env, string str)
@@ -275,12 +299,20 @@
       {
           cout << '"' << this->str << '"';
       }
+      bool
+      string_o::equal (env_t &env, shared_ptr <obj_t> obj)
+      {
+          if (this->tag != obj->tag) return false;
+          auto that = static_pointer_cast <string_o> (obj);
+          return (this->str == that->str);
+      }
       struct data_o: obj_t
       {
           obj_map_t obj_map;
           data_o (env_t &env,
                   tag_t tag,
                   obj_map_t obj_map);
+          bool equal (env_t &env, shared_ptr <obj_t> obj);
       };
       data_o::
       data_o (env_t &env,
@@ -289,6 +321,26 @@
       {
           this->tag = tag;
           this->obj_map = obj_map;
+      }
+      bool
+      obj_map_equal (env_t &env, obj_map_t &lhs, obj_map_t &rhs)
+      {
+          if (lhs.size () != rhs.size ()) return false;
+          for (auto &kv: lhs) {
+              auto name = kv.first;
+              auto it = rhs.find (name);
+              if (it == rhs.end ()) return false;
+              if (! kv.second->equal (env, it->second)) return false;
+          }
+          return true;
+      }
+      bool
+      data_o::equal (env_t &env, shared_ptr <obj_t> obj)
+      {
+          if (this->tag != obj->tag) return false;
+          auto that = static_pointer_cast <data_o> (obj);
+          return obj_map_equal (env, this->obj_map, that->obj_map);
+
       }
       struct data_cons_o: obj_t
       {
@@ -300,6 +352,7 @@
                        name_vector_t name_vector,
                        obj_map_t obj_map);
           void apply (env_t &env, size_t arity);
+          bool equal (env_t &env, shared_ptr <obj_t> obj);
       };
       data_cons_o::
       data_cons_o (env_t &env,
@@ -392,6 +445,15 @@
                    << "\n";
               exit (1);
           }
+      }
+      bool
+      data_cons_o::equal (env_t &env, shared_ptr <obj_t> obj)
+      {
+          if (this->tag != obj->tag) return false;
+          auto that = static_pointer_cast <data_cons_o> (obj);
+          if (this->type_tag != that->type_tag) return false;
+          return obj_map_equal (env, this->obj_map, that->obj_map);
+
       }
       void
       jojo_print (env_t &env, jojo_t jojo)
@@ -701,6 +763,11 @@
           return "(apply)";
       }
     auto unique_empty_obj_map = obj_map_t ();
+    void
+    define (env_t &env, name_t name, shared_ptr <obj_t> obj)
+    {
+        env.box_map [name] = new box_t (obj);
+    }
     shared_ptr <data_o>
     true_c (env_t &env)
     {
@@ -717,10 +784,10 @@
             tagging (env, "false-t"),
             unique_empty_obj_map);
     }
-    void expose_bool (env_t &env)
+    void import_bool (env_t &env)
     {
-       env.box_map ["true-c"] = new box_t (true_c (env));
-       env.box_map ["false-c"] = new box_t (false_c (env));
+       define (env, "true-c", true_c (env));
+       define (env, "false-c", false_c (env));
     }
     using string_vector_t = vector <string> ;
     bool space_char_p (char c)
@@ -802,44 +869,44 @@
             (jojo, local_scope_t ());
     }
       void
+      assert_pop_eq (env_t &env, shared_ptr <obj_t> obj)
+      {
+          auto that = env.obj_stack.top ();
+          assert (obj->equal (env, that));
+          env.obj_stack.pop ();
+      }
+      void
+      assert_tos_eq (env_t &env, shared_ptr <obj_t> obj)
+      {
+          auto that = env.obj_stack.top ();
+          assert (obj->equal (env, that));
+      }
+      void
+      assert_stack_size (env_t &env, size_t size)
+      {
+          assert (env.obj_stack.size () == size);
+      }
+      void
       test_step ()
       {
           auto env = env_t ();
 
-          env.box_map = {
-              {"string-1", new box_t (make_shared <string_o> (env, "bye"))},
-              {"string-2", new box_t (make_shared <string_o> (env, "world"))},
-          };
+          define (env, "s1", make_shared <string_o> (env, "bye"));
+          define (env, "s2", make_shared <string_o> (env, "world"));
 
           jojo_t jojo = {
-              new ref_jo_t (boxing (env, "string-1")),
-              new ref_jo_t (boxing (env, "string-2")),
+              new ref_jo_t (boxing (env, "s1")),
+              new ref_jo_t (boxing (env, "s2")),
           };
 
           env.frame_stack.push (new_frame (jojo));
 
           {
               env.run ();
-
-              assert (env.obj_stack.size () == 2);
-
-              // assert_pop_eq (env, string_o ("world"));
-
-              auto string_2 = static_pointer_cast <string_o>
-                  (env.obj_stack.top ());
-              assert (string_2->tag == tagging (env, "string-t"));
-              assert (string_2->str == "world");
-              env.obj_stack.pop ();
-
-              assert (env.obj_stack.size () == 1);
-
-              auto string_1 = static_pointer_cast <string_o>
-                  (env.obj_stack.top ());
-              assert (string_1->tag == tagging (env, "string-t"));
-              assert (string_1->str == "bye");
-              env.obj_stack.pop ();
-
-              assert (env.obj_stack.size () == 0);
+              assert_stack_size (env, 2);
+              assert_pop_eq (env, make_shared <string_o> (env, "world"));
+              assert_pop_eq (env, make_shared <string_o> (env, "bye"));
+              assert_stack_size (env, 0);
           }
       }
       void
@@ -848,20 +915,19 @@
           auto env = env_t ();
 
           obj_map_t obj_map = {
-              {"field-1", make_shared <string_o> (env, "bye")},
-              {"field-2", make_shared <string_o> (env, "world")},
+              {"car", make_shared <string_o> (env, "bye")},
+              {"cdr", make_shared <string_o> (env, "world")},
           };
 
-          env.box_map = {
-              {"data-1", new box_t (make_shared <data_o> (env, tagging (env, "data-1-t"), obj_map))},
-          };
+          define (env, "last-cry", make_shared <data_o>
+                  (env, tagging (env, "cons-t"), obj_map));
 
           jojo_t jojo = {
-              new ref_jo_t (boxing (env, "data-1")),
-              new field_jo_t ("field-1"),
-              new ref_jo_t (boxing (env, "data-1")),
-              new field_jo_t ("field-2"),
-              new ref_jo_t (boxing (env, "data-1")),
+              new ref_jo_t (boxing (env, "last-cry")),
+              new field_jo_t ("car"),
+              new ref_jo_t (boxing (env, "last-cry")),
+              new field_jo_t ("cdr"),
+              new ref_jo_t (boxing (env, "last-cry")),
           };
 
           env.frame_stack.push (new_frame (jojo));
@@ -869,30 +935,14 @@
           {
               env.run ();
 
-              assert (env.obj_stack.size () == 3);
-
-              auto data_1 = static_pointer_cast <data_o>
-                  (env.obj_stack.top ());
-              assert (data_1->tag == tagging (env, "data-1-t"));
-              env.obj_stack.pop ();
-
-              assert (env.obj_stack.size () == 2);
-
-              auto string_2 = static_pointer_cast <string_o>
-                  (env.obj_stack.top ());
-              assert (string_2->tag == tagging (env, "string-t"));
-              assert (string_2->str == "world");
-              env.obj_stack.pop ();
-
-              assert (env.obj_stack.size () == 1);
-
-              auto string_1 = static_pointer_cast <string_o>
-                  (env.obj_stack.top ());
-              assert (string_1->tag == tagging (env, "string-t"));
-              assert (string_1->str == "bye");
-              env.obj_stack.pop ();
-
-              assert (env.obj_stack.size () == 0);
+              assert_stack_size (env, 3);
+              assert_pop_eq (env, make_shared <data_o>
+                             (env,
+                              tagging (env, "cons-t"),
+                              obj_map));
+              assert_pop_eq (env, make_shared <string_o> (env, "world"));
+              assert_pop_eq (env, make_shared <string_o> (env, "bye"));
+              assert_stack_size (env, 0);
           }
       }
       void
@@ -900,14 +950,12 @@
       {
           auto env = env_t ();
 
-          env.box_map = {
-              {"string-1", new box_t (make_shared <string_o> (env, "bye"))},
-              {"string-2", new box_t (make_shared <string_o> (env, "world"))},
-          };
+          define (env, "s1", make_shared <string_o> (env, "bye"));
+          define (env, "s2", make_shared <string_o> (env, "world"));
 
           jojo_t jojo = {
-              new ref_jo_t (boxing (env, "string-1")),
-              new ref_jo_t (boxing (env, "string-2")),
+              new ref_jo_t (boxing (env, "s1")),
+              new ref_jo_t (boxing (env, "s2")),
               new lambda_jo_t ({ "x", "y" },
                                { new local_ref_jo_t (0, 0),
                                  new local_ref_jo_t (0, 1) }),
@@ -924,24 +972,10 @@
 
           {
               env.run ();
-
-              assert (env.obj_stack.size () == 2);
-
-              auto string_2 = static_pointer_cast <string_o>
-                  (env.obj_stack.top ());
-              assert (string_2->tag == tagging (env, "string-t"));
-              assert (string_2->str == "world");
-              env.obj_stack.pop ();
-
-              assert (env.obj_stack.size () == 1);
-
-              auto string_1 = static_pointer_cast <string_o>
-                  (env.obj_stack.top ());
-              assert (string_1->tag == tagging (env, "string-t"));
-              assert (string_1->str == "bye");
-              env.obj_stack.pop ();
-
-              assert (env.obj_stack.size () == 0);
+              assert_stack_size (env, 2);
+              assert_pop_eq (env, make_shared <string_o> (env, "world"));
+              assert_pop_eq (env, make_shared <string_o> (env, "bye"));
+              assert_stack_size (env, 0);
           }
       }
       void
@@ -949,14 +983,12 @@
       {
           auto env = env_t ();
 
-          env.box_map = {
-              {"string-1", new box_t (make_shared <string_o> (env, "bye"))},
-              {"string-2", new box_t (make_shared <string_o> (env, "world"))},
-          };
+          define (env, "s1", make_shared <string_o> (env, "bye"));
+          define (env, "s2", make_shared <string_o> (env, "world"));
 
           jojo_t jojo = {
-              new ref_jo_t (boxing (env, "string-1")),
-              new ref_jo_t (boxing (env, "string-2")),
+              new ref_jo_t (boxing (env, "s1")),
+              new ref_jo_t (boxing (env, "s2")),
               new lambda_jo_t ({ "x", "y" },
                                { new local_ref_jo_t (0, 0),
                                  new local_ref_jo_t (0, 1) }),
@@ -974,24 +1006,10 @@
 
           {
               env.run ();
-
-              assert (env.obj_stack.size () == 2);
-
-              auto string_1 = static_pointer_cast <string_o>
-                  (env.obj_stack.top ());
-              assert (string_1->tag == tagging (env, "string-t"));
-              assert (string_1->str == "bye");
-              env.obj_stack.pop ();
-
-              assert (env.obj_stack.size () == 1);
-
-              auto string_2 = static_pointer_cast <string_o>
-                  (env.obj_stack.top ());
-              assert (string_2->tag == tagging (env, "string-t"));
-              assert (string_2->str == "world");
-              env.obj_stack.pop ();
-
-              assert (env.obj_stack.size () == 0);
+              assert_stack_size (env, 2);
+              assert_pop_eq (env, make_shared <string_o> (env, "bye"));
+              assert_pop_eq (env, make_shared <string_o> (env, "world"));
+              assert_stack_size (env, 0);
           }
       }
       void
@@ -1000,20 +1018,17 @@
           auto env = env_t ();
 
           name_vector_t name_vector = { "car", "cdr" };
-          env.box_map = {
-              {"string-1", new box_t (make_shared <string_o> (env, "bye"))},
-              {"string-2", new box_t (make_shared <string_o> (env, "world"))},
-              {"cons-c", new box_t
-               (make_shared <data_cons_o>
-                (env,
-                 tagging (env, "cons-t"),
-                 name_vector,
-                 obj_map_t ()))},
-          };
+          define (env, "s1", make_shared <string_o> (env, "bye"));
+          define (env, "s2", make_shared <string_o> (env, "world"));
+          define (env, "cons-c", make_shared <data_cons_o>
+                  (env,
+                   tagging (env, "cons-t"),
+                   name_vector,
+                   obj_map_t ()));
 
           jojo_t jojo = {
-              new ref_jo_t (boxing (env, "string-1")),
-              new ref_jo_t (boxing (env, "string-2")),
+              new ref_jo_t (boxing (env, "s1")),
+              new ref_jo_t (boxing (env, "s2")),
               new ref_jo_t (boxing (env, "cons-c")),
               new apply_jo_t (2),
               new field_jo_t ("cdr"),
@@ -1029,16 +1044,9 @@
 
           {
               env.run ();
-
-              assert (env.obj_stack.size () == 1);
-
-              auto string_2 = static_pointer_cast <string_o>
-                  (env.obj_stack.top ());
-              assert (string_2->tag == tagging (env, "string-t"));
-              assert (string_2->str == "world");
-              env.obj_stack.pop ();
-
-              assert (env.obj_stack.size () == 0);
+              assert_stack_size (env, 1);
+              assert_pop_eq (env, make_shared <string_o> (env, "world"));
+              assert_stack_size (env, 0);
           }
       }
       void
@@ -1047,20 +1055,17 @@
           auto env = env_t ();
 
           name_vector_t name_vector = { "car", "cdr" };
-          env.box_map = {
-              {"string-1", new box_t (make_shared <string_o> (env, "bye"))},
-              {"string-2", new box_t (make_shared <string_o> (env, "world"))},
-              {"cons-c", new box_t
-               (make_shared <data_cons_o>
-                (env,
-                 tagging (env, "cons-t"),
-                 name_vector,
-                 obj_map_t ()))},
-          };
+          define (env, "s1", make_shared <string_o> (env, "bye"));
+          define (env, "s2", make_shared <string_o> (env, "world"));
+          define (env, "cons-c", make_shared <data_cons_o>
+                  (env,
+                   tagging (env, "cons-t"),
+                   name_vector,
+                   obj_map_t ()));
 
           jojo_t jojo = {
-              new ref_jo_t (boxing (env, "string-1")),
-              new ref_jo_t (boxing (env, "string-2")),
+              new ref_jo_t (boxing (env, "s1")),
+              new ref_jo_t (boxing (env, "s2")),
               new ref_jo_t (boxing (env, "cons-c")),
               new apply_jo_t (1),
               new apply_jo_t (1),
@@ -1077,23 +1082,16 @@
 
           {
               env.run ();
-
-              assert (env.obj_stack.size () == 1);
-
-              auto string_2 = static_pointer_cast <string_o>
-                  (env.obj_stack.top ());
-              assert (string_2->tag == tagging (env, "string-t"));
-              assert (string_2->str == "world");
-              env.obj_stack.pop ();
-
-              assert (env.obj_stack.size () == 0);
+              assert_stack_size (env, 1);
+              assert_pop_eq (env, make_shared <string_o> (env, "world"));
+              assert_stack_size (env, 0);
           }
       }
       void
       test_bool ()
       {
           auto env = env_t ();
-          expose_bool (env);
+          import_bool (env);
 
           jojo_t jojo = {
               new ref_jo_t (boxing (env, "true-c")),
@@ -1110,11 +1108,10 @@
 
           {
               env.run ();
-              assert (env.obj_stack.size () == 2);
-              // assert_stack_size (2);
-              // assert_pop_eq (env, false_c (env));
-              // assert_pop_eq (env, true_c (env));
-              // assert_stack_size (0);
+              assert_stack_size (env, 2);
+              assert_pop_eq (env, false_c (env));
+              assert_pop_eq (env, true_c (env));
+              assert_stack_size (env, 0);
           }
       }
       void
