@@ -4,9 +4,17 @@
 
 * [todo-stack]
 
-*** fix repr for *_o
+*** fix repr for *_jo_t
+
+*** fix print for *_o
+
+*** frame_t also based on `lambda_jo_t *lambda_jo;`
+
+*** lambda_jo_t::~lambda_jo_t should delete jo in its jojo
 
 *** data_pred_o -- for `<data>-p`
+
+*** json-like syntax to write jojo functions in c++
 
 *** sexp
 
