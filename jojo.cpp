@@ -251,7 +251,8 @@
               env.obj_stack.push (lambda);
           }
           else {
-              cout << "- fatal error : over-arity apply" << "\n"
+              cout << "- fatal error : lambda_o::apply" << "\n"
+                   << "  over-arity apply" << "\n"
                    << "  arity > lack" << "\n"
                    << "  arity : " << arity << "\n"
                    << "  lack : " << lack << "\n"
@@ -277,58 +278,120 @@
       struct data_o: obj_t
       {
           obj_map_t obj_map;
-          data_o (env_t &env, tag_t tag, obj_map_t obj_map);
+          data_o (env_t &env,
+                  tag_t tag,
+                  obj_map_t obj_map);
       };
-      data_o::data_o (env_t &env, tag_t tag, obj_map_t obj_map)
+      data_o::
+      data_o (env_t &env,
+              tag_t tag,
+              obj_map_t obj_map)
       {
           this->tag = tag;
           this->obj_map = obj_map;
       }
-      struct type_o: obj_t
+      struct data_cons_o: obj_t
       {
           tag_t type_tag;
           name_vector_t name_vector;
-          type_o (env_t &env,
-                  tag_t type_tag,
-                  name_vector_t name_vector);
-      };
-      type_o::
-      type_o (env_t &env,
-              tag_t type_tag,
-              name_vector_t name_vector)
-      {
-          this->tag = tagging (env, "type-t");
-          this->type_tag = type_tag;
-          this->name_vector = name_vector;
-      }
-      struct data_cons_o: obj_t
-      {
-          shared_ptr <type_o> type;
-          data_cons_o (env_t &env, shared_ptr <type_o> type);
+          obj_map_t obj_map;
+          data_cons_o (env_t &env,
+                       tag_t type_tag,
+                       name_vector_t name_vector,
+                       obj_map_t obj_map);
           void apply (env_t &env, size_t arity);
       };
       data_cons_o::
-      data_cons_o (env_t &env, shared_ptr <type_o> type)
+      data_cons_o (env_t &env,
+                   tag_t type_tag,
+                   name_vector_t name_vector,
+                   obj_map_t obj_map)
       {
           this->tag = tagging (env, "data-cons-t");
-          this->type = type;
+          this->type_tag = type_tag;
+          this->name_vector = name_vector;
+          this->obj_map = obj_map;
+      }
+      name_vector_t
+      name_vector_obj_map_lack (name_vector_t &old_name_vector,
+                                obj_map_t &obj_map)
+      {
+          auto name_vector = name_vector_t ();
+          for (auto name: old_name_vector) {
+              auto it = obj_map.find (name);
+              // not found == lack
+              if (it == obj_map.end ())
+                  name_vector.push_back (name);
+          }
+          return name_vector;
+      }
+      name_vector_t
+      name_vector_obj_map_arity_lack (name_vector_t &old_name_vector,
+                                      obj_map_t &obj_map,
+                                      size_t arity)
+      {
+          auto name_vector = name_vector_obj_map_lack
+              (old_name_vector, obj_map);
+          auto lack = name_vector.size ();
+          auto counter = lack - arity;
+          while (counter > 0) {
+              counter--;
+              name_vector.pop_back ();
+          }
+          return name_vector;
       }
       void
       data_cons_o::apply (env_t &env, size_t arity)
       {
-          auto obj_map = obj_map_t ();
-          name_vector_t &name_vector = this->type->name_vector;
-          for (auto it = name_vector.rbegin();
-               it != name_vector.rend();
-               it++) {
-              name_t name = *it;
-              auto obj = env.obj_stack.top ();
-              env.obj_stack.pop ();
-              obj_map [name] = obj;
+          auto size = this->name_vector.size ();
+          auto have = this->obj_map.size ();
+          auto lack = size - have;
+          if (lack == arity) {
+              auto lack_name_vector = name_vector_obj_map_lack
+                  (this->name_vector, obj_map);
+              auto obj_map = this->obj_map;
+              auto begin = lack_name_vector.rbegin ();
+              auto end = lack_name_vector.rend ();
+              for (auto it = begin; it != end; it++) {
+                  name_t name = *it;
+                  auto obj = env.obj_stack.top ();
+                  env.obj_stack.pop ();
+                  obj_map [name] = obj;
+              }
+              auto data = make_shared <data_o>
+                  (env,
+                   this->type_tag,
+                   obj_map);
+              env.obj_stack.push (data);
           }
-          auto data = make_shared <data_o>
-              (env, this->type->type_tag, obj_map);
-          env.obj_stack.push (data);
+          else if (arity < lack) {
+              auto lack_name_vector = name_vector_obj_map_arity_lack
+                  (this->name_vector, obj_map, arity);
+              auto obj_map = this->obj_map;
+              auto begin = lack_name_vector.rbegin ();
+              auto end = lack_name_vector.rend ();
+              for (auto it = begin; it != end; it++) {
+                  name_t name = *it;
+                  auto obj = env.obj_stack.top ();
+                  env.obj_stack.pop ();
+                  obj_map [name] = obj;
+              }
+              auto data_cons = make_shared <data_cons_o>
+                  (env,
+                   this->type_tag,
+                   this->name_vector,
+                   obj_map);
+              env.obj_stack.push (data_cons);
+          }
+          else {
+              cout << "- fatal error : data_cons_o::apply" << "\n"
+                   << "  over-arity apply" << "\n"
+                   << "  arity > lack" << "\n"
+                   << "  arity : " << arity << "\n"
+                   << "  lack : " << lack << "\n"
+                   << "\n";
+              exit (1);
+          }
       }
       void
       jojo_print (env_t &env, jojo_t jojo)
@@ -773,7 +836,7 @@
           }
       }
       void
-      test_curry ()
+      test_lambda_curry ()
       {
           auto env = env_t ();
 
@@ -825,15 +888,107 @@
       void
       test_data_cons ()
       {
+          auto env = env_t ();
 
+          name_vector_t name_vector = { "field-1", "field-2" };
+          env.box_map = {
+              {"string-1", new box_t (make_shared <string_o> (env, "bye"))},
+              {"string-2", new box_t (make_shared <string_o> (env, "world"))},
+              {"data-1-c", new box_t
+               (make_shared <data_cons_o>
+                (env,
+                 tagging (env, "data-1-t"),
+                 name_vector,
+                 obj_map_t ()))},
+          };
+
+          jojo_t jojo = {
+              new ref_jo_t (boxing (env, "string-1")),
+              new ref_jo_t (boxing (env, "string-2")),
+              new ref_jo_t (boxing (env, "data-1-c")),
+              new apply_jo_t (2),
+              new field_jo_t ("field-2"),
+          };
+          auto frame = make_shared <frame_t> (jojo, local_scope_t ());
+          env.frame_stack.push (frame);
+
+          // {
+          //     env.report ();
+          //     env.run ();
+          //     env.report ();
+          // }
+
+          {
+              env.run ();
+
+              assert (env.obj_stack.size () == 1);
+
+              auto string_2 = static_pointer_cast <string_o>
+                  (env.obj_stack.top ());
+              assert (string_2->tag == tagging (env, "string-t"));
+              assert (string_2->str == "world");
+              env.obj_stack.pop ();
+
+              assert (env.obj_stack.size () == 0);
+          }
       }
-      void test_all ()
+      void
+      test_data_cons_curry ()
+      {
+          auto env = env_t ();
+
+          name_vector_t name_vector = { "field-1", "field-2" };
+          env.box_map = {
+              {"string-1", new box_t (make_shared <string_o> (env, "bye"))},
+              {"string-2", new box_t (make_shared <string_o> (env, "world"))},
+              {"data-1-c", new box_t
+               (make_shared <data_cons_o>
+                (env,
+                 tagging (env, "data-1-t"),
+                 name_vector,
+                 obj_map_t ()))},
+          };
+
+          jojo_t jojo = {
+              new ref_jo_t (boxing (env, "string-1")),
+              new ref_jo_t (boxing (env, "string-2")),
+              new ref_jo_t (boxing (env, "data-1-c")),
+              new apply_jo_t (1),
+              new apply_jo_t (1),
+              new field_jo_t ("field-1"),
+          };
+          auto frame = make_shared <frame_t> (jojo, local_scope_t ());
+          env.frame_stack.push (frame);
+
+          // {
+          //     env.report ();
+          //     env.run ();
+          //     env.report ();
+          // }
+
+          {
+              env.run ();
+
+              assert (env.obj_stack.size () == 1);
+
+              auto string_2 = static_pointer_cast <string_o>
+                  (env.obj_stack.top ());
+              assert (string_2->tag == tagging (env, "string-t"));
+              assert (string_2->str == "world");
+              env.obj_stack.pop ();
+
+              assert (env.obj_stack.size () == 0);
+          }
+      }
+      void
+      test_all ()
       {
           test_step ();
           test_data ();
           test_apply ();
-          test_curry ();
+          test_lambda_curry ();
           test_data_cons ();
+          test_data_cons_curry ();
       }
     int
     main ()
