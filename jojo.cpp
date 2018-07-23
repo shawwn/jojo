@@ -24,10 +24,12 @@
         virtual void exe (env_t &env, local_scope_t &local_scope);
         virtual string repr (env_t &env);
     };
-    using tag_t = string;
+    using tag_t = size_t;
+    using tag_name_vector_t = vector <name_t>;
+    using tag_map_t = map <name_t, tag_t>;
     struct obj_t
     {
-        tag_t t;
+        tag_t tag;
         virtual ~obj_t ();
         virtual void print (env_t &env);
         virtual void apply (env_t &env, size_t arity);
@@ -56,6 +58,8 @@
         box_map_t box_map;
         obj_stack_t obj_stack;
         frame_stack_t frame_stack;
+        tag_name_vector_t tag_name_vector;
+        tag_map_t tag_map;
         void step ();
         void run ();
         void report ();
@@ -68,6 +72,26 @@
           void exe (env_t &env, local_scope_t &local_scope);
           string repr (env_t &env);
       };
+      tag_t
+      tagging (env_t &env, name_t name)
+      {
+          auto it = env.tag_map.find (name);
+          if (it != env.tag_map.end ()) {
+              tag_t tag = it->second;
+              return tag;
+          }
+          else {
+              auto tag = env.tag_name_vector.size ();
+              env.tag_map [name] = tag;
+              env.tag_name_vector.push_back (name);
+              return tag;
+          }
+      }
+      name_t
+      name_of_tag (env_t &env, tag_t tag)
+      {
+          return env.tag_name_vector [tag];
+      }
       void
       bind_vector_print (env_t &env, bind_vector_t bind_vector)
       {
@@ -108,7 +132,7 @@
       void
       obj_t::print (env_t &env)
       {
-          cout << this->t;
+          cout << name_of_tag (env, this->tag);
       }
       void
       obj_t::apply (env_t &env, size_t arity)
@@ -144,7 +168,7 @@
                 bind_vector_t bind_vector,
                 local_scope_t local_scope)
       {
-          this->t = "lambda-t";
+          this->tag = tagging (env, "lambda-t");
           this->lambda_jo = lambda_jo;
           this->bind_vector = bind_vector;
           this->local_scope = local_scope;
@@ -237,27 +261,27 @@
       }
       struct string_o: obj_t
       {
-          string s;
-          string_o (env_t &env, string s);
+          string str;
+          string_o (env_t &env, string str);
           void print (env_t &env);
       };
-      string_o::string_o (env_t &env, string s)
+      string_o::string_o (env_t &env, string str)
       {
-          this->t = "string-t";
-          this->s = s;
+          this->tag = tagging (env, "string-t");
+          this->str = str;
       }
       void string_o::print (env_t &env)
       {
-          cout << '"' << this->s << '"';
+          cout << '"' << this->str << '"';
       }
       struct data_o: obj_t
       {
           obj_map_t obj_map;
-          data_o (env_t &env, tag_t t, obj_map_t obj_map);
+          data_o (env_t &env, tag_t tag, obj_map_t obj_map);
       };
-      data_o::data_o (env_t &env, tag_t t, obj_map_t obj_map)
+      data_o::data_o (env_t &env, tag_t tag, obj_map_t obj_map)
       {
-          this->t = t;
+          this->tag = tag;
           this->obj_map = obj_map;
       }
       struct type_o: obj_t
@@ -273,7 +297,7 @@
               tag_t type_tag,
               name_vector_t name_vector)
       {
-          this->t = "type-t";
+          this->tag = tagging (env, "type-t");
           this->type_tag = type_tag;
           this->name_vector = name_vector;
       }
@@ -286,7 +310,7 @@
       data_cons_o::
       data_cons_o (env_t &env, shared_ptr <type_o> type)
       {
-          this->t = "data-cons-t";
+          this->tag = tagging (env, "data-cons-t");
           this->type = type;
       }
       void
@@ -300,8 +324,7 @@
               name_t name = *it;
               auto obj = env.obj_stack.top ();
               env.obj_stack.pop ();
-              auto bind = make_pair (name, obj);
-              obj_map.insert (bind);
+              obj_map [name] = obj;
           }
           auto data = make_shared <data_o>
               (env, this->type->type_tag, obj_map);
@@ -368,7 +391,7 @@
               return it->second;
           else {
               auto box = new box_t ();
-              env.box_map.insert (make_pair (name, box));
+              env.box_map [name] = box;
               return box;
           }
       }
@@ -636,16 +659,16 @@
 
           auto string_2 = static_pointer_cast <string_o>
               (env.obj_stack.top ());
-          assert (string_2->t == "string-t");
-          assert (string_2->s == "world");
+          assert (string_2->tag == tagging (env, "string-t"));
+          assert (string_2->str == "world");
           env.obj_stack.pop ();
 
           assert (env.obj_stack.size () == 1);
 
           auto string_1 = static_pointer_cast <string_o>
               (env.obj_stack.top ());
-          assert (string_1->t == "string-t");
-          assert (string_1->s == "bye");
+          assert (string_1->tag == tagging (env, "string-t"));
+          assert (string_1->str == "bye");
           env.obj_stack.pop ();
 
           assert (env.obj_stack.size () == 0);
@@ -661,7 +684,7 @@
           };
 
           env.box_map = {
-              {"data-1", new box_t (make_shared <data_o> (env, "data-1-t", obj_map))},
+              {"data-1", new box_t (make_shared <data_o> (env, tagging (env, "data-1-t"), obj_map))},
           };
 
           jojo_t jojo = {
@@ -679,23 +702,23 @@
 
           auto data_1 = static_pointer_cast <data_o>
               (env.obj_stack.top ());
-          assert (data_1->t == "data-1-t");
+          assert (data_1->tag == tagging (env, "data-1-t"));
           env.obj_stack.pop ();
 
           assert (env.obj_stack.size () == 2);
 
           auto string_2 = static_pointer_cast <string_o>
               (env.obj_stack.top ());
-          assert (string_2->t == "string-t");
-          assert (string_2->s == "world");
+          assert (string_2->tag == tagging (env, "string-t"));
+          assert (string_2->str == "world");
           env.obj_stack.pop ();
 
           assert (env.obj_stack.size () == 1);
 
           auto string_1 = static_pointer_cast <string_o>
               (env.obj_stack.top ());
-          assert (string_1->t == "string-t");
-          assert (string_1->s == "bye");
+          assert (string_1->tag == tagging (env, "string-t"));
+          assert (string_1->str == "bye");
           env.obj_stack.pop ();
 
           assert (env.obj_stack.size () == 0);
@@ -734,16 +757,16 @@
 
               auto string_2 = static_pointer_cast <string_o>
                   (env.obj_stack.top ());
-              assert (string_2->t == "string-t");
-              assert (string_2->s == "world");
+              assert (string_2->tag == tagging (env, "string-t"));
+              assert (string_2->str == "world");
               env.obj_stack.pop ();
 
               assert (env.obj_stack.size () == 1);
 
               auto string_1 = static_pointer_cast <string_o>
                   (env.obj_stack.top ());
-              assert (string_1->t == "string-t");
-              assert (string_1->s == "bye");
+              assert (string_1->tag == tagging (env, "string-t"));
+              assert (string_1->str == "bye");
               env.obj_stack.pop ();
 
               assert (env.obj_stack.size () == 0);
@@ -784,16 +807,16 @@
 
               auto string_1 = static_pointer_cast <string_o>
                   (env.obj_stack.top ());
-              assert (string_1->t == "string-t");
-              assert (string_1->s == "bye");
+              assert (string_1->tag == tagging (env, "string-t"));
+              assert (string_1->str == "bye");
               env.obj_stack.pop ();
 
               assert (env.obj_stack.size () == 1);
 
               auto string_2 = static_pointer_cast <string_o>
                   (env.obj_stack.top ());
-              assert (string_2->t == "string-t");
-              assert (string_2->s == "world");
+              assert (string_2->tag == tagging (env, "string-t"));
+              assert (string_2->str == "world");
               env.obj_stack.pop ();
 
               assert (env.obj_stack.size () == 0);
