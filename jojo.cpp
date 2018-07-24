@@ -514,8 +514,8 @@
       }
       obj_map_t
       pick_up_obj_map_and_merge (env_t &env,
-                                 name_vector_t lack_name_vector,
-                                 obj_map_t old_obj_map)
+                                 name_vector_t &lack_name_vector,
+                                 obj_map_t &old_obj_map)
       {
           auto obj_map = old_obj_map;
           auto begin = lack_name_vector.rbegin ();
