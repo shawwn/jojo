@@ -330,15 +330,59 @@
           }
       }
       bool
+      bind_equal (env_t &env,
+                  bind_t &lhs,
+                  bind_t &rhs)
+      {
+          if (lhs.first != rhs.first) return false;
+          return lhs.second->equal (env, rhs.second);
+      }
+      bool
+      bind_vector_equal (env_t &env,
+                         bind_vector_t &lhs,
+                         bind_vector_t &rhs)
+      {
+          if (lhs.size () != rhs.size ()) return false;
+          auto size = lhs.size ();
+          auto index = 0;
+          while (index < size) {
+              if (! bind_equal (env, lhs [index], rhs [index]))
+                  return false;
+              index++;
+          }
+          return true;
+      }
+      bool
+      local_scope_equal (env_t &env,
+                         local_scope_t &lhs,
+                         local_scope_t &rhs)
+      {
+          if (lhs.size () != rhs.size ()) return false;
+          auto size = lhs.size ();
+          auto index = 0;
+          while (index < size) {
+              if (! bind_vector_equal (env, lhs [index], rhs [index]))
+                  return false;
+              index++;
+          }
+          return true;
+      }
+      bool
       lambda_o::equal (env_t &env, shared_ptr <obj_t> obj)
       {
           // raw pointers must be equal first
           if (this != obj.get ()) return false;
           auto that = static_pointer_cast <lambda_o> (obj);
           // then scopes
-          if (this->local_scope != that->local_scope) return false;
+          if (local_scope_equal
+              (env,
+               this->local_scope,
+               that->local_scope)) return false;
           // then bindings
-          if (this->bind_vector != that->bind_vector) return false;
+          if (bind_vector_equal
+              (env,
+               this->bind_vector,
+               that->bind_vector)) return false;
           else return true;
       }
       void
