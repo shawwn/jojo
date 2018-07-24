@@ -72,15 +72,6 @@
         void run ();
         void report ();
     };
-      struct lambda_jo_t: jo_t
-      {
-          name_vector_t name_vector;
-          shared_ptr <jojo_t> jojo;
-          lambda_jo_t (name_vector_t name_vector,
-                       shared_ptr <jojo_t> jojo);
-          void exe (env_t &env, local_scope_t &local_scope);
-          string repr (env_t &env);
-      };
       tag_t
       tagging (env_t &env, name_t name)
       {
@@ -177,11 +168,13 @@
       }
       struct lambda_o: obj_t
       {
-          lambda_jo_t *lambda_jo;
+          name_vector_t name_vector;
+          shared_ptr <jojo_t> jojo;
           bind_vector_t bind_vector;
           local_scope_t local_scope;
           lambda_o (env_t &env,
-                    lambda_jo_t *lambda_jo,
+                    name_vector_t name_vector,
+                    shared_ptr <jojo_t> jojo,
                     bind_vector_t bind_vector,
                     local_scope_t local_scope);
           bool equal (env_t &env, shared_ptr <obj_t> obj);
@@ -189,12 +182,14 @@
       };
       lambda_o::
       lambda_o (env_t &env,
-                lambda_jo_t *lambda_jo,
+                name_vector_t name_vector,
+                shared_ptr <jojo_t> jojo,
                 bind_vector_t bind_vector,
                 local_scope_t local_scope)
       {
           this->tag = tagging (env, "lambda-t");
-          this->lambda_jo = lambda_jo;
+          this->name_vector = name_vector;
+          this->jojo = jojo;
           this->bind_vector = bind_vector;
           this->local_scope = local_scope;
       }
@@ -249,7 +244,7 @@
       void
       lambda_o::apply (env_t &env, size_t arity)
       {
-          auto size = this->lambda_jo->name_vector.size ();
+          auto size = this->name_vector.size ();
           auto have = number_of_obj_in_bind_vector (this->bind_vector);
           auto lack = size - have;
           if (lack == arity) {
@@ -260,7 +255,7 @@
               auto local_scope = local_scope_extend
                   (this->local_scope, bind_vector);
               auto frame = make_shared <frame_t>
-                  (this->lambda_jo->jojo, local_scope);
+                  (this->jojo, local_scope);
               env.frame_stack.push (frame);
           }
           else if (arity < lack) {
@@ -270,7 +265,8 @@
                   (this->bind_vector, obj_vector);
               auto lambda = make_shared <lambda_o>
                   (env,
-                   this->lambda_jo,
+                   this->name_vector,
+                   this->jojo,
                    bind_vector,
                    this->local_scope);
               env.obj_stack.push (lambda);
@@ -289,6 +285,8 @@
       lambda_o::equal (env_t &env, shared_ptr <obj_t> obj)
       {
           // only equivalence between raw pointers.
+          // ><><><
+          // also about the bind_vector
           return this == obj.get ();
       }
       struct string_o: obj_t
@@ -705,6 +703,15 @@
               to_string (this->level) + " " +
               to_string (this->index) + ")";
       }
+      struct lambda_jo_t: jo_t
+      {
+          name_vector_t name_vector;
+          shared_ptr <jojo_t> jojo;
+          lambda_jo_t (name_vector_t name_vector,
+                       shared_ptr <jojo_t> jojo);
+          void exe (env_t &env, local_scope_t &local_scope);
+          string repr (env_t &env);
+      };
       lambda_jo_t::
       lambda_jo_t (name_vector_t name_vector,
                    shared_ptr <jojo_t> jojo)
@@ -727,7 +734,9 @@
       {
           auto frame = env.frame_stack.top ();
           auto lambda = make_shared <lambda_o>
-              (env, this,
+              (env,
+               this->name_vector,
+               this->jojo,
                bind_vector_from_name_vector (this->name_vector),
                frame->local_scope);
           env.obj_stack.push (lambda);
