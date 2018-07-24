@@ -1093,8 +1093,15 @@
     }
 
     shared_ptr <frame_t>
-    new_frame (shared_ptr <jojo_t> jojo)
+    new_frame_from_jojo (shared_ptr <jojo_t> jojo)
     {
+        return make_shared <frame_t>
+            (jojo, local_scope_t ());
+    }
+    shared_ptr <frame_t>
+    new_frame_from_jo_vector (jo_vector_t jo_vector)
+    {
+        auto jojo = make_shared <jojo_t> (jo_vector);
         return make_shared <frame_t>
             (jojo, local_scope_t ());
     }
@@ -1129,9 +1136,7 @@
               new ref_jo_t (boxing (env, "s2")),
           };
 
-          auto jojo = make_shared <jojo_t> (jo_vector);
-
-          env.frame_stack.push (new_frame (jojo));
+          env.frame_stack.push (new_frame_from_jo_vector (jo_vector));
 
           {
               env.run ();
@@ -1162,9 +1167,7 @@
               new ref_jo_t (boxing (env, "last-cry")),
           };
 
-          auto jojo = make_shared <jojo_t> (jo_vector);
-
-          env.frame_stack.push (new_frame (jojo));
+          env.frame_stack.push (new_frame_from_jo_vector (jo_vector));
 
           {
               env.run ();
@@ -1200,9 +1203,7 @@
               new apply_jo_t (2),
           };
 
-          auto jojo = make_shared <jojo_t> (jo_vector);
-
-          env.frame_stack.push (new_frame (jojo));
+          env.frame_stack.push (new_frame_from_jo_vector (jo_vector));
 
           // {
           //     env.report ();
@@ -1240,9 +1241,7 @@
               new apply_jo_t (1),
           };
 
-          auto jojo = make_shared <jojo_t> (jo_vector);
-
-          env.frame_stack.push (new_frame (jojo));
+          env.frame_stack.push (new_frame_from_jo_vector (jo_vector));
 
           // {
           //     env.report ();
@@ -1284,9 +1283,7 @@
               new field_jo_t ("cdr"),
           };
 
-          auto jojo = make_shared <jojo_t> (jo_vector);
-
-          env.frame_stack.push (new_frame (jojo));
+          env.frame_stack.push (new_frame_from_jo_vector (jo_vector));
 
           // {
           //     env.report ();
@@ -1323,9 +1320,7 @@
               new field_jo_t ("car"),
           };
 
-          auto jojo = make_shared <jojo_t> (jo_vector);
-
-          env.frame_stack.push (new_frame (jojo));
+          env.frame_stack.push (new_frame_from_jo_vector (jo_vector));
 
           // {
           //     env.report ();
@@ -1373,9 +1368,7 @@
               new apply_jo_t (1),
           };
 
-          auto jojo = make_shared <jojo_t> (jo_vector);
-
-          env.frame_stack.push (new_frame (jojo));
+          env.frame_stack.push (new_frame_from_jo_vector (jo_vector));
 
           // {
           //     env.report ();
@@ -1405,9 +1398,7 @@
               new ref_jo_t (boxing (env, "false-c")),
           };
 
-          auto jojo = make_shared <jojo_t> (jo_vector);
-
-          env.frame_stack.push (new_frame (jojo));
+          env.frame_stack.push (new_frame_from_jo_vector (jo_vector));
 
           // {
           //     env.report ();
@@ -1441,9 +1432,7 @@
               new field_jo_t ("cdr"),
           };
 
-          auto jojo = make_shared <jojo_t> (jo_vector);
-
-          env.frame_stack.push (new_frame (jojo));
+          env.frame_stack.push (new_frame_from_jo_vector (jo_vector));
 
           // {
           //     env.report ();
