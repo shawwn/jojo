@@ -72,6 +72,54 @@
         void run ();
         void report ();
     };
+    string
+    jojo_repr (env_t &env, shared_ptr <jojo_t> jojo)
+    {
+        string repr = "";
+        for (auto &jo: jojo->jo_vector) {
+            repr += jo->repr (env);
+            repr += " ";
+        }
+        repr.pop_back ();
+        return repr;
+    }
+    void
+    jojo_print (env_t &env, shared_ptr <jojo_t> jojo)
+    {
+        for (auto &jo: jojo->jo_vector) {
+            cout << jo->repr (env)
+                 << " ";
+        }
+    }
+    void
+    jojo_print_with_index (env_t &env,
+                           shared_ptr <jojo_t> jojo,
+                           size_t index)
+    {
+        for (auto it = jojo->jo_vector.begin ();
+             it != jojo->jo_vector.end ();
+             it++) {
+            size_t it_index = it - jojo->jo_vector.begin ();
+            jo_t *jo = *it;
+            if (index == it_index) {
+                cout << "->> " << jo->repr (env) << " ";
+            }
+            else {
+                cout << jo->repr (env) << " ";
+            }
+        }
+    }
+    string
+    name_vector_repr (name_vector_t &name_vector)
+    {
+        string repr = "[ ";
+        for (auto name: name_vector) {
+            repr += name;
+            repr += " ";
+        }
+        repr += "]";
+        return repr;
+    }
       tag_t
       tagging (env_t &env, name_t name)
       {
@@ -98,7 +146,7 @@
           for (auto it = bind_vector.rbegin ();
                it != bind_vector.rend ();
                it++) {
-              cout << "(#"
+              cout << "("
                    << distance(bind_vector.rbegin (), it)
                    << " ";
               cout << it->first
@@ -111,13 +159,12 @@
       void
       local_scope_print (env_t &env, local_scope_t local_scope)
       {
-          cout << "- local_scope\n";
           for (auto it = local_scope.rbegin ();
                it != local_scope.rend ();
                it++) {
-              cout << "  - level # "
+              cout << "    "
                    << distance(local_scope.rbegin (), it)
-                   << " : ";
+                   << " ";
               bind_vector_print (env, *it);
               cout << "\n";
           }
@@ -179,6 +226,7 @@
                     local_scope_t local_scope);
           bool equal (env_t &env, shared_ptr <obj_t> obj);
           void apply (env_t &env, size_t arity);
+          void print (env_t &env);
       };
       lambda_o::
       lambda_o (env_t &env,
@@ -284,10 +332,23 @@
       bool
       lambda_o::equal (env_t &env, shared_ptr <obj_t> obj)
       {
-          // only equivalence between raw pointers.
-          // ><><><
-          // also about the bind_vector
-          return this == obj.get ();
+          // raw pointers must be equal first
+          if (this != obj.get ()) return false;
+          auto that = static_pointer_cast <lambda_o> (obj);
+          // then scopes
+          if (this->local_scope != that->local_scope) return false;
+          // then bindings
+          if (this->bind_vector != that->bind_vector) return false;
+          else return true;
+      }
+      void
+      lambda_o::print (env_t &env)
+      {
+          cout << "(lambda "
+               << name_vector_repr (this->name_vector)
+               << " "
+               << jojo_repr (env, this->jojo)
+               << ")";
       }
       struct string_o: obj_t
       {
@@ -319,6 +380,7 @@
                   tag_t tag,
                   obj_map_t obj_map);
           bool equal (env_t &env, shared_ptr <obj_t> obj);
+          void print (env_t &env);
       };
       data_o::
       data_o (env_t &env,
@@ -348,6 +410,11 @@
           return obj_map_equal (env, this->obj_map, that->obj_map);
 
       }
+      void
+      data_o::print (env_t &env)
+      {
+          // ><><><
+      }
       struct data_cons_o: obj_t
       {
           tag_t type_tag;
@@ -359,6 +426,7 @@
                        obj_map_t obj_map);
           void apply (env_t &env, size_t arity);
           bool equal (env_t &env, shared_ptr <obj_t> obj);
+          void print (env_t &env);
       };
       data_cons_o::
       data_cons_o (env_t &env,
@@ -461,42 +529,10 @@
           return obj_map_equal (env, this->obj_map, that->obj_map);
 
       }
-      string
-      jojo_repr (env_t &env, shared_ptr <jojo_t> jojo)
-      {
-          string repr = "";
-          for (auto &jo: jojo->jo_vector) {
-              repr += jo->repr (env);
-              repr += " ";
-          }
-          repr.pop_back ();
-          return repr;
-      }
       void
-      jojo_print (env_t &env, shared_ptr <jojo_t> jojo)
+      data_cons_o::print (env_t &env)
       {
-          for (auto &jo: jojo->jo_vector) {
-              cout << jo->repr (env)
-                   << " ";
-          }
-      }
-      void
-      jojo_print_with_index (env_t &env,
-                             shared_ptr <jojo_t> jojo,
-                             size_t index)
-      {
-          for (auto it = jojo->jo_vector.begin ();
-               it != jojo->jo_vector.end ();
-               it++) {
-              size_t it_index = it - jojo->jo_vector.begin ();
-              jo_t *jo = *it;
-              if (index == it_index) {
-                  cout << "->> " << jo->repr (env) << " ";
-              }
-              else {
-                  cout << jo->repr (env) << " ";
-              }
-          }
+          // ><><><
       }
       frame_t::frame_t (shared_ptr <jojo_t> jojo,
                         local_scope_t local_scope)
@@ -508,17 +544,15 @@
       void
       frame_report (env_t &env, shared_ptr <frame_t> frame)
       {
-          cout << "  - ["
-               << frame->index+1
-               << "/"
-               << frame->jojo->jo_vector.size ()
+          cout << "  - [" << frame->index+1
+               << "/" << frame->jojo->jo_vector.size ()
                << "] ";
           jojo_print_with_index (env, frame->jojo, frame->index);
           cout << "\n";
-
-          cout << "  - local_scope # "
-               << frame->local_scope.size ()
+          cout << "  - [" << frame->local_scope.size () << "] "
+               << "local_scope - "
                << "\n";
+          local_scope_print (env, frame->local_scope);
       }
       box_t::box_t ()
       {
@@ -545,13 +579,17 @@
       void
       box_map_report (env_t &env)
       {
-          cout << "- box_map # " << env.box_map.size () << "\n";
+          cout << "- [" << env.box_map.size () << "] "
+               << "box_map - "
+               << "\n";
+          cout << "  ";
           for (auto &kv: env.box_map) {
-              cout << "  " << kv.first << " : ";
+              cout << "(" << kv.first << " = ";
               auto box = kv.second;
               box->obj->print (env);
-              cout << "\n";
+              cout << ") ";
           }
+          cout << "\n";
       }
       name_t
       name_of_box (env_t &env, box_t *box)
@@ -567,8 +605,8 @@
       void
       frame_stack_report (env_t &env)
       {
-          cout << "- frame_stack # "
-               << env.frame_stack.size ()
+          cout << "- [" << env.frame_stack.size () << "] "
+               << "frame_stack - "
                << "\n";
           frame_stack_t frame_stack = env.frame_stack;
           while (! frame_stack.empty ()) {
@@ -580,8 +618,8 @@
       void
       obj_stack_report (env_t &env)
       {
-          cout << "- obj_stack # "
-               << env.obj_stack.size ()
+          cout << "- [" << env.obj_stack.size () << "] "
+               << "obj_stack - "
                << "\n";
           cout << "  ";
           auto obj_stack = env.obj_stack;
@@ -705,17 +743,6 @@
               vector_rev_ref (local_scope, this->level);
           auto bind =
               vector_rev_ref (bind_vector, this->index);
-          // {
-          //     local_scope_print (env, local_scope);
-          //     cout << "- local_ref_jo_t::exe\n"
-          //          << "  this->level : " << this->level << "\n"
-          //          << "  this->index : " << this->index << "\n"
-          //          << "  bind.first : " << bind.first << "\n";
-          //     cout << "  bind.second->print () : ";
-          //     bind.second->print (env);
-          //     cout << "\n";
-          //     cout << "\n";
-          // }
           auto obj = bind.second;
           env.obj_stack.push (obj);
       }
@@ -763,17 +790,6 @@
                bind_vector_from_name_vector (this->name_vector),
                frame->local_scope);
           env.obj_stack.push (lambda);
-      }
-      string
-      name_vector_repr (name_vector_t &name_vector)
-      {
-          string repr = "[ ";
-          for (auto name: name_vector) {
-              repr += name;
-              repr += " ";
-          }
-          repr += "]";
-          return repr;
       }
       string
       lambda_jo_t::repr (env_t &env)
@@ -1119,19 +1135,24 @@
 
           env.frame_stack.push (new_frame (jojo));
 
-          {
-              env.report ();
-              env.run ();
-              env.report ();
-          }
-
           // {
-      //         env.run ();
-      //         assert_stack_size (env, 2);
-      //         assert_pop_eq (env, make_shared <string_o> (env, "bye"));
-      //         assert_pop_eq (env, make_shared <string_o> (env, "world"));
-      //         assert_stack_size (env, 0);
-      //     }
+          //     env.report ();
+          //     env.step (); env.report ();
+          //     env.step (); env.report ();
+          //     env.step (); env.report ();
+          //     env.step (); env.report ();
+          //     env.step (); env.report ();
+          //     env.step (); env.report ();
+          //     env.step (); env.report ();
+          // }
+
+          {
+              env.run ();
+              assert_stack_size (env, 2);
+              assert_pop_eq (env, make_shared <string_o> (env, "bye"));
+              assert_pop_eq (env, make_shared <string_o> (env, "world"));
+              assert_stack_size (env, 0);
+          }
       }
       void
       test_data_cons ()
