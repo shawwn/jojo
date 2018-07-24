@@ -1,5 +1,6 @@
     #include <iostream>
     #include <algorithm>
+    #include <functional>
     #include <cassert>
     #include <memory>
     #include <vector>
@@ -571,12 +572,96 @@
           auto that = static_pointer_cast <data_cons_o> (obj);
           if (this->type_tag != that->type_tag) return false;
           return obj_map_equal (env, this->obj_map, that->obj_map);
-
       }
       void
       data_cons_o::print (env_t &env)
       {
           // ><><><
+      }
+      using prim_fn = function <void (env_t &, obj_map_t &)>;
+      struct prim_o: obj_t
+      {
+          name_vector_t name_vector;
+          prim_fn fn;
+          obj_map_t obj_map;
+          prim_o (env_t &env,
+                  name_vector_t name_vector,
+                  prim_fn fn,
+                  obj_map_t obj_map);
+          void print (env_t &env);
+          bool equal (env_t &env, shared_ptr <obj_t> obj);
+          void apply (env_t &env, size_t arity);
+      };
+      prim_o::prim_o (env_t &env,
+                      name_vector_t name_vector,
+                      prim_fn fn,
+                      obj_map_t obj_map)
+      {
+          this->tag = tagging (env, "prim-t");
+          this->name_vector = name_vector;
+          this->fn = fn;
+          this->obj_map = obj_map;
+      }
+      void prim_o::print (env_t &env)
+      {
+          cout << "(prim "
+               << name_vector_repr (this->name_vector)
+               << ")";
+      }
+      bool prim_o::equal (env_t &env, shared_ptr <obj_t> obj)
+      {
+          if (this->tag != obj->tag) return false;
+          auto that = static_pointer_cast <prim_o> (obj);
+          if (this != obj.get ()) return false;
+          return obj_map_equal (env, this->obj_map, that->obj_map);
+      }
+      void prim_o::apply (env_t &env, size_t arity)
+      {
+          auto size = this->name_vector.size ();
+          auto have = this->obj_map.size ();
+          auto lack = size - have;
+          if (lack == arity) {
+              auto lack_name_vector = name_vector_obj_map_lack
+                  (this->name_vector, obj_map);
+              auto obj_map = this->obj_map;
+              auto begin = lack_name_vector.rbegin ();
+              auto end = lack_name_vector.rend ();
+              for (auto it = begin; it != end; it++) {
+                  name_t name = *it;
+                  auto obj = env.obj_stack.top ();
+                  env.obj_stack.pop ();
+                  obj_map [name] = obj;
+              }
+              this->fn (env, obj_map);
+          }
+          else if (arity < lack) {
+              auto lack_name_vector = name_vector_obj_map_arity_lack
+                  (this->name_vector, obj_map, arity);
+              auto obj_map = this->obj_map;
+              auto begin = lack_name_vector.rbegin ();
+              auto end = lack_name_vector.rend ();
+              for (auto it = begin; it != end; it++) {
+                  name_t name = *it;
+                  auto obj = env.obj_stack.top ();
+                  env.obj_stack.pop ();
+                  obj_map [name] = obj;
+              }
+              auto prim = make_shared <prim_o>
+                  (env,
+                   this->name_vector,
+                   this->fn,
+                   obj_map);
+              env.obj_stack.push (prim);
+          }
+          else {
+              cout << "- fatal error : prim_o::apply" << "\n"
+                   << "  over-arity apply" << "\n"
+                   << "  arity > lack" << "\n"
+                   << "  arity : " << arity << "\n"
+                   << "  lack : " << lack << "\n"
+                   << "\n";
+              exit (1);
+          }
       }
       frame_t::frame_t (shared_ptr <jojo_t> jojo,
                         local_scope_t local_scope)
@@ -1276,6 +1361,59 @@
           }
       }
       void
+      test_prim ()
+      {
+          auto env = env_t ();
+
+          define (env, "s1", make_shared <string_o> (env, "bye"));
+          define (env, "s2", make_shared <string_o> (env, "world"));
+
+          auto swap =
+              [] (env_t &env, obj_map_t &obj_map)
+              {
+                  env.obj_stack.push (obj_map ["y"]);
+                  env.obj_stack.push (obj_map ["x"]);
+              };
+
+          define (env, "swap", make_shared <prim_o>
+                  (env,
+                   name_vector_t { "x", "y" },
+                   swap,
+                   obj_map_t ()));
+
+          jo_vector_t jo_vector = {
+              new ref_jo_t (boxing (env, "s1")),
+              new ref_jo_t (boxing (env, "s2")),
+              new ref_jo_t (boxing (env, "swap")),
+              new apply_jo_t (2),
+              new ref_jo_t (boxing (env, "s1")),
+              new ref_jo_t (boxing (env, "s2")),
+              new ref_jo_t (boxing (env, "swap")),
+              new apply_jo_t (1),
+              new apply_jo_t (1),
+          };
+
+          auto jojo = make_shared <jojo_t> (jo_vector);
+
+          env.frame_stack.push (new_frame (jojo));
+
+          // {
+          //     env.report ();
+          //     env.run ();
+          //     env.report ();
+          // }
+
+          {
+              env.run ();
+              assert_stack_size (env, 4);
+              assert_pop_eq (env, make_shared <string_o> (env, "world"));
+              assert_pop_eq (env, make_shared <string_o> (env, "bye"));
+              assert_pop_eq (env, make_shared <string_o> (env, "bye"));
+              assert_pop_eq (env, make_shared <string_o> (env, "world"));
+              assert_stack_size (env, 0);
+          }
+      }
+      void
       test_bool ()
       {
           auto env = env_t ();
@@ -1362,6 +1500,7 @@
         test_lambda_curry ();
         test_data_cons ();
         test_data_cons_curry ();
+        test_prim ();
         // data
         test_bool ();
         test_list ();
