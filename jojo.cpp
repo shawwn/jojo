@@ -18,9 +18,16 @@
     using bind_vector_t = vector <bind_t>;
     // index from end
     using local_scope_t = vector <bind_vector_t>;
-    using jojo_t = vector <jo_t *>;
+    using jo_vector_t = vector <jo_t *>;
+    struct jojo_t
+    {
+        jo_vector_t jo_vector;
+        jojo_t (jo_vector_t jo_vector);
+        ~jojo_t ();
+    };
     struct jo_t
     {
+        virtual ~jo_t ();
         virtual void exe (env_t &env, local_scope_t &local_scope);
         virtual string repr (env_t &env);
     };
@@ -40,9 +47,9 @@
     struct frame_t
     {
         size_t index;
-        jojo_t jojo;
+        shared_ptr <jojo_t> jojo;
         local_scope_t local_scope;
-        frame_t (jojo_t jojo, local_scope_t local_scope);
+        frame_t (shared_ptr <jojo_t> jojo, local_scope_t local_scope);
     };
     struct box_t
     {
@@ -68,8 +75,9 @@
       struct lambda_jo_t: jo_t
       {
           name_vector_t name_vector;
-          jojo_t jojo;
-          lambda_jo_t (name_vector_t name_vector, jojo_t jojo);
+          shared_ptr <jojo_t> jojo;
+          lambda_jo_t (name_vector_t name_vector,
+                       shared_ptr <jojo_t> jojo);
           void exe (env_t &env, local_scope_t &local_scope);
           string repr (env_t &env);
       };
@@ -456,18 +464,20 @@
 
       }
       void
-      jojo_print (env_t &env, jojo_t jojo)
+      jojo_print (env_t &env, shared_ptr <jojo_t> jojo)
       {
-          for (auto &jo: jojo)
+          for (auto &jo: jojo->jo_vector)
               cout << jo->repr (env) << " ";
       }
       void
-      jojo_print_with_index (env_t &env, jojo_t jojo, size_t index)
+      jojo_print_with_index (env_t &env,
+                             shared_ptr <jojo_t> jojo,
+                             size_t index)
       {
-          for (auto it = jojo.begin ();
-               it != jojo.end ();
+          for (auto it = jojo->jo_vector.begin ();
+               it != jojo->jo_vector.end ();
                it++) {
-              size_t it_index = it - jojo.begin ();
+              size_t it_index = it - jojo->jo_vector.begin ();
               jo_t *jo = *it;
               if (index == it_index) {
                   cout << "->> " << jo->repr (env) << " ";
@@ -477,7 +487,8 @@
               }
           }
       }
-      frame_t::frame_t (jojo_t jojo, local_scope_t local_scope)
+      frame_t::frame_t (shared_ptr <jojo_t> jojo,
+                        local_scope_t local_scope)
       {
           this->index = 0;
           this->jojo = jojo;
@@ -489,7 +500,7 @@
           cout << "  - ["
                << frame->index+1
                << "/"
-               << frame->jojo.size ()
+               << frame->jojo->jo_vector.size ()
                << "] ";
           jojo_print_with_index (env, frame->jojo, frame->index);
           cout << "\n";
@@ -564,16 +575,16 @@
     env_t::step ()
     {
         auto frame = this->frame_stack.top ();
-        size_t size = frame->jojo.size ();
-        size_t index = frame->index;
+        size_t size = frame->jojo->jo_vector.size ();
         // it is assumed that jojo in frame are not empty
-        jo_t *jo = frame->jojo [index];
+        assert (size != 0);
+        size_t index = frame->index;
         frame->index++;
         // handle proper tail call
         if (index+1 == size) this->frame_stack.pop ();
         // since the last frame might be drop,
         //   we pass last local_scope as an extra argument.
-        jo->exe (*this, frame->local_scope);
+        frame->jojo->jo_vector[index]->exe (*this, frame->local_scope);
     }
     void
     env_t::run ()
@@ -590,6 +601,24 @@
         obj_stack_report (*this);
         cout << "\n";
     }
+      jojo_t::
+      jojo_t (jo_vector_t jo_vector)
+      {
+          this->jo_vector = jo_vector;
+      }
+      jojo_t::
+      ~jojo_t ()
+      {
+          for (jo_t *jo_ptr: this->jo_vector)
+              delete jo_ptr;
+      }
+      jo_t::~jo_t ()
+      {
+          // all classes that will be derived from
+          // should have a virtual or protected destructor,
+          // otherwise deleting an instance via a pointer
+          // to a base class results in undefined behavior.
+      }
       void
       jo_t::exe (env_t &env, local_scope_t &local_scope)
       {
@@ -676,7 +705,9 @@
               to_string (this->level) + " " +
               to_string (this->index) + ")";
       }
-      lambda_jo_t::lambda_jo_t (name_vector_t name_vector, jojo_t jojo)
+      lambda_jo_t::
+      lambda_jo_t (name_vector_t name_vector,
+                   shared_ptr <jojo_t> jojo)
       {
           this->name_vector = name_vector;
           this->jojo = jojo;
@@ -884,7 +915,7 @@
 
 
     shared_ptr <frame_t>
-    new_frame (jojo_t jojo)
+    new_frame (shared_ptr <jojo_t> jojo)
     {
         return make_shared <frame_t>
             (jojo, local_scope_t ());
@@ -915,10 +946,12 @@
           define (env, "s1", make_shared <string_o> (env, "bye"));
           define (env, "s2", make_shared <string_o> (env, "world"));
 
-          jojo_t jojo = {
+          jo_vector_t jo_vector = {
               new ref_jo_t (boxing (env, "s1")),
               new ref_jo_t (boxing (env, "s2")),
           };
+
+          auto jojo = make_shared <jojo_t> (jo_vector);
 
           env.frame_stack.push (new_frame (jojo));
 
@@ -943,13 +976,15 @@
           define (env, "last-cry", make_shared <data_o>
                   (env, tagging (env, "cons-t"), obj_map));
 
-          jojo_t jojo = {
+          jo_vector_t jo_vector = {
               new ref_jo_t (boxing (env, "last-cry")),
               new field_jo_t ("car"),
               new ref_jo_t (boxing (env, "last-cry")),
               new field_jo_t ("cdr"),
               new ref_jo_t (boxing (env, "last-cry")),
           };
+
+          auto jojo = make_shared <jojo_t> (jo_vector);
 
           env.frame_stack.push (new_frame (jojo));
 
@@ -974,14 +1009,20 @@
           define (env, "s1", make_shared <string_o> (env, "bye"));
           define (env, "s2", make_shared <string_o> (env, "world"));
 
-          jojo_t jojo = {
+          jo_vector_t body = {
+              new local_ref_jo_t (0, 0),
+              new local_ref_jo_t (0, 1),
+          };
+
+          jo_vector_t jo_vector = {
               new ref_jo_t (boxing (env, "s1")),
               new ref_jo_t (boxing (env, "s2")),
               new lambda_jo_t ({ "x", "y" },
-                               { new local_ref_jo_t (0, 0),
-                                 new local_ref_jo_t (0, 1) }),
+                               make_shared <jojo_t> (body)),
               new apply_jo_t (2),
           };
+
+          auto jojo = make_shared <jojo_t> (jo_vector);
 
           env.frame_stack.push (new_frame (jojo));
 
@@ -1007,15 +1048,21 @@
           define (env, "s1", make_shared <string_o> (env, "bye"));
           define (env, "s2", make_shared <string_o> (env, "world"));
 
-          jojo_t jojo = {
+          jo_vector_t body = {
+              new local_ref_jo_t (0, 0),
+              new local_ref_jo_t (0, 1),
+          };
+
+          jo_vector_t jo_vector = {
               new ref_jo_t (boxing (env, "s1")),
               new ref_jo_t (boxing (env, "s2")),
               new lambda_jo_t ({ "x", "y" },
-                               { new local_ref_jo_t (0, 0),
-                                 new local_ref_jo_t (0, 1) }),
+                               make_shared <jojo_t> (body)),
               new apply_jo_t (1),
               new apply_jo_t (1),
           };
+
+          auto jojo = make_shared <jojo_t> (jo_vector);
 
           env.frame_stack.push (new_frame (jojo));
 
@@ -1046,13 +1093,15 @@
                    name_vector_t ({ "car", "cdr" }),
                    obj_map_t ()));
 
-          jojo_t jojo = {
+          jo_vector_t jo_vector = {
               new ref_jo_t (boxing (env, "s1")),
               new ref_jo_t (boxing (env, "s2")),
               new ref_jo_t (boxing (env, "cons-c")),
               new apply_jo_t (2),
               new field_jo_t ("cdr"),
           };
+
+          auto jojo = make_shared <jojo_t> (jo_vector);
 
           env.frame_stack.push (new_frame (jojo));
 
@@ -1082,7 +1131,7 @@
                    name_vector_t ({ "car", "cdr" }),
                    obj_map_t ()));
 
-          jojo_t jojo = {
+          jo_vector_t jo_vector = {
               new ref_jo_t (boxing (env, "s1")),
               new ref_jo_t (boxing (env, "s2")),
               new ref_jo_t (boxing (env, "cons-c")),
@@ -1090,6 +1139,8 @@
               new apply_jo_t (1),
               new field_jo_t ("car"),
           };
+
+          auto jojo = make_shared <jojo_t> (jo_vector);
 
           env.frame_stack.push (new_frame (jojo));
 
@@ -1113,10 +1164,12 @@
 
           import_bool (env);
 
-          jojo_t jojo = {
+          jo_vector_t jo_vector = {
               new ref_jo_t (boxing (env, "true-c")),
               new ref_jo_t (boxing (env, "false-c")),
           };
+
+          auto jojo = make_shared <jojo_t> (jo_vector);
 
           env.frame_stack.push (new_frame (jojo));
 
@@ -1144,13 +1197,15 @@
           define (env, "s1", make_shared <string_o> (env, "bye"));
           define (env, "s2", make_shared <string_o> (env, "world"));
 
-          jojo_t jojo = {
+          jo_vector_t jo_vector = {
               new ref_jo_t (boxing (env, "s1")),
               new ref_jo_t (boxing (env, "s2")),
               new ref_jo_t (boxing (env, "cons-c")),
               new apply_jo_t (2),
               new field_jo_t ("cdr"),
           };
+
+          auto jojo = make_shared <jojo_t> (jo_vector);
 
           env.frame_stack.push (new_frame (jojo));
 
