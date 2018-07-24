@@ -4,13 +4,13 @@
 
 * [todo-stack]
 
-*** fix repr for *_jo_t
+*** local_ref_jo::repr need `local_scope` as an extra argument
 
 *** fix print for *_o
 
 *** data_pred_o -- for `<data>-p`
 
-*** json-like syntax to write jojo functions in c++
+*** primitive_o to implement sexp parser
 
 *** sexp
 
@@ -777,14 +777,32 @@
 
 *** jojo
 
+***** jojo_repr
+
+      #+begin_src cpp
+      string
+      jojo_repr (env_t &env, shared_ptr <jojo_t> jojo)
+      {
+          string repr = "";
+          for (auto &jo: jojo->jo_vector) {
+              repr += jo->repr (env);
+              repr += " ";
+          }
+          repr.pop_back ();
+          return repr;
+      }
+      #+end_src
+
 ***** jojo_print
 
       #+begin_src cpp
       void
       jojo_print (env_t &env, shared_ptr <jojo_t> jojo)
       {
-          for (auto &jo: jojo->jo_vector)
-              cout << jo->repr (env) << " ";
+          for (auto &jo: jojo->jo_vector) {
+              cout << jo->repr (env)
+                   << " ";
+          }
       }
       #+end_src
 
@@ -894,6 +912,22 @@
               box->obj->print (env);
               cout << "\n";
           }
+      }
+      #+end_src
+
+***** name_of_box
+
+      #+begin_src cpp
+      name_t
+      name_of_box (env_t &env, box_t *box)
+      {
+          for (auto &kv: env.box_map) {
+              auto name = kv.first;
+              if (kv.second == box) {
+                  return name;
+              }
+          }
+          return "#non-name";
       }
       #+end_src
 
@@ -1085,8 +1119,7 @@
       string
       ref_jo_t::repr (env_t &env)
       {
-          // return "(ref " + this->name + ")";
-          return "(ref)";
+          return name_of_box (env, this->box);
       }
       #+end_src
 
@@ -1163,7 +1196,7 @@
       string
       local_ref_jo_t::repr (env_t &env)
       {
-          return "(local-ref " +
+          return "(local " +
               to_string (this->level) + " " +
               to_string (this->index) + ")";
       }
@@ -1229,13 +1262,33 @@
       }
       #+end_src
 
+***** name_vector_repr
+
+      #+begin_src cpp
+      string
+      name_vector_repr (name_vector_t &name_vector)
+      {
+          string repr = "[ ";
+          for (auto name: name_vector) {
+              repr += name;
+              repr += " ";
+          }
+          repr += "]";
+          return repr;
+      }
+      #+end_src
+
 ***** lambda_jo_t::repr
 
       #+begin_src cpp
       string
       lambda_jo_t::repr (env_t &env)
       {
-          return "(lambda)";
+          return "(lambda " +
+              name_vector_repr (this->name_vector) +
+              " " +
+              jojo_repr (env, this->jojo) +
+              ")";
       }
       #+end_src
 
@@ -1289,7 +1342,7 @@
       string
       field_jo_t::repr (env_t &env)
       {
-          return "(field " + this->name + ")";
+          return "." + this->name;
       }
       #+end_src
 
@@ -1335,7 +1388,7 @@
       string
       apply_jo_t::repr (env_t &env)
       {
-          return "(apply)";
+          return "apply";
       }
       #+end_src
 
@@ -1549,18 +1602,6 @@
 
     #+end_src
 
-*** null_t
-
-    #+begin_src cpp
-
-    #+end_src
-
-*** cons_t
-
-    #+begin_src cpp
-
-    #+end_src
-
 * epilog
 
 *** new_frame
@@ -1757,19 +1798,19 @@
 
           env.frame_stack.push (new_frame (jojo));
 
-          // {
-          //     env.report ();
-          //     env.run ();
-          //     env.report ();
-          // }
-
           {
+              env.report ();
               env.run ();
-              assert_stack_size (env, 2);
-              assert_pop_eq (env, make_shared <string_o> (env, "bye"));
-              assert_pop_eq (env, make_shared <string_o> (env, "world"));
-              assert_stack_size (env, 0);
+              env.report ();
           }
+
+          // {
+      //         env.run ();
+      //         assert_stack_size (env, 2);
+      //         assert_pop_eq (env, make_shared <string_o> (env, "bye"));
+      //         assert_pop_eq (env, make_shared <string_o> (env, "world"));
+      //         assert_stack_size (env, 0);
+      //     }
       }
       #+end_src
 
@@ -1952,26 +1993,26 @@
       }
       #+end_src
 
-***** test_all
+*** test_all
 
-      #+begin_src cpp
-      void
-      test_all ()
-      {
-          // core
-          test_step ();
-          test_data ();
-          test_apply ();
-          test_lambda_curry ();
-          test_data_cons ();
-          test_data_cons_curry ();
-          // data
-          test_bool ();
-          test_list ();
-          // parser
-          test_scan ();
-      }
-      #+end_src
+    #+begin_src cpp
+    void
+    test_all ()
+    {
+        // core
+        test_step ();
+        test_data ();
+        test_apply ();
+        test_lambda_curry ();
+        test_data_cons ();
+        test_data_cons_curry ();
+        // data
+        test_bool ();
+        test_list ();
+        // parser
+        test_scan ();
+    }
+    #+end_src
 
 *** main
 

@@ -461,11 +461,24 @@
           return obj_map_equal (env, this->obj_map, that->obj_map);
 
       }
+      string
+      jojo_repr (env_t &env, shared_ptr <jojo_t> jojo)
+      {
+          string repr = "";
+          for (auto &jo: jojo->jo_vector) {
+              repr += jo->repr (env);
+              repr += " ";
+          }
+          repr.pop_back ();
+          return repr;
+      }
       void
       jojo_print (env_t &env, shared_ptr <jojo_t> jojo)
       {
-          for (auto &jo: jojo->jo_vector)
-              cout << jo->repr (env) << " ";
+          for (auto &jo: jojo->jo_vector) {
+              cout << jo->repr (env)
+                   << " ";
+          }
       }
       void
       jojo_print_with_index (env_t &env,
@@ -539,6 +552,17 @@
               box->obj->print (env);
               cout << "\n";
           }
+      }
+      name_t
+      name_of_box (env_t &env, box_t *box)
+      {
+          for (auto &kv: env.box_map) {
+              auto name = kv.first;
+              if (kv.second == box) {
+                  return name;
+              }
+          }
+          return "#non-name";
       }
       void
       frame_stack_report (env_t &env)
@@ -648,8 +672,7 @@
       string
       ref_jo_t::repr (env_t &env)
       {
-          // return "(ref " + this->name + ")";
-          return "(ref)";
+          return name_of_box (env, this->box);
       }
       struct local_ref_jo_t: jo_t
       {
@@ -699,7 +722,7 @@
       string
       local_ref_jo_t::repr (env_t &env)
       {
-          return "(local-ref " +
+          return "(local " +
               to_string (this->level) + " " +
               to_string (this->index) + ")";
       }
@@ -742,9 +765,24 @@
           env.obj_stack.push (lambda);
       }
       string
+      name_vector_repr (name_vector_t &name_vector)
+      {
+          string repr = "[ ";
+          for (auto name: name_vector) {
+              repr += name;
+              repr += " ";
+          }
+          repr += "]";
+          return repr;
+      }
+      string
       lambda_jo_t::repr (env_t &env)
       {
-          return "(lambda)";
+          return "(lambda " +
+              name_vector_repr (this->name_vector) +
+              " " +
+              jojo_repr (env, this->jojo) +
+              ")";
       }
       struct field_jo_t: jo_t
       {
@@ -776,7 +814,7 @@
       string
       field_jo_t::repr (env_t &env)
       {
-          return "(field " + this->name + ")";
+          return "." + this->name;
       }
       struct apply_jo_t: jo_t
       {
@@ -800,7 +838,7 @@
       string
       apply_jo_t::repr (env_t &env)
       {
-          return "(apply)";
+          return "apply";
       }
     void
     define (env_t &env, name_t name, shared_ptr <obj_t> obj)
@@ -928,8 +966,6 @@
         }
         return string_vector;
     }
-
-
 
     shared_ptr <frame_t>
     new_frame (shared_ptr <jojo_t> jojo)
@@ -1083,19 +1119,19 @@
 
           env.frame_stack.push (new_frame (jojo));
 
-          // {
-          //     env.report ();
-          //     env.run ();
-          //     env.report ();
-          // }
-
           {
+              env.report ();
               env.run ();
-              assert_stack_size (env, 2);
-              assert_pop_eq (env, make_shared <string_o> (env, "bye"));
-              assert_pop_eq (env, make_shared <string_o> (env, "world"));
-              assert_stack_size (env, 0);
+              env.report ();
           }
+
+          // {
+      //         env.run ();
+      //         assert_stack_size (env, 2);
+      //         assert_pop_eq (env, make_shared <string_o> (env, "bye"));
+      //         assert_pop_eq (env, make_shared <string_o> (env, "world"));
+      //         assert_stack_size (env, 0);
+      //     }
       }
       void
       test_data_cons ()
@@ -1251,22 +1287,22 @@
           assert (string_vector [3] == "<cdr>");
           assert (string_vector [4] == ")");
       }
-      void
-      test_all ()
-      {
-          // core
-          test_step ();
-          test_data ();
-          test_apply ();
-          test_lambda_curry ();
-          test_data_cons ();
-          test_data_cons_curry ();
-          // data
-          test_bool ();
-          test_list ();
-          // parser
-          test_scan ();
-      }
+    void
+    test_all ()
+    {
+        // core
+        test_step ();
+        test_data ();
+        test_apply ();
+        test_lambda_curry ();
+        test_data_cons ();
+        test_data_cons_curry ();
+        // data
+        test_bool ();
+        test_list ();
+        // parser
+        test_scan ();
+    }
     int
     main ()
     {
