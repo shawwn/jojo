@@ -12,4 +12,4 @@
 
 - [paper](https://xieyuheng.github.io/jojo) -- Semantic of De Bruijn Notation and Bizarre Syntax Adventure.
 - [jojo](https://xieyuheng.github.io/jojo/jojo) -- The implemention in C++.
-- [core](https://xieyuheng.github.io/jojo/core) -- Basic functionalities.
+- [prelude](https://xieyuheng.github.io/jojo/prelude) -- Basic functionalities.
