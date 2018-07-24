@@ -4,8 +4,6 @@
 
 * [todo-stack]
 
-*** fix define -- for when there already box
-
 *** fix repr for *_jo_t
 
 *** fix print for *_o
@@ -1349,7 +1347,15 @@
     void
     define (env_t &env, name_t name, shared_ptr <obj_t> obj)
     {
-        env.box_map [name] = new box_t (obj);
+        auto it = env.box_map.find (name);
+        if (it != env.box_map.end ()) {
+            box_t *box = it->second;
+            box->empty_p = false;
+            box->obj = obj;
+        }
+        else {
+            env.box_map [name] = new box_t (obj);
+        }
     }
     #+end_src
 

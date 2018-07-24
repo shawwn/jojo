@@ -805,7 +805,15 @@
     void
     define (env_t &env, name_t name, shared_ptr <obj_t> obj)
     {
-        env.box_map [name] = new box_t (obj);
+        auto it = env.box_map.find (name);
+        if (it != env.box_map.end ()) {
+            box_t *box = it->second;
+            box->empty_p = false;
+            box->obj = obj;
+        }
+        else {
+            env.box_map [name] = new box_t (obj);
+        }
     }
     shared_ptr <data_o>
     true_c (env_t &env)
