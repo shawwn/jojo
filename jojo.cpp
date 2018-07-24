@@ -187,7 +187,7 @@
       bool
       obj_t::equal (env_t &env, shared_ptr <obj_t> obj)
       {
-          if (this->tag != this->tag)
+          if (this->tag != obj->tag)
               return false;
           else {
               cout << "- fatal error : obj_t::equal" << "\n"
@@ -994,7 +994,8 @@
             tagging (env, "false-t"),
             obj_map_t ());
     }
-    void import_bool (env_t &env)
+    void
+    import_bool (env_t &env)
     {
         define (env, "true-c", true_c (env));
         define (env, "false-c", false_c (env));
@@ -1016,7 +1017,8 @@
              name_vector_t ({ "car", "cdr" }),
              obj_map_t ());
     }
-    void import_list (env_t &env)
+    void
+    import_list (env_t &env)
     {
         define (env, "null-c", null_c (env));
         define (env, "cons-c", cons_c (env));
@@ -1068,7 +1070,7 @@
         }
     }
     string_vector_t
-    code_scan (string code)
+    scan_word_vector (string code)
     {
         auto string_vector = string_vector_t ();
         size_t i = 0;
@@ -1092,6 +1094,90 @@
         return string_vector;
     }
 
+    using sig_t = name_vector_t;
+    name_t
+    name_of_sig (sig_t &sig)
+    {
+        return sig [0];
+    }
+    name_vector_t
+    name_vector_of_sig (sig_t &sig)
+    {
+        name_vector_t name_vector = {};
+        auto begin = sig.begin () + 1;
+        auto end = sig.end () + 1;
+        for (auto it = begin; it != end; it++)
+            name_vector.push_back (*it);
+        return name_vector;
+    }
+    void
+    define_prim (env_t &env, sig_t sig, prim_fn fn)
+    {
+        auto name = name_of_sig (sig);
+        auto name_vector = name_vector_of_sig (sig);
+        auto prim = make_shared <prim_o>
+            (env, name_vector, fn, obj_map_t ());
+        define (env, name, prim);
+    }
+    sig_t p_scan_word_list_sig =
+    { "scan-word-list" };
+    // -- string-t -> (list-t string-t)
+    void
+    p_scan_word_list (env_t &env, obj_map_t &obj_map)
+    {
+
+    }
+    sig_t p_parse_sexp_list_sig =
+    { "parse-sexp-list" };
+    // -- (list-t string-t) -> (list-t sexp-t)
+    void
+    p_parse_sexp_list (env_t &env, obj_map_t &obj_map)
+    {
+
+    }
+    sig_t p_parse_sexp_sig =
+    { "parse-sexp" };
+    // -- (list-t string-t) -> sexp-t
+    void
+    p_parse_sexp (env_t &env, obj_map_t &obj_map)
+    {
+
+    }
+    sig_t p_sexp_print_sig =
+    { "sexp-print" };
+    // -- sexp-t ->
+    void
+    p_sexp_print (env_t &env, obj_map_t &obj_map)
+    {
+
+    }
+    sig_t p_sexp_list_print_sig =
+    { "sexp-list-print" };
+    // -- (list-t sexp-t) ->
+    void
+    p_sexp_list_print (env_t &env, obj_map_t &obj_map)
+    {
+
+    }
+    void
+    import_sexp (env_t &env)
+    {
+        define_prim (env,
+                     p_scan_word_list_sig,
+                     p_scan_word_list);
+        define_prim (env,
+                     p_parse_sexp_list_sig,
+                     p_parse_sexp_list);
+        define_prim (env,
+                     p_parse_sexp_sig,
+                     p_parse_sexp);
+        define_prim (env,
+                     p_sexp_print_sig,
+                     p_sexp_print);
+        define_prim (env,
+                     p_sexp_list_print_sig,
+                     p_sexp_list_print);
+    }
     shared_ptr <frame_t>
     new_frame_from_jojo (shared_ptr <jojo_t> jojo)
     {
@@ -1451,13 +1537,18 @@
       test_scan ()
       {
           auto code = "(cons-c <car> <cdr>)";
-          auto string_vector = code_scan (code);
+          auto string_vector = scan_word_vector (code);
           assert (string_vector.size () == 5);
           assert (string_vector [0] == "(");
           assert (string_vector [1] == "cons-c");
           assert (string_vector [2] == "<car>");
           assert (string_vector [3] == "<cdr>");
           assert (string_vector [4] == ")");
+      }
+      void
+      test_sexp ()
+      {
+
       }
     void
     test_all ()
@@ -1475,6 +1566,7 @@
         test_list ();
         // parser
         test_scan ();
+        test_sexp ();
     }
     int
     main ()
