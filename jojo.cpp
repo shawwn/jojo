@@ -512,6 +512,22 @@
           }
           return name_vector;
       }
+      obj_map_t
+      pick_up_obj_map_and_merge (env_t &env,
+                                 name_vector_t lack_name_vector,
+                                 obj_map_t old_obj_map)
+      {
+          auto obj_map = old_obj_map;
+          auto begin = lack_name_vector.rbegin ();
+          auto end = lack_name_vector.rend ();
+          for (auto it = begin; it != end; it++) {
+              name_t name = *it;
+              auto obj = env.obj_stack.top ();
+              env.obj_stack.pop ();
+              obj_map [name] = obj;
+          }
+          return obj_map;
+      }
       void
       data_cons_o::apply (env_t &env, size_t arity)
       {
@@ -520,39 +536,20 @@
           auto lack = size - have;
           if (lack == arity) {
               auto lack_name_vector = name_vector_obj_map_lack
-                  (this->name_vector, obj_map);
-              auto obj_map = this->obj_map;
-              auto begin = lack_name_vector.rbegin ();
-              auto end = lack_name_vector.rend ();
-              for (auto it = begin; it != end; it++) {
-                  name_t name = *it;
-                  auto obj = env.obj_stack.top ();
-                  env.obj_stack.pop ();
-                  obj_map [name] = obj;
-              }
+                  (this->name_vector, this->obj_map);
+              auto obj_map = pick_up_obj_map_and_merge
+                  (env, lack_name_vector, this->obj_map);
               auto data = make_shared <data_o>
-                  (env,
-                   this->type_tag,
-                   obj_map);
+                  (env, this->type_tag, obj_map);
               env.obj_stack.push (data);
           }
           else if (arity < lack) {
               auto lack_name_vector = name_vector_obj_map_arity_lack
-                  (this->name_vector, obj_map, arity);
-              auto obj_map = this->obj_map;
-              auto begin = lack_name_vector.rbegin ();
-              auto end = lack_name_vector.rend ();
-              for (auto it = begin; it != end; it++) {
-                  name_t name = *it;
-                  auto obj = env.obj_stack.top ();
-                  env.obj_stack.pop ();
-                  obj_map [name] = obj;
-              }
+                  (this->name_vector, this->obj_map, arity);
+              auto obj_map = pick_up_obj_map_and_merge
+                  (env, lack_name_vector, this->obj_map);
               auto data_cons = make_shared <data_cons_o>
-                  (env,
-                   this->type_tag,
-                   this->name_vector,
-                   obj_map);
+                  (env, this->type_tag, this->name_vector, obj_map);
               env.obj_stack.push (data_cons);
           }
           else {
@@ -622,35 +619,18 @@
           auto lack = size - have;
           if (lack == arity) {
               auto lack_name_vector = name_vector_obj_map_lack
-                  (this->name_vector, obj_map);
-              auto obj_map = this->obj_map;
-              auto begin = lack_name_vector.rbegin ();
-              auto end = lack_name_vector.rend ();
-              for (auto it = begin; it != end; it++) {
-                  name_t name = *it;
-                  auto obj = env.obj_stack.top ();
-                  env.obj_stack.pop ();
-                  obj_map [name] = obj;
-              }
+                  (this->name_vector, this->obj_map);
+              auto obj_map = pick_up_obj_map_and_merge
+                  (env, lack_name_vector, this->obj_map);
               this->fn (env, obj_map);
           }
           else if (arity < lack) {
               auto lack_name_vector = name_vector_obj_map_arity_lack
-                  (this->name_vector, obj_map, arity);
-              auto obj_map = this->obj_map;
-              auto begin = lack_name_vector.rbegin ();
-              auto end = lack_name_vector.rend ();
-              for (auto it = begin; it != end; it++) {
-                  name_t name = *it;
-                  auto obj = env.obj_stack.top ();
-                  env.obj_stack.pop ();
-                  obj_map [name] = obj;
-              }
+                  (this->name_vector, this->obj_map, arity);
+              auto obj_map = pick_up_obj_map_and_merge
+                  (env, lack_name_vector, this->obj_map);
               auto prim = make_shared <prim_o>
-                  (env,
-                   this->name_vector,
-                   this->fn,
-                   obj_map);
+                  (env, this->name_vector, this->fn, obj_map);
               env.obj_stack.push (prim);
           }
           else {
