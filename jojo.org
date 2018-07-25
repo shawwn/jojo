@@ -6,6 +6,10 @@
 
 *** sexp
 
+*** vector literal -- [ ]
+
+*** map literal -- { }
+
 *** predicate and branching
 
 *** case_jo_t
@@ -222,6 +226,7 @@
     string
     jojo_repr (env_t &env, shared_ptr <jojo_t> jojo)
     {
+        assert (jojo->jo_vector.size () != 0);
         string repr = "";
         for (auto &jo: jojo->jo_vector) {
             repr += jo->repr (env);
@@ -1586,7 +1591,7 @@
       }
       #+end_src
 
-* bool
+* define
 
 *** define
 
@@ -1606,11 +1611,58 @@
     }
     #+end_src
 
-*** true_c
+*** sig_t
+
+    #+begin_src cpp
+    using sig_t = name_vector_t;
+    #+end_src
+
+*** name_of_sig
+
+    #+begin_src cpp
+    name_t
+    name_of_sig (sig_t &sig)
+    {
+        return sig [0];
+    }
+    #+end_src
+
+*** name_vector_of_sig
+
+    #+begin_src cpp
+    name_vector_t
+    name_vector_of_sig (sig_t &sig)
+    {
+        name_vector_t name_vector = {};
+        auto begin = sig.begin () + 1;
+        auto end = sig.end () + 1;
+        for (auto it = begin; it != end; it++)
+            name_vector.push_back (*it);
+        return name_vector;
+    }
+    #+end_src
+
+*** define_prim
+
+    #+begin_src cpp
+    void
+    define_prim (env_t &env, sig_t sig, prim_fn fn)
+    {
+        auto name = name_of_sig (sig);
+        auto name_vector = name_vector_of_sig (sig);
+        auto prim = make_shared <prim_o>
+            (env, name_vector, fn, obj_map_t ());
+        define (env, name, prim);
+    }
+    #+end_src
+
+* bool
+
+*** jj_true_c
 
     #+begin_src cpp
     shared_ptr <data_o>
-    true_c (env_t &env)
+    jj_true_c (env_t &env)
     {
        return make_shared <data_o>
            (env,
@@ -1619,11 +1671,11 @@
     }
     #+end_src
 
-*** false_c
+*** jj_false_c
 
     #+begin_src cpp
     shared_ptr <data_o>
-    false_c (env_t &env)
+    jj_false_c (env_t &env)
     {
        return make_shared <data_o>
            (env,
@@ -1638,8 +1690,8 @@
     void
     import_bool (env_t &env)
     {
-        define (env, "true-c", true_c (env));
-        define (env, "false-c", false_c (env));
+        define (env, "true-c", jj_true_c (env));
+        define (env, "false-c", jj_false_c (env));
     }
     #+end_src
 
@@ -1661,8 +1713,39 @@
 *** cons_c
 
     #+begin_src cpp
+    shared_ptr <data_o>
+    cons_c (env_t &env,
+            shared_ptr <obj_t> car,
+            shared_ptr <obj_t> cdr)
+    {
+        auto obj_map = obj_map_t ();
+        obj_map ["car"] = car;
+        obj_map ["cdr"] = cdr;
+        return make_shared <data_o>
+            (env,
+             tagging (env, "cons-t"),
+             obj_map);
+    }
+    #+end_src
+
+*** jj_null_c
+
+    #+begin_src cpp
+    shared_ptr <data_o>
+    jj_null_c (env_t &env)
+    {
+       return make_shared <data_o>
+           (env,
+            tagging (env, "null-t"),
+            obj_map_t ());
+    }
+    #+end_src
+
+*** jj_cons_c
+
+    #+begin_src cpp
     shared_ptr <data_cons_o>
-    cons_c (env_t &env)
+    jj_cons_c (env_t &env)
     {
         return make_shared <data_cons_o>
             (env,
@@ -1678,8 +1761,8 @@
     void
     import_list (env_t &env)
     {
-        define (env, "null-c", null_c (env));
-        define (env, "cons-c", cons_c (env));
+        define (env, "null-c", jj_null_c (env));
+        define (env, "cons-c", jj_cons_c (env));
     }
     #+end_src
 
@@ -1788,116 +1871,110 @@
         }
         return string_vector;
     }
+    #+end_src
 
+*** string_vector_to_string_list
+
+    #+begin_src cpp
+    shared_ptr <data_o>
+    string_vector_to_string_list
+    (env_t &env, string_vector_t &string_vector)
+    {
+        auto begin = string_vector.rbegin ();
+        auto end = string_vector.rend ();
+        auto collect = null_c (env);
+        for (auto it = begin; it != end; it++) {
+            auto obj = make_shared <string_o> (env, *it);
+            collect = cons_c (env, obj, collect);
+        }
+        return collect;
+    }
     #+end_src
 
 * sexp
 
-*** sig_t
+*** [note] about literal in quote
+
+    | ( ) | list-t   |
+    | [ ] | vector-t |
+    | { } | map-t    |
+
+*** scan_word_list
 
     #+begin_src cpp
-    using sig_t = name_vector_t;
-    #+end_src
-
-*** name_of_sig
-
-    #+begin_src cpp
-    name_t
-    name_of_sig (sig_t &sig)
+    shared_ptr <data_o>
+    scan_word_list (env_t &env, shared_ptr <string_o> code)
     {
-        return sig [0];
+        auto word_vector = scan_word_vector (code->str);
+        return string_vector_to_string_list
+            (env, word_vector);
     }
     #+end_src
 
-*** name_vector_of_sig
+*** >< parse_sexp_list
 
     #+begin_src cpp
-    name_vector_t
-    name_vector_of_sig (sig_t &sig)
+    shared_ptr <data_o>
+    parse_sexp_list (env_t &env, shared_ptr <data_o> word_list)
     {
-        name_vector_t name_vector = {};
-        auto begin = sig.begin () + 1;
-        auto end = sig.end () + 1;
-        for (auto it = begin; it != end; it++)
-            name_vector.push_back (*it);
-        return name_vector;
+        return nullptr;
     }
     #+end_src
 
-*** define_prim
+*** jj_scan_word_list
 
     #+begin_src cpp
-    void
-    define_prim (env_t &env, sig_t sig, prim_fn fn)
-    {
-        auto name = name_of_sig (sig);
-        auto name_vector = name_vector_of_sig (sig);
-        auto prim = make_shared <prim_o>
-            (env, name_vector, fn, obj_map_t ());
-        define (env, name, prim);
-    }
-    #+end_src
-
-*** >< p_scan_word_list
-
-    #+begin_src cpp
-    sig_t p_scan_word_list_sig =
-    { "scan-word-list" };
+    sig_t jj_scan_word_list_sig = { "scan-word-list", "code" };
     // -- string-t -> (list-t string-t)
-    void
-    p_scan_word_list (env_t &env, obj_map_t &obj_map)
+    void jj_scan_word_list (env_t &env, obj_map_t &obj_map)
     {
-
+        auto code = static_pointer_cast <string_o>
+            (obj_map ["code"]);
+        auto list = scan_word_list (env, code);
+        env.obj_stack.push (list);
     }
     #+end_src
 
-*** >< p_parse_sexp_list
+*** >< jj_parse_sexp_list
 
     #+begin_src cpp
-    sig_t p_parse_sexp_list_sig =
-    { "parse-sexp-list" };
+    sig_t jj_parse_sexp_list_sig =
+    { "parse-sexp-list", "word-list" };
     // -- (list-t string-t) -> (list-t sexp-t)
-    void
-    p_parse_sexp_list (env_t &env, obj_map_t &obj_map)
+    void jj_parse_sexp_list (env_t &env, obj_map_t &obj_map)
     {
 
     }
     #+end_src
 
-*** >< p_parse_sexp
+*** >< jj_parse_sexp
 
     #+begin_src cpp
-    sig_t p_parse_sexp_sig =
-    { "parse-sexp" };
+    sig_t jj_parse_sexp_sig = { "parse-sexp" };
     // -- (list-t string-t) -> sexp-t
-    void
-    p_parse_sexp (env_t &env, obj_map_t &obj_map)
+    void jj_parse_sexp (env_t &env, obj_map_t &obj_map)
     {
 
     }
     #+end_src
 
-*** >< p_sexp_print
+*** >< jj_sexp_print
 
     #+begin_src cpp
-    sig_t p_sexp_print_sig =
-    { "sexp-print" };
+    sig_t jj_sexp_print_sig = { "sexp-print" };
     // -- sexp-t ->
-    void
-    p_sexp_print (env_t &env, obj_map_t &obj_map)
+    void jj_sexp_print (env_t &env, obj_map_t &obj_map)
     {
 
     }
     #+end_src
 
-*** >< p_sexp_list_print
+*** >< jj_sexp_list_print
 
     #+begin_src cpp
-    sig_t p_sexp_list_print_sig =
-    { "sexp-list-print" };
+    sig_t jj_sexp_list_print_sig = { "sexp-list-print" };
     // -- (list-t sexp-t) ->
-    void
-    p_sexp_list_print (env_t &env, obj_map_t &obj_map)
+    void jj_sexp_list_print (env_t &env, obj_map_t &obj_map)
     {
 
     }
@@ -1910,20 +1987,20 @@
     import_sexp (env_t &env)
     {
         define_prim (env,
-                     p_scan_word_list_sig,
-                     p_scan_word_list);
+                     jj_scan_word_list_sig,
+                     jj_scan_word_list);
         define_prim (env,
-                     p_parse_sexp_list_sig,
-                     p_parse_sexp_list);
+                     jj_parse_sexp_list_sig,
+                     jj_parse_sexp_list);
         define_prim (env,
-                     p_parse_sexp_sig,
-                     p_parse_sexp);
+                     jj_parse_sexp_sig,
+                     jj_parse_sexp);
         define_prim (env,
-                     p_sexp_print_sig,
-                     p_sexp_print);
+                     jj_sexp_print_sig,
+                     jj_sexp_print);
         define_prim (env,
-                     p_sexp_list_print_sig,
-                     p_sexp_list_print);
+                     jj_sexp_list_print_sig,
+                     jj_sexp_list_print);
     }
     #+end_src
 
@@ -2313,8 +2390,8 @@
           {
               env.run ();
               assert_stack_size (env, 2);
-              assert_pop_eq (env, false_c (env));
-              assert_pop_eq (env, true_c (env));
+              assert_pop_eq (env, jj_false_c (env));
+              assert_pop_eq (env, jj_true_c (env));
               assert_stack_size (env, 0);
           }
       }
