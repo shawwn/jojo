@@ -1047,6 +1047,34 @@
              tagging (env, "cons-t"),
              obj_map);
     }
+    shared_ptr <obj_t>
+    car (env_t &env, shared_ptr <obj_t> a)
+    {
+
+        cout << name_of_tag (env, a->tag);
+        cout << "\n";
+        cout << flush;
+        assert (a->tag == tagging (env, "cons-t"));
+        auto cons = static_pointer_cast <data_o> (a);
+        return cons->obj_map ["car"];
+    }
+    shared_ptr <obj_t>
+    cdr (env_t &env, shared_ptr <obj_t> a)
+    {
+        assert (a->tag == tagging (env, "cons-t"));
+        auto cons = static_pointer_cast <data_o> (a);
+        return cons->obj_map ["cdr"];
+    }
+    bool
+    null_p (env_t &env, shared_ptr <obj_t> a)
+    {
+        return a->tag == tagging (env, "null-t");
+    }
+    bool
+    cons_p (env_t &env, shared_ptr <obj_t> a)
+    {
+        return a->tag == tagging (env, "cons-t");
+    }
     shared_ptr <data_o>
     jj_null_c (env_t &env)
     {
@@ -1160,10 +1188,117 @@
         return string_vector_to_string_list
             (env, word_vector);
     }
-    shared_ptr <data_o>
-    parse_sexp_list (env_t &env, shared_ptr <data_o> word_list)
+    pair<shared_ptr <obj_t>, shared_ptr <obj_t>>
+    parse_sexp (env_t &env, shared_ptr <obj_t> a);
+
+    pair<shared_ptr <obj_t>, shared_ptr <obj_t>>
+    parse_sexp_until_ket (env_t &env,
+                          shared_ptr <obj_t> a,
+                          string ket)
     {
-        return nullptr;
+        auto word_list = static_pointer_cast <data_o> (a);
+        if (null_p (env, word_list)) {
+            cout << "<here>\n" << flush;
+            return make_pair (word_list, word_list);
+        }
+        auto head = static_pointer_cast <string_o>
+            (car (env, word_list));
+        auto word = head->str;
+        auto rest = cdr (env, word_list);
+        if (word == ket) {
+            return make_pair (null_c (env), rest);
+        }
+        else {
+            auto res1 = parse_sexp (env, rest);
+            auto res2 = parse_sexp_until_ket (env, res1.second, ket);
+            return make_pair (cons_c (env, res1.first, res2.first),
+                              res2.second);
+        }
+    }
+    pair<shared_ptr <obj_t>, shared_ptr <obj_t>>
+    parse_sexp (env_t &env, shared_ptr <obj_t> a)
+    {
+        auto word_list = static_pointer_cast <data_o> (a);
+        if (null_p (env, word_list)) {
+            cout << "<here>\n" << flush;
+            return make_pair (word_list, word_list);
+        }
+        auto head = static_pointer_cast <string_o>
+            (car (env, word_list));
+        auto word = head->str;
+        auto rest = cdr (env, word_list);
+        if (word == "(") {
+            return parse_sexp_until_ket (env, rest, ")");
+        }
+        else if (word == "[") {
+            return parse_sexp_until_ket (env, rest, "]");
+        }
+        else if (word == "{") {
+            return parse_sexp_until_ket (env, rest, "}");
+        }
+        else if (word == "'") {
+            auto results = parse_sexp (env, rest);
+            auto str = make_shared <string_o> (env, "quote");
+            auto unit_list = cons_c (env, results.first, null_c (env));
+            return make_pair (cons_c (env, str, unit_list),
+                              results.second);
+        }
+        else if (word == "`") {
+            auto results = parse_sexp (env, rest);
+            auto str = make_shared <string_o> (env, "partquote");
+            auto unit_list = cons_c (env, results.first, null_c (env));
+            return make_pair (cons_c (env, str, unit_list),
+                              results.second);
+        }
+        else {
+            return make_pair (head, rest);
+        }
+    }
+    shared_ptr <data_o>
+    parse_sexp_list (env_t &env, shared_ptr <obj_t> a)
+    {
+        auto word_list = static_pointer_cast <data_o> (a);
+        if (null_p (env, word_list)) {
+            return word_list;
+        }
+        else {
+            auto results = parse_sexp (env, word_list);
+            return cons_c (env,
+                           results.first,
+                           parse_sexp_list (env, results.second));
+        }
+    }
+    string
+    sexp_list_repr (env_t &env, shared_ptr <obj_t> a);
+
+    string
+    sexp_repr (env_t &env, shared_ptr <obj_t> a)
+    {
+        if (null_p (env, a)) {
+            return "()";
+        }
+        else if (cons_p (env, a)) {
+            return "(" + sexp_list_repr (env, a) + ")";
+        }
+        else {
+            auto str = static_pointer_cast <string_o> (a);
+            assert (str->tag == tagging (env, "string-t"));
+            return str->str;
+        }
+    }
+    string
+    sexp_list_repr (env_t &env, shared_ptr <obj_t> a)
+    {
+        auto sexp_list = static_pointer_cast <data_o> (a);
+        if (null_p (env, sexp_list))
+            return "";
+        else if (null_p (env, cdr (env, sexp_list)))
+            return sexp_repr (env, car (env, sexp_list));
+        else {
+            return
+                sexp_repr (env, car (env, sexp_list)) + " " +
+                sexp_list_repr (env, cdr (env, sexp_list));
+        }
     }
     sig_t jj_scan_word_list_sig = { "scan-word-list", "code" };
     // -- string-t -> (list-t string-t)
@@ -1174,16 +1309,16 @@
         auto list = scan_word_list (env, code);
         env.obj_stack.push (list);
     }
+    sig_t jj_parse_sexp_sig = { "parse-sexp" };
+    // -- (list-t string-t) -> sexp-t
+    void jj_parse_sexp (env_t &env, obj_map_t &obj_map)
+    {
+
+    }
     sig_t jj_parse_sexp_list_sig =
     { "parse-sexp-list", "word-list" };
     // -- (list-t string-t) -> (list-t sexp-t)
     void jj_parse_sexp_list (env_t &env, obj_map_t &obj_map)
-    {
-
-    }
-    sig_t jj_parse_sexp_sig = { "parse-sexp" };
-    // -- (list-t string-t) -> sexp-t
-    void jj_parse_sexp (env_t &env, obj_map_t &obj_map)
     {
 
     }
@@ -1588,7 +1723,13 @@
       void
       test_sexp ()
       {
+          auto env = env_t ();
 
+          auto code = make_shared <string_o> (env, "(cons-c <car> <cdr>)");
+          auto word_list = scan_word_list (env, code);
+          auto sexp_list = parse_sexp_list (env, word_list);
+
+          cout << sexp_list_repr (env, sexp_list);
       }
     void
     test_all ()

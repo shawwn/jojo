@@ -3,9 +3,9 @@
 # c="g++"
 c="clang++"
 
-f="-Wall"
-# f="-Wall -foptimize-sibling-calls"
-# f="-Wall -foptimize-sibling-calls -O2"
+f="-Wall -Wno-infinite-recursion"
+# -foptimize-sibling-calls
+# -O2
 
 build ()
 {
