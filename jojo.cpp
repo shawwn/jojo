@@ -1253,10 +1253,98 @@
     // {
 
     // }
+    bool
+    vect_p (env_t &env, shared_ptr <obj_t> a)
+    {
+        return a->tag == tagging (env, "vect-t");
+    }
+    shared_ptr <vect_o>
+    list_to_vect (env_t &env, shared_ptr <obj_t> a)
+    {
+        auto vect = obj_vect_t ();
+        auto l = static_pointer_cast <data_o> (a);
+        while (! null_p (env, l)) {
+            vect.push_back (car (env, l));
+            l = static_pointer_cast <data_o>
+                (cdr (env, l));
+        }
+        return make_shared <vect_o> (env, vect);
+    }
+    sig_t jj_list_to_vect_sig = { "list-to-vect", "list" };
+    // -- (list-t t) -> (vect-t t)
+    void jj_list_to_vect (env_t &env, obj_map_t &obj_map)
+    {
+        env.obj_stack.push (list_to_vect (env, obj_map ["list"]));
+    }
+    shared_ptr <data_o>
+    vect_to_list (env_t &env, shared_ptr <obj_t> a)
+    {
+        auto v = static_pointer_cast <vect_o> (a);
+        auto vect = v->vect;
+        auto result = null_c (env);
+        auto begin = vect.rbegin ();
+        auto end = vect.rend ();
+        for (auto it = begin; it != end; it++)
+            result = cons_c (env, *it, result);
+        return result;
+    }
+    sig_t jj_vect_to_list_sig = { "vect-to-list", "vect" };
+    // -- (vect-t t) -> (list-t t)
+    void jj_vect_to_list (env_t &env, obj_map_t &obj_map)
+    {
+        env.obj_stack.push (vect_to_list (env, obj_map ["vect"]));
+    }
+    void
+    import_vect (env_t &env)
+    {
+        define_prim (env,
+                     jj_list_to_vect_sig,
+                     jj_list_to_vect);
+        define_prim (env,
+                     jj_vect_to_list_sig,
+                     jj_vect_to_list);
+    }
     void
     test_vect ()
     {
+        auto env = env_t ();
 
+        import_list (env);
+        import_vect (env);
+
+        define (env, "s1", make_shared <string_o> (env, "bye"));
+        define (env, "s2", make_shared <string_o> (env, "world"));
+
+        jo_vector_t jo_vector = {
+            new ref_jo_t (boxing (env, "s1")),
+            new ref_jo_t (boxing (env, "s2")),
+            new ref_jo_t (boxing (env, "null-c")),
+            new ref_jo_t (boxing (env, "cons-c")),
+            new apply_jo_t (2),
+            new ref_jo_t (boxing (env, "cons-c")),
+            new apply_jo_t (2),
+            new ref_jo_t (boxing (env, "list-to-vect")),
+            new apply_jo_t (1),
+            new ref_jo_t (boxing (env, "vect-to-list")),
+            new apply_jo_t (1),
+            new field_jo_t ("cdr"),
+            new field_jo_t ("car"),
+        };
+
+        env.frame_stack.push (new_frame_from_jo_vector (jo_vector));
+
+        // {
+        //     env.report ();
+        //     env.run ();
+        //     env.report ();
+        // }
+
+        {
+            env.run ();
+            assert_stack_size (env, 1);
+            assert_pop_eq (env, make_shared <string_o> (env, "world"));
+            assert_stack_size (env, 0);
+        }
     }
     void
     test_dict ()
@@ -1524,6 +1612,10 @@
         if (word == "(")
             return parse_sexp_list
                 (env, word_list_drop_ket (env, rest, ")"));
+        else if (word == "[")
+            return list_to_vect
+                (env, parse_sexp_list
+                 (env, word_list_drop_ket (env, rest, "]")));
         else if (word == "'")
             return cons_c (env, make_shared <string_o> (env, "quote"),
                            cons_c (env,
@@ -1560,6 +1652,10 @@
         }
         else if (cons_p (env, a)) {
             return "(" + sexp_list_repr (env, a) + ")";
+        }
+        else if (vect_p (env, a)) {
+            auto l = vect_to_list (env, a);
+            return "[" + sexp_list_repr (env, l) + "]";
         }
         else {
             auto str = static_pointer_cast <string_o> (a);
@@ -1633,31 +1729,20 @@
                      jj_sexp_list_repr);
     }
     void
-    test_sexp ()
+    test_sexp_scan ()
     {
-        {
-            auto code = "(cons-c <car> <cdr>)";
-            auto string_vector = scan_word_vector (code);
-            assert (string_vector.size () == 5);
-            assert (string_vector [0] == "(");
-            assert (string_vector [1] == "cons-c");
-            assert (string_vector [2] == "<car>");
-            assert (string_vector [3] == "<cdr>");
-            assert (string_vector [4] == ")");
-        }
-
-        // {
-        //     auto env = env_t ();
-        //
-        //     auto code =
-        //         "(cons-c <car> <cdr>)"
-        //         "(cons-c (cons-c <car> <cdr>) (cons-c <car> <cdr>))";
-        //     auto word_list = scan_word_list
-        //         (env, make_shared <string_o> (env, code));
-        //     auto sexp_list = parse_sexp_list (env, word_list);
-        //     cout << sexp_list_repr (env, sexp_list);
-        // }
-
+        auto code = "(cons-c <car> <cdr>)";
+        auto string_vector = scan_word_vector (code);
+        assert (string_vector.size () == 5);
+        assert (string_vector [0] == "(");
+        assert (string_vector [1] == "cons-c");
+        assert (string_vector [2] == "<car>");
+        assert (string_vector [3] == "<cdr>");
+        assert (string_vector [4] == ")");
+    }
+    void
+    test_sexp_list ()
+    {
         auto env = env_t ();
 
         import_sexp (env);
@@ -1686,6 +1771,43 @@
         //     env.run ();
         //     env.report ();
         // }
+    }
+    void
+    test_sexp_vect ()
+    {
+        auto env = env_t ();
+
+        import_sexp (env);
+        import_string (env);
+
+        auto code = "(a [a b c] c) [a b c] (a [a b c] c)";
+        auto word_list = scan_word_list
+            (env, make_shared <string_o> (env, code));
+        env.obj_stack.push (word_list);
+
+        jo_vector_t jo_vector = {
+            new ref_jo_t (boxing (env, "parse-sexp-list")),
+            new apply_jo_t (1),
+            new ref_jo_t (boxing (env, "sexp-list-repr")),
+            new apply_jo_t (1),
+            new ref_jo_t (boxing (env, "string-print")),
+            new apply_jo_t (1),
+        };
+
+        env.frame_stack.push (new_frame_from_jo_vector (jo_vector));
+
+        {
+            env.report ();
+            env.run ();
+            env.report ();
+        }
+    }
+    void
+    test_sexp ()
+    {
+        test_sexp_scan ();
+        test_sexp_list ();
+        test_sexp_vect ();
     }
       void
       test_step ()
