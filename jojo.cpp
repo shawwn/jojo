@@ -1005,6 +1005,37 @@
             (env, name_vector, fn, obj_map_t ());
         define (env, name, prim);
     }
+    shared_ptr <frame_t>
+    new_frame_from_jojo (shared_ptr <jojo_t> jojo)
+    {
+        return make_shared <frame_t>
+            (jojo, local_scope_t ());
+    }
+    shared_ptr <frame_t>
+    new_frame_from_jo_vector (jo_vector_t jo_vector)
+    {
+        auto jojo = make_shared <jojo_t> (jo_vector);
+        return make_shared <frame_t>
+            (jojo, local_scope_t ());
+    }
+      void
+      assert_pop_eq (env_t &env, shared_ptr <obj_t> obj)
+      {
+          auto that = env.obj_stack.top ();
+          assert (obj->equal (env, that));
+          env.obj_stack.pop ();
+      }
+      void
+      assert_tos_eq (env_t &env, shared_ptr <obj_t> obj)
+      {
+          auto that = env.obj_stack.top ();
+          assert (obj->equal (env, that));
+      }
+      void
+      assert_stack_size (env_t &env, size_t size)
+      {
+          assert (env.obj_stack.size () == size);
+      }
     shared_ptr <data_o>
     jj_true_c (env_t &env)
     {
@@ -1026,6 +1057,34 @@
     {
         define (env, "true-c", jj_true_c (env));
         define (env, "false-c", jj_false_c (env));
+    }
+    void
+    test_bool ()
+    {
+        auto env = env_t ();
+
+        import_bool (env);
+
+        jo_vector_t jo_vector = {
+            new ref_jo_t (boxing (env, "true-c")),
+            new ref_jo_t (boxing (env, "false-c")),
+        };
+
+        env.frame_stack.push (new_frame_from_jo_vector (jo_vector));
+
+        // {
+        //     env.report ();
+        //     env.run ();
+        //     env.report ();
+        // }
+
+        {
+            env.run ();
+            assert_stack_size (env, 2);
+            assert_pop_eq (env, jj_false_c (env));
+            assert_pop_eq (env, jj_true_c (env));
+            assert_stack_size (env, 0);
+        }
     }
     shared_ptr <data_o>
     null_c (env_t &env)
@@ -1095,6 +1154,39 @@
         define (env, "null-c", jj_null_c (env));
         define (env, "cons-c", jj_cons_c (env));
     }
+    void
+    test_list ()
+    {
+        auto env = env_t ();
+
+        import_list (env);
+
+        define (env, "s1", make_shared <string_o> (env, "bye"));
+        define (env, "s2", make_shared <string_o> (env, "world"));
+
+        jo_vector_t jo_vector = {
+            new ref_jo_t (boxing (env, "s1")),
+            new ref_jo_t (boxing (env, "s2")),
+            new ref_jo_t (boxing (env, "cons-c")),
+            new apply_jo_t (2),
+            new field_jo_t ("cdr"),
+        };
+
+        env.frame_stack.push (new_frame_from_jo_vector (jo_vector));
+
+        // {
+        //     env.report ();
+        //     env.run ();
+        //     env.report ();
+        // }
+
+        {
+            env.run ();
+            assert_stack_size (env, 1);
+            assert_pop_eq (env, make_shared <string_o> (env, "world"));
+            assert_stack_size (env, 0);
+        }
+    }
     sig_t jj_string_print_sig = { "string-print", "string" };
     // -- string-t ->
     void jj_string_print (env_t &env, obj_map_t &obj_map)
@@ -1108,6 +1200,68 @@
         define_prim (env,
                      jj_string_print_sig,
                      jj_string_print);
+    }
+    void
+    test_string ()
+    {
+
+    }
+    using obj_vect_t = vector <shared_ptr <obj_t>>;
+    struct vect_o: obj_t
+    {
+        obj_vect_t vect;
+        vect_o (env_t &env, obj_vect_t vect);
+        bool equal (env_t &env, shared_ptr <obj_t> obj);
+        // void print (env_t &env);
+    };
+    vect_o::vect_o (env_t &env, vector <shared_ptr <obj_t>> vect)
+    {
+        this->tag = tagging (env, "vect-t");
+        this->vect = vect;
+    }
+    bool
+    obj_equal (env_t &env,
+               shared_ptr <obj_t> &lhs,
+               shared_ptr <obj_t> &rhs)
+    {
+        return lhs->equal (env, rhs);
+    }
+    bool
+    vect_equal (env_t &env,
+                obj_vect_t &lhs,
+                obj_vect_t &rhs)
+    {
+        if (lhs.size () != rhs.size ()) return false;
+        auto size = lhs.size ();
+        auto index = 0;
+        while (index < size) {
+            if (! obj_equal (env, lhs [index], rhs [index]))
+                return false;
+            index++;
+        }
+        return true;
+    }
+    bool
+    vect_o::equal (env_t &env, shared_ptr <obj_t> obj)
+    {
+        if (this->tag != obj->tag) return false;
+        auto that = static_pointer_cast <vect_o> (obj);
+        return vect_equal (env, this->vect, that->vect);
+    }
+    // void
+    // vect_o::print (env_t &env)
+    // {
+
+    // }
+    void
+    test_vect ()
+    {
+
+    }
+    void
+    test_dict ()
+    {
+
     }
     using string_vector_t = vector <string> ;
     bool space_char_p (char c)
@@ -1478,37 +1632,61 @@
                      jj_sexp_list_repr_sig,
                      jj_sexp_list_repr);
     }
-    shared_ptr <frame_t>
-    new_frame_from_jojo (shared_ptr <jojo_t> jojo)
+    void
+    test_sexp ()
     {
-        return make_shared <frame_t>
-            (jojo, local_scope_t ());
+        {
+            auto code = "(cons-c <car> <cdr>)";
+            auto string_vector = scan_word_vector (code);
+            assert (string_vector.size () == 5);
+            assert (string_vector [0] == "(");
+            assert (string_vector [1] == "cons-c");
+            assert (string_vector [2] == "<car>");
+            assert (string_vector [3] == "<cdr>");
+            assert (string_vector [4] == ")");
+        }
+
+        // {
+        //     auto env = env_t ();
+        //
+        //     auto code =
+        //         "(cons-c <car> <cdr>)"
+        //         "(cons-c (cons-c <car> <cdr>) (cons-c <car> <cdr>))";
+        //     auto word_list = scan_word_list
+        //         (env, make_shared <string_o> (env, code));
+        //     auto sexp_list = parse_sexp_list (env, word_list);
+        //     cout << sexp_list_repr (env, sexp_list);
+        // }
+
+        auto env = env_t ();
+
+        import_sexp (env);
+        import_string (env);
+
+        auto code =
+            "(cons-c <car> <cdr>)"
+            "(cons-c (cons-c <car> <cdr>) (cons-c <car> <cdr>))";
+        auto word_list = scan_word_list
+            (env, make_shared <string_o> (env, code));
+        env.obj_stack.push (word_list);
+
+        jo_vector_t jo_vector = {
+            new ref_jo_t (boxing (env, "parse-sexp-list")),
+            new apply_jo_t (1),
+            new ref_jo_t (boxing (env, "sexp-list-repr")),
+            new apply_jo_t (1),
+            new ref_jo_t (boxing (env, "string-print")),
+            new apply_jo_t (1),
+        };
+
+        env.frame_stack.push (new_frame_from_jo_vector (jo_vector));
+
+        // {
+        //     env.report ();
+        //     env.run ();
+        //     env.report ();
+        // }
     }
-    shared_ptr <frame_t>
-    new_frame_from_jo_vector (jo_vector_t jo_vector)
-    {
-        auto jojo = make_shared <jojo_t> (jo_vector);
-        return make_shared <frame_t>
-            (jojo, local_scope_t ());
-    }
-      void
-      assert_pop_eq (env_t &env, shared_ptr <obj_t> obj)
-      {
-          auto that = env.obj_stack.top ();
-          assert (obj->equal (env, that));
-          env.obj_stack.pop ();
-      }
-      void
-      assert_tos_eq (env_t &env, shared_ptr <obj_t> obj)
-      {
-          auto that = env.obj_stack.top ();
-          assert (obj->equal (env, that));
-      }
-      void
-      assert_stack_size (env_t &env, size_t size)
-      {
-          assert (env.obj_stack.size () == size);
-      }
       void
       test_step ()
       {
@@ -1772,138 +1950,6 @@
               assert_stack_size (env, 0);
           }
       }
-      void
-      test_bool ()
-      {
-          auto env = env_t ();
-
-          import_bool (env);
-
-          jo_vector_t jo_vector = {
-              new ref_jo_t (boxing (env, "true-c")),
-              new ref_jo_t (boxing (env, "false-c")),
-          };
-
-          env.frame_stack.push (new_frame_from_jo_vector (jo_vector));
-
-          // {
-          //     env.report ();
-          //     env.run ();
-          //     env.report ();
-          // }
-
-          {
-              env.run ();
-              assert_stack_size (env, 2);
-              assert_pop_eq (env, jj_false_c (env));
-              assert_pop_eq (env, jj_true_c (env));
-              assert_stack_size (env, 0);
-          }
-      }
-      void
-      test_vect ()
-      {
-
-      }
-      void
-      test_dict ()
-      {
-
-      }
-      void
-      test_list ()
-      {
-          auto env = env_t ();
-
-          import_list (env);
-
-          define (env, "s1", make_shared <string_o> (env, "bye"));
-          define (env, "s2", make_shared <string_o> (env, "world"));
-
-          jo_vector_t jo_vector = {
-              new ref_jo_t (boxing (env, "s1")),
-              new ref_jo_t (boxing (env, "s2")),
-              new ref_jo_t (boxing (env, "cons-c")),
-              new apply_jo_t (2),
-              new field_jo_t ("cdr"),
-          };
-
-          env.frame_stack.push (new_frame_from_jo_vector (jo_vector));
-
-          // {
-          //     env.report ();
-          //     env.run ();
-          //     env.report ();
-          // }
-
-          {
-              env.run ();
-              assert_stack_size (env, 1);
-              assert_pop_eq (env, make_shared <string_o> (env, "world"));
-              assert_stack_size (env, 0);
-          }
-      }
-      void
-      test_string ()
-      {
-
-      }
-      void
-      test_scan ()
-      {
-          auto code = "(cons-c <car> <cdr>)";
-          auto string_vector = scan_word_vector (code);
-          assert (string_vector.size () == 5);
-          assert (string_vector [0] == "(");
-          assert (string_vector [1] == "cons-c");
-          assert (string_vector [2] == "<car>");
-          assert (string_vector [3] == "<cdr>");
-          assert (string_vector [4] == ")");
-      }
-      void
-      test_sexp ()
-      {
-          // {
-          //     auto env = env_t ();
-          //
-          //     auto code =
-          //         "(cons-c <car> <cdr>)"
-          //         "(cons-c (cons-c <car> <cdr>) (cons-c <car> <cdr>))";
-          //     auto word_list = scan_word_list
-          //         (env, make_shared <string_o> (env, code));
-          //     auto sexp_list = parse_sexp_list (env, word_list);
-          //     cout << sexp_list_repr (env, sexp_list);
-          // }
-
-          auto env = env_t ();
-
-          import_sexp (env);
-          import_string (env);
-
-          auto code =
-              "(cons-c <car> <cdr>)"
-              "(cons-c (cons-c <car> <cdr>) (cons-c <car> <cdr>))";
-          auto word_list = scan_word_list
-              (env, make_shared <string_o> (env, code));
-          env.obj_stack.push (word_list);
-
-          jo_vector_t jo_vector = {
-              new ref_jo_t (boxing (env, "parse-sexp-list")),
-              new apply_jo_t (1),
-              new ref_jo_t (boxing (env, "sexp-list-repr")),
-              new apply_jo_t (1),
-              new ref_jo_t (boxing (env, "string-print")),
-              new apply_jo_t (1),
-          };
-
-          env.frame_stack.push (new_frame_from_jo_vector (jo_vector));
-
-          // {
-          //     env.report ();
-          //     env.run ();
-          //     env.report ();
-          // }
-      }
     void
     test_all ()
     {
@@ -1921,8 +1967,6 @@
         test_string ();
         test_vect ();
         test_dict ();
-        // parser
-        test_scan ();
         test_sexp ();
     }
     int
