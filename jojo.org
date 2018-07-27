@@ -4,11 +4,13 @@
 
 * [todo-stack]
 
+*** repl
+
+*** (=)
+
 *** dict_o
 
 *** dict literal -- { }
-
-*** (=)
 
 *** predicate and branching
 
@@ -790,7 +792,7 @@
       void
       data_o::print (env_t &env)
       {
-          // ><><><
+          // [todo]
       }
       #+end_src
 
@@ -947,7 +949,7 @@
       void
       data_cons_o::print (env_t &env)
       {
-          // ><><><
+          // [todo]
       }
       #+end_src
 
@@ -1657,7 +1659,7 @@
     }
     #+end_src
 
-* test
+* *test*
 
 *** new_frame_from_jojo
 
@@ -1716,6 +1718,15 @@
           assert (env.obj_stack.size () == size);
       }
       #+end_src
+
+*** [todo] import_test
+
+    #+begin_src cpp
+    void import_test (env_t &env)
+    {
+
+    }
+    #+end_src
 
 * *bool*
 
@@ -2828,6 +2839,44 @@
     }
     #+end_src
 
+* *repl*
+
+*** repl
+
+    #+begin_src cpp
+    void
+    repl (env_t &env)
+    {
+
+    }
+    #+end_src
+
+*** [todo] jj_repl
+
+    #+begin_src cpp
+    // jj_repl
+    #+end_src
+
+*** import_repl
+
+    #+begin_src cpp
+    void
+    import_repl (env_t &env)
+    {
+
+    }
+    #+end_src
+
+*** test_repl
+
+    #+begin_src cpp
+    void
+    test_repl ()
+    {
+
+    }
+    #+end_src
+
 * epilog
 
 *** test
@@ -3136,7 +3185,6 @@
     void
     test_all ()
     {
-        // core
         test_step ();
         test_data ();
         test_apply ();
@@ -3144,13 +3192,13 @@
         test_data_cons ();
         test_data_cons_curry ();
         test_prim ();
-        // data
         test_bool ();
         test_list ();
         test_string ();
         test_vect ();
         test_dict ();
         test_sexp ();
+        test_repl ();
     }
     #+end_src
 

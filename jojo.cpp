@@ -459,7 +459,7 @@
       void
       data_o::print (env_t &env)
       {
-          // ><><><
+          // [todo]
       }
       struct data_cons_o: obj_t
       {
@@ -574,7 +574,7 @@
       void
       data_cons_o::print (env_t &env)
       {
-          // ><><><
+          // [todo]
       }
       using prim_fn = function <void (env_t &, obj_map_t &)>;
       struct prim_o: obj_t
@@ -1036,6 +1036,10 @@
       {
           assert (env.obj_stack.size () == size);
       }
+    void import_test (env_t &env)
+    {
+
+    }
     shared_ptr <data_o>
     jj_true_c (env_t &env)
     {
@@ -1796,11 +1800,11 @@
 
         env.frame_stack.push (new_frame_from_jo_vector (jo_vector));
 
-        {
-            env.report ();
-            env.run ();
-            env.report ();
-        }
+        // {
+        //     env.report ();
+        //     env.run ();
+        //     env.report ();
+        // }
     }
     void
     test_sexp ()
@@ -1808,6 +1812,22 @@
         test_sexp_scan ();
         test_sexp_list ();
         test_sexp_vect ();
+    }
+    void
+    repl (env_t &env)
+    {
+
+    }
+    // jj_repl
+    void
+    import_repl (env_t &env)
+    {
+
+    }
+    void
+    test_repl ()
+    {
+
     }
       void
       test_step ()
@@ -2075,7 +2095,6 @@
     void
     test_all ()
     {
-        // core
         test_step ();
         test_data ();
         test_apply ();
@@ -2083,13 +2102,13 @@
         test_data_cons ();
         test_data_cons_curry ();
         test_prim ();
-        // data
         test_bool ();
         test_list ();
         test_string ();
         test_vect ();
         test_dict ();
         test_sexp ();
+        test_repl ();
     }
     int
     main ()
