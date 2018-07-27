@@ -1050,10 +1050,6 @@
     shared_ptr <obj_t>
     car (env_t &env, shared_ptr <obj_t> a)
     {
-
-        cout << name_of_tag (env, a->tag);
-        cout << "\n";
-        cout << flush;
         assert (a->tag == tagging (env, "cons-t"));
         auto cons = static_pointer_cast <data_o> (a);
         return cons->obj_map ["car"];
@@ -1188,85 +1184,199 @@
         return string_vector_to_string_list
             (env, word_vector);
     }
-    pair<shared_ptr <obj_t>, shared_ptr <obj_t>>
-    parse_sexp (env_t &env, shared_ptr <obj_t> a);
-
-    pair<shared_ptr <obj_t>, shared_ptr <obj_t>>
-    parse_sexp_until_ket (env_t &env,
-                          shared_ptr <obj_t> a,
-                          string ket)
+    bool
+    bar_word_p (string word)
+    {
+        return word == "("
+            || word == "["
+            || word == "{";
+    }
+    bool
+    ket_word_p (string word)
+    {
+        return word == ")"
+            || word == "]"
+            || word == "}";
+    }
+    bool
+    quote_word_p (string word)
+    {
+        return word == "'"
+            || word == "`";
+    }
+    string
+    bar_word_to_ket_word (string bar)
+    {
+        assert (bar_word_p (bar));
+        if (bar == "(") return ")";
+        if (bar == "[") return "]";
+        if (bar == "{") return "}";
+        cout << "bar_word_to_ket_word fail\n";
+        exit (1);
+    }
+    shared_ptr <data_o>
+    word_list_head_with_bar_ket_counter
+    (env_t &env,
+     shared_ptr <obj_t> a,
+     string bar,
+     string ket,
+     size_t counter)
     {
         auto word_list = static_pointer_cast <data_o> (a);
-        if (null_p (env, word_list)) {
-            cout << "<here>\n" << flush;
-            return make_pair (word_list, word_list);
-        }
+        if (counter == 0)
+            return null_c (env);
         auto head = static_pointer_cast <string_o>
             (car (env, word_list));
         auto word = head->str;
-        auto rest = cdr (env, word_list);
-        if (word == ket) {
-            return make_pair (null_c (env), rest);
+        if (word == bar)
+            return cons_c
+                (env, head, word_list_head_with_bar_ket_counter
+                 (env,
+                  cdr (env, word_list),
+                  bar, ket, counter + 1));
+        if (word == ket)
+            return cons_c
+                (env, head, word_list_head_with_bar_ket_counter
+                 (env,
+                  cdr (env, word_list),
+                  bar, ket, counter - 1));
+        else
+            return cons_c
+                (env, head, word_list_head_with_bar_ket_counter
+                 (env,
+                  cdr (env, word_list),
+                  bar, ket, counter));
+    }
+    shared_ptr <data_o>
+    word_list_head (env_t &env, shared_ptr <obj_t> a)
+    {
+        assert (cons_p (env, a));
+        auto word_list = static_pointer_cast <data_o> (a);
+        auto head = static_pointer_cast <string_o>
+            (car (env, word_list));
+        auto word = head->str;
+        if (bar_word_p (word)) {
+            auto bar = word;
+            auto ket = bar_word_to_ket_word (word);
+            return cons_c
+                (env, head, word_list_head_with_bar_ket_counter
+                 (env,
+                  cdr (env, word_list),
+                  bar, ket, 1));
         }
         else {
-            auto res1 = parse_sexp (env, rest);
-            auto res2 = parse_sexp_until_ket (env, res1.second, ket);
-            return make_pair (cons_c (env, res1.first, res2.first),
-                              res2.second);
+            return cons_c (env, head, null_c (env));
         }
     }
-    pair<shared_ptr <obj_t>, shared_ptr <obj_t>>
+    shared_ptr <data_o>
+    word_list_rest_with_bar_ket_counter
+    (env_t &env,
+     shared_ptr <obj_t> a,
+     string bar,
+     string ket,
+     size_t counter)
+    {
+        auto word_list = static_pointer_cast <data_o> (a);
+        if (counter == 0)
+            return word_list;
+        auto head = static_pointer_cast <string_o>
+            (car (env, word_list));
+        auto word = head->str;
+        if (word == bar)
+            return word_list_rest_with_bar_ket_counter
+                (env,
+                 cdr (env, word_list),
+                 bar, ket, counter + 1);
+        if (word == ket)
+            return word_list_rest_with_bar_ket_counter
+                (env,
+                 cdr (env, word_list),
+                 bar, ket, counter - 1);
+        else
+            return word_list_rest_with_bar_ket_counter
+                (env,
+                 cdr (env, word_list),
+                 bar, ket, counter);
+    }
+    shared_ptr <data_o>
+    word_list_rest (env_t &env, shared_ptr <obj_t> a)
+    {
+        assert (cons_p (env, a));
+        auto word_list = static_pointer_cast <data_o> (a);
+        auto head = static_pointer_cast <string_o>
+            (car (env, word_list));
+        auto word = head->str;
+        if (bar_word_p (word)) {
+            auto bar = word;
+            auto ket = bar_word_to_ket_word (word);
+            return word_list_rest_with_bar_ket_counter
+                (env,
+                 cdr (env, word_list),
+                 bar, ket, 1);
+        }
+        else
+            return static_pointer_cast <data_o>
+                (cdr (env, word_list));
+    }
+    shared_ptr <data_o>
+    word_list_drop_ket
+    (env_t &env,
+     shared_ptr <obj_t> a,
+     string ket)
+    {
+        auto word_list = static_pointer_cast <data_o> (a);
+        auto head = car (env, word_list);
+        auto rest = cdr (env, word_list);
+        auto next = cdr (env, cdr (env, word_list));
+        auto car_rest = static_pointer_cast <string_o> (car (env, rest));
+        auto word = car_rest->str;
+        if (null_p (env, next)) {
+            assert (word == ket);
+            return cons_c (env, head, null_c (env));
+        }
+        else {
+            return cons_c (env, head,
+                           word_list_drop_ket (env, rest, ket));
+        }
+    }
+    shared_ptr <data_o>
+    parse_sexp_list (env_t &env, shared_ptr <obj_t> a);
+
+    shared_ptr <obj_t>
     parse_sexp (env_t &env, shared_ptr <obj_t> a)
     {
         auto word_list = static_pointer_cast <data_o> (a);
-        if (null_p (env, word_list)) {
-            cout << "<here>\n" << flush;
-            return make_pair (word_list, word_list);
-        }
         auto head = static_pointer_cast <string_o>
             (car (env, word_list));
         auto word = head->str;
         auto rest = cdr (env, word_list);
-        if (word == "(") {
-            return parse_sexp_until_ket (env, rest, ")");
-        }
-        else if (word == "[") {
-            return parse_sexp_until_ket (env, rest, "]");
-        }
-        else if (word == "{") {
-            return parse_sexp_until_ket (env, rest, "}");
-        }
-        else if (word == "'") {
-            auto results = parse_sexp (env, rest);
-            auto str = make_shared <string_o> (env, "quote");
-            auto unit_list = cons_c (env, results.first, null_c (env));
-            return make_pair (cons_c (env, str, unit_list),
-                              results.second);
-        }
-        else if (word == "`") {
-            auto results = parse_sexp (env, rest);
-            auto str = make_shared <string_o> (env, "partquote");
-            auto unit_list = cons_c (env, results.first, null_c (env));
-            return make_pair (cons_c (env, str, unit_list),
-                              results.second);
-        }
-        else {
-            return make_pair (head, rest);
-        }
+        if (word == "(")
+            return parse_sexp_list
+                (env, word_list_drop_ket (env, rest, ")"));
+        else if (word == "'")
+            return cons_c (env, make_shared <string_o> (env, "quote"),
+                           cons_c (env,
+                                   parse_sexp (env, rest),
+                                   null_c (env)));
+        else if (word == "`")
+            return cons_c (env, make_shared <string_o> (env, "partquote"),
+                           cons_c (env,
+                                   parse_sexp (env, rest),
+                                   null_c (env)));
+        else
+            return head;
     }
     shared_ptr <data_o>
     parse_sexp_list (env_t &env, shared_ptr <obj_t> a)
     {
         auto word_list = static_pointer_cast <data_o> (a);
-        if (null_p (env, word_list)) {
+        if (null_p (env, word_list))
             return word_list;
-        }
-        else {
-            auto results = parse_sexp (env, word_list);
-            return cons_c (env,
-                           results.first,
-                           parse_sexp_list (env, results.second));
-        }
+        else
+            return cons_c
+                (env,
+                 parse_sexp (env, word_list_head (env, word_list)),
+                 parse_sexp_list (env, word_list_rest (env, word_list)));
     }
     string
     sexp_list_repr (env_t &env, shared_ptr <obj_t> a);
@@ -1725,10 +1835,12 @@
       {
           auto env = env_t ();
 
-          auto code = make_shared <string_o> (env, "(cons-c <car> <cdr>)");
-          auto word_list = scan_word_list (env, code);
+          auto code =
+              "(cons-c <car> <cdr>)"
+              "(cons-c (cons-c <car> <cdr>) (cons-c <car> <cdr>))";
+          auto word_list = scan_word_list
+              (env, make_shared <string_o> (env, code));
           auto sexp_list = parse_sexp_list (env, word_list);
-
           cout << sexp_list_repr (env, sexp_list);
       }
     void
