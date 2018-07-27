@@ -1,5 +1,17 @@
-  (= true-t (data))
-  (= false-t (data))
+  (= zero-t (data))
+  (= succ-t (data prev))
+
+  (= nat-add
+     (lambda [x y]
+       ))
+
+  (= nat-mul
+     (lambda [x y]
+       ))
+
+  (= nat-factorial
+     (lambda [x]
+       ))
   (= null-t (data))
   (= cons-t (data car cdr))
 

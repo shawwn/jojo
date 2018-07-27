@@ -988,11 +988,12 @@
     name_vector_t
     name_vector_of_sig (sig_t &sig)
     {
-        name_vector_t name_vector = {};
+        auto name_vector = name_vector_t ();
         auto begin = sig.begin () + 1;
-        auto end = sig.end () + 1;
-        for (auto it = begin; it != end; it++)
+        auto end = sig.end ();
+        for (auto it = begin; it != end; it++) {
             name_vector.push_back (*it);
+        }
         return name_vector;
     }
     void
@@ -1094,6 +1095,20 @@
         define (env, "null-c", jj_null_c (env));
         define (env, "cons-c", jj_cons_c (env));
     }
+    sig_t jj_string_print_sig = { "string-print", "string" };
+    // -- string-t ->
+    void jj_string_print (env_t &env, obj_map_t &obj_map)
+    {
+        auto str = static_pointer_cast <string_o> (obj_map ["string"]);
+        cout << str->str;
+    }
+    void
+    import_string (env_t &env)
+    {
+        define_prim (env,
+                     jj_string_print_sig,
+                     jj_string_print);
+    }
     using string_vector_t = vector <string> ;
     bool space_char_p (char c)
     {
@@ -1178,8 +1193,10 @@
         return collect;
     }
     shared_ptr <data_o>
-    scan_word_list (env_t &env, shared_ptr <string_o> code)
+    // scan_word_list (env_t &env, shared_ptr <string_o> code)
+    scan_word_list (env_t &env, shared_ptr <obj_t> a)
     {
+        auto code = static_pointer_cast <string_o> (a);
         auto word_vector = scan_word_vector (code->str);
         return string_vector_to_string_list
             (env, word_vector);
@@ -1414,35 +1431,33 @@
     // -- string-t -> (list-t string-t)
     void jj_scan_word_list (env_t &env, obj_map_t &obj_map)
     {
-        auto code = static_pointer_cast <string_o>
-            (obj_map ["code"]);
-        auto list = scan_word_list (env, code);
-        env.obj_stack.push (list);
+        env.obj_stack.push (scan_word_list (env, obj_map ["code"]));
     }
-    sig_t jj_parse_sexp_sig = { "parse-sexp" };
+    sig_t jj_parse_sexp_sig = { "parse-sexp", "word-list" };
     // -- (list-t string-t) -> sexp-t
     void jj_parse_sexp (env_t &env, obj_map_t &obj_map)
     {
-
+        env.obj_stack.push (parse_sexp (env, obj_map ["word-list"]));
     }
-    sig_t jj_parse_sexp_list_sig =
-    { "parse-sexp-list", "word-list" };
+    sig_t jj_parse_sexp_list_sig = { "parse-sexp-list", "word-list" };
     // -- (list-t string-t) -> (list-t sexp-t)
     void jj_parse_sexp_list (env_t &env, obj_map_t &obj_map)
     {
-
+        env.obj_stack.push (parse_sexp_list (env, obj_map ["word-list"]));
     }
-    sig_t jj_sexp_print_sig = { "sexp-print" };
+    sig_t jj_sexp_repr_sig = { "sexp-repr", "sexp" };
     // -- sexp-t ->
-    void jj_sexp_print (env_t &env, obj_map_t &obj_map)
+    void jj_sexp_repr (env_t &env, obj_map_t &obj_map)
     {
-
+        auto str = sexp_repr (env, obj_map ["sexp"]);
+        env.obj_stack.push (make_shared <string_o> (env, str));
     }
-    sig_t jj_sexp_list_print_sig = { "sexp-list-print" };
+    sig_t jj_sexp_list_repr_sig = { "sexp-list-repr", "sexp-list" };
     // -- (list-t sexp-t) ->
-    void jj_sexp_list_print (env_t &env, obj_map_t &obj_map)
+    void jj_sexp_list_repr (env_t &env, obj_map_t &obj_map)
     {
-
+        auto str = sexp_list_repr (env, obj_map ["sexp-list"]);
+        env.obj_stack.push (make_shared <string_o> (env, str));
     }
     void
     import_sexp (env_t &env)
@@ -1457,11 +1472,11 @@
                      jj_parse_sexp_sig,
                      jj_parse_sexp);
         define_prim (env,
-                     jj_sexp_print_sig,
-                     jj_sexp_print);
+                     jj_sexp_repr_sig,
+                     jj_sexp_repr);
         define_prim (env,
-                     jj_sexp_list_print_sig,
-                     jj_sexp_list_print);
+                     jj_sexp_list_repr_sig,
+                     jj_sexp_list_repr);
     }
     shared_ptr <frame_t>
     new_frame_from_jojo (shared_ptr <jojo_t> jojo)
@@ -1786,6 +1801,16 @@
           }
       }
       void
+      test_vect ()
+      {
+
+      }
+      void
+      test_dict ()
+      {
+
+      }
+      void
       test_list ()
       {
           auto env = env_t ();
@@ -1819,6 +1844,11 @@
           }
       }
       void
+      test_string ()
+      {
+
+      }
+      void
       test_scan ()
       {
           auto code = "(cons-c <car> <cdr>)";
@@ -1833,15 +1863,46 @@
       void
       test_sexp ()
       {
+          // {
+          //     auto env = env_t ();
+          //
+          //     auto code =
+          //         "(cons-c <car> <cdr>)"
+          //         "(cons-c (cons-c <car> <cdr>) (cons-c <car> <cdr>))";
+          //     auto word_list = scan_word_list
+          //         (env, make_shared <string_o> (env, code));
+          //     auto sexp_list = parse_sexp_list (env, word_list);
+          //     cout << sexp_list_repr (env, sexp_list);
+          // }
+
           auto env = env_t ();
+
+          import_sexp (env);
+          import_string (env);
 
           auto code =
               "(cons-c <car> <cdr>)"
               "(cons-c (cons-c <car> <cdr>) (cons-c <car> <cdr>))";
           auto word_list = scan_word_list
               (env, make_shared <string_o> (env, code));
-          auto sexp_list = parse_sexp_list (env, word_list);
-          cout << sexp_list_repr (env, sexp_list);
+          env.obj_stack.push (word_list);
+
+          jo_vector_t jo_vector = {
+              new ref_jo_t (boxing (env, "parse-sexp-list")),
+              new apply_jo_t (1),
+              new ref_jo_t (boxing (env, "sexp-list-repr")),
+              new apply_jo_t (1),
+              new ref_jo_t (boxing (env, "string-print")),
+              new apply_jo_t (1),
+          };
+
+          env.frame_stack.push (new_frame_from_jo_vector (jo_vector));
+
+          // {
+          //     env.report ();
+          //     env.run ();
+          //     env.report ();
+          // }
       }
     void
     test_all ()
@@ -1857,6 +1918,9 @@
         // data
         test_bool ();
         test_list ();
+        test_string ();
+        test_vect ();
+        test_dict ();
         // parser
         test_scan ();
         test_sexp ();

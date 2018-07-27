@@ -1637,11 +1637,12 @@
     name_vector_t
     name_vector_of_sig (sig_t &sig)
     {
-        name_vector_t name_vector = {};
+        auto name_vector = name_vector_t ();
         auto begin = sig.begin () + 1;
-        auto end = sig.end () + 1;
-        for (auto it = begin; it != end; it++)
+        auto end = sig.end ();
+        for (auto it = begin; it != end; it++) {
             name_vector.push_back (*it);
+        }
         return name_vector;
     }
     #+end_src
@@ -1814,6 +1815,36 @@
     }
     #+end_src
 
+* string
+
+*** jj_string_print
+
+    #+begin_src cpp
+    sig_t jj_string_print_sig = { "string-print", "string" };
+    // -- string-t ->
+    void jj_string_print (env_t &env, obj_map_t &obj_map)
+    {
+        auto str = static_pointer_cast <string_o> (obj_map ["string"]);
+        cout << str->str;
+    }
+    #+end_src
+
+*** import_string
+
+    #+begin_src cpp
+    void
+    import_string (env_t &env)
+    {
+        define_prim (env,
+                     jj_string_print_sig,
+                     jj_string_print);
+    }
+    #+end_src
+
+* [todo] vect
+
+* [todo] dict
+
 * scan
 
 *** string_vector_t
@@ -1951,8 +1982,10 @@
 
     #+begin_src cpp
     shared_ptr <data_o>
-    scan_word_list (env_t &env, shared_ptr <string_o> code)
+    // scan_word_list (env_t &env, shared_ptr <string_o> code)
+    scan_word_list (env_t &env, shared_ptr <obj_t> a)
     {
+        auto code = static_pointer_cast <string_o> (a);
         auto word_vector = scan_word_vector (code->str);
         return string_vector_to_string_list
             (env, word_vector);
@@ -2257,55 +2290,53 @@
     // -- string-t -> (list-t string-t)
     void jj_scan_word_list (env_t &env, obj_map_t &obj_map)
     {
-        auto code = static_pointer_cast <string_o>
-            (obj_map ["code"]);
-        auto list = scan_word_list (env, code);
-        env.obj_stack.push (list);
+        env.obj_stack.push (scan_word_list (env, obj_map ["code"]));
     }
     #+end_src
 
-*** >< jj_parse_sexp
+*** jj_parse_sexp
 
     #+begin_src cpp
-    sig_t jj_parse_sexp_sig = { "parse-sexp" };
+    sig_t jj_parse_sexp_sig = { "parse-sexp", "word-list" };
     // -- (list-t string-t) -> sexp-t
     void jj_parse_sexp (env_t &env, obj_map_t &obj_map)
     {
-
+        env.obj_stack.push (parse_sexp (env, obj_map ["word-list"]));
     }
     #+end_src
 
-*** >< jj_parse_sexp_list
+*** jj_parse_sexp_list
 
     #+begin_src cpp
-    sig_t jj_parse_sexp_list_sig =
-    { "parse-sexp-list", "word-list" };
+    sig_t jj_parse_sexp_list_sig = { "parse-sexp-list", "word-list" };
     // -- (list-t string-t) -> (list-t sexp-t)
     void jj_parse_sexp_list (env_t &env, obj_map_t &obj_map)
     {
-
+        env.obj_stack.push (parse_sexp_list (env, obj_map ["word-list"]));
     }
     #+end_src
 
-*** >< jj_sexp_print
+*** jj_sexp_repr
 
     #+begin_src cpp
-    sig_t jj_sexp_print_sig = { "sexp-print" };
+    sig_t jj_sexp_repr_sig = { "sexp-repr", "sexp" };
     // -- sexp-t ->
-    void jj_sexp_print (env_t &env, obj_map_t &obj_map)
+    void jj_sexp_repr (env_t &env, obj_map_t &obj_map)
     {
-
+        auto str = sexp_repr (env, obj_map ["sexp"]);
+        env.obj_stack.push (make_shared <string_o> (env, str));
     }
     #+end_src
 
-*** >< jj_sexp_list_print
+*** jj_sexp_list_repr
 
     #+begin_src cpp
-    sig_t jj_sexp_list_print_sig = { "sexp-list-print" };
+    sig_t jj_sexp_list_repr_sig = { "sexp-list-repr", "sexp-list" };
     // -- (list-t sexp-t) ->
-    void jj_sexp_list_print (env_t &env, obj_map_t &obj_map)
+    void jj_sexp_list_repr (env_t &env, obj_map_t &obj_map)
     {
-
+        auto str = sexp_list_repr (env, obj_map ["sexp-list"]);
+        env.obj_stack.push (make_shared <string_o> (env, str));
     }
     #+end_src
 
@@ -2325,15 +2356,15 @@
                      jj_parse_sexp_sig,
                      jj_parse_sexp);
         define_prim (env,
-                     jj_sexp_print_sig,
-                     jj_sexp_print);
+                     jj_sexp_repr_sig,
+                     jj_sexp_repr);
         define_prim (env,
-                     jj_sexp_list_print_sig,
-                     jj_sexp_list_print);
+                     jj_sexp_list_repr_sig,
+                     jj_sexp_list_repr);
     }
     #+end_src
 
-* epilog
+* test
 
 *** new_frame_from_jojo
 
@@ -2726,6 +2757,26 @@
       }
       #+end_src
 
+***** [todo] test_vect
+
+      #+begin_src cpp
+      void
+      test_vect ()
+      {
+
+      }
+      #+end_src
+
+***** [todo] test_dict
+
+      #+begin_src cpp
+      void
+      test_dict ()
+      {
+
+      }
+      #+end_src
+
 ***** test_list
 
       #+begin_src cpp
@@ -2764,6 +2815,16 @@
       }
       #+end_src
 
+***** [todo] test_string
+
+      #+begin_src cpp
+      void
+      test_string ()
+      {
+
+      }
+      #+end_src
+
 ***** test_scan
 
       #+begin_src cpp
@@ -2787,15 +2848,46 @@
       void
       test_sexp ()
       {
+          // {
+          //     auto env = env_t ();
+          //
+          //     auto code =
+          //         "(cons-c <car> <cdr>)"
+          //         "(cons-c (cons-c <car> <cdr>) (cons-c <car> <cdr>))";
+          //     auto word_list = scan_word_list
+          //         (env, make_shared <string_o> (env, code));
+          //     auto sexp_list = parse_sexp_list (env, word_list);
+          //     cout << sexp_list_repr (env, sexp_list);
+          // }
+
           auto env = env_t ();
+
+          import_sexp (env);
+          import_string (env);
 
           auto code =
               "(cons-c <car> <cdr>)"
               "(cons-c (cons-c <car> <cdr>) (cons-c <car> <cdr>))";
           auto word_list = scan_word_list
               (env, make_shared <string_o> (env, code));
-          auto sexp_list = parse_sexp_list (env, word_list);
-          cout << sexp_list_repr (env, sexp_list);
+          env.obj_stack.push (word_list);
+
+          jo_vector_t jo_vector = {
+              new ref_jo_t (boxing (env, "parse-sexp-list")),
+              new apply_jo_t (1),
+              new ref_jo_t (boxing (env, "sexp-list-repr")),
+              new apply_jo_t (1),
+              new ref_jo_t (boxing (env, "string-print")),
+              new apply_jo_t (1),
+          };
+
+          env.frame_stack.push (new_frame_from_jo_vector (jo_vector));
+
+          // {
+          //     env.report ();
+          //     env.run ();
+          //     env.report ();
+          // }
       }
       #+end_src
 
@@ -2816,11 +2908,16 @@
         // data
         test_bool ();
         test_list ();
+        test_string ();
+        test_vect ();
+        test_dict ();
         // parser
         test_scan ();
         test_sexp ();
     }
     #+end_src
+
+* epilog
 
 *** main
 
