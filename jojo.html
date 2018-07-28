@@ -3,7 +3,7 @@
 "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd">
 <html xmlns="http://www.w3.org/1999/xhtml" lang="en" xml:lang="en">
 <head>
-<!-- 2018-07-25 Wed 03:29 -->
+<!-- 2018-07-28 Sat 16:40 -->
 <meta http-equiv="Content-Type" content="text/html;charset=utf-8" />
 <meta name="viewport" content="width=device-width, initial-scale=1" />
 <title>jojo</title>
@@ -63,344 +63,370 @@ for the JavaScript code in this tag.
 <h2>overview</h2>
 <div id="text-table-of-contents">
 <ul>
-<li><a href="#org6361e5f"><span class="done _todo_stack_">[todo-stack]</span> </a>
+<li><a href="#org52f0682">prolog</a>
 <ul>
-<li><a href="#orgcf47fc7">sexp</a></li>
-<li><a href="#orgd95d1ef">predicate and branching</a></li>
-<li><a href="#orgd6f8b2b">case_jo_t</a></li>
-<li><a href="#orge5cfc24">data_pred_o &#x2013; for `&lt;data&gt;-p`</a></li>
-<li><a href="#org29ab6ef">looks better</a>
-<ul>
-<li><a href="#org96f72e2">repr for *_o</a></li>
-<li><a href="#orgead836">fix print for *_o</a></li>
+<li><a href="#orgb2593cf">include</a></li>
+<li><a href="#org92fb280">using</a></li>
 </ul>
 </li>
-<li><a href="#org2184367">quit org-mode &#x2013; use header file &#x2013; no forward declarations</a></li>
+<li><a href="#org65f22b4">datatype</a>
+<ul>
+<li><a href="#orgaa11301">forward declaration</a></li>
+<li><a href="#org2554c32">name_t</a></li>
+<li><a href="#orgee8daea">name_vector_t</a></li>
+<li><a href="#org56959c7">bind_t</a></li>
+<li><a href="#org280facc">bind_vector_t</a></li>
+<li><a href="#org7ff1901">local_scope_t</a></li>
+<li><a href="#org93bc031">jo_vector_t</a></li>
+<li><a href="#orgbbe1d77">jojo_t</a></li>
+<li><a href="#org23017ea">jo_t</a></li>
+<li><a href="#org92587c5">tag_t</a></li>
+<li><a href="#org55fc607">tag_name_vector</a></li>
+<li><a href="#orga0b162c">tag_map</a></li>
+<li><a href="#orgf7f8b78">obj_t</a></li>
+<li><a href="#org56477c3">obj_map_t</a></li>
+<li><a href="#org2aef61b">obj_vector_t</a></li>
+<li><a href="#orgfb515e1">frame_t</a></li>
+<li><a href="#org2a49db">box_t</a></li>
+<li><a href="#org4ffd995">box_map_t</a></li>
+<li><a href="#org2f21e85">obj_stack_t</a></li>
+<li><a href="#orga63a4f5">frame_stack_t</a></li>
+<li><a href="#org6ff91b3">env_t</a></li>
 </ul>
 </li>
-<li><a href="#org273bde8">prolog</a>
+<li><a href="#orga0c1f9e">jojo</a>
 <ul>
-<li><a href="#org2af7ca8">include</a></li>
-<li><a href="#org515bd71">using</a></li>
+<li><a href="#org3a8d1d9">jojo_repr</a></li>
+<li><a href="#org458ab38">jojo_print</a></li>
+<li><a href="#org37f6d63">jojo_print_with_index</a></li>
 </ul>
 </li>
-<li><a href="#org8fb12f6">datatype</a>
+<li><a href="#orgd560b70">name_vector</a>
 <ul>
-<li><a href="#org73397ef">forward declaration</a></li>
-<li><a href="#orgfbbcfc3">name_t</a></li>
-<li><a href="#org7eaea4b">name_vector_t</a></li>
-<li><a href="#orgf6b8ad1">bind_t</a></li>
-<li><a href="#org634e5c0">bind_vector_t</a></li>
-<li><a href="#org6b97f1d">local_scope_t</a></li>
-<li><a href="#org22bfd85">jo_vector_t</a></li>
-<li><a href="#orgad0d0e1">jojo_t</a></li>
-<li><a href="#org38094be">jo_t</a></li>
-<li><a href="#org89dc928">tag_t</a></li>
-<li><a href="#org92fbddf">tag_name_vector</a></li>
-<li><a href="#orgb545958">tag_map</a></li>
-<li><a href="#orgddb612c">obj_t</a></li>
-<li><a href="#orgb2cd892">obj_map_t</a></li>
-<li><a href="#org5dd0f7e">obj_vector_t</a></li>
-<li><a href="#org2f297b2">frame_t</a></li>
-<li><a href="#orgc6f673f">box_t</a></li>
-<li><a href="#org47d660d">box_map_t</a></li>
-<li><a href="#org1f5eb59">obj_stack_t</a></li>
-<li><a href="#orgf333d59">frame_stack_t</a></li>
-<li><a href="#org612050a">env_t</a></li>
+<li><a href="#org899f5c4">name_vector_repr</a></li>
 </ul>
 </li>
-<li><a href="#org25bc800">jojo</a>
+<li><a href="#orge3f8601">obj</a>
 <ul>
-<li><a href="#orgdd53f3e">jojo_repr</a></li>
-<li><a href="#org520ea24">jojo_print</a></li>
-<li><a href="#orgc32baff">jojo_print_with_index</a></li>
+<li><a href="#org182a4ce">tag</a>
+<ul>
+<li><a href="#org51df296">tagging</a></li>
+<li><a href="#orgfe81b9f">name_of_tag</a></li>
 </ul>
 </li>
-<li><a href="#org45764df">name_vector</a>
+<li><a href="#org926f9df">local</a>
 <ul>
-<li><a href="#orge110b72">name_vector_repr</a></li>
+<li><a href="#org9869ac6">bind_vector_print</a></li>
+<li><a href="#org8ab12e9">local_scope_print</a></li>
 </ul>
 </li>
-<li><a href="#org722ef18">obj</a>
+<li><a href="#orgc83e81f">obj</a>
 <ul>
-<li><a href="#orgc3d7605">tag</a>
-<ul>
-<li><a href="#org2f11219">tagging</a></li>
-<li><a href="#org24a7077">name_of_tag</a></li>
+<li><a href="#orga077490">obj_t::~obj_t</a></li>
+<li><a href="#orgb83006c">obj_t::print</a></li>
+<li><a href="#org96e0a2c">obj_t::equal</a></li>
+<li><a href="#org43397ca">obj_t::apply</a></li>
 </ul>
 </li>
-<li><a href="#orgfe34258">local</a>
+<li><a href="#org8e1b33a">lambda</a>
 <ul>
-<li><a href="#orgf7ed0b2">bind_vector_print</a></li>
-<li><a href="#org5d43af9">local_scope_print</a></li>
+<li><a href="#org669a914">number_of_obj_in_bind_vector</a></li>
+<li><a href="#org32358a7">lambda_o</a></li>
+<li><a href="#org322f95e">lambda_o::lambda_o</a></li>
+<li><a href="#org4a7845f">bind_vector_insert_obj</a></li>
+<li><a href="#orgd678834">bind_vector_merge_obj_vector</a></li>
+<li><a href="#org4a2cca8">pick_up_obj_vector</a></li>
+<li><a href="#org8eb710b">local_scope_extend</a></li>
+<li><a href="#orgd47ea27">lambda_o::apply</a></li>
+<li><a href="#orgf83c668">bind_equal</a></li>
+<li><a href="#org8d66d08">bind_vector_equal</a></li>
+<li><a href="#org6efb327">local_scope_equal</a></li>
+<li><a href="#orgd25904b">lambda_o::equal</a></li>
+<li><a href="#org7e9ae9c">lambda_o::print</a></li>
 </ul>
 </li>
-<li><a href="#org355d683">obj</a>
+<li><a href="#org88dac1c">string</a>
 <ul>
-<li><a href="#org89783cf">obj_t::~obj_t</a></li>
-<li><a href="#org471db1d">obj_t::print</a></li>
-<li><a href="#org60bc08c">obj_t::equal</a></li>
-<li><a href="#org5c225c2">obj_t::apply</a></li>
+<li><a href="#orgc6e1df8">string_o</a></li>
+<li><a href="#orgbd06372">string_o::string_o</a></li>
+<li><a href="#org5124b95">string_o::print</a></li>
+<li><a href="#org35d1ff9">string_o::equal</a></li>
 </ul>
 </li>
-<li><a href="#org7ac76e3">lambda</a>
+<li><a href="#org2127174">data</a>
 <ul>
-<li><a href="#org823aa6b">number_of_obj_in_bind_vector</a></li>
-<li><a href="#org7b5d833">lambda_o</a></li>
-<li><a href="#orgeea72a0">lambda_o::lambda_o</a></li>
-<li><a href="#org19902d7">bind_vector_insert_obj</a></li>
-<li><a href="#orga23d7ee">bind_vector_merge_obj_vector</a></li>
-<li><a href="#orge2ed7e1">pick_up_obj_vector</a></li>
-<li><a href="#org196f7f1">local_scope_extend</a></li>
-<li><a href="#orgb6c4ab0">lambda_o::apply</a></li>
-<li><a href="#org7bba972">bind_equal</a></li>
-<li><a href="#orge945447">bind_vector_equal</a></li>
-<li><a href="#org2203e66">local_scope_equal</a></li>
-<li><a href="#org7d969e9">lambda_o::equal</a></li>
-<li><a href="#org5abcd73">lambda_o::print</a></li>
+<li><a href="#org62529b2">data_o</a></li>
+<li><a href="#org78f9e02">data_o::data_o</a></li>
+<li><a href="#org1707c49">obj_map_equal</a></li>
+<li><a href="#orgde9c456">data_o::equal</a></li>
+<li><a href="#org74121cd"><span class="todo _todo_">[todo]</span> data_o::print</a></li>
 </ul>
 </li>
-<li><a href="#orgee61077">string</a>
+<li><a href="#org6ae3c83">data_cons</a>
 <ul>
-<li><a href="#orgad0d331">string_o</a></li>
-<li><a href="#orgb446b1a">string_o::string_o</a></li>
-<li><a href="#org8039388">string_o::print</a></li>
-<li><a href="#org7cc4f8b">string_o::equal</a></li>
+<li><a href="#org31cf146">data_cons_o</a></li>
+<li><a href="#orgb717dfd">data_cons_o::data_cons_o</a></li>
+<li><a href="#org4e030ca">name_vector_obj_map_lack</a></li>
+<li><a href="#org276f7e4">name_vector_obj_map_arity_lack</a></li>
+<li><a href="#orgc9283ef">pick_up_obj_map_and_merge</a></li>
+<li><a href="#org3e019f5">data_cons_o::apply</a></li>
+<li><a href="#orgcd10518">data_cons_o::equal</a></li>
+<li><a href="#orgf13fba2"><span class="todo _todo_">[todo]</span> data_cons_o::print</a></li>
 </ul>
 </li>
-<li><a href="#org9d1f577">data</a>
+<li><a href="#org5883a25">prim</a>
 <ul>
-<li><a href="#orga84e811">data_o</a></li>
-<li><a href="#org4452607">data_o::data_o</a></li>
-<li><a href="#org4b3daec">obj_map_equal</a></li>
-<li><a href="#orge43af71">data_o::equal</a></li>
-<li><a href="#orgef41bb2"><span class="todo _todo_">[todo]</span> data_o::print</a></li>
-</ul>
-</li>
-<li><a href="#orgf57b047">data_cons</a>
-<ul>
-<li><a href="#orgf4f8895">data_cons_o</a></li>
-<li><a href="#org3e134bd">data_cons_o::data_cons_o</a></li>
-<li><a href="#orga859347">name_vector_obj_map_lack</a></li>
-<li><a href="#org42d9d66">name_vector_obj_map_arity_lack</a></li>
-<li><a href="#orga9ef3c7">pick_up_obj_map_and_merge</a></li>
-<li><a href="#org6956396">data_cons_o::apply</a></li>
-<li><a href="#org7afa027">data_cons_o::equal</a></li>
-<li><a href="#org699bcaa"><span class="todo _todo_">[todo]</span> data_cons_o::print</a></li>
-</ul>
-</li>
-<li><a href="#org1996897">prim</a>
-<ul>
-<li><a href="#orgab94c24">prim_fn</a></li>
-<li><a href="#orgcbde1ad">prim_o</a></li>
-<li><a href="#org6d8320b">prim_o::prim_o</a></li>
-<li><a href="#orga522fa"><span class="todo _todo_">[todo]</span> prim_o::print</a></li>
-<li><a href="#org2245c84">prim_o::equal</a></li>
-<li><a href="#orgdd8337f">prim_o::apply</a></li>
+<li><a href="#org743bed1">prim_fn</a></li>
+<li><a href="#org33e58af">prim_o</a></li>
+<li><a href="#org65ef7c3">prim_o::prim_o</a></li>
+<li><a href="#orgb78976"><span class="todo _todo_">[todo]</span> prim_o::print</a></li>
+<li><a href="#orgcc94f15">prim_o::equal</a></li>
+<li><a href="#orgaaead52">prim_o::apply</a></li>
 </ul>
 </li>
 </ul>
 </li>
-<li><a href="#org56a2363">env</a>
+<li><a href="#orgfd481b0">env</a>
 <ul>
-<li><a href="#org91bfd6">frame</a>
+<li><a href="#org9f4cf9c">frame</a>
 <ul>
-<li><a href="#org32c38b3">frame_t::frame_t</a></li>
-<li><a href="#orgb400c9d">frame_report</a></li>
+<li><a href="#org8cf51b">frame_t::frame_t</a></li>
+<li><a href="#orga40703b">frame_report</a></li>
 </ul>
 </li>
-<li><a href="#orgfb8e8b3">box</a>
+<li><a href="#org682e7ad">box</a>
 <ul>
-<li><a href="#org4a12dbc">box_t::box_t</a></li>
-<li><a href="#org2619629">boxing</a></li>
+<li><a href="#org94f1868">box_t::box_t</a></li>
+<li><a href="#orgb95f487">boxing</a></li>
 </ul>
 </li>
-<li><a href="#org1887138">box_map</a>
+<li><a href="#org1a057c1">box_map</a>
 <ul>
-<li><a href="#orgff83cdf">box_map_report</a></li>
-<li><a href="#orgf488b09">name_of_box</a></li>
+<li><a href="#org10002c6">box_map_report</a></li>
+<li><a href="#org723c0cf">name_of_box</a></li>
 </ul>
 </li>
-<li><a href="#orgad0a89c">obj_stack</a>
+<li><a href="#org224a40">obj_stack</a>
 <ul>
-<li><a href="#orge3f9b0e">frame_stack_report</a></li>
+<li><a href="#orgf385927">frame_stack_report</a></li>
 </ul>
 </li>
-<li><a href="#orgf969ed7">frame_stack</a>
+<li><a href="#orgf60dfc8">frame_stack</a>
 <ul>
-<li><a href="#org73ea22d">obj_stack_report</a></li>
+<li><a href="#orgdc7f0b">obj_stack_report</a></li>
 </ul>
 </li>
-<li><a href="#orgc2a1788">env_t::step</a></li>
-<li><a href="#orgd4091c5">env_t::run</a></li>
-<li><a href="#orgc257a1b">env_t::report</a></li>
+<li><a href="#orga4b6349">env_t::step</a></li>
+<li><a href="#org58420f3">env_t::run</a></li>
+<li><a href="#orgee71795">env_t::report</a></li>
 </ul>
 </li>
-<li><a href="#orgcbfc6d8">jo</a>
+<li><a href="#org4db7773">jo</a>
 <ul>
-<li><a href="#org986f4b5">jojo</a>
+<li><a href="#org7f50fcb">jojo</a>
 <ul>
-<li><a href="#orgb2ffdc5">jojo_t::jojo_t</a></li>
-<li><a href="#org3a46d8">jojo_t::~jojo_t</a></li>
+<li><a href="#orgaf2bdc4">jojo_t::jojo_t</a></li>
+<li><a href="#org6f074af">jojo_t::~jojo_t</a></li>
 </ul>
 </li>
-<li><a href="#org489e002">jo</a>
+<li><a href="#orgeac38b0">jo</a>
 <ul>
-<li><a href="#org592a584">jo_t::~jo_t</a></li>
-<li><a href="#org8d7561c">jo_t::exe</a></li>
-<li><a href="#org5095b55">jo_t::repr</a></li>
+<li><a href="#org537f78f">jo_t::~jo_t</a></li>
+<li><a href="#orgc98a552">jo_t::exe</a></li>
+<li><a href="#orge95fd65">jo_t::repr</a></li>
 </ul>
 </li>
-<li><a href="#orgead5ea2">ref_jo</a>
+<li><a href="#org8c9e6a9">ref_jo</a>
 <ul>
-<li><a href="#orgac8d5c3">ref_jo_t</a></li>
-<li><a href="#orga7a925">ref_jo_t::ref_jo_t</a></li>
-<li><a href="#orgbcf2c9d">ref_jo_t::exe</a></li>
-<li><a href="#org11c6865">ref_jo_t::repr</a></li>
+<li><a href="#org4df3f18">ref_jo_t</a></li>
+<li><a href="#org19e50b8">ref_jo_t::ref_jo_t</a></li>
+<li><a href="#org57071a3">ref_jo_t::exe</a></li>
+<li><a href="#orgbbb518b">ref_jo_t::repr</a></li>
 </ul>
 </li>
-<li><a href="#org6b1e3ad">local_ref_jo</a>
+<li><a href="#orgae835e3">local_ref_jo</a>
 <ul>
-<li><a href="#orgbba1a6">local_ref_jo_t</a></li>
-<li><a href="#org9d972fb">local_ref_jo_t::local_ref_jo_t</a></li>
-<li><a href="#orgb18b59b">vector_rev_ref</a></li>
-<li><a href="#org1b73959">local_ref_jo_t::exe</a></li>
-<li><a href="#org2a67be9">local_ref_jo_t::repr</a></li>
+<li><a href="#orgd0968f4">local_ref_jo_t</a></li>
+<li><a href="#org7ebab1b">local_ref_jo_t::local_ref_jo_t</a></li>
+<li><a href="#org448d3e">vector_rev_ref</a></li>
+<li><a href="#org8ded7c">local_ref_jo_t::exe</a></li>
+<li><a href="#org19cb049">local_ref_jo_t::repr</a></li>
 </ul>
 </li>
-<li><a href="#org627bc77">lambda_jo</a>
+<li><a href="#org30e1821">lambda_jo</a>
 <ul>
-<li><a href="#orge222402">lambda_jo_t</a></li>
-<li><a href="#org7d379a0">lambda_jo_t::lambda_jo_t</a></li>
-<li><a href="#orgd5c5b7e">bind_vector_from_name_vector</a></li>
-<li><a href="#orgec93b53">lambda_jo_t::exe</a></li>
-<li><a href="#org62fd2e0">lambda_jo_t::repr</a></li>
+<li><a href="#org538ea4b">lambda_jo_t</a></li>
+<li><a href="#org6dd16d0">lambda_jo_t::lambda_jo_t</a></li>
+<li><a href="#org152b261">bind_vector_from_name_vector</a></li>
+<li><a href="#orgb4ddf21">lambda_jo_t::exe</a></li>
+<li><a href="#org8c3936f">lambda_jo_t::repr</a></li>
 </ul>
 </li>
-<li><a href="#org33649c2">field_jo</a>
+<li><a href="#org585d847">field_jo</a>
 <ul>
-<li><a href="#org9881562">field_jo_t</a></li>
-<li><a href="#org69de2da">field_jo_t::field_jo_t</a></li>
-<li><a href="#org84df053">field_jo_t::exe</a></li>
-<li><a href="#orgaab5824">field_jo_t::repr</a></li>
+<li><a href="#org28014d1">field_jo_t</a></li>
+<li><a href="#org99635e7">field_jo_t::field_jo_t</a></li>
+<li><a href="#orgf43832f">field_jo_t::exe</a></li>
+<li><a href="#orge78d2a6">field_jo_t::repr</a></li>
 </ul>
 </li>
-<li><a href="#org3e551d2">apply_jo</a>
+<li><a href="#orgd75b9ad">apply_jo</a>
 <ul>
-<li><a href="#orgdcfbb84">apply_jo_t</a></li>
-<li><a href="#orgbe352b3">apply_jo_t::apply_jo_t</a></li>
-<li><a href="#org41ea4af">apply_jo_t::exe</a></li>
-<li><a href="#orgc3cf7c4">apply_jo_t::repr</a></li>
+<li><a href="#orga57e11d">apply_jo_t</a></li>
+<li><a href="#orged50ca4">apply_jo_t::apply_jo_t</a></li>
+<li><a href="#orgc8a0312">apply_jo_t::exe</a></li>
+<li><a href="#orgb4a4df8">apply_jo_t::repr</a></li>
 </ul>
 </li>
 </ul>
 </li>
-<li><a href="#orgecc1e0">bool</a>
+<li><a href="#org5fafd23">define</a>
 <ul>
-<li><a href="#org94919ec">define</a></li>
-<li><a href="#orgd87bcce">true_c</a></li>
-<li><a href="#org28ef013">false_c</a></li>
-<li><a href="#org906d41c">import_bool</a></li>
+<li><a href="#orgdc09f98">define</a></li>
+<li><a href="#orgea90f1f">sig_t</a></li>
+<li><a href="#org4223cc0">name_of_sig</a></li>
+<li><a href="#orgdba2076">name_vector_of_sig</a></li>
+<li><a href="#org4f642c2">define_prim</a></li>
 </ul>
 </li>
-<li><a href="#orgcaff6a3">list</a>
+<li><a href="#orgdfc43ae"><b>test</b></a>
 <ul>
-<li><a href="#orgc8f9fa2">null_c</a></li>
-<li><a href="#org739c6a4">cons_c</a></li>
-<li><a href="#org207ba30">import_list</a></li>
+<li><a href="#org3615b5e">new_frame_from_jojo</a></li>
+<li><a href="#orgde7cd2a">new_frame_from_jo_vector</a></li>
+<li><a href="#orgad9918f">assert</a>
+<ul>
+<li><a href="#orge442788">assert_pop_eq</a></li>
+<li><a href="#org88e03ec">assert_tos_eq</a></li>
+<li><a href="#org3f8f09a">assert_stack_size</a></li>
 </ul>
 </li>
-<li><a href="#orgb6e572a">scan</a>
-<ul>
-<li><a href="#org3856066">string_vector_t</a></li>
-<li><a href="#orgdf396e5">space_char_p</a></li>
-<li><a href="#orgad7bb90">delimiter_char_p</a></li>
-<li><a href="#orga549bc">string_from_char</a></li>
-<li><a href="#org86c9664">doublequote_char_p</a></li>
-<li><a href="#orgc8fef2d">find_word_length</a></li>
-<li><a href="#orgef633ab">code_scan</a></li>
+<li><a href="#orgc90b9e7"><span class="todo _todo_">[todo]</span> import_test</a></li>
 </ul>
 </li>
-<li><a href="#orgcd6f402">sexp</a>
+<li><a href="#orga16187a"><b>bool</b></a>
 <ul>
-<li><a href="#org3b78059">sexp_t</a></li>
+<li><a href="#orge3c5a23">jj_true_c</a></li>
+<li><a href="#org48ba58a">jj_false_c</a></li>
+<li><a href="#orgd1377d8">import_bool</a></li>
+<li><a href="#org2ffa32">test_bool</a></li>
 </ul>
 </li>
-<li><a href="#org730de6e">epilog</a>
+<li><a href="#org1e996d8"><b>list</b></a>
 <ul>
-<li><a href="#org64a25ea">new_frame_from_jojo</a></li>
-<li><a href="#orgd31e767">new_frame_from_jo_vector</a></li>
-<li><a href="#org2383ef4">assert</a>
-<ul>
-<li><a href="#org5151796">assert_pop_eq</a></li>
-<li><a href="#org306ec18">assert_tos_eq</a></li>
-<li><a href="#org9e99886">assert_stack_size</a></li>
+<li><a href="#orgc48de48">null_c</a></li>
+<li><a href="#orgdb65beb">cons_c</a></li>
+<li><a href="#orgf6cb6eb">car</a></li>
+<li><a href="#org928a8ac">cdr</a></li>
+<li><a href="#org6b42860">null_p</a></li>
+<li><a href="#orgc75c4e0">cons_p</a></li>
+<li><a href="#orgb64fd98">jj_null_c</a></li>
+<li><a href="#org2cd2337">jj_cons_c</a></li>
+<li><a href="#org6e22acd">import_list</a></li>
+<li><a href="#org950d4e5">test_list</a></li>
 </ul>
 </li>
-<li><a href="#orgdd263ca">test</a>
+<li><a href="#org36cf69a"><b>string</b></a>
 <ul>
-<li><a href="#org10750b7">test_step</a></li>
-<li><a href="#org853a20">test_data</a></li>
-<li><a href="#org797554b">test_apply</a></li>
-<li><a href="#org419548">test_lambda_curry</a></li>
-<li><a href="#orge3fde29">test_data_cons</a></li>
-<li><a href="#org8b9067b">test_data_cons_curry</a></li>
-<li><a href="#org24c415">test_prim</a></li>
-<li><a href="#org18b4b6c">test_bool</a></li>
-<li><a href="#org7883492">test_list</a></li>
-<li><a href="#org6590982">test_scan</a></li>
+<li><a href="#orgf242629">jj_string_print</a></li>
+<li><a href="#org2e8416c">import_string</a></li>
+<li><a href="#org589bdb0"><span class="todo _todo_">[todo]</span> test_string</a></li>
 </ul>
 </li>
-<li><a href="#orgb885ecd">test_all</a></li>
-<li><a href="#org4a031e6">main</a></li>
+<li><a href="#orgcc45bcc"><b>vect</b></a>
+<ul>
+<li><a href="#org4e2bd62">obj_vect_t</a></li>
+<li><a href="#orgc077602">vect_o</a></li>
+<li><a href="#org9750b24">vect_o::vect_o</a></li>
+<li><a href="#org9f5dc25">obj_equal</a></li>
+<li><a href="#org6d445ad">vect_equal</a></li>
+<li><a href="#orgf2a3a5d">vect_o::equal</a></li>
+<li><a href="#orgcca6fd0"><span class="todo _todo_">[todo]</span> vect_o::print</a></li>
+<li><a href="#orgfe427c6">vect_p</a></li>
+<li><a href="#orga7f2db5">list_to_vect</a></li>
+<li><a href="#org7c093a8">jj_list_to_vect</a></li>
+<li><a href="#orgffcb670">vect_to_list</a></li>
+<li><a href="#orgfdad473">jj_vect_to_list</a></li>
+<li><a href="#orgc8c0fa5">import_vect</a></li>
+<li><a href="#org212953d">test_vect</a></li>
+</ul>
+</li>
+<li><a href="#org50211e8"><b>dict</b></a>
+<ul>
+<li><a href="#orgf656b3f"><span class="todo _todo_">[todo]</span> test_dict</a></li>
+</ul>
+</li>
+<li><a href="#org77caba"><b>sexp</b></a>
+<ul>
+<li><a href="#org76fb8be">string_vector_t</a></li>
+<li><a href="#org8023f48">space_char_p</a></li>
+<li><a href="#orgbbde6cc">delimiter_char_p</a></li>
+<li><a href="#org9a348c7">string_from_char</a></li>
+<li><a href="#org3b2e8f7">doublequote_char_p</a></li>
+<li><a href="#org50c7fb4">find_word_length</a></li>
+<li><a href="#org521e7cd">scan_word_vector</a></li>
+<li><a href="#orgcc1737">string_vector_to_string_list</a></li>
+<li><a href="#org9f905d9"><span class="todo _note_">[note]</span> about literal in quote</a></li>
+<li><a href="#org8891697">scan_word_list</a></li>
+<li><a href="#org488e468">bar_word_p</a></li>
+<li><a href="#orgcdcec8a">ket_word_p</a></li>
+<li><a href="#org7e8870b">quote_word_p</a></li>
+<li><a href="#orga102828">bar_word_to_ket_word</a></li>
+<li><a href="#org19e41f3">word_list_head_with_bar_ket_counter</a></li>
+<li><a href="#org4bfd527">word_list_head</a></li>
+<li><a href="#org9610635">word_list_rest_with_bar_ket_counter</a></li>
+<li><a href="#orgb4fd0b">word_list_rest</a></li>
+<li><a href="#org1cf930e">word_list_drop_ket</a></li>
+<li><a href="#org4ecd84b">parse_sexp</a></li>
+<li><a href="#org2900be8">parse_sexp_list</a></li>
+<li><a href="#org51c65a5">sexp_repr</a></li>
+<li><a href="#org3cb0a8e">sexp_list_repr</a></li>
+<li><a href="#org707fe7">jj_scan_word_list</a></li>
+<li><a href="#orgf70114e">jj_parse_sexp</a></li>
+<li><a href="#org819be66">jj_parse_sexp_list</a></li>
+<li><a href="#org3beb2ec">jj_sexp_repr</a></li>
+<li><a href="#orgb34d0c">jj_sexp_list_repr</a></li>
+<li><a href="#org5647a71">import_sexp</a></li>
+<li><a href="#org3801794">test_sexp_scan</a></li>
+<li><a href="#org9fd3cac">test_sexp_list</a></li>
+<li><a href="#orgdac63e4">test_sexp_vect</a></li>
+<li><a href="#org1f88230">test_sexp</a></li>
+</ul>
+</li>
+<li><a href="#org9e95bc3"><b>repl</b></a>
+<ul>
+<li><a href="#org56c2197">repl</a></li>
+<li><a href="#org1ae8c2a"><span class="todo _todo_">[todo]</span> jj_repl</a></li>
+<li><a href="#orga5b459f">import_repl</a></li>
+<li><a href="#org5a4fd3b">test_repl</a></li>
+</ul>
+</li>
+<li><a href="#org3d2a342">epilog</a>
+<ul>
+<li><a href="#org1ca0e7c">test</a>
+<ul>
+<li><a href="#org385c5b">test_step</a></li>
+<li><a href="#orgc04e464">test_data</a></li>
+<li><a href="#org9b2b182">test_apply</a></li>
+<li><a href="#orgcd62df8">test_lambda_curry</a></li>
+<li><a href="#orgc49cae6">test_data_cons</a></li>
+<li><a href="#org2096770">test_data_cons_curry</a></li>
+<li><a href="#orgb80c824">test_prim</a></li>
+</ul>
+</li>
+<li><a href="#orgf123446">test_all</a></li>
+<li><a href="#orgcd6ad55">main</a></li>
 </ul>
 </li>
 </ul>
 </div>
 </div>
 
-<div id="outline-container-org6361e5f" class="outline-2">
-<h2 id="org6361e5f"><span class="done _todo_stack_">[todo-stack]</span> </h2>
-<div class="outline-text-2" id="text-org6361e5f">
-</div><div id="outline-container-orgcf47fc7" class="outline-3">
-<h3 id="orgcf47fc7">sexp</h3>
-</div>
-
-<div id="outline-container-orgd95d1ef" class="outline-3">
-<h3 id="orgd95d1ef">predicate and branching</h3>
-</div>
-
-<div id="outline-container-orgd6f8b2b" class="outline-3">
-<h3 id="orgd6f8b2b">case_jo_t</h3>
-</div>
-
-<div id="outline-container-orge5cfc24" class="outline-3">
-<h3 id="orge5cfc24">data_pred_o &#x2013; for `&lt;data&gt;-p`</h3>
-</div>
-
-<div id="outline-container-org29ab6ef" class="outline-3">
-<h3 id="org29ab6ef">looks better</h3>
-<div class="outline-text-3" id="text-org29ab6ef">
-</div><div id="outline-container-org96f72e2" class="outline-4">
-<h4 id="org96f72e2">repr for *_o</h4>
-</div>
-
-<div id="outline-container-orgead836" class="outline-4">
-<h4 id="orgead836">fix print for *_o</h4>
-</div>
-</div>
-
-<div id="outline-container-org2184367" class="outline-3">
-<h3 id="org2184367">quit org-mode &#x2013; use header file &#x2013; no forward declarations</h3>
-</div>
-</div>
-
-<div id="outline-container-org273bde8" class="outline-2">
-<h2 id="org273bde8">prolog</h2>
-<div class="outline-text-2" id="text-org273bde8">
-</div><div id="outline-container-org2af7ca8" class="outline-3">
-<h3 id="org2af7ca8">include</h3>
-<div class="outline-text-3" id="text-org2af7ca8">
+<div id="outline-container-org52f0682" class="outline-2">
+<h2 id="org52f0682">prolog</h2>
+<div class="outline-text-2" id="text-org52f0682">
+</div><div id="outline-container-orgb2593cf" class="outline-3">
+<h3 id="orgb2593cf">include</h3>
+<div class="outline-text-3" id="text-orgb2593cf">
 <div class="org-src-container">
 
 <pre class="src src-cpp"><span style="color: #94BFF3;">#include</span> <span style="color: #CC9393;">&lt;iostream&gt;</span>
@@ -418,9 +444,9 @@ for the JavaScript code in this tag.
 </div>
 </div>
 
-<div id="outline-container-org515bd71" class="outline-3">
-<h3 id="org515bd71">using</h3>
-<div class="outline-text-3" id="text-org515bd71">
+<div id="outline-container-org92fb280" class="outline-3">
+<h3 id="org92fb280">using</h3>
+<div class="outline-text-3" id="text-org92fb280">
 <div class="org-src-container">
 
 <pre class="src src-cpp"><span style="color: #F0DFAF; font-weight: bold;">using</span> <span style="color: #F0DFAF; font-weight: bold;">namespace</span> <span style="color: #BFEBBF;">std</span>;
@@ -430,12 +456,12 @@ for the JavaScript code in this tag.
 </div>
 </div>
 
-<div id="outline-container-org8fb12f6" class="outline-2">
-<h2 id="org8fb12f6">datatype</h2>
-<div class="outline-text-2" id="text-org8fb12f6">
-</div><div id="outline-container-org73397ef" class="outline-3">
-<h3 id="org73397ef">forward declaration</h3>
-<div class="outline-text-3" id="text-org73397ef">
+<div id="outline-container-org65f22b4" class="outline-2">
+<h2 id="org65f22b4">datatype</h2>
+<div class="outline-text-2" id="text-org65f22b4">
+</div><div id="outline-container-orgaa11301" class="outline-3">
+<h3 id="orgaa11301">forward declaration</h3>
+<div class="outline-text-3" id="text-orgaa11301">
 <div class="org-src-container">
 
 <pre class="src src-cpp"><span style="color: #F0DFAF; font-weight: bold;">struct</span> <span style="color: #7CB8BB;">env_t</span>;
@@ -446,9 +472,9 @@ for the JavaScript code in this tag.
 </div>
 </div>
 
-<div id="outline-container-orgfbbcfc3" class="outline-3">
-<h3 id="orgfbbcfc3">name_t</h3>
-<div class="outline-text-3" id="text-orgfbbcfc3">
+<div id="outline-container-org2554c32" class="outline-3">
+<h3 id="org2554c32">name_t</h3>
+<div class="outline-text-3" id="text-org2554c32">
 <div class="org-src-container">
 
 <pre class="src src-cpp"><span style="color: #F0DFAF; font-weight: bold;">using</span> <span style="color: #7CB8BB;">name_t</span> = string;
@@ -457,9 +483,9 @@ for the JavaScript code in this tag.
 </div>
 </div>
 
-<div id="outline-container-org7eaea4b" class="outline-3">
-<h3 id="org7eaea4b">name_vector_t</h3>
-<div class="outline-text-3" id="text-org7eaea4b">
+<div id="outline-container-orgee8daea" class="outline-3">
+<h3 id="orgee8daea">name_vector_t</h3>
+<div class="outline-text-3" id="text-orgee8daea">
 <div class="org-src-container">
 
 <pre class="src src-cpp"><span style="color: #F0DFAF; font-weight: bold;">using</span> <span style="color: #7CB8BB;">name_vector_t</span> = <span style="color: #7CB8BB;">vector</span> &lt;<span style="color: #7CB8BB;">name_t</span>&gt;;
@@ -468,9 +494,9 @@ for the JavaScript code in this tag.
 </div>
 </div>
 
-<div id="outline-container-orgf6b8ad1" class="outline-3">
-<h3 id="orgf6b8ad1">bind_t</h3>
-<div class="outline-text-3" id="text-orgf6b8ad1">
+<div id="outline-container-org56959c7" class="outline-3">
+<h3 id="org56959c7">bind_t</h3>
+<div class="outline-text-3" id="text-org56959c7">
 <div class="org-src-container">
 
 <pre class="src src-cpp"><span style="color: #F0DFAF; font-weight: bold;">using</span> <span style="color: #7CB8BB;">bind_t</span> = <span style="color: #7CB8BB;">pair</span> &lt;<span style="color: #7CB8BB;">name_t</span>, <span style="color: #7CB8BB;">shared_ptr</span> &lt;<span style="color: #7CB8BB;">obj_t</span>&gt;&gt;;
@@ -479,9 +505,9 @@ for the JavaScript code in this tag.
 </div>
 </div>
 
-<div id="outline-container-org634e5c0" class="outline-3">
-<h3 id="org634e5c0">bind_vector_t</h3>
-<div class="outline-text-3" id="text-org634e5c0">
+<div id="outline-container-org280facc" class="outline-3">
+<h3 id="org280facc">bind_vector_t</h3>
+<div class="outline-text-3" id="text-org280facc">
 <div class="org-src-container">
 
 <pre class="src src-cpp"><span style="color: #5F7F5F;">// </span><span style="color: #7F9F7F;">index from end</span>
@@ -491,9 +517,9 @@ for the JavaScript code in this tag.
 </div>
 </div>
 
-<div id="outline-container-org6b97f1d" class="outline-3">
-<h3 id="org6b97f1d">local_scope_t</h3>
-<div class="outline-text-3" id="text-org6b97f1d">
+<div id="outline-container-org7ff1901" class="outline-3">
+<h3 id="org7ff1901">local_scope_t</h3>
+<div class="outline-text-3" id="text-org7ff1901">
 <div class="org-src-container">
 
 <pre class="src src-cpp"><span style="color: #5F7F5F;">// </span><span style="color: #7F9F7F;">index from end</span>
@@ -503,9 +529,9 @@ for the JavaScript code in this tag.
 </div>
 </div>
 
-<div id="outline-container-org22bfd85" class="outline-3">
-<h3 id="org22bfd85">jo_vector_t</h3>
-<div class="outline-text-3" id="text-org22bfd85">
+<div id="outline-container-org93bc031" class="outline-3">
+<h3 id="org93bc031">jo_vector_t</h3>
+<div class="outline-text-3" id="text-org93bc031">
 <div class="org-src-container">
 
 <pre class="src src-cpp"><span style="color: #F0DFAF; font-weight: bold;">using</span> <span style="color: #7CB8BB;">jo_vector_t</span> = <span style="color: #7CB8BB;">vector</span> &lt;<span style="color: #7CB8BB;">jo_t</span> *&gt;;
@@ -514,9 +540,9 @@ for the JavaScript code in this tag.
 </div>
 </div>
 
-<div id="outline-container-orgad0d0e1" class="outline-3">
-<h3 id="orgad0d0e1">jojo_t</h3>
-<div class="outline-text-3" id="text-orgad0d0e1">
+<div id="outline-container-orgbbe1d77" class="outline-3">
+<h3 id="orgbbe1d77">jojo_t</h3>
+<div class="outline-text-3" id="text-orgbbe1d77">
 <div class="org-src-container">
 
 <pre class="src src-cpp"><span style="color: #F0DFAF; font-weight: bold;">struct</span> <span style="color: #7CB8BB;">jojo_t</span>
@@ -530,9 +556,9 @@ for the JavaScript code in this tag.
 </div>
 </div>
 
-<div id="outline-container-org38094be" class="outline-3">
-<h3 id="org38094be">jo_t</h3>
-<div class="outline-text-3" id="text-org38094be">
+<div id="outline-container-org23017ea" class="outline-3">
+<h3 id="org23017ea">jo_t</h3>
+<div class="outline-text-3" id="text-org23017ea">
 <div class="org-src-container">
 
 <pre class="src src-cpp"><span style="color: #F0DFAF; font-weight: bold;">struct</span> <span style="color: #7CB8BB;">jo_t</span>
@@ -546,9 +572,9 @@ for the JavaScript code in this tag.
 </div>
 </div>
 
-<div id="outline-container-org89dc928" class="outline-3">
-<h3 id="org89dc928">tag_t</h3>
-<div class="outline-text-3" id="text-org89dc928">
+<div id="outline-container-org92587c5" class="outline-3">
+<h3 id="org92587c5">tag_t</h3>
+<div class="outline-text-3" id="text-org92587c5">
 <div class="org-src-container">
 
 <pre class="src src-cpp"><span style="color: #F0DFAF; font-weight: bold;">using</span> <span style="color: #7CB8BB;">tag_t</span> = size_t;
@@ -557,9 +583,9 @@ for the JavaScript code in this tag.
 </div>
 </div>
 
-<div id="outline-container-org92fbddf" class="outline-3">
-<h3 id="org92fbddf">tag_name_vector</h3>
-<div class="outline-text-3" id="text-org92fbddf">
+<div id="outline-container-org55fc607" class="outline-3">
+<h3 id="org55fc607">tag_name_vector</h3>
+<div class="outline-text-3" id="text-org55fc607">
 <div class="org-src-container">
 
 <pre class="src src-cpp"><span style="color: #F0DFAF; font-weight: bold;">using</span> <span style="color: #7CB8BB;">tag_name_vector_t</span> = <span style="color: #7CB8BB;">vector</span> &lt;<span style="color: #7CB8BB;">name_t</span>&gt;;
@@ -568,9 +594,9 @@ for the JavaScript code in this tag.
 </div>
 </div>
 
-<div id="outline-container-orgb545958" class="outline-3">
-<h3 id="orgb545958">tag_map</h3>
-<div class="outline-text-3" id="text-orgb545958">
+<div id="outline-container-orga0b162c" class="outline-3">
+<h3 id="orga0b162c">tag_map</h3>
+<div class="outline-text-3" id="text-orga0b162c">
 <div class="org-src-container">
 
 <pre class="src src-cpp"><span style="color: #F0DFAF; font-weight: bold;">using</span> <span style="color: #7CB8BB;">tag_map_t</span> = <span style="color: #7CB8BB;">map</span> &lt;<span style="color: #7CB8BB;">name_t</span>, <span style="color: #7CB8BB;">tag_t</span>&gt;;
@@ -579,9 +605,9 @@ for the JavaScript code in this tag.
 </div>
 </div>
 
-<div id="outline-container-orgddb612c" class="outline-3">
-<h3 id="orgddb612c">obj_t</h3>
-<div class="outline-text-3" id="text-orgddb612c">
+<div id="outline-container-orgf7f8b78" class="outline-3">
+<h3 id="orgf7f8b78">obj_t</h3>
+<div class="outline-text-3" id="text-orgf7f8b78">
 <div class="org-src-container">
 
 <pre class="src src-cpp"><span style="color: #F0DFAF; font-weight: bold;">struct</span> <span style="color: #7CB8BB;">obj_t</span>
@@ -597,9 +623,9 @@ for the JavaScript code in this tag.
 </div>
 </div>
 
-<div id="outline-container-orgb2cd892" class="outline-3">
-<h3 id="orgb2cd892">obj_map_t</h3>
-<div class="outline-text-3" id="text-orgb2cd892">
+<div id="outline-container-org56477c3" class="outline-3">
+<h3 id="org56477c3">obj_map_t</h3>
+<div class="outline-text-3" id="text-org56477c3">
 <div class="org-src-container">
 
 <pre class="src src-cpp"><span style="color: #F0DFAF; font-weight: bold;">using</span> <span style="color: #7CB8BB;">obj_map_t</span> = <span style="color: #7CB8BB;">map</span> &lt;<span style="color: #7CB8BB;">name_t</span>, <span style="color: #7CB8BB;">shared_ptr</span> &lt;<span style="color: #7CB8BB;">obj_t</span>&gt;&gt;;
@@ -608,9 +634,9 @@ for the JavaScript code in this tag.
 </div>
 </div>
 
-<div id="outline-container-org5dd0f7e" class="outline-3">
-<h3 id="org5dd0f7e">obj_vector_t</h3>
-<div class="outline-text-3" id="text-org5dd0f7e">
+<div id="outline-container-org2aef61b" class="outline-3">
+<h3 id="org2aef61b">obj_vector_t</h3>
+<div class="outline-text-3" id="text-org2aef61b">
 <div class="org-src-container">
 
 <pre class="src src-cpp"><span style="color: #F0DFAF; font-weight: bold;">using</span> <span style="color: #7CB8BB;">obj_vector_t</span> = <span style="color: #7CB8BB;">vector</span> &lt;<span style="color: #7CB8BB;">shared_ptr</span> &lt;<span style="color: #7CB8BB;">obj_t</span>&gt;&gt;;
@@ -619,9 +645,9 @@ for the JavaScript code in this tag.
 </div>
 </div>
 
-<div id="outline-container-org2f297b2" class="outline-3">
-<h3 id="org2f297b2">frame_t</h3>
-<div class="outline-text-3" id="text-org2f297b2">
+<div id="outline-container-orgfb515e1" class="outline-3">
+<h3 id="orgfb515e1">frame_t</h3>
+<div class="outline-text-3" id="text-orgfb515e1">
 <div class="org-src-container">
 
 <pre class="src src-cpp"><span style="color: #F0DFAF; font-weight: bold;">struct</span> <span style="color: #7CB8BB;">frame_t</span>
@@ -636,9 +662,9 @@ for the JavaScript code in this tag.
 </div>
 </div>
 
-<div id="outline-container-orgc6f673f" class="outline-3">
-<h3 id="orgc6f673f">box_t</h3>
-<div class="outline-text-3" id="text-orgc6f673f">
+<div id="outline-container-org2a49db" class="outline-3">
+<h3 id="org2a49db">box_t</h3>
+<div class="outline-text-3" id="text-org2a49db">
 <div class="org-src-container">
 
 <pre class="src src-cpp"><span style="color: #F0DFAF; font-weight: bold;">struct</span> <span style="color: #7CB8BB;">box_t</span>
@@ -653,9 +679,9 @@ for the JavaScript code in this tag.
 </div>
 </div>
 
-<div id="outline-container-org47d660d" class="outline-3">
-<h3 id="org47d660d">box_map_t</h3>
-<div class="outline-text-3" id="text-org47d660d">
+<div id="outline-container-org4ffd995" class="outline-3">
+<h3 id="org4ffd995">box_map_t</h3>
+<div class="outline-text-3" id="text-org4ffd995">
 <div class="org-src-container">
 
 <pre class="src src-cpp"><span style="color: #F0DFAF; font-weight: bold;">using</span> <span style="color: #7CB8BB;">box_map_t</span> = <span style="color: #7CB8BB;">map</span> &lt;<span style="color: #7CB8BB;">name_t</span>, <span style="color: #7CB8BB;">box_t</span> *&gt;;
@@ -664,9 +690,9 @@ for the JavaScript code in this tag.
 </div>
 </div>
 
-<div id="outline-container-org1f5eb59" class="outline-3">
-<h3 id="org1f5eb59">obj_stack_t</h3>
-<div class="outline-text-3" id="text-org1f5eb59">
+<div id="outline-container-org2f21e85" class="outline-3">
+<h3 id="org2f21e85">obj_stack_t</h3>
+<div class="outline-text-3" id="text-org2f21e85">
 <div class="org-src-container">
 
 <pre class="src src-cpp"><span style="color: #F0DFAF; font-weight: bold;">using</span> <span style="color: #7CB8BB;">obj_stack_t</span> = <span style="color: #7CB8BB;">stack</span> &lt;<span style="color: #7CB8BB;">shared_ptr</span> &lt;<span style="color: #7CB8BB;">obj_t</span>&gt;&gt;;
@@ -675,9 +701,9 @@ for the JavaScript code in this tag.
 </div>
 </div>
 
-<div id="outline-container-orgf333d59" class="outline-3">
-<h3 id="orgf333d59">frame_stack_t</h3>
-<div class="outline-text-3" id="text-orgf333d59">
+<div id="outline-container-orga63a4f5" class="outline-3">
+<h3 id="orga63a4f5">frame_stack_t</h3>
+<div class="outline-text-3" id="text-orga63a4f5">
 <div class="org-src-container">
 
 <pre class="src src-cpp"><span style="color: #F0DFAF; font-weight: bold;">using</span> <span style="color: #7CB8BB;">frame_stack_t</span> = <span style="color: #7CB8BB;">stack</span> &lt;<span style="color: #7CB8BB;">shared_ptr</span> &lt;<span style="color: #7CB8BB;">frame_t</span>&gt;&gt;;
@@ -686,9 +712,9 @@ for the JavaScript code in this tag.
 </div>
 </div>
 
-<div id="outline-container-org612050a" class="outline-3">
-<h3 id="org612050a">env_t</h3>
-<div class="outline-text-3" id="text-org612050a">
+<div id="outline-container-org6ff91b3" class="outline-3">
+<h3 id="org6ff91b3">env_t</h3>
+<div class="outline-text-3" id="text-org6ff91b3">
 <div class="org-src-container">
 
 <pre class="src src-cpp"><span style="color: #F0DFAF; font-weight: bold;">struct</span> <span style="color: #7CB8BB;">env_t</span>
@@ -708,17 +734,18 @@ for the JavaScript code in this tag.
 </div>
 </div>
 
-<div id="outline-container-org25bc800" class="outline-2">
-<h2 id="org25bc800">jojo</h2>
-<div class="outline-text-2" id="text-org25bc800">
-</div><div id="outline-container-orgdd53f3e" class="outline-3">
-<h3 id="orgdd53f3e">jojo_repr</h3>
-<div class="outline-text-3" id="text-orgdd53f3e">
+<div id="outline-container-orga0c1f9e" class="outline-2">
+<h2 id="orga0c1f9e">jojo</h2>
+<div class="outline-text-2" id="text-orga0c1f9e">
+</div><div id="outline-container-org3a8d1d9" class="outline-3">
+<h3 id="org3a8d1d9">jojo_repr</h3>
+<div class="outline-text-3" id="text-org3a8d1d9">
 <div class="org-src-container">
 
 <pre class="src src-cpp"><span style="color: #7CB8BB;">string</span>
 <span style="color: #93E0E3;">jojo_repr</span> (<span style="color: #7CB8BB;">env_t</span> &amp;<span style="color: #DFAF8F;">env</span>, <span style="color: #7CB8BB;">shared_ptr</span> &lt;<span style="color: #7CB8BB;">jojo_t</span>&gt; <span style="color: #DFAF8F;">jojo</span>)
 {
+    assert (jojo-&gt;jo_vector.size () != 0);
     <span style="color: #7CB8BB;">string</span> <span style="color: #DFAF8F;">repr</span> = <span style="color: #CC9393;">""</span>;
     <span style="color: #F0DFAF; font-weight: bold;">for</span> (<span style="color: #F0DFAF; font-weight: bold;">auto</span> &amp;<span style="color: #DFAF8F;">jo</span>: jojo-&gt;jo_vector) {
         repr += jo-&gt;repr (env);
@@ -732,9 +759,9 @@ for the JavaScript code in this tag.
 </div>
 </div>
 
-<div id="outline-container-org520ea24" class="outline-3">
-<h3 id="org520ea24">jojo_print</h3>
-<div class="outline-text-3" id="text-org520ea24">
+<div id="outline-container-org458ab38" class="outline-3">
+<h3 id="org458ab38">jojo_print</h3>
+<div class="outline-text-3" id="text-org458ab38">
 <div class="org-src-container">
 
 <pre class="src src-cpp"><span style="color: #7CB8BB;">void</span>
@@ -750,9 +777,9 @@ for the JavaScript code in this tag.
 </div>
 </div>
 
-<div id="outline-container-orgc32baff" class="outline-3">
-<h3 id="orgc32baff">jojo_print_with_index</h3>
-<div class="outline-text-3" id="text-orgc32baff">
+<div id="outline-container-org37f6d63" class="outline-3">
+<h3 id="org37f6d63">jojo_print_with_index</h3>
+<div class="outline-text-3" id="text-org37f6d63">
 <div class="org-src-container">
 
 <pre class="src src-cpp"><span style="color: #7CB8BB;">void</span>
@@ -779,12 +806,12 @@ for the JavaScript code in this tag.
 </div>
 </div>
 
-<div id="outline-container-org45764df" class="outline-2">
-<h2 id="org45764df">name_vector</h2>
-<div class="outline-text-2" id="text-org45764df">
-</div><div id="outline-container-orge110b72" class="outline-3">
-<h3 id="orge110b72">name_vector_repr</h3>
-<div class="outline-text-3" id="text-orge110b72">
+<div id="outline-container-orgd560b70" class="outline-2">
+<h2 id="orgd560b70">name_vector</h2>
+<div class="outline-text-2" id="text-orgd560b70">
+</div><div id="outline-container-org899f5c4" class="outline-3">
+<h3 id="org899f5c4">name_vector_repr</h3>
+<div class="outline-text-3" id="text-org899f5c4">
 <div class="org-src-container">
 
 <pre class="src src-cpp"><span style="color: #7CB8BB;">string</span>
@@ -804,15 +831,15 @@ for the JavaScript code in this tag.
 </div>
 </div>
 
-<div id="outline-container-org722ef18" class="outline-2">
-<h2 id="org722ef18">obj</h2>
-<div class="outline-text-2" id="text-org722ef18">
-</div><div id="outline-container-orgc3d7605" class="outline-3">
-<h3 id="orgc3d7605">tag</h3>
-<div class="outline-text-3" id="text-orgc3d7605">
-</div><div id="outline-container-org2f11219" class="outline-4">
-<h4 id="org2f11219">tagging</h4>
-<div class="outline-text-4" id="text-org2f11219">
+<div id="outline-container-orge3f8601" class="outline-2">
+<h2 id="orge3f8601">obj</h2>
+<div class="outline-text-2" id="text-orge3f8601">
+</div><div id="outline-container-org182a4ce" class="outline-3">
+<h3 id="org182a4ce">tag</h3>
+<div class="outline-text-3" id="text-org182a4ce">
+</div><div id="outline-container-org51df296" class="outline-4">
+<h4 id="org51df296">tagging</h4>
+<div class="outline-text-4" id="text-org51df296">
 <div class="org-src-container">
 
 <pre class="src src-cpp"><span style="color: #7CB8BB;">tag_t</span>
@@ -835,9 +862,9 @@ for the JavaScript code in this tag.
 </div>
 </div>
 
-<div id="outline-container-org24a7077" class="outline-4">
-<h4 id="org24a7077">name_of_tag</h4>
-<div class="outline-text-4" id="text-org24a7077">
+<div id="outline-container-orgfe81b9f" class="outline-4">
+<h4 id="orgfe81b9f">name_of_tag</h4>
+<div class="outline-text-4" id="text-orgfe81b9f">
 <div class="org-src-container">
 
 <pre class="src src-cpp"><span style="color: #7CB8BB;">name_t</span>
@@ -851,12 +878,12 @@ for the JavaScript code in this tag.
 </div>
 </div>
 
-<div id="outline-container-orgfe34258" class="outline-3">
-<h3 id="orgfe34258">local</h3>
-<div class="outline-text-3" id="text-orgfe34258">
-</div><div id="outline-container-orgf7ed0b2" class="outline-4">
-<h4 id="orgf7ed0b2">bind_vector_print</h4>
-<div class="outline-text-4" id="text-orgf7ed0b2">
+<div id="outline-container-org926f9df" class="outline-3">
+<h3 id="org926f9df">local</h3>
+<div class="outline-text-3" id="text-org926f9df">
+</div><div id="outline-container-org9869ac6" class="outline-4">
+<h4 id="org9869ac6">bind_vector_print</h4>
+<div class="outline-text-4" id="text-org9869ac6">
 <div class="org-src-container">
 
 <pre class="src src-cpp"><span style="color: #7CB8BB;">void</span>
@@ -880,9 +907,9 @@ for the JavaScript code in this tag.
 </div>
 </div>
 
-<div id="outline-container-org5d43af9" class="outline-4">
-<h4 id="org5d43af9">local_scope_print</h4>
-<div class="outline-text-4" id="text-org5d43af9">
+<div id="outline-container-org8ab12e9" class="outline-4">
+<h4 id="org8ab12e9">local_scope_print</h4>
+<div class="outline-text-4" id="text-org8ab12e9">
 <div class="org-src-container">
 
 <pre class="src src-cpp"><span style="color: #7CB8BB;">void</span>
@@ -904,12 +931,12 @@ for the JavaScript code in this tag.
 </div>
 </div>
 
-<div id="outline-container-org355d683" class="outline-3">
-<h3 id="org355d683">obj</h3>
-<div class="outline-text-3" id="text-org355d683">
-</div><div id="outline-container-org89783cf" class="outline-4">
-<h4 id="org89783cf">obj_t::~obj_t</h4>
-<div class="outline-text-4" id="text-org89783cf">
+<div id="outline-container-orgc83e81f" class="outline-3">
+<h3 id="orgc83e81f">obj</h3>
+<div class="outline-text-3" id="text-orgc83e81f">
+</div><div id="outline-container-orga077490" class="outline-4">
+<h4 id="orga077490">obj_t::~obj_t</h4>
+<div class="outline-text-4" id="text-orga077490">
 <div class="org-src-container">
 
 <pre class="src src-cpp"><span style="color: #BFEBBF;">obj_t</span>::~<span style="color: #93E0E3;">obj_t</span> ()
@@ -924,9 +951,9 @@ for the JavaScript code in this tag.
 </div>
 </div>
 
-<div id="outline-container-org471db1d" class="outline-4">
-<h4 id="org471db1d">obj_t::print</h4>
-<div class="outline-text-4" id="text-org471db1d">
+<div id="outline-container-orgb83006c" class="outline-4">
+<h4 id="orgb83006c">obj_t::print</h4>
+<div class="outline-text-4" id="text-orgb83006c">
 <div class="org-src-container">
 
 <pre class="src src-cpp"><span style="color: #7CB8BB;">void</span>
@@ -941,15 +968,15 @@ for the JavaScript code in this tag.
 </div>
 </div>
 
-<div id="outline-container-org60bc08c" class="outline-4">
-<h4 id="org60bc08c">obj_t::equal</h4>
-<div class="outline-text-4" id="text-org60bc08c">
+<div id="outline-container-org96e0a2c" class="outline-4">
+<h4 id="org96e0a2c">obj_t::equal</h4>
+<div class="outline-text-4" id="text-org96e0a2c">
 <div class="org-src-container">
 
 <pre class="src src-cpp"><span style="color: #7CB8BB;">bool</span>
 <span style="color: #BFEBBF;">obj_t</span>::<span style="color: #93E0E3;">equal</span> (<span style="color: #7CB8BB;">env_t</span> &amp;<span style="color: #DFAF8F;">env</span>, <span style="color: #7CB8BB;">shared_ptr</span> &lt;<span style="color: #7CB8BB;">obj_t</span>&gt; <span style="color: #DFAF8F;">obj</span>)
 {
-    <span style="color: #F0DFAF; font-weight: bold;">if</span> (<span style="color: #F0DFAF; font-weight: bold;">this</span>-&gt;tag != <span style="color: #F0DFAF; font-weight: bold;">this</span>-&gt;tag)
+    <span style="color: #F0DFAF; font-weight: bold;">if</span> (<span style="color: #F0DFAF; font-weight: bold;">this</span>-&gt;tag != obj-&gt;tag)
         <span style="color: #F0DFAF; font-weight: bold;">return</span> <span style="color: #BFEBBF;">false</span>;
     <span style="color: #F0DFAF; font-weight: bold;">else</span> {
         cout &lt;&lt; <span style="color: #CC9393;">"- fatal error : obj_t::equal"</span> &lt;&lt; <span style="color: #CC9393;">"\n"</span>
@@ -964,9 +991,9 @@ for the JavaScript code in this tag.
 </div>
 </div>
 
-<div id="outline-container-org5c225c2" class="outline-4">
-<h4 id="org5c225c2">obj_t::apply</h4>
-<div class="outline-text-4" id="text-org5c225c2">
+<div id="outline-container-org43397ca" class="outline-4">
+<h4 id="org43397ca">obj_t::apply</h4>
+<div class="outline-text-4" id="text-org43397ca">
 <div class="org-src-container">
 
 <pre class="src src-cpp"><span style="color: #7CB8BB;">void</span>
@@ -981,12 +1008,12 @@ for the JavaScript code in this tag.
 </div>
 </div>
 
-<div id="outline-container-org7ac76e3" class="outline-3">
-<h3 id="org7ac76e3">lambda</h3>
-<div class="outline-text-3" id="text-org7ac76e3">
-</div><div id="outline-container-org823aa6b" class="outline-4">
-<h4 id="org823aa6b">number_of_obj_in_bind_vector</h4>
-<div class="outline-text-4" id="text-org823aa6b">
+<div id="outline-container-org8e1b33a" class="outline-3">
+<h3 id="org8e1b33a">lambda</h3>
+<div class="outline-text-3" id="text-org8e1b33a">
+</div><div id="outline-container-org669a914" class="outline-4">
+<h4 id="org669a914">number_of_obj_in_bind_vector</h4>
+<div class="outline-text-4" id="text-org669a914">
 <div class="org-src-container">
 
 <pre class="src src-cpp"><span style="color: #7CB8BB;">size_t</span>
@@ -1005,9 +1032,9 @@ for the JavaScript code in this tag.
 </div>
 </div>
 
-<div id="outline-container-org7b5d833" class="outline-4">
-<h4 id="org7b5d833">lambda_o</h4>
-<div class="outline-text-4" id="text-org7b5d833">
+<div id="outline-container-org32358a7" class="outline-4">
+<h4 id="org32358a7">lambda_o</h4>
+<div class="outline-text-4" id="text-org32358a7">
 <div class="org-src-container">
 
 <pre class="src src-cpp"><span style="color: #F0DFAF; font-weight: bold;">struct</span> <span style="color: #7CB8BB;">lambda_o</span>: <span style="color: #7CB8BB;">obj_t</span>
@@ -1030,9 +1057,9 @@ for the JavaScript code in this tag.
 </div>
 </div>
 
-<div id="outline-container-orgeea72a0" class="outline-4">
-<h4 id="orgeea72a0">lambda_o::lambda_o</h4>
-<div class="outline-text-4" id="text-orgeea72a0">
+<div id="outline-container-org322f95e" class="outline-4">
+<h4 id="org322f95e">lambda_o::lambda_o</h4>
+<div class="outline-text-4" id="text-org322f95e">
 <div class="org-src-container">
 
 <pre class="src src-cpp"><span style="color: #BFEBBF;">lambda_o</span>::
@@ -1053,9 +1080,9 @@ for the JavaScript code in this tag.
 </div>
 </div>
 
-<div id="outline-container-org19902d7" class="outline-4">
-<h4 id="org19902d7">bind_vector_insert_obj</h4>
-<div class="outline-text-4" id="text-org19902d7">
+<div id="outline-container-org4a7845f" class="outline-4">
+<h4 id="org4a7845f">bind_vector_insert_obj</h4>
+<div class="outline-text-4" id="text-org4a7845f">
 <div class="org-src-container">
 
 <pre class="src src-cpp"><span style="color: #7CB8BB;">void</span>
@@ -1080,9 +1107,9 @@ for the JavaScript code in this tag.
 </div>
 </div>
 
-<div id="outline-container-orga23d7ee" class="outline-4">
-<h4 id="orga23d7ee">bind_vector_merge_obj_vector</h4>
-<div class="outline-text-4" id="text-orga23d7ee">
+<div id="outline-container-orgd678834" class="outline-4">
+<h4 id="orgd678834">bind_vector_merge_obj_vector</h4>
+<div class="outline-text-4" id="text-orgd678834">
 <div class="org-src-container">
 
 <pre class="src src-cpp"><span style="color: #7CB8BB;">bind_vector_t</span>
@@ -1099,9 +1126,9 @@ for the JavaScript code in this tag.
 </div>
 </div>
 
-<div id="outline-container-orge2ed7e1" class="outline-4">
-<h4 id="orge2ed7e1">pick_up_obj_vector</h4>
-<div class="outline-text-4" id="text-orge2ed7e1">
+<div id="outline-container-org4a2cca8" class="outline-4">
+<h4 id="org4a2cca8">pick_up_obj_vector</h4>
+<div class="outline-text-4" id="text-org4a2cca8">
 <div class="org-src-container">
 
 <pre class="src src-cpp"><span style="color: #7CB8BB;">obj_vector_t</span>
@@ -1123,9 +1150,9 @@ for the JavaScript code in this tag.
 </div>
 </div>
 
-<div id="outline-container-org196f7f1" class="outline-4">
-<h4 id="org196f7f1">local_scope_extend</h4>
-<div class="outline-text-4" id="text-org196f7f1">
+<div id="outline-container-org8eb710b" class="outline-4">
+<h4 id="org8eb710b">local_scope_extend</h4>
+<div class="outline-text-4" id="text-org8eb710b">
 <div class="org-src-container">
 
 <pre class="src src-cpp"><span style="color: #7CB8BB;">local_scope_t</span>
@@ -1141,9 +1168,9 @@ for the JavaScript code in this tag.
 </div>
 </div>
 
-<div id="outline-container-orgb6c4ab0" class="outline-4">
-<h4 id="orgb6c4ab0">lambda_o::apply</h4>
-<div class="outline-text-4" id="text-orgb6c4ab0">
+<div id="outline-container-orgd47ea27" class="outline-4">
+<h4 id="orgd47ea27">lambda_o::apply</h4>
+<div class="outline-text-4" id="text-orgd47ea27">
 <div class="org-src-container">
 
 <pre class="src src-cpp"><span style="color: #7CB8BB;">void</span>
@@ -1191,9 +1218,9 @@ for the JavaScript code in this tag.
 </div>
 </div>
 
-<div id="outline-container-org7bba972" class="outline-4">
-<h4 id="org7bba972">bind_equal</h4>
-<div class="outline-text-4" id="text-org7bba972">
+<div id="outline-container-orgf83c668" class="outline-4">
+<h4 id="orgf83c668">bind_equal</h4>
+<div class="outline-text-4" id="text-orgf83c668">
 <div class="org-src-container">
 
 <pre class="src src-cpp"><span style="color: #7CB8BB;">bool</span>
@@ -1209,9 +1236,9 @@ for the JavaScript code in this tag.
 </div>
 </div>
 
-<div id="outline-container-orge945447" class="outline-4">
-<h4 id="orge945447">bind_vector_equal</h4>
-<div class="outline-text-4" id="text-orge945447">
+<div id="outline-container-org8d66d08" class="outline-4">
+<h4 id="org8d66d08">bind_vector_equal</h4>
+<div class="outline-text-4" id="text-org8d66d08">
 <div class="org-src-container">
 
 <pre class="src src-cpp"><span style="color: #7CB8BB;">bool</span>
@@ -1234,9 +1261,9 @@ for the JavaScript code in this tag.
 </div>
 </div>
 
-<div id="outline-container-org2203e66" class="outline-4">
-<h4 id="org2203e66">local_scope_equal</h4>
-<div class="outline-text-4" id="text-org2203e66">
+<div id="outline-container-org6efb327" class="outline-4">
+<h4 id="org6efb327">local_scope_equal</h4>
+<div class="outline-text-4" id="text-org6efb327">
 <div class="org-src-container">
 
 <pre class="src src-cpp"><span style="color: #7CB8BB;">bool</span>
@@ -1259,9 +1286,9 @@ for the JavaScript code in this tag.
 </div>
 </div>
 
-<div id="outline-container-org7d969e9" class="outline-4">
-<h4 id="org7d969e9">lambda_o::equal</h4>
-<div class="outline-text-4" id="text-org7d969e9">
+<div id="outline-container-orgd25904b" class="outline-4">
+<h4 id="orgd25904b">lambda_o::equal</h4>
+<div class="outline-text-4" id="text-orgd25904b">
 <div class="org-src-container">
 
 <pre class="src src-cpp"><span style="color: #7CB8BB;">bool</span>
@@ -1287,9 +1314,9 @@ for the JavaScript code in this tag.
 </div>
 </div>
 
-<div id="outline-container-org5abcd73" class="outline-4">
-<h4 id="org5abcd73">lambda_o::print</h4>
-<div class="outline-text-4" id="text-org5abcd73">
+<div id="outline-container-org7e9ae9c" class="outline-4">
+<h4 id="org7e9ae9c">lambda_o::print</h4>
+<div class="outline-text-4" id="text-org7e9ae9c">
 <div class="org-src-container">
 
 <pre class="src src-cpp"><span style="color: #7CB8BB;">void</span>
@@ -1307,12 +1334,12 @@ for the JavaScript code in this tag.
 </div>
 </div>
 
-<div id="outline-container-orgee61077" class="outline-3">
-<h3 id="orgee61077">string</h3>
-<div class="outline-text-3" id="text-orgee61077">
-</div><div id="outline-container-orgad0d331" class="outline-4">
-<h4 id="orgad0d331">string_o</h4>
-<div class="outline-text-4" id="text-orgad0d331">
+<div id="outline-container-org88dac1c" class="outline-3">
+<h3 id="org88dac1c">string</h3>
+<div class="outline-text-3" id="text-org88dac1c">
+</div><div id="outline-container-orgc6e1df8" class="outline-4">
+<h4 id="orgc6e1df8">string_o</h4>
+<div class="outline-text-4" id="text-orgc6e1df8">
 <div class="org-src-container">
 
 <pre class="src src-cpp"><span style="color: #F0DFAF; font-weight: bold;">struct</span> <span style="color: #7CB8BB;">string_o</span>: <span style="color: #7CB8BB;">obj_t</span>
@@ -1327,9 +1354,9 @@ for the JavaScript code in this tag.
 </div>
 </div>
 
-<div id="outline-container-orgb446b1a" class="outline-4">
-<h4 id="orgb446b1a">string_o::string_o</h4>
-<div class="outline-text-4" id="text-orgb446b1a">
+<div id="outline-container-orgbd06372" class="outline-4">
+<h4 id="orgbd06372">string_o::string_o</h4>
+<div class="outline-text-4" id="text-orgbd06372">
 <div class="org-src-container">
 
 <pre class="src src-cpp"><span style="color: #BFEBBF;">string_o</span>::<span style="color: #93E0E3;">string_o</span> (<span style="color: #7CB8BB;">env_t</span> &amp;<span style="color: #DFAF8F;">env</span>, <span style="color: #7CB8BB;">string</span> <span style="color: #DFAF8F;">str</span>)
@@ -1342,9 +1369,9 @@ for the JavaScript code in this tag.
 </div>
 </div>
 
-<div id="outline-container-org8039388" class="outline-4">
-<h4 id="org8039388">string_o::print</h4>
-<div class="outline-text-4" id="text-org8039388">
+<div id="outline-container-org5124b95" class="outline-4">
+<h4 id="org5124b95">string_o::print</h4>
+<div class="outline-text-4" id="text-org5124b95">
 <div class="org-src-container">
 
 <pre class="src src-cpp"><span style="color: #7CB8BB;">void</span> <span style="color: #BFEBBF;">string_o</span>::<span style="color: #93E0E3;">print</span> (<span style="color: #7CB8BB;">env_t</span> &amp;<span style="color: #DFAF8F;">env</span>)
@@ -1356,9 +1383,9 @@ for the JavaScript code in this tag.
 </div>
 </div>
 
-<div id="outline-container-org7cc4f8b" class="outline-4">
-<h4 id="org7cc4f8b">string_o::equal</h4>
-<div class="outline-text-4" id="text-org7cc4f8b">
+<div id="outline-container-org35d1ff9" class="outline-4">
+<h4 id="org35d1ff9">string_o::equal</h4>
+<div class="outline-text-4" id="text-org35d1ff9">
 <div class="org-src-container">
 
 <pre class="src src-cpp"><span style="color: #7CB8BB;">bool</span>
@@ -1374,12 +1401,12 @@ for the JavaScript code in this tag.
 </div>
 </div>
 
-<div id="outline-container-org9d1f577" class="outline-3">
-<h3 id="org9d1f577">data</h3>
-<div class="outline-text-3" id="text-org9d1f577">
-</div><div id="outline-container-orga84e811" class="outline-4">
-<h4 id="orga84e811">data_o</h4>
-<div class="outline-text-4" id="text-orga84e811">
+<div id="outline-container-org2127174" class="outline-3">
+<h3 id="org2127174">data</h3>
+<div class="outline-text-3" id="text-org2127174">
+</div><div id="outline-container-org62529b2" class="outline-4">
+<h4 id="org62529b2">data_o</h4>
+<div class="outline-text-4" id="text-org62529b2">
 <div class="org-src-container">
 
 <pre class="src src-cpp"><span style="color: #F0DFAF; font-weight: bold;">struct</span> <span style="color: #7CB8BB;">data_o</span>: <span style="color: #7CB8BB;">obj_t</span>
@@ -1396,9 +1423,9 @@ for the JavaScript code in this tag.
 </div>
 </div>
 
-<div id="outline-container-org4452607" class="outline-4">
-<h4 id="org4452607">data_o::data_o</h4>
-<div class="outline-text-4" id="text-org4452607">
+<div id="outline-container-org78f9e02" class="outline-4">
+<h4 id="org78f9e02">data_o::data_o</h4>
+<div class="outline-text-4" id="text-org78f9e02">
 <div class="org-src-container">
 
 <pre class="src src-cpp"><span style="color: #BFEBBF;">data_o</span>::
@@ -1414,9 +1441,9 @@ for the JavaScript code in this tag.
 </div>
 </div>
 
-<div id="outline-container-org4b3daec" class="outline-4">
-<h4 id="org4b3daec">obj_map_equal</h4>
-<div class="outline-text-4" id="text-org4b3daec">
+<div id="outline-container-org1707c49" class="outline-4">
+<h4 id="org1707c49">obj_map_equal</h4>
+<div class="outline-text-4" id="text-org1707c49">
 <div class="org-src-container">
 
 <pre class="src src-cpp"><span style="color: #7CB8BB;">bool</span>
@@ -1436,9 +1463,9 @@ for the JavaScript code in this tag.
 </div>
 </div>
 
-<div id="outline-container-orge43af71" class="outline-4">
-<h4 id="orge43af71">data_o::equal</h4>
-<div class="outline-text-4" id="text-orge43af71">
+<div id="outline-container-orgde9c456" class="outline-4">
+<h4 id="orgde9c456">data_o::equal</h4>
+<div class="outline-text-4" id="text-orgde9c456">
 <div class="org-src-container">
 
 <pre class="src src-cpp"><span style="color: #7CB8BB;">bool</span>
@@ -1454,15 +1481,15 @@ for the JavaScript code in this tag.
 </div>
 </div>
 
-<div id="outline-container-orgef41bb2" class="outline-4">
-<h4 id="orgef41bb2"><span class="todo _todo_">[todo]</span> data_o::print</h4>
-<div class="outline-text-4" id="text-orgef41bb2">
+<div id="outline-container-org74121cd" class="outline-4">
+<h4 id="org74121cd"><span class="todo _todo_">[todo]</span> data_o::print</h4>
+<div class="outline-text-4" id="text-org74121cd">
 <div class="org-src-container">
 
 <pre class="src src-cpp"><span style="color: #7CB8BB;">void</span>
 <span style="color: #BFEBBF;">data_o</span>::<span style="color: #93E0E3;">print</span> (<span style="color: #7CB8BB;">env_t</span> &amp;<span style="color: #DFAF8F;">env</span>)
 {
-    <span style="color: #5F7F5F;">// </span><span style="color: #7F9F7F;">&gt;&lt;&gt;&lt;&gt;&lt;</span>
+    <span style="color: #5F7F5F;">// </span><span style="color: #7F9F7F;">[todo]</span>
 }
 </pre>
 </div>
@@ -1470,12 +1497,12 @@ for the JavaScript code in this tag.
 </div>
 </div>
 
-<div id="outline-container-orgf57b047" class="outline-3">
-<h3 id="orgf57b047">data_cons</h3>
-<div class="outline-text-3" id="text-orgf57b047">
-</div><div id="outline-container-orgf4f8895" class="outline-4">
-<h4 id="orgf4f8895">data_cons_o</h4>
-<div class="outline-text-4" id="text-orgf4f8895">
+<div id="outline-container-org6ae3c83" class="outline-3">
+<h3 id="org6ae3c83">data_cons</h3>
+<div class="outline-text-3" id="text-org6ae3c83">
+</div><div id="outline-container-org31cf146" class="outline-4">
+<h4 id="org31cf146">data_cons_o</h4>
+<div class="outline-text-4" id="text-org31cf146">
 <div class="org-src-container">
 
 <pre class="src src-cpp"><span style="color: #F0DFAF; font-weight: bold;">struct</span> <span style="color: #7CB8BB;">data_cons_o</span>: <span style="color: #7CB8BB;">obj_t</span>
@@ -1496,9 +1523,9 @@ for the JavaScript code in this tag.
 </div>
 </div>
 
-<div id="outline-container-org3e134bd" class="outline-4">
-<h4 id="org3e134bd">data_cons_o::data_cons_o</h4>
-<div class="outline-text-4" id="text-org3e134bd">
+<div id="outline-container-orgb717dfd" class="outline-4">
+<h4 id="orgb717dfd">data_cons_o::data_cons_o</h4>
+<div class="outline-text-4" id="text-orgb717dfd">
 <div class="org-src-container">
 
 <pre class="src src-cpp"><span style="color: #BFEBBF;">data_cons_o</span>::
@@ -1517,9 +1544,9 @@ for the JavaScript code in this tag.
 </div>
 </div>
 
-<div id="outline-container-orga859347" class="outline-4">
-<h4 id="orga859347">name_vector_obj_map_lack</h4>
-<div class="outline-text-4" id="text-orga859347">
+<div id="outline-container-org4e030ca" class="outline-4">
+<h4 id="org4e030ca">name_vector_obj_map_lack</h4>
+<div class="outline-text-4" id="text-org4e030ca">
 <div class="org-src-container">
 
 <pre class="src src-cpp"><span style="color: #7CB8BB;">name_vector_t</span>
@@ -1540,9 +1567,9 @@ for the JavaScript code in this tag.
 </div>
 </div>
 
-<div id="outline-container-org42d9d66" class="outline-4">
-<h4 id="org42d9d66">name_vector_obj_map_arity_lack</h4>
-<div class="outline-text-4" id="text-org42d9d66">
+<div id="outline-container-org276f7e4" class="outline-4">
+<h4 id="org276f7e4">name_vector_obj_map_arity_lack</h4>
+<div class="outline-text-4" id="text-org276f7e4">
 <div class="org-src-container">
 
 <pre class="src src-cpp"><span style="color: #7CB8BB;">name_vector_t</span>
@@ -1565,15 +1592,15 @@ for the JavaScript code in this tag.
 </div>
 </div>
 
-<div id="outline-container-orga9ef3c7" class="outline-4">
-<h4 id="orga9ef3c7">pick_up_obj_map_and_merge</h4>
-<div class="outline-text-4" id="text-orga9ef3c7">
+<div id="outline-container-orgc9283ef" class="outline-4">
+<h4 id="orgc9283ef">pick_up_obj_map_and_merge</h4>
+<div class="outline-text-4" id="text-orgc9283ef">
 <div class="org-src-container">
 
 <pre class="src src-cpp"><span style="color: #7CB8BB;">obj_map_t</span>
 <span style="color: #93E0E3;">pick_up_obj_map_and_merge</span> (<span style="color: #7CB8BB;">env_t</span> &amp;<span style="color: #DFAF8F;">env</span>,
-                           <span style="color: #7CB8BB;">name_vector_t</span> <span style="color: #DFAF8F;">lack_name_vector</span>,
-                           <span style="color: #7CB8BB;">obj_map_t</span> <span style="color: #DFAF8F;">old_obj_map</span>)
+                           <span style="color: #7CB8BB;">name_vector_t</span> &amp;<span style="color: #DFAF8F;">lack_name_vector</span>,
+                           <span style="color: #7CB8BB;">obj_map_t</span> &amp;<span style="color: #DFAF8F;">old_obj_map</span>)
 {
     <span style="color: #F0DFAF; font-weight: bold;">auto</span> <span style="color: #DFAF8F;">obj_map</span> = old_obj_map;
     <span style="color: #F0DFAF; font-weight: bold;">auto</span> <span style="color: #DFAF8F;">begin</span> = lack_name_vector.rbegin ();
@@ -1591,9 +1618,9 @@ for the JavaScript code in this tag.
 </div>
 </div>
 
-<div id="outline-container-org6956396" class="outline-4">
-<h4 id="org6956396">data_cons_o::apply</h4>
-<div class="outline-text-4" id="text-org6956396">
+<div id="outline-container-org3e019f5" class="outline-4">
+<h4 id="org3e019f5">data_cons_o::apply</h4>
+<div class="outline-text-4" id="text-org3e019f5">
 <div class="org-src-container">
 
 <pre class="src src-cpp"><span style="color: #7CB8BB;">void</span>
@@ -1635,9 +1662,9 @@ for the JavaScript code in this tag.
 </div>
 </div>
 
-<div id="outline-container-org7afa027" class="outline-4">
-<h4 id="org7afa027">data_cons_o::equal</h4>
-<div class="outline-text-4" id="text-org7afa027">
+<div id="outline-container-orgcd10518" class="outline-4">
+<h4 id="orgcd10518">data_cons_o::equal</h4>
+<div class="outline-text-4" id="text-orgcd10518">
 <div class="org-src-container">
 
 <pre class="src src-cpp"><span style="color: #7CB8BB;">bool</span>
@@ -1653,15 +1680,15 @@ for the JavaScript code in this tag.
 </div>
 </div>
 
-<div id="outline-container-org699bcaa" class="outline-4">
-<h4 id="org699bcaa"><span class="todo _todo_">[todo]</span> data_cons_o::print</h4>
-<div class="outline-text-4" id="text-org699bcaa">
+<div id="outline-container-orgf13fba2" class="outline-4">
+<h4 id="orgf13fba2"><span class="todo _todo_">[todo]</span> data_cons_o::print</h4>
+<div class="outline-text-4" id="text-orgf13fba2">
 <div class="org-src-container">
 
 <pre class="src src-cpp"><span style="color: #7CB8BB;">void</span>
 <span style="color: #BFEBBF;">data_cons_o</span>::<span style="color: #93E0E3;">print</span> (<span style="color: #7CB8BB;">env_t</span> &amp;<span style="color: #DFAF8F;">env</span>)
 {
-    <span style="color: #5F7F5F;">// </span><span style="color: #7F9F7F;">&gt;&lt;&gt;&lt;&gt;&lt;</span>
+    <span style="color: #5F7F5F;">// </span><span style="color: #7F9F7F;">[todo]</span>
 }
 </pre>
 </div>
@@ -1669,12 +1696,12 @@ for the JavaScript code in this tag.
 </div>
 </div>
 
-<div id="outline-container-org1996897" class="outline-3">
-<h3 id="org1996897">prim</h3>
-<div class="outline-text-3" id="text-org1996897">
-</div><div id="outline-container-orgab94c24" class="outline-4">
-<h4 id="orgab94c24">prim_fn</h4>
-<div class="outline-text-4" id="text-orgab94c24">
+<div id="outline-container-org5883a25" class="outline-3">
+<h3 id="org5883a25">prim</h3>
+<div class="outline-text-3" id="text-org5883a25">
+</div><div id="outline-container-org743bed1" class="outline-4">
+<h4 id="org743bed1">prim_fn</h4>
+<div class="outline-text-4" id="text-org743bed1">
 <div class="org-src-container">
 
 <pre class="src src-cpp"><span style="color: #F0DFAF; font-weight: bold;">using</span> <span style="color: #7CB8BB;">prim_fn</span> = <span style="color: #7CB8BB;">function</span> &lt;<span style="color: #7CB8BB;">void</span> (<span style="color: #7CB8BB;">env_t</span> &amp;, <span style="color: #7CB8BB;">obj_map_t</span> &amp;)&gt;;
@@ -1683,9 +1710,9 @@ for the JavaScript code in this tag.
 </div>
 </div>
 
-<div id="outline-container-orgcbde1ad" class="outline-4">
-<h4 id="orgcbde1ad">prim_o</h4>
-<div class="outline-text-4" id="text-orgcbde1ad">
+<div id="outline-container-org33e58af" class="outline-4">
+<h4 id="org33e58af">prim_o</h4>
+<div class="outline-text-4" id="text-org33e58af">
 <div class="org-src-container">
 
 <pre class="src src-cpp"><span style="color: #F0DFAF; font-weight: bold;">struct</span> <span style="color: #7CB8BB;">prim_o</span>: <span style="color: #7CB8BB;">obj_t</span>
@@ -1706,9 +1733,9 @@ for the JavaScript code in this tag.
 </div>
 </div>
 
-<div id="outline-container-org6d8320b" class="outline-4">
-<h4 id="org6d8320b">prim_o::prim_o</h4>
-<div class="outline-text-4" id="text-org6d8320b">
+<div id="outline-container-org65ef7c3" class="outline-4">
+<h4 id="org65ef7c3">prim_o::prim_o</h4>
+<div class="outline-text-4" id="text-org65ef7c3">
 <div class="org-src-container">
 
 <pre class="src src-cpp"><span style="color: #BFEBBF;">prim_o</span>::<span style="color: #93E0E3;">prim_o</span> (<span style="color: #7CB8BB;">env_t</span> &amp;<span style="color: #DFAF8F;">env</span>,
@@ -1726,9 +1753,9 @@ for the JavaScript code in this tag.
 </div>
 </div>
 
-<div id="outline-container-orga522fa" class="outline-4">
-<h4 id="orga522fa"><span class="todo _todo_">[todo]</span> prim_o::print</h4>
-<div class="outline-text-4" id="text-orga522fa">
+<div id="outline-container-orgb78976" class="outline-4">
+<h4 id="orgb78976"><span class="todo _todo_">[todo]</span> prim_o::print</h4>
+<div class="outline-text-4" id="text-orgb78976">
 <div class="org-src-container">
 
 <pre class="src src-cpp"><span style="color: #7CB8BB;">void</span> <span style="color: #BFEBBF;">prim_o</span>::<span style="color: #93E0E3;">print</span> (<span style="color: #7CB8BB;">env_t</span> &amp;<span style="color: #DFAF8F;">env</span>)
@@ -1742,9 +1769,9 @@ for the JavaScript code in this tag.
 </div>
 </div>
 
-<div id="outline-container-org2245c84" class="outline-4">
-<h4 id="org2245c84">prim_o::equal</h4>
-<div class="outline-text-4" id="text-org2245c84">
+<div id="outline-container-orgcc94f15" class="outline-4">
+<h4 id="orgcc94f15">prim_o::equal</h4>
+<div class="outline-text-4" id="text-orgcc94f15">
 <div class="org-src-container">
 
 <pre class="src src-cpp"><span style="color: #7CB8BB;">bool</span> <span style="color: #BFEBBF;">prim_o</span>::<span style="color: #93E0E3;">equal</span> (<span style="color: #7CB8BB;">env_t</span> &amp;<span style="color: #DFAF8F;">env</span>, <span style="color: #7CB8BB;">shared_ptr</span> &lt;<span style="color: #7CB8BB;">obj_t</span>&gt; <span style="color: #DFAF8F;">obj</span>)
@@ -1759,9 +1786,9 @@ for the JavaScript code in this tag.
 </div>
 </div>
 
-<div id="outline-container-orgdd8337f" class="outline-4">
-<h4 id="orgdd8337f">prim_o::apply</h4>
-<div class="outline-text-4" id="text-orgdd8337f">
+<div id="outline-container-orgaaead52" class="outline-4">
+<h4 id="orgaaead52">prim_o::apply</h4>
+<div class="outline-text-4" id="text-orgaaead52">
 <div class="org-src-container">
 
 <pre class="src src-cpp"><span style="color: #7CB8BB;">void</span> <span style="color: #BFEBBF;">prim_o</span>::<span style="color: #93E0E3;">apply</span> (<span style="color: #7CB8BB;">env_t</span> &amp;<span style="color: #DFAF8F;">env</span>, <span style="color: #7CB8BB;">size_t</span> <span style="color: #DFAF8F;">arity</span>)
@@ -1802,15 +1829,15 @@ for the JavaScript code in this tag.
 </div>
 </div>
 
-<div id="outline-container-org56a2363" class="outline-2">
-<h2 id="org56a2363">env</h2>
-<div class="outline-text-2" id="text-org56a2363">
-</div><div id="outline-container-org91bfd6" class="outline-3">
-<h3 id="org91bfd6">frame</h3>
-<div class="outline-text-3" id="text-org91bfd6">
-</div><div id="outline-container-org32c38b3" class="outline-4">
-<h4 id="org32c38b3">frame_t::frame_t</h4>
-<div class="outline-text-4" id="text-org32c38b3">
+<div id="outline-container-orgfd481b0" class="outline-2">
+<h2 id="orgfd481b0">env</h2>
+<div class="outline-text-2" id="text-orgfd481b0">
+</div><div id="outline-container-org9f4cf9c" class="outline-3">
+<h3 id="org9f4cf9c">frame</h3>
+<div class="outline-text-3" id="text-org9f4cf9c">
+</div><div id="outline-container-org8cf51b" class="outline-4">
+<h4 id="org8cf51b">frame_t::frame_t</h4>
+<div class="outline-text-4" id="text-org8cf51b">
 <div class="org-src-container">
 
 <pre class="src src-cpp"><span style="color: #BFEBBF;">frame_t</span>::<span style="color: #93E0E3;">frame_t</span> (<span style="color: #7CB8BB;">shared_ptr</span> &lt;<span style="color: #7CB8BB;">jojo_t</span>&gt; <span style="color: #DFAF8F;">jojo</span>,
@@ -1825,9 +1852,9 @@ for the JavaScript code in this tag.
 </div>
 </div>
 
-<div id="outline-container-orgb400c9d" class="outline-4">
-<h4 id="orgb400c9d">frame_report</h4>
-<div class="outline-text-4" id="text-orgb400c9d">
+<div id="outline-container-orga40703b" class="outline-4">
+<h4 id="orga40703b">frame_report</h4>
+<div class="outline-text-4" id="text-orga40703b">
 <div class="org-src-container">
 
 <pre class="src src-cpp"><span style="color: #7CB8BB;">void</span>
@@ -1849,12 +1876,12 @@ for the JavaScript code in this tag.
 </div>
 </div>
 
-<div id="outline-container-orgfb8e8b3" class="outline-3">
-<h3 id="orgfb8e8b3">box</h3>
-<div class="outline-text-3" id="text-orgfb8e8b3">
-</div><div id="outline-container-org4a12dbc" class="outline-4">
-<h4 id="org4a12dbc">box_t::box_t</h4>
-<div class="outline-text-4" id="text-org4a12dbc">
+<div id="outline-container-org682e7ad" class="outline-3">
+<h3 id="org682e7ad">box</h3>
+<div class="outline-text-3" id="text-org682e7ad">
+</div><div id="outline-container-org94f1868" class="outline-4">
+<h4 id="org94f1868">box_t::box_t</h4>
+<div class="outline-text-4" id="text-org94f1868">
 <div class="org-src-container">
 
 <pre class="src src-cpp"><span style="color: #BFEBBF;">box_t</span>::<span style="color: #93E0E3;">box_t</span> ()
@@ -1872,9 +1899,9 @@ for the JavaScript code in this tag.
 </div>
 </div>
 
-<div id="outline-container-org2619629" class="outline-4">
-<h4 id="org2619629">boxing</h4>
-<div class="outline-text-4" id="text-org2619629">
+<div id="outline-container-orgb95f487" class="outline-4">
+<h4 id="orgb95f487">boxing</h4>
+<div class="outline-text-4" id="text-orgb95f487">
 <div class="org-src-container">
 
 <pre class="src src-cpp"><span style="color: #7CB8BB;">box_t</span> *
@@ -1895,12 +1922,12 @@ for the JavaScript code in this tag.
 </div>
 </div>
 
-<div id="outline-container-org1887138" class="outline-3">
-<h3 id="org1887138">box_map</h3>
-<div class="outline-text-3" id="text-org1887138">
-</div><div id="outline-container-orgff83cdf" class="outline-4">
-<h4 id="orgff83cdf">box_map_report</h4>
-<div class="outline-text-4" id="text-orgff83cdf">
+<div id="outline-container-org1a057c1" class="outline-3">
+<h3 id="org1a057c1">box_map</h3>
+<div class="outline-text-3" id="text-org1a057c1">
+</div><div id="outline-container-org10002c6" class="outline-4">
+<h4 id="org10002c6">box_map_report</h4>
+<div class="outline-text-4" id="text-org10002c6">
 <div class="org-src-container">
 
 <pre class="src src-cpp"><span style="color: #7CB8BB;">void</span>
@@ -1923,9 +1950,9 @@ for the JavaScript code in this tag.
 </div>
 </div>
 
-<div id="outline-container-orgf488b09" class="outline-4">
-<h4 id="orgf488b09">name_of_box</h4>
-<div class="outline-text-4" id="text-orgf488b09">
+<div id="outline-container-org723c0cf" class="outline-4">
+<h4 id="org723c0cf">name_of_box</h4>
+<div class="outline-text-4" id="text-org723c0cf">
 <div class="org-src-container">
 
 <pre class="src src-cpp"><span style="color: #7CB8BB;">name_t</span>
@@ -1945,12 +1972,12 @@ for the JavaScript code in this tag.
 </div>
 </div>
 
-<div id="outline-container-orgad0a89c" class="outline-3">
-<h3 id="orgad0a89c">obj_stack</h3>
-<div class="outline-text-3" id="text-orgad0a89c">
-</div><div id="outline-container-orge3f9b0e" class="outline-4">
-<h4 id="orge3f9b0e">frame_stack_report</h4>
-<div class="outline-text-4" id="text-orge3f9b0e">
+<div id="outline-container-org224a40" class="outline-3">
+<h3 id="org224a40">obj_stack</h3>
+<div class="outline-text-3" id="text-org224a40">
+</div><div id="outline-container-orgf385927" class="outline-4">
+<h4 id="orgf385927">frame_stack_report</h4>
+<div class="outline-text-4" id="text-orgf385927">
 <div class="org-src-container">
 
 <pre class="src src-cpp"><span style="color: #7CB8BB;">void</span>
@@ -1972,12 +1999,12 @@ for the JavaScript code in this tag.
 </div>
 </div>
 
-<div id="outline-container-orgf969ed7" class="outline-3">
-<h3 id="orgf969ed7">frame_stack</h3>
-<div class="outline-text-3" id="text-orgf969ed7">
-</div><div id="outline-container-org73ea22d" class="outline-4">
-<h4 id="org73ea22d">obj_stack_report</h4>
-<div class="outline-text-4" id="text-org73ea22d">
+<div id="outline-container-orgf60dfc8" class="outline-3">
+<h3 id="orgf60dfc8">frame_stack</h3>
+<div class="outline-text-3" id="text-orgf60dfc8">
+</div><div id="outline-container-orgdc7f0b" class="outline-4">
+<h4 id="orgdc7f0b">obj_stack_report</h4>
+<div class="outline-text-4" id="text-orgdc7f0b">
 <div class="org-src-container">
 
 <pre class="src src-cpp"><span style="color: #7CB8BB;">void</span>
@@ -2002,9 +2029,9 @@ for the JavaScript code in this tag.
 </div>
 </div>
 
-<div id="outline-container-orgc2a1788" class="outline-3">
-<h3 id="orgc2a1788">env_t::step</h3>
-<div class="outline-text-3" id="text-orgc2a1788">
+<div id="outline-container-orga4b6349" class="outline-3">
+<h3 id="orga4b6349">env_t::step</h3>
+<div class="outline-text-3" id="text-orga4b6349">
 <div class="org-src-container">
 
 <pre class="src src-cpp"><span style="color: #7CB8BB;">void</span>
@@ -2027,9 +2054,9 @@ for the JavaScript code in this tag.
 </div>
 </div>
 
-<div id="outline-container-orgd4091c5" class="outline-3">
-<h3 id="orgd4091c5">env_t::run</h3>
-<div class="outline-text-3" id="text-orgd4091c5">
+<div id="outline-container-org58420f3" class="outline-3">
+<h3 id="org58420f3">env_t::run</h3>
+<div class="outline-text-3" id="text-org58420f3">
 <div class="org-src-container">
 
 <pre class="src src-cpp"><span style="color: #7CB8BB;">void</span>
@@ -2044,9 +2071,9 @@ for the JavaScript code in this tag.
 </div>
 </div>
 
-<div id="outline-container-orgc257a1b" class="outline-3">
-<h3 id="orgc257a1b">env_t::report</h3>
-<div class="outline-text-3" id="text-orgc257a1b">
+<div id="outline-container-orgee71795" class="outline-3">
+<h3 id="orgee71795">env_t::report</h3>
+<div class="outline-text-3" id="text-orgee71795">
 <div class="org-src-container">
 
 <pre class="src src-cpp"><span style="color: #7CB8BB;">void</span>
@@ -2063,15 +2090,15 @@ for the JavaScript code in this tag.
 </div>
 </div>
 
-<div id="outline-container-orgcbfc6d8" class="outline-2">
-<h2 id="orgcbfc6d8">jo</h2>
-<div class="outline-text-2" id="text-orgcbfc6d8">
-</div><div id="outline-container-org986f4b5" class="outline-3">
-<h3 id="org986f4b5">jojo</h3>
-<div class="outline-text-3" id="text-org986f4b5">
-</div><div id="outline-container-orgb2ffdc5" class="outline-4">
-<h4 id="orgb2ffdc5">jojo_t::jojo_t</h4>
-<div class="outline-text-4" id="text-orgb2ffdc5">
+<div id="outline-container-org4db7773" class="outline-2">
+<h2 id="org4db7773">jo</h2>
+<div class="outline-text-2" id="text-org4db7773">
+</div><div id="outline-container-org7f50fcb" class="outline-3">
+<h3 id="org7f50fcb">jojo</h3>
+<div class="outline-text-3" id="text-org7f50fcb">
+</div><div id="outline-container-orgaf2bdc4" class="outline-4">
+<h4 id="orgaf2bdc4">jojo_t::jojo_t</h4>
+<div class="outline-text-4" id="text-orgaf2bdc4">
 <div class="org-src-container">
 
 <pre class="src src-cpp"><span style="color: #BFEBBF;">jojo_t</span>::
@@ -2084,9 +2111,9 @@ for the JavaScript code in this tag.
 </div>
 </div>
 
-<div id="outline-container-org3a46d8" class="outline-4">
-<h4 id="org3a46d8">jojo_t::~jojo_t</h4>
-<div class="outline-text-4" id="text-org3a46d8">
+<div id="outline-container-org6f074af" class="outline-4">
+<h4 id="org6f074af">jojo_t::~jojo_t</h4>
+<div class="outline-text-4" id="text-org6f074af">
 <div class="org-src-container">
 
 <pre class="src src-cpp"><span style="color: #BFEBBF;">jojo_t</span>::
@@ -2101,12 +2128,12 @@ for the JavaScript code in this tag.
 </div>
 </div>
 
-<div id="outline-container-org489e002" class="outline-3">
-<h3 id="org489e002">jo</h3>
-<div class="outline-text-3" id="text-org489e002">
-</div><div id="outline-container-org592a584" class="outline-4">
-<h4 id="org592a584">jo_t::~jo_t</h4>
-<div class="outline-text-4" id="text-org592a584">
+<div id="outline-container-orgeac38b0" class="outline-3">
+<h3 id="orgeac38b0">jo</h3>
+<div class="outline-text-3" id="text-orgeac38b0">
+</div><div id="outline-container-org537f78f" class="outline-4">
+<h4 id="org537f78f">jo_t::~jo_t</h4>
+<div class="outline-text-4" id="text-org537f78f">
 <div class="org-src-container">
 
 <pre class="src src-cpp"><span style="color: #BFEBBF;">jo_t</span>::~<span style="color: #93E0E3;">jo_t</span> ()
@@ -2121,9 +2148,9 @@ for the JavaScript code in this tag.
 </div>
 </div>
 
-<div id="outline-container-org8d7561c" class="outline-4">
-<h4 id="org8d7561c">jo_t::exe</h4>
-<div class="outline-text-4" id="text-org8d7561c">
+<div id="outline-container-orgc98a552" class="outline-4">
+<h4 id="orgc98a552">jo_t::exe</h4>
+<div class="outline-text-4" id="text-orgc98a552">
 <div class="org-src-container">
 
 <pre class="src src-cpp"><span style="color: #7CB8BB;">void</span>
@@ -2137,9 +2164,9 @@ for the JavaScript code in this tag.
 </div>
 </div>
 
-<div id="outline-container-org5095b55" class="outline-4">
-<h4 id="org5095b55">jo_t::repr</h4>
-<div class="outline-text-4" id="text-org5095b55">
+<div id="outline-container-orge95fd65" class="outline-4">
+<h4 id="orge95fd65">jo_t::repr</h4>
+<div class="outline-text-4" id="text-orge95fd65">
 <div class="org-src-container">
 
 <pre class="src src-cpp"><span style="color: #7CB8BB;">string</span>
@@ -2153,12 +2180,12 @@ for the JavaScript code in this tag.
 </div>
 </div>
 
-<div id="outline-container-orgead5ea2" class="outline-3">
-<h3 id="orgead5ea2">ref_jo</h3>
-<div class="outline-text-3" id="text-orgead5ea2">
-</div><div id="outline-container-orgac8d5c3" class="outline-4">
-<h4 id="orgac8d5c3">ref_jo_t</h4>
-<div class="outline-text-4" id="text-orgac8d5c3">
+<div id="outline-container-org8c9e6a9" class="outline-3">
+<h3 id="org8c9e6a9">ref_jo</h3>
+<div class="outline-text-3" id="text-org8c9e6a9">
+</div><div id="outline-container-org4df3f18" class="outline-4">
+<h4 id="org4df3f18">ref_jo_t</h4>
+<div class="outline-text-4" id="text-org4df3f18">
 <div class="org-src-container">
 
 <pre class="src src-cpp"><span style="color: #F0DFAF; font-weight: bold;">struct</span> <span style="color: #7CB8BB;">ref_jo_t</span>: <span style="color: #7CB8BB;">jo_t</span>
@@ -2173,9 +2200,9 @@ for the JavaScript code in this tag.
 </div>
 </div>
 
-<div id="outline-container-orga7a925" class="outline-4">
-<h4 id="orga7a925">ref_jo_t::ref_jo_t</h4>
-<div class="outline-text-4" id="text-orga7a925">
+<div id="outline-container-org19e50b8" class="outline-4">
+<h4 id="org19e50b8">ref_jo_t::ref_jo_t</h4>
+<div class="outline-text-4" id="text-org19e50b8">
 <div class="org-src-container">
 
 <pre class="src src-cpp"><span style="color: #BFEBBF;">ref_jo_t</span>::<span style="color: #93E0E3;">ref_jo_t</span> (<span style="color: #7CB8BB;">box_t</span> *<span style="color: #DFAF8F;">box</span>)
@@ -2187,9 +2214,9 @@ for the JavaScript code in this tag.
 </div>
 </div>
 
-<div id="outline-container-orgbcf2c9d" class="outline-4">
-<h4 id="orgbcf2c9d">ref_jo_t::exe</h4>
-<div class="outline-text-4" id="text-orgbcf2c9d">
+<div id="outline-container-org57071a3" class="outline-4">
+<h4 id="org57071a3">ref_jo_t::exe</h4>
+<div class="outline-text-4" id="text-org57071a3">
 <div class="org-src-container">
 
 <pre class="src src-cpp"><span style="color: #7CB8BB;">void</span>
@@ -2203,9 +2230,9 @@ for the JavaScript code in this tag.
 </div>
 </div>
 
-<div id="outline-container-org11c6865" class="outline-4">
-<h4 id="org11c6865">ref_jo_t::repr</h4>
-<div class="outline-text-4" id="text-org11c6865">
+<div id="outline-container-orgbbb518b" class="outline-4">
+<h4 id="orgbbb518b">ref_jo_t::repr</h4>
+<div class="outline-text-4" id="text-orgbbb518b">
 <div class="org-src-container">
 
 <pre class="src src-cpp"><span style="color: #7CB8BB;">string</span>
@@ -2219,12 +2246,12 @@ for the JavaScript code in this tag.
 </div>
 </div>
 
-<div id="outline-container-org6b1e3ad" class="outline-3">
-<h3 id="org6b1e3ad">local_ref_jo</h3>
-<div class="outline-text-3" id="text-org6b1e3ad">
-</div><div id="outline-container-orgbba1a6" class="outline-4">
-<h4 id="orgbba1a6">local_ref_jo_t</h4>
-<div class="outline-text-4" id="text-orgbba1a6">
+<div id="outline-container-orgae835e3" class="outline-3">
+<h3 id="orgae835e3">local_ref_jo</h3>
+<div class="outline-text-3" id="text-orgae835e3">
+</div><div id="outline-container-orgd0968f4" class="outline-4">
+<h4 id="orgd0968f4">local_ref_jo_t</h4>
+<div class="outline-text-4" id="text-orgd0968f4">
 <div class="org-src-container">
 
 <pre class="src src-cpp"><span style="color: #F0DFAF; font-weight: bold;">struct</span> <span style="color: #7CB8BB;">local_ref_jo_t</span>: <span style="color: #7CB8BB;">jo_t</span>
@@ -2240,9 +2267,9 @@ for the JavaScript code in this tag.
 </div>
 </div>
 
-<div id="outline-container-org9d972fb" class="outline-4">
-<h4 id="org9d972fb">local_ref_jo_t::local_ref_jo_t</h4>
-<div class="outline-text-4" id="text-org9d972fb">
+<div id="outline-container-org7ebab1b" class="outline-4">
+<h4 id="org7ebab1b">local_ref_jo_t::local_ref_jo_t</h4>
+<div class="outline-text-4" id="text-org7ebab1b">
 <div class="org-src-container">
 
 <pre class="src src-cpp"><span style="color: #BFEBBF;">local_ref_jo_t</span>::
@@ -2256,9 +2283,9 @@ for the JavaScript code in this tag.
 </div>
 </div>
 
-<div id="outline-container-orgb18b59b" class="outline-4">
-<h4 id="orgb18b59b">vector_rev_ref</h4>
-<div class="outline-text-4" id="text-orgb18b59b">
+<div id="outline-container-org448d3e" class="outline-4">
+<h4 id="org448d3e">vector_rev_ref</h4>
+<div class="outline-text-4" id="text-org448d3e">
 <div class="org-src-container">
 
 <pre class="src src-cpp"><span style="color: #F0DFAF; font-weight: bold;">template</span> &lt;<span style="color: #F0DFAF; font-weight: bold;">class</span> <span style="color: #7CB8BB;">T</span>&gt;
@@ -2274,9 +2301,9 @@ for the JavaScript code in this tag.
 </div>
 </div>
 
-<div id="outline-container-org1b73959" class="outline-4">
-<h4 id="org1b73959">local_ref_jo_t::exe</h4>
-<div class="outline-text-4" id="text-org1b73959">
+<div id="outline-container-org8ded7c" class="outline-4">
+<h4 id="org8ded7c">local_ref_jo_t::exe</h4>
+<div class="outline-text-4" id="text-org8ded7c">
 <div class="org-src-container">
 
 <pre class="src src-cpp"><span style="color: #7CB8BB;">void</span>
@@ -2296,9 +2323,9 @@ for the JavaScript code in this tag.
 </div>
 </div>
 
-<div id="outline-container-org2a67be9" class="outline-4">
-<h4 id="org2a67be9">local_ref_jo_t::repr</h4>
-<div class="outline-text-4" id="text-org2a67be9">
+<div id="outline-container-org19cb049" class="outline-4">
+<h4 id="org19cb049">local_ref_jo_t::repr</h4>
+<div class="outline-text-4" id="text-org19cb049">
 <div class="org-src-container">
 
 <pre class="src src-cpp"><span style="color: #7CB8BB;">string</span>
@@ -2314,12 +2341,12 @@ for the JavaScript code in this tag.
 </div>
 </div>
 
-<div id="outline-container-org627bc77" class="outline-3">
-<h3 id="org627bc77">lambda_jo</h3>
-<div class="outline-text-3" id="text-org627bc77">
-</div><div id="outline-container-orge222402" class="outline-4">
-<h4 id="orge222402">lambda_jo_t</h4>
-<div class="outline-text-4" id="text-orge222402">
+<div id="outline-container-org30e1821" class="outline-3">
+<h3 id="org30e1821">lambda_jo</h3>
+<div class="outline-text-3" id="text-org30e1821">
+</div><div id="outline-container-org538ea4b" class="outline-4">
+<h4 id="org538ea4b">lambda_jo_t</h4>
+<div class="outline-text-4" id="text-org538ea4b">
 <div class="org-src-container">
 
 <pre class="src src-cpp"><span style="color: #F0DFAF; font-weight: bold;">struct</span> <span style="color: #7CB8BB;">lambda_jo_t</span>: <span style="color: #7CB8BB;">jo_t</span>
@@ -2336,9 +2363,9 @@ for the JavaScript code in this tag.
 </div>
 </div>
 
-<div id="outline-container-org7d379a0" class="outline-4">
-<h4 id="org7d379a0">lambda_jo_t::lambda_jo_t</h4>
-<div class="outline-text-4" id="text-org7d379a0">
+<div id="outline-container-org6dd16d0" class="outline-4">
+<h4 id="org6dd16d0">lambda_jo_t::lambda_jo_t</h4>
+<div class="outline-text-4" id="text-org6dd16d0">
 <div class="org-src-container">
 
 <pre class="src src-cpp"><span style="color: #BFEBBF;">lambda_jo_t</span>::
@@ -2353,9 +2380,9 @@ for the JavaScript code in this tag.
 </div>
 </div>
 
-<div id="outline-container-orgd5c5b7e" class="outline-4">
-<h4 id="orgd5c5b7e">bind_vector_from_name_vector</h4>
-<div class="outline-text-4" id="text-orgd5c5b7e">
+<div id="outline-container-org152b261" class="outline-4">
+<h4 id="org152b261">bind_vector_from_name_vector</h4>
+<div class="outline-text-4" id="text-org152b261">
 <div class="org-src-container">
 
 <pre class="src src-cpp"><span style="color: #7CB8BB;">bind_vector_t</span>
@@ -2373,9 +2400,9 @@ for the JavaScript code in this tag.
 </div>
 </div>
 
-<div id="outline-container-orgec93b53" class="outline-4">
-<h4 id="orgec93b53">lambda_jo_t::exe</h4>
-<div class="outline-text-4" id="text-orgec93b53">
+<div id="outline-container-orgb4ddf21" class="outline-4">
+<h4 id="orgb4ddf21">lambda_jo_t::exe</h4>
+<div class="outline-text-4" id="text-orgb4ddf21">
 <div class="org-src-container">
 
 <pre class="src src-cpp"><span style="color: #7CB8BB;">void</span>
@@ -2395,9 +2422,9 @@ for the JavaScript code in this tag.
 </div>
 </div>
 
-<div id="outline-container-org62fd2e0" class="outline-4">
-<h4 id="org62fd2e0">lambda_jo_t::repr</h4>
-<div class="outline-text-4" id="text-org62fd2e0">
+<div id="outline-container-org8c3936f" class="outline-4">
+<h4 id="org8c3936f">lambda_jo_t::repr</h4>
+<div class="outline-text-4" id="text-org8c3936f">
 <div class="org-src-container">
 
 <pre class="src src-cpp"><span style="color: #7CB8BB;">string</span>
@@ -2415,12 +2442,12 @@ for the JavaScript code in this tag.
 </div>
 </div>
 
-<div id="outline-container-org33649c2" class="outline-3">
-<h3 id="org33649c2">field_jo</h3>
-<div class="outline-text-3" id="text-org33649c2">
-</div><div id="outline-container-org9881562" class="outline-4">
-<h4 id="org9881562">field_jo_t</h4>
-<div class="outline-text-4" id="text-org9881562">
+<div id="outline-container-org585d847" class="outline-3">
+<h3 id="org585d847">field_jo</h3>
+<div class="outline-text-3" id="text-org585d847">
+</div><div id="outline-container-org28014d1" class="outline-4">
+<h4 id="org28014d1">field_jo_t</h4>
+<div class="outline-text-4" id="text-org28014d1">
 <div class="org-src-container">
 
 <pre class="src src-cpp"><span style="color: #F0DFAF; font-weight: bold;">struct</span> <span style="color: #7CB8BB;">field_jo_t</span>: <span style="color: #7CB8BB;">jo_t</span>
@@ -2435,9 +2462,9 @@ for the JavaScript code in this tag.
 </div>
 </div>
 
-<div id="outline-container-org69de2da" class="outline-4">
-<h4 id="org69de2da">field_jo_t::field_jo_t</h4>
-<div class="outline-text-4" id="text-org69de2da">
+<div id="outline-container-org99635e7" class="outline-4">
+<h4 id="org99635e7">field_jo_t::field_jo_t</h4>
+<div class="outline-text-4" id="text-org99635e7">
 <div class="org-src-container">
 
 <pre class="src src-cpp"><span style="color: #BFEBBF;">field_jo_t</span>::<span style="color: #93E0E3;">field_jo_t</span> (<span style="color: #7CB8BB;">name_t</span> <span style="color: #DFAF8F;">name</span>)
@@ -2449,9 +2476,9 @@ for the JavaScript code in this tag.
 </div>
 </div>
 
-<div id="outline-container-org84df053" class="outline-4">
-<h4 id="org84df053">field_jo_t::exe</h4>
-<div class="outline-text-4" id="text-org84df053">
+<div id="outline-container-orgf43832f" class="outline-4">
+<h4 id="orgf43832f">field_jo_t::exe</h4>
+<div class="outline-text-4" id="text-orgf43832f">
 <div class="org-src-container">
 
 <pre class="src src-cpp"><span style="color: #7CB8BB;">void</span>
@@ -2475,9 +2502,9 @@ for the JavaScript code in this tag.
 </div>
 </div>
 
-<div id="outline-container-orgaab5824" class="outline-4">
-<h4 id="orgaab5824">field_jo_t::repr</h4>
-<div class="outline-text-4" id="text-orgaab5824">
+<div id="outline-container-orge78d2a6" class="outline-4">
+<h4 id="orge78d2a6">field_jo_t::repr</h4>
+<div class="outline-text-4" id="text-orge78d2a6">
 <div class="org-src-container">
 
 <pre class="src src-cpp"><span style="color: #7CB8BB;">string</span>
@@ -2491,12 +2518,12 @@ for the JavaScript code in this tag.
 </div>
 </div>
 
-<div id="outline-container-org3e551d2" class="outline-3">
-<h3 id="org3e551d2">apply_jo</h3>
-<div class="outline-text-3" id="text-org3e551d2">
-</div><div id="outline-container-orgdcfbb84" class="outline-4">
-<h4 id="orgdcfbb84">apply_jo_t</h4>
-<div class="outline-text-4" id="text-orgdcfbb84">
+<div id="outline-container-orgd75b9ad" class="outline-3">
+<h3 id="orgd75b9ad">apply_jo</h3>
+<div class="outline-text-3" id="text-orgd75b9ad">
+</div><div id="outline-container-orga57e11d" class="outline-4">
+<h4 id="orga57e11d">apply_jo_t</h4>
+<div class="outline-text-4" id="text-orga57e11d">
 <div class="org-src-container">
 
 <pre class="src src-cpp"><span style="color: #F0DFAF; font-weight: bold;">struct</span> <span style="color: #7CB8BB;">apply_jo_t</span>: <span style="color: #7CB8BB;">jo_t</span>
@@ -2511,9 +2538,9 @@ for the JavaScript code in this tag.
 </div>
 </div>
 
-<div id="outline-container-orgbe352b3" class="outline-4">
-<h4 id="orgbe352b3">apply_jo_t::apply_jo_t</h4>
-<div class="outline-text-4" id="text-orgbe352b3">
+<div id="outline-container-orged50ca4" class="outline-4">
+<h4 id="orged50ca4">apply_jo_t::apply_jo_t</h4>
+<div class="outline-text-4" id="text-orged50ca4">
 <div class="org-src-container">
 
 <pre class="src src-cpp"><span style="color: #BFEBBF;">apply_jo_t</span>::
@@ -2526,9 +2553,9 @@ for the JavaScript code in this tag.
 </div>
 </div>
 
-<div id="outline-container-org41ea4af" class="outline-4">
-<h4 id="org41ea4af">apply_jo_t::exe</h4>
-<div class="outline-text-4" id="text-org41ea4af">
+<div id="outline-container-orgc8a0312" class="outline-4">
+<h4 id="orgc8a0312">apply_jo_t::exe</h4>
+<div class="outline-text-4" id="text-orgc8a0312">
 <div class="org-src-container">
 
 <pre class="src src-cpp"><span style="color: #7CB8BB;">void</span>
@@ -2543,9 +2570,9 @@ for the JavaScript code in this tag.
 </div>
 </div>
 
-<div id="outline-container-orgc3cf7c4" class="outline-4">
-<h4 id="orgc3cf7c4">apply_jo_t::repr</h4>
-<div class="outline-text-4" id="text-orgc3cf7c4">
+<div id="outline-container-orgb4a4df8" class="outline-4">
+<h4 id="orgb4a4df8">apply_jo_t::repr</h4>
+<div class="outline-text-4" id="text-orgb4a4df8">
 <div class="org-src-container">
 
 <pre class="src src-cpp"><span style="color: #7CB8BB;">string</span>
@@ -2560,12 +2587,12 @@ for the JavaScript code in this tag.
 </div>
 </div>
 
-<div id="outline-container-orgecc1e0" class="outline-2">
-<h2 id="orgecc1e0">bool</h2>
-<div class="outline-text-2" id="text-orgecc1e0">
-</div><div id="outline-container-org94919ec" class="outline-3">
-<h3 id="org94919ec">define</h3>
-<div class="outline-text-3" id="text-org94919ec">
+<div id="outline-container-org5fafd23" class="outline-2">
+<h2 id="org5fafd23">define</h2>
+<div class="outline-text-2" id="text-org5fafd23">
+</div><div id="outline-container-orgdc09f98" class="outline-3">
+<h3 id="orgdc09f98">define</h3>
+<div class="outline-text-3" id="text-orgdc09f98">
 <div class="org-src-container">
 
 <pre class="src src-cpp"><span style="color: #7CB8BB;">void</span>
@@ -2586,13 +2613,186 @@ for the JavaScript code in this tag.
 </div>
 </div>
 
-<div id="outline-container-orgd87bcce" class="outline-3">
-<h3 id="orgd87bcce">true_c</h3>
-<div class="outline-text-3" id="text-orgd87bcce">
+<div id="outline-container-orgea90f1f" class="outline-3">
+<h3 id="orgea90f1f">sig_t</h3>
+<div class="outline-text-3" id="text-orgea90f1f">
+<div class="org-src-container">
+
+<pre class="src src-cpp"><span style="color: #F0DFAF; font-weight: bold;">using</span> <span style="color: #7CB8BB;">sig_t</span> = name_vector_t;
+</pre>
+</div>
+</div>
+</div>
+
+<div id="outline-container-org4223cc0" class="outline-3">
+<h3 id="org4223cc0">name_of_sig</h3>
+<div class="outline-text-3" id="text-org4223cc0">
+<div class="org-src-container">
+
+<pre class="src src-cpp"><span style="color: #7CB8BB;">name_t</span>
+<span style="color: #93E0E3;">name_of_sig</span> (<span style="color: #7CB8BB;">sig_t</span> &amp;<span style="color: #DFAF8F;">sig</span>)
+{
+    <span style="color: #F0DFAF; font-weight: bold;">return</span> sig [0];
+}
+</pre>
+</div>
+</div>
+</div>
+
+<div id="outline-container-orgdba2076" class="outline-3">
+<h3 id="orgdba2076">name_vector_of_sig</h3>
+<div class="outline-text-3" id="text-orgdba2076">
+<div class="org-src-container">
+
+<pre class="src src-cpp"><span style="color: #7CB8BB;">name_vector_t</span>
+<span style="color: #93E0E3;">name_vector_of_sig</span> (<span style="color: #7CB8BB;">sig_t</span> &amp;<span style="color: #DFAF8F;">sig</span>)
+{
+    <span style="color: #F0DFAF; font-weight: bold;">auto</span> <span style="color: #DFAF8F;">name_vector</span> = name_vector_t ();
+    <span style="color: #F0DFAF; font-weight: bold;">auto</span> <span style="color: #DFAF8F;">begin</span> = sig.begin () + 1;
+    <span style="color: #F0DFAF; font-weight: bold;">auto</span> <span style="color: #DFAF8F;">end</span> = sig.end ();
+    <span style="color: #F0DFAF; font-weight: bold;">for</span> (<span style="color: #F0DFAF; font-weight: bold;">auto</span> <span style="color: #DFAF8F;">it</span> = begin; it != end; it++) {
+        name_vector.push_back (*it);
+    }
+    <span style="color: #F0DFAF; font-weight: bold;">return</span> name_vector;
+}
+</pre>
+</div>
+</div>
+</div>
+
+<div id="outline-container-org4f642c2" class="outline-3">
+<h3 id="org4f642c2">define_prim</h3>
+<div class="outline-text-3" id="text-org4f642c2">
+<div class="org-src-container">
+
+<pre class="src src-cpp"><span style="color: #7CB8BB;">void</span>
+<span style="color: #93E0E3;">define_prim</span> (<span style="color: #7CB8BB;">env_t</span> &amp;<span style="color: #DFAF8F;">env</span>, <span style="color: #7CB8BB;">sig_t</span> <span style="color: #DFAF8F;">sig</span>, <span style="color: #7CB8BB;">prim_fn</span> <span style="color: #DFAF8F;">fn</span>)
+{
+    <span style="color: #F0DFAF; font-weight: bold;">auto</span> <span style="color: #DFAF8F;">name</span> = name_of_sig (sig);
+    <span style="color: #F0DFAF; font-weight: bold;">auto</span> <span style="color: #DFAF8F;">name_vector</span> = name_vector_of_sig (sig);
+    <span style="color: #F0DFAF; font-weight: bold;">auto</span> <span style="color: #DFAF8F;">prim</span> = make_shared &lt;prim_o&gt;
+        (env, name_vector, fn, <span style="color: #7CB8BB;">obj_map_t</span> ());
+    define (env, name, prim);
+}
+</pre>
+</div>
+</div>
+</div>
+</div>
+
+<div id="outline-container-orgdfc43ae" class="outline-2">
+<h2 id="orgdfc43ae"><b>test</b></h2>
+<div class="outline-text-2" id="text-orgdfc43ae">
+</div><div id="outline-container-org3615b5e" class="outline-3">
+<h3 id="org3615b5e">new_frame_from_jojo</h3>
+<div class="outline-text-3" id="text-org3615b5e">
+<div class="org-src-container">
+
+<pre class="src src-cpp"><span style="color: #7CB8BB;">shared_ptr</span> &lt;<span style="color: #7CB8BB;">frame_t</span>&gt;
+<span style="color: #93E0E3;">new_frame_from_jojo</span> (<span style="color: #7CB8BB;">shared_ptr</span> &lt;<span style="color: #7CB8BB;">jojo_t</span>&gt; <span style="color: #DFAF8F;">jojo</span>)
+{
+    <span style="color: #F0DFAF; font-weight: bold;">return</span> make_shared &lt;<span style="color: #7CB8BB;">frame_t</span>&gt;
+        (jojo, <span style="color: #7CB8BB;">local_scope_t</span> ());
+}
+</pre>
+</div>
+</div>
+</div>
+
+<div id="outline-container-orgde7cd2a" class="outline-3">
+<h3 id="orgde7cd2a">new_frame_from_jo_vector</h3>
+<div class="outline-text-3" id="text-orgde7cd2a">
+<div class="org-src-container">
+
+<pre class="src src-cpp"><span style="color: #7CB8BB;">shared_ptr</span> &lt;<span style="color: #7CB8BB;">frame_t</span>&gt;
+<span style="color: #93E0E3;">new_frame_from_jo_vector</span> (<span style="color: #7CB8BB;">jo_vector_t</span> <span style="color: #DFAF8F;">jo_vector</span>)
+{
+    <span style="color: #F0DFAF; font-weight: bold;">auto</span> <span style="color: #DFAF8F;">jojo</span> = make_shared &lt;<span style="color: #7CB8BB;">jojo_t</span>&gt; (jo_vector);
+    <span style="color: #F0DFAF; font-weight: bold;">return</span> make_shared &lt;<span style="color: #7CB8BB;">frame_t</span>&gt;
+        (jojo, <span style="color: #7CB8BB;">local_scope_t</span> ());
+}
+</pre>
+</div>
+</div>
+</div>
+
+<div id="outline-container-orgad9918f" class="outline-3">
+<h3 id="orgad9918f">assert</h3>
+<div class="outline-text-3" id="text-orgad9918f">
+</div><div id="outline-container-orge442788" class="outline-4">
+<h4 id="orge442788">assert_pop_eq</h4>
+<div class="outline-text-4" id="text-orge442788">
+<div class="org-src-container">
+
+<pre class="src src-cpp"><span style="color: #7CB8BB;">void</span>
+<span style="color: #93E0E3;">assert_pop_eq</span> (<span style="color: #7CB8BB;">env_t</span> &amp;<span style="color: #DFAF8F;">env</span>, <span style="color: #7CB8BB;">shared_ptr</span> &lt;<span style="color: #7CB8BB;">obj_t</span>&gt; <span style="color: #DFAF8F;">obj</span>)
+{
+    <span style="color: #F0DFAF; font-weight: bold;">auto</span> <span style="color: #DFAF8F;">that</span> = env.obj_stack.top ();
+    assert (obj-&gt;equal (env, that));
+    env.obj_stack.pop ();
+}
+</pre>
+</div>
+</div>
+</div>
+
+<div id="outline-container-org88e03ec" class="outline-4">
+<h4 id="org88e03ec">assert_tos_eq</h4>
+<div class="outline-text-4" id="text-org88e03ec">
+<div class="org-src-container">
+
+<pre class="src src-cpp"><span style="color: #7CB8BB;">void</span>
+<span style="color: #93E0E3;">assert_tos_eq</span> (<span style="color: #7CB8BB;">env_t</span> &amp;<span style="color: #DFAF8F;">env</span>, <span style="color: #7CB8BB;">shared_ptr</span> &lt;<span style="color: #7CB8BB;">obj_t</span>&gt; <span style="color: #DFAF8F;">obj</span>)
+{
+    <span style="color: #F0DFAF; font-weight: bold;">auto</span> <span style="color: #DFAF8F;">that</span> = env.obj_stack.top ();
+    assert (obj-&gt;equal (env, that));
+}
+</pre>
+</div>
+</div>
+</div>
+
+<div id="outline-container-org3f8f09a" class="outline-4">
+<h4 id="org3f8f09a">assert_stack_size</h4>
+<div class="outline-text-4" id="text-org3f8f09a">
+<div class="org-src-container">
+
+<pre class="src src-cpp"><span style="color: #7CB8BB;">void</span>
+<span style="color: #93E0E3;">assert_stack_size</span> (<span style="color: #7CB8BB;">env_t</span> &amp;<span style="color: #DFAF8F;">env</span>, <span style="color: #7CB8BB;">size_t</span> <span style="color: #DFAF8F;">size</span>)
+{
+    assert (env.obj_stack.size () == size);
+}
+</pre>
+</div>
+</div>
+</div>
+</div>
+
+<div id="outline-container-orgc90b9e7" class="outline-3">
+<h3 id="orgc90b9e7"><span class="todo _todo_">[todo]</span> import_test</h3>
+<div class="outline-text-3" id="text-orgc90b9e7">
+<div class="org-src-container">
+
+<pre class="src src-cpp"><span style="color: #7CB8BB;">void</span> <span style="color: #93E0E3;">import_test</span> (<span style="color: #7CB8BB;">env_t</span> &amp;<span style="color: #DFAF8F;">env</span>)
+{
+
+}
+</pre>
+</div>
+</div>
+</div>
+</div>
+
+<div id="outline-container-orga16187a" class="outline-2">
+<h2 id="orga16187a"><b>bool</b></h2>
+<div class="outline-text-2" id="text-orga16187a">
+</div><div id="outline-container-orge3c5a23" class="outline-3">
+<h3 id="orge3c5a23">jj_true_c</h3>
+<div class="outline-text-3" id="text-orge3c5a23">
 <div class="org-src-container">
 
 <pre class="src src-cpp"><span style="color: #7CB8BB;">shared_ptr</span> &lt;data_o&gt;
-<span style="color: #93E0E3;">true_c</span> (<span style="color: #7CB8BB;">env_t</span> &amp;<span style="color: #DFAF8F;">env</span>)
+<span style="color: #93E0E3;">jj_true_c</span> (<span style="color: #7CB8BB;">env_t</span> &amp;<span style="color: #DFAF8F;">env</span>)
 {
    <span style="color: #F0DFAF; font-weight: bold;">return</span> make_shared &lt;data_o&gt;
        (env,
@@ -2604,13 +2804,13 @@ for the JavaScript code in this tag.
 </div>
 </div>
 
-<div id="outline-container-org28ef013" class="outline-3">
-<h3 id="org28ef013">false_c</h3>
-<div class="outline-text-3" id="text-org28ef013">
+<div id="outline-container-org48ba58a" class="outline-3">
+<h3 id="org48ba58a">jj_false_c</h3>
+<div class="outline-text-3" id="text-org48ba58a">
 <div class="org-src-container">
 
 <pre class="src src-cpp"><span style="color: #7CB8BB;">shared_ptr</span> &lt;data_o&gt;
-<span style="color: #93E0E3;">false_c</span> (<span style="color: #7CB8BB;">env_t</span> &amp;<span style="color: #DFAF8F;">env</span>)
+<span style="color: #93E0E3;">jj_false_c</span> (<span style="color: #7CB8BB;">env_t</span> &amp;<span style="color: #DFAF8F;">env</span>)
 {
    <span style="color: #F0DFAF; font-weight: bold;">return</span> make_shared &lt;data_o&gt;
        (env,
@@ -2622,15 +2822,54 @@ for the JavaScript code in this tag.
 </div>
 </div>
 
-<div id="outline-container-org906d41c" class="outline-3">
-<h3 id="org906d41c">import_bool</h3>
-<div class="outline-text-3" id="text-org906d41c">
+<div id="outline-container-orgd1377d8" class="outline-3">
+<h3 id="orgd1377d8">import_bool</h3>
+<div class="outline-text-3" id="text-orgd1377d8">
 <div class="org-src-container">
 
-<pre class="src src-cpp"><span style="color: #7CB8BB;">void</span> <span style="color: #93E0E3;">import_bool</span> (<span style="color: #7CB8BB;">env_t</span> &amp;<span style="color: #DFAF8F;">env</span>)
+<pre class="src src-cpp"><span style="color: #7CB8BB;">void</span>
+<span style="color: #93E0E3;">import_bool</span> (<span style="color: #7CB8BB;">env_t</span> &amp;<span style="color: #DFAF8F;">env</span>)
 {
-    define (env, <span style="color: #CC9393;">"true-c"</span>, true_c (env));
-    define (env, <span style="color: #CC9393;">"false-c"</span>, false_c (env));
+    define (env, <span style="color: #CC9393;">"true-c"</span>, jj_true_c (env));
+    define (env, <span style="color: #CC9393;">"false-c"</span>, jj_false_c (env));
+}
+</pre>
+</div>
+</div>
+</div>
+
+<div id="outline-container-org2ffa32" class="outline-3">
+<h3 id="org2ffa32">test_bool</h3>
+<div class="outline-text-3" id="text-org2ffa32">
+<div class="org-src-container">
+
+<pre class="src src-cpp"><span style="color: #7CB8BB;">void</span>
+<span style="color: #93E0E3;">test_bool</span> ()
+{
+    <span style="color: #F0DFAF; font-weight: bold;">auto</span> <span style="color: #DFAF8F;">env</span> = env_t ();
+
+    import_bool (env);
+
+    <span style="color: #7CB8BB;">jo_vector_t</span> <span style="color: #DFAF8F;">jo_vector</span> = {
+        <span style="color: #F0DFAF; font-weight: bold;">new</span> <span style="color: #7CB8BB;">ref_jo_t</span> (boxing (env, <span style="color: #CC9393;">"true-c"</span>)),
+        <span style="color: #F0DFAF; font-weight: bold;">new</span> <span style="color: #7CB8BB;">ref_jo_t</span> (boxing (env, <span style="color: #CC9393;">"false-c"</span>)),
+    };
+
+    env.frame_stack.push (new_frame_from_jo_vector (jo_vector));
+
+    <span style="color: #5F7F5F;">// </span><span style="color: #7F9F7F;">{</span>
+    <span style="color: #5F7F5F;">//     </span><span style="color: #7F9F7F;">env.report ();</span>
+    <span style="color: #5F7F5F;">//     </span><span style="color: #7F9F7F;">env.run ();</span>
+    <span style="color: #5F7F5F;">//     </span><span style="color: #7F9F7F;">env.report ();</span>
+    <span style="color: #5F7F5F;">// </span><span style="color: #7F9F7F;">}</span>
+
+    {
+        env.run ();
+        assert_stack_size (env, 2);
+        assert_pop_eq (env, jj_false_c (env));
+        assert_pop_eq (env, jj_true_c (env));
+        assert_stack_size (env, 0);
+    }
 }
 </pre>
 </div>
@@ -2638,12 +2877,12 @@ for the JavaScript code in this tag.
 </div>
 </div>
 
-<div id="outline-container-orgcaff6a3" class="outline-2">
-<h2 id="orgcaff6a3">list</h2>
-<div class="outline-text-2" id="text-orgcaff6a3">
-</div><div id="outline-container-orgc8f9fa2" class="outline-3">
-<h3 id="orgc8f9fa2">null_c</h3>
-<div class="outline-text-3" id="text-orgc8f9fa2">
+<div id="outline-container-org1e996d8" class="outline-2">
+<h2 id="org1e996d8"><b>list</b></h2>
+<div class="outline-text-2" id="text-org1e996d8">
+</div><div id="outline-container-orgc48de48" class="outline-3">
+<h3 id="orgc48de48">null_c</h3>
+<div class="outline-text-3" id="text-orgc48de48">
 <div class="org-src-container">
 
 <pre class="src src-cpp"><span style="color: #7CB8BB;">shared_ptr</span> &lt;data_o&gt;
@@ -2659,13 +2898,118 @@ for the JavaScript code in this tag.
 </div>
 </div>
 
-<div id="outline-container-org739c6a4" class="outline-3">
-<h3 id="org739c6a4">cons_c</h3>
-<div class="outline-text-3" id="text-org739c6a4">
+<div id="outline-container-orgdb65beb" class="outline-3">
+<h3 id="orgdb65beb">cons_c</h3>
+<div class="outline-text-3" id="text-orgdb65beb">
+<div class="org-src-container">
+
+<pre class="src src-cpp"><span style="color: #7CB8BB;">shared_ptr</span> &lt;data_o&gt;
+<span style="color: #93E0E3;">cons_c</span> (<span style="color: #7CB8BB;">env_t</span> &amp;<span style="color: #DFAF8F;">env</span>,
+        <span style="color: #7CB8BB;">shared_ptr</span> &lt;<span style="color: #7CB8BB;">obj_t</span>&gt; <span style="color: #DFAF8F;">car</span>,
+        <span style="color: #7CB8BB;">shared_ptr</span> &lt;<span style="color: #7CB8BB;">obj_t</span>&gt; <span style="color: #DFAF8F;">cdr</span>)
+{
+    <span style="color: #F0DFAF; font-weight: bold;">auto</span> <span style="color: #DFAF8F;">obj_map</span> = obj_map_t ();
+    obj_map [<span style="color: #CC9393;">"car"</span>] = car;
+    obj_map [<span style="color: #CC9393;">"cdr"</span>] = cdr;
+    <span style="color: #F0DFAF; font-weight: bold;">return</span> make_shared &lt;data_o&gt;
+        (env,
+         tagging (env, <span style="color: #CC9393;">"cons-t"</span>),
+         obj_map);
+}
+</pre>
+</div>
+</div>
+</div>
+
+<div id="outline-container-orgf6cb6eb" class="outline-3">
+<h3 id="orgf6cb6eb">car</h3>
+<div class="outline-text-3" id="text-orgf6cb6eb">
+<div class="org-src-container">
+
+<pre class="src src-cpp"><span style="color: #7CB8BB;">shared_ptr</span> &lt;<span style="color: #7CB8BB;">obj_t</span>&gt;
+<span style="color: #93E0E3;">car</span> (<span style="color: #7CB8BB;">env_t</span> &amp;<span style="color: #DFAF8F;">env</span>, <span style="color: #7CB8BB;">shared_ptr</span> &lt;<span style="color: #7CB8BB;">obj_t</span>&gt; <span style="color: #DFAF8F;">a</span>)
+{
+    assert (a-&gt;tag == tagging (env, <span style="color: #CC9393;">"cons-t"</span>));
+    <span style="color: #F0DFAF; font-weight: bold;">auto</span> <span style="color: #DFAF8F;">cons</span> = static_pointer_cast &lt;data_o&gt; (a);
+    <span style="color: #F0DFAF; font-weight: bold;">return</span> cons-&gt;obj_map [<span style="color: #CC9393;">"car"</span>];
+}
+</pre>
+</div>
+</div>
+</div>
+
+<div id="outline-container-org928a8ac" class="outline-3">
+<h3 id="org928a8ac">cdr</h3>
+<div class="outline-text-3" id="text-org928a8ac">
+<div class="org-src-container">
+
+<pre class="src src-cpp"><span style="color: #7CB8BB;">shared_ptr</span> &lt;<span style="color: #7CB8BB;">obj_t</span>&gt;
+<span style="color: #93E0E3;">cdr</span> (<span style="color: #7CB8BB;">env_t</span> &amp;<span style="color: #DFAF8F;">env</span>, <span style="color: #7CB8BB;">shared_ptr</span> &lt;<span style="color: #7CB8BB;">obj_t</span>&gt; <span style="color: #DFAF8F;">a</span>)
+{
+    assert (a-&gt;tag == tagging (env, <span style="color: #CC9393;">"cons-t"</span>));
+    <span style="color: #F0DFAF; font-weight: bold;">auto</span> <span style="color: #DFAF8F;">cons</span> = static_pointer_cast &lt;data_o&gt; (a);
+    <span style="color: #F0DFAF; font-weight: bold;">return</span> cons-&gt;obj_map [<span style="color: #CC9393;">"cdr"</span>];
+}
+</pre>
+</div>
+</div>
+</div>
+
+<div id="outline-container-org6b42860" class="outline-3">
+<h3 id="org6b42860">null_p</h3>
+<div class="outline-text-3" id="text-org6b42860">
+<div class="org-src-container">
+
+<pre class="src src-cpp"><span style="color: #7CB8BB;">bool</span>
+<span style="color: #93E0E3;">null_p</span> (<span style="color: #7CB8BB;">env_t</span> &amp;<span style="color: #DFAF8F;">env</span>, <span style="color: #7CB8BB;">shared_ptr</span> &lt;<span style="color: #7CB8BB;">obj_t</span>&gt; <span style="color: #DFAF8F;">a</span>)
+{
+    <span style="color: #F0DFAF; font-weight: bold;">return</span> a-&gt;tag == tagging (env, <span style="color: #CC9393;">"null-t"</span>);
+}
+</pre>
+</div>
+</div>
+</div>
+
+<div id="outline-container-orgc75c4e0" class="outline-3">
+<h3 id="orgc75c4e0">cons_p</h3>
+<div class="outline-text-3" id="text-orgc75c4e0">
+<div class="org-src-container">
+
+<pre class="src src-cpp"><span style="color: #7CB8BB;">bool</span>
+<span style="color: #93E0E3;">cons_p</span> (<span style="color: #7CB8BB;">env_t</span> &amp;<span style="color: #DFAF8F;">env</span>, <span style="color: #7CB8BB;">shared_ptr</span> &lt;<span style="color: #7CB8BB;">obj_t</span>&gt; <span style="color: #DFAF8F;">a</span>)
+{
+    <span style="color: #F0DFAF; font-weight: bold;">return</span> a-&gt;tag == tagging (env, <span style="color: #CC9393;">"cons-t"</span>);
+}
+</pre>
+</div>
+</div>
+</div>
+
+<div id="outline-container-orgb64fd98" class="outline-3">
+<h3 id="orgb64fd98">jj_null_c</h3>
+<div class="outline-text-3" id="text-orgb64fd98">
+<div class="org-src-container">
+
+<pre class="src src-cpp"><span style="color: #7CB8BB;">shared_ptr</span> &lt;data_o&gt;
+<span style="color: #93E0E3;">jj_null_c</span> (<span style="color: #7CB8BB;">env_t</span> &amp;<span style="color: #DFAF8F;">env</span>)
+{
+   <span style="color: #F0DFAF; font-weight: bold;">return</span> make_shared &lt;data_o&gt;
+       (env,
+        tagging (env, <span style="color: #CC9393;">"null-t"</span>),
+        <span style="color: #7CB8BB;">obj_map_t</span> ());
+}
+</pre>
+</div>
+</div>
+</div>
+
+<div id="outline-container-org2cd2337" class="outline-3">
+<h3 id="org2cd2337">jj_cons_c</h3>
+<div class="outline-text-3" id="text-org2cd2337">
 <div class="org-src-container">
 
 <pre class="src src-cpp"><span style="color: #7CB8BB;">shared_ptr</span> &lt;data_cons_o&gt;
-<span style="color: #93E0E3;">cons_c</span> (<span style="color: #7CB8BB;">env_t</span> &amp;<span style="color: #DFAF8F;">env</span>)
+<span style="color: #93E0E3;">jj_cons_c</span> (<span style="color: #7CB8BB;">env_t</span> &amp;<span style="color: #DFAF8F;">env</span>)
 {
     <span style="color: #F0DFAF; font-weight: bold;">return</span> make_shared &lt;data_cons_o&gt;
         (env,
@@ -2678,15 +3022,59 @@ for the JavaScript code in this tag.
 </div>
 </div>
 
-<div id="outline-container-org207ba30" class="outline-3">
-<h3 id="org207ba30">import_list</h3>
-<div class="outline-text-3" id="text-org207ba30">
+<div id="outline-container-org6e22acd" class="outline-3">
+<h3 id="org6e22acd">import_list</h3>
+<div class="outline-text-3" id="text-org6e22acd">
 <div class="org-src-container">
 
-<pre class="src src-cpp"><span style="color: #7CB8BB;">void</span> <span style="color: #93E0E3;">import_list</span> (<span style="color: #7CB8BB;">env_t</span> &amp;<span style="color: #DFAF8F;">env</span>)
+<pre class="src src-cpp"><span style="color: #7CB8BB;">void</span>
+<span style="color: #93E0E3;">import_list</span> (<span style="color: #7CB8BB;">env_t</span> &amp;<span style="color: #DFAF8F;">env</span>)
 {
-    define (env, <span style="color: #CC9393;">"null-c"</span>, null_c (env));
-    define (env, <span style="color: #CC9393;">"cons-c"</span>, cons_c (env));
+    define (env, <span style="color: #CC9393;">"null-c"</span>, jj_null_c (env));
+    define (env, <span style="color: #CC9393;">"cons-c"</span>, jj_cons_c (env));
+}
+</pre>
+</div>
+</div>
+</div>
+
+<div id="outline-container-org950d4e5" class="outline-3">
+<h3 id="org950d4e5">test_list</h3>
+<div class="outline-text-3" id="text-org950d4e5">
+<div class="org-src-container">
+
+<pre class="src src-cpp"><span style="color: #7CB8BB;">void</span>
+<span style="color: #93E0E3;">test_list</span> ()
+{
+    <span style="color: #F0DFAF; font-weight: bold;">auto</span> <span style="color: #DFAF8F;">env</span> = env_t ();
+
+    import_list (env);
+
+    define (env, <span style="color: #CC9393;">"s1"</span>, make_shared &lt;string_o&gt; (env, <span style="color: #CC9393;">"bye"</span>));
+    define (env, <span style="color: #CC9393;">"s2"</span>, make_shared &lt;string_o&gt; (env, <span style="color: #CC9393;">"world"</span>));
+
+    <span style="color: #7CB8BB;">jo_vector_t</span> <span style="color: #DFAF8F;">jo_vector</span> = {
+        <span style="color: #F0DFAF; font-weight: bold;">new</span> <span style="color: #7CB8BB;">ref_jo_t</span> (boxing (env, <span style="color: #CC9393;">"s1"</span>)),
+        <span style="color: #F0DFAF; font-weight: bold;">new</span> <span style="color: #7CB8BB;">ref_jo_t</span> (boxing (env, <span style="color: #CC9393;">"s2"</span>)),
+        <span style="color: #F0DFAF; font-weight: bold;">new</span> <span style="color: #7CB8BB;">ref_jo_t</span> (boxing (env, <span style="color: #CC9393;">"cons-c"</span>)),
+        <span style="color: #F0DFAF; font-weight: bold;">new</span> <span style="color: #7CB8BB;">apply_jo_t</span> (2),
+        <span style="color: #F0DFAF; font-weight: bold;">new</span> <span style="color: #7CB8BB;">field_jo_t</span> (<span style="color: #CC9393;">"cdr"</span>),
+    };
+
+    env.frame_stack.push (new_frame_from_jo_vector (jo_vector));
+
+    <span style="color: #5F7F5F;">// </span><span style="color: #7F9F7F;">{</span>
+    <span style="color: #5F7F5F;">//     </span><span style="color: #7F9F7F;">env.report ();</span>
+    <span style="color: #5F7F5F;">//     </span><span style="color: #7F9F7F;">env.run ();</span>
+    <span style="color: #5F7F5F;">//     </span><span style="color: #7F9F7F;">env.report ();</span>
+    <span style="color: #5F7F5F;">// </span><span style="color: #7F9F7F;">}</span>
+
+    {
+        env.run ();
+        assert_stack_size (env, 1);
+        assert_pop_eq (env, make_shared &lt;string_o&gt; (env, <span style="color: #CC9393;">"world"</span>));
+        assert_stack_size (env, 0);
+    }
 }
 </pre>
 </div>
@@ -2694,12 +3082,368 @@ for the JavaScript code in this tag.
 </div>
 </div>
 
-<div id="outline-container-orgb6e572a" class="outline-2">
-<h2 id="orgb6e572a">scan</h2>
-<div class="outline-text-2" id="text-orgb6e572a">
-</div><div id="outline-container-org3856066" class="outline-3">
-<h3 id="org3856066">string_vector_t</h3>
-<div class="outline-text-3" id="text-org3856066">
+<div id="outline-container-org36cf69a" class="outline-2">
+<h2 id="org36cf69a"><b>string</b></h2>
+<div class="outline-text-2" id="text-org36cf69a">
+</div><div id="outline-container-orgf242629" class="outline-3">
+<h3 id="orgf242629">jj_string_print</h3>
+<div class="outline-text-3" id="text-orgf242629">
+<div class="org-src-container">
+
+<pre class="src src-cpp"><span style="color: #7CB8BB;">sig_t</span> <span style="color: #DFAF8F;">jj_string_print_sig</span> = { <span style="color: #CC9393;">"string-print"</span>, <span style="color: #CC9393;">"string"</span> };
+<span style="color: #5F7F5F;">// </span><span style="color: #7F9F7F;">-- string-t -&gt;</span>
+<span style="color: #7CB8BB;">void</span> <span style="color: #93E0E3;">jj_string_print</span> (<span style="color: #7CB8BB;">env_t</span> &amp;<span style="color: #DFAF8F;">env</span>, <span style="color: #7CB8BB;">obj_map_t</span> &amp;<span style="color: #DFAF8F;">obj_map</span>)
+{
+    <span style="color: #F0DFAF; font-weight: bold;">auto</span> <span style="color: #DFAF8F;">str</span> = static_pointer_cast &lt;string_o&gt; (obj_map [<span style="color: #CC9393;">"string"</span>]);
+    cout &lt;&lt; str-&gt;str;
+}
+</pre>
+</div>
+</div>
+</div>
+
+<div id="outline-container-org2e8416c" class="outline-3">
+<h3 id="org2e8416c">import_string</h3>
+<div class="outline-text-3" id="text-org2e8416c">
+<div class="org-src-container">
+
+<pre class="src src-cpp"><span style="color: #7CB8BB;">void</span>
+<span style="color: #93E0E3;">import_string</span> (<span style="color: #7CB8BB;">env_t</span> &amp;<span style="color: #DFAF8F;">env</span>)
+{
+    define_prim (env,
+                 jj_string_print_sig,
+                 jj_string_print);
+}
+</pre>
+</div>
+</div>
+</div>
+
+<div id="outline-container-org589bdb0" class="outline-3">
+<h3 id="org589bdb0"><span class="todo _todo_">[todo]</span> test_string</h3>
+<div class="outline-text-3" id="text-org589bdb0">
+<div class="org-src-container">
+
+<pre class="src src-cpp"><span style="color: #7CB8BB;">void</span>
+<span style="color: #93E0E3;">test_string</span> ()
+{
+
+}
+</pre>
+</div>
+</div>
+</div>
+</div>
+
+<div id="outline-container-orgcc45bcc" class="outline-2">
+<h2 id="orgcc45bcc"><b>vect</b></h2>
+<div class="outline-text-2" id="text-orgcc45bcc">
+</div><div id="outline-container-org4e2bd62" class="outline-3">
+<h3 id="org4e2bd62">obj_vect_t</h3>
+<div class="outline-text-3" id="text-org4e2bd62">
+<div class="org-src-container">
+
+<pre class="src src-cpp"><span style="color: #F0DFAF; font-weight: bold;">using</span> <span style="color: #7CB8BB;">obj_vect_t</span> = <span style="color: #7CB8BB;">vector</span> &lt;<span style="color: #7CB8BB;">shared_ptr</span> &lt;<span style="color: #7CB8BB;">obj_t</span>&gt;&gt;;
+</pre>
+</div>
+</div>
+</div>
+
+<div id="outline-container-orgc077602" class="outline-3">
+<h3 id="orgc077602">vect_o</h3>
+<div class="outline-text-3" id="text-orgc077602">
+<div class="org-src-container">
+
+<pre class="src src-cpp"><span style="color: #F0DFAF; font-weight: bold;">struct</span> <span style="color: #7CB8BB;">vect_o</span>: <span style="color: #7CB8BB;">obj_t</span>
+{
+    <span style="color: #7CB8BB;">obj_vect_t</span> <span style="color: #DFAF8F;">vect</span>;
+    <span style="color: #93E0E3;">vect_o</span> (<span style="color: #7CB8BB;">env_t</span> &amp;<span style="color: #DFAF8F;">env</span>, <span style="color: #7CB8BB;">obj_vect_t</span> <span style="color: #DFAF8F;">vect</span>);
+    <span style="color: #7CB8BB;">bool</span> <span style="color: #93E0E3;">equal</span> (<span style="color: #7CB8BB;">env_t</span> &amp;<span style="color: #DFAF8F;">env</span>, <span style="color: #7CB8BB;">shared_ptr</span> &lt;<span style="color: #7CB8BB;">obj_t</span>&gt; <span style="color: #DFAF8F;">obj</span>);
+    <span style="color: #5F7F5F;">// </span><span style="color: #7F9F7F;">void print (env_t &amp;env);</span>
+};
+</pre>
+</div>
+</div>
+</div>
+
+<div id="outline-container-org9750b24" class="outline-3">
+<h3 id="org9750b24">vect_o::vect_o</h3>
+<div class="outline-text-3" id="text-org9750b24">
+<div class="org-src-container">
+
+<pre class="src src-cpp"><span style="color: #BFEBBF;">vect_o</span>::<span style="color: #93E0E3;">vect_o</span> (<span style="color: #7CB8BB;">env_t</span> &amp;<span style="color: #DFAF8F;">env</span>, <span style="color: #7CB8BB;">vector</span> &lt;<span style="color: #7CB8BB;">shared_ptr</span> &lt;<span style="color: #7CB8BB;">obj_t</span>&gt;&gt; <span style="color: #DFAF8F;">vect</span>)
+{
+    <span style="color: #F0DFAF; font-weight: bold;">this</span>-&gt;tag = tagging (env, <span style="color: #CC9393;">"vect-t"</span>);
+    <span style="color: #F0DFAF; font-weight: bold;">this</span>-&gt;vect = vect;
+}
+</pre>
+</div>
+</div>
+</div>
+
+<div id="outline-container-org9f5dc25" class="outline-3">
+<h3 id="org9f5dc25">obj_equal</h3>
+<div class="outline-text-3" id="text-org9f5dc25">
+<div class="org-src-container">
+
+<pre class="src src-cpp"><span style="color: #7CB8BB;">bool</span>
+<span style="color: #93E0E3;">obj_equal</span> (<span style="color: #7CB8BB;">env_t</span> &amp;<span style="color: #DFAF8F;">env</span>,
+           <span style="color: #7CB8BB;">shared_ptr</span> &lt;<span style="color: #7CB8BB;">obj_t</span>&gt; &amp;<span style="color: #DFAF8F;">lhs</span>,
+           <span style="color: #7CB8BB;">shared_ptr</span> &lt;<span style="color: #7CB8BB;">obj_t</span>&gt; &amp;<span style="color: #DFAF8F;">rhs</span>)
+{
+    <span style="color: #F0DFAF; font-weight: bold;">return</span> lhs-&gt;equal (env, rhs);
+}
+</pre>
+</div>
+</div>
+</div>
+
+<div id="outline-container-org6d445ad" class="outline-3">
+<h3 id="org6d445ad">vect_equal</h3>
+<div class="outline-text-3" id="text-org6d445ad">
+<div class="org-src-container">
+
+<pre class="src src-cpp"><span style="color: #7CB8BB;">bool</span>
+<span style="color: #93E0E3;">vect_equal</span> (<span style="color: #7CB8BB;">env_t</span> &amp;<span style="color: #DFAF8F;">env</span>,
+            <span style="color: #7CB8BB;">obj_vect_t</span> &amp;<span style="color: #DFAF8F;">lhs</span>,
+            <span style="color: #7CB8BB;">obj_vect_t</span> &amp;<span style="color: #DFAF8F;">rhs</span>)
+{
+    <span style="color: #F0DFAF; font-weight: bold;">if</span> (lhs.size () != rhs.size ()) <span style="color: #F0DFAF; font-weight: bold;">return</span> <span style="color: #BFEBBF;">false</span>;
+    <span style="color: #F0DFAF; font-weight: bold;">auto</span> <span style="color: #DFAF8F;">size</span> = lhs.size ();
+    <span style="color: #F0DFAF; font-weight: bold;">auto</span> <span style="color: #DFAF8F;">index</span> = 0;
+    <span style="color: #F0DFAF; font-weight: bold;">while</span> (index &lt; size) {
+        <span style="color: #F0DFAF; font-weight: bold;">if</span> (<span style="color: #F0DFAF; font-weight: bold;">!</span> obj_equal (env, lhs [index], rhs [index]))
+            <span style="color: #F0DFAF; font-weight: bold;">return</span> <span style="color: #BFEBBF;">false</span>;
+        index++;
+    }
+    <span style="color: #F0DFAF; font-weight: bold;">return</span> <span style="color: #BFEBBF;">true</span>;
+}
+</pre>
+</div>
+</div>
+</div>
+
+<div id="outline-container-orgf2a3a5d" class="outline-3">
+<h3 id="orgf2a3a5d">vect_o::equal</h3>
+<div class="outline-text-3" id="text-orgf2a3a5d">
+<div class="org-src-container">
+
+<pre class="src src-cpp"><span style="color: #7CB8BB;">bool</span>
+<span style="color: #BFEBBF;">vect_o</span>::<span style="color: #93E0E3;">equal</span> (<span style="color: #7CB8BB;">env_t</span> &amp;<span style="color: #DFAF8F;">env</span>, <span style="color: #7CB8BB;">shared_ptr</span> &lt;<span style="color: #7CB8BB;">obj_t</span>&gt; <span style="color: #DFAF8F;">obj</span>)
+{
+    <span style="color: #F0DFAF; font-weight: bold;">if</span> (<span style="color: #F0DFAF; font-weight: bold;">this</span>-&gt;tag != obj-&gt;tag) <span style="color: #F0DFAF; font-weight: bold;">return</span> <span style="color: #BFEBBF;">false</span>;
+    <span style="color: #F0DFAF; font-weight: bold;">auto</span> <span style="color: #DFAF8F;">that</span> = static_pointer_cast &lt;vect_o&gt; (obj);
+    <span style="color: #F0DFAF; font-weight: bold;">return</span> vect_equal (env, <span style="color: #F0DFAF; font-weight: bold;">this</span>-&gt;vect, that-&gt;vect);
+}
+</pre>
+</div>
+</div>
+</div>
+
+<div id="outline-container-orgcca6fd0" class="outline-3">
+<h3 id="orgcca6fd0"><span class="todo _todo_">[todo]</span> vect_o::print</h3>
+<div class="outline-text-3" id="text-orgcca6fd0">
+<div class="org-src-container">
+
+<pre class="src src-cpp"><span style="color: #5F7F5F;">// </span><span style="color: #7F9F7F;">void</span>
+<span style="color: #5F7F5F;">// </span><span style="color: #7F9F7F;">vect_o::print (env_t &amp;env)</span>
+<span style="color: #5F7F5F;">// </span><span style="color: #7F9F7F;">{</span>
+
+<span style="color: #5F7F5F;">// </span><span style="color: #7F9F7F;">}</span>
+</pre>
+</div>
+</div>
+</div>
+
+<div id="outline-container-orgfe427c6" class="outline-3">
+<h3 id="orgfe427c6">vect_p</h3>
+<div class="outline-text-3" id="text-orgfe427c6">
+<div class="org-src-container">
+
+<pre class="src src-cpp"><span style="color: #7CB8BB;">bool</span>
+<span style="color: #93E0E3;">vect_p</span> (<span style="color: #7CB8BB;">env_t</span> &amp;<span style="color: #DFAF8F;">env</span>, <span style="color: #7CB8BB;">shared_ptr</span> &lt;<span style="color: #7CB8BB;">obj_t</span>&gt; <span style="color: #DFAF8F;">a</span>)
+{
+    <span style="color: #F0DFAF; font-weight: bold;">return</span> a-&gt;tag == tagging (env, <span style="color: #CC9393;">"vect-t"</span>);
+}
+</pre>
+</div>
+</div>
+</div>
+
+<div id="outline-container-orga7f2db5" class="outline-3">
+<h3 id="orga7f2db5">list_to_vect</h3>
+<div class="outline-text-3" id="text-orga7f2db5">
+<div class="org-src-container">
+
+<pre class="src src-cpp"><span style="color: #7CB8BB;">shared_ptr</span> &lt;vect_o&gt;
+<span style="color: #93E0E3;">list_to_vect</span> (<span style="color: #7CB8BB;">env_t</span> &amp;<span style="color: #DFAF8F;">env</span>, <span style="color: #7CB8BB;">shared_ptr</span> &lt;<span style="color: #7CB8BB;">obj_t</span>&gt; <span style="color: #DFAF8F;">a</span>)
+{
+    <span style="color: #F0DFAF; font-weight: bold;">auto</span> <span style="color: #DFAF8F;">vect</span> = obj_vect_t ();
+    <span style="color: #F0DFAF; font-weight: bold;">auto</span> <span style="color: #DFAF8F;">l</span> = static_pointer_cast &lt;data_o&gt; (a);
+    <span style="color: #F0DFAF; font-weight: bold;">while</span> (<span style="color: #F0DFAF; font-weight: bold;">!</span> null_p (env, l)) {
+        vect.push_back (car (env, l));
+        l = static_pointer_cast &lt;data_o&gt;
+            (cdr (env, l));
+    }
+    <span style="color: #F0DFAF; font-weight: bold;">return</span> make_shared &lt;vect_o&gt; (env, vect);
+}
+</pre>
+</div>
+</div>
+</div>
+
+<div id="outline-container-org7c093a8" class="outline-3">
+<h3 id="org7c093a8">jj_list_to_vect</h3>
+<div class="outline-text-3" id="text-org7c093a8">
+<div class="org-src-container">
+
+<pre class="src src-cpp"><span style="color: #7CB8BB;">sig_t</span> <span style="color: #DFAF8F;">jj_list_to_vect_sig</span> = { <span style="color: #CC9393;">"list-to-vect"</span>, <span style="color: #CC9393;">"list"</span> };
+<span style="color: #5F7F5F;">// </span><span style="color: #7F9F7F;">-- (list-t t) -&gt; (vect-t t)</span>
+<span style="color: #7CB8BB;">void</span> <span style="color: #93E0E3;">jj_list_to_vect</span> (<span style="color: #7CB8BB;">env_t</span> &amp;<span style="color: #DFAF8F;">env</span>, <span style="color: #7CB8BB;">obj_map_t</span> &amp;<span style="color: #DFAF8F;">obj_map</span>)
+{
+    env.obj_stack.push (list_to_vect (env, obj_map [<span style="color: #CC9393;">"list"</span>]));
+}
+</pre>
+</div>
+</div>
+</div>
+
+<div id="outline-container-orgffcb670" class="outline-3">
+<h3 id="orgffcb670">vect_to_list</h3>
+<div class="outline-text-3" id="text-orgffcb670">
+<div class="org-src-container">
+
+<pre class="src src-cpp"><span style="color: #7CB8BB;">shared_ptr</span> &lt;data_o&gt;
+<span style="color: #93E0E3;">vect_to_list</span> (<span style="color: #7CB8BB;">env_t</span> &amp;<span style="color: #DFAF8F;">env</span>, <span style="color: #7CB8BB;">shared_ptr</span> &lt;<span style="color: #7CB8BB;">obj_t</span>&gt; <span style="color: #DFAF8F;">a</span>)
+{
+    <span style="color: #F0DFAF; font-weight: bold;">auto</span> <span style="color: #DFAF8F;">v</span> = static_pointer_cast &lt;vect_o&gt; (a);
+    <span style="color: #F0DFAF; font-weight: bold;">auto</span> <span style="color: #DFAF8F;">vect</span> = v-&gt;vect;
+    <span style="color: #F0DFAF; font-weight: bold;">auto</span> <span style="color: #DFAF8F;">result</span> = null_c (env);
+    <span style="color: #F0DFAF; font-weight: bold;">auto</span> <span style="color: #DFAF8F;">begin</span> = vect.rbegin ();
+    <span style="color: #F0DFAF; font-weight: bold;">auto</span> <span style="color: #DFAF8F;">end</span> = vect.rend ();
+    <span style="color: #F0DFAF; font-weight: bold;">for</span> (<span style="color: #F0DFAF; font-weight: bold;">auto</span> <span style="color: #DFAF8F;">it</span> = begin; it != end; it++)
+        result = cons_c (env, *it, result);
+    <span style="color: #F0DFAF; font-weight: bold;">return</span> result;
+}
+</pre>
+</div>
+</div>
+</div>
+
+<div id="outline-container-orgfdad473" class="outline-3">
+<h3 id="orgfdad473">jj_vect_to_list</h3>
+<div class="outline-text-3" id="text-orgfdad473">
+<div class="org-src-container">
+
+<pre class="src src-cpp"><span style="color: #7CB8BB;">sig_t</span> <span style="color: #DFAF8F;">jj_vect_to_list_sig</span> = { <span style="color: #CC9393;">"vect-to-list"</span>, <span style="color: #CC9393;">"vect"</span> };
+<span style="color: #5F7F5F;">// </span><span style="color: #7F9F7F;">-- (vect-t t) -&gt; (list-t t)</span>
+<span style="color: #7CB8BB;">void</span> <span style="color: #93E0E3;">jj_vect_to_list</span> (<span style="color: #7CB8BB;">env_t</span> &amp;<span style="color: #DFAF8F;">env</span>, <span style="color: #7CB8BB;">obj_map_t</span> &amp;<span style="color: #DFAF8F;">obj_map</span>)
+{
+    env.obj_stack.push (vect_to_list (env, obj_map [<span style="color: #CC9393;">"vect"</span>]));
+}
+</pre>
+</div>
+</div>
+</div>
+
+<div id="outline-container-orgc8c0fa5" class="outline-3">
+<h3 id="orgc8c0fa5">import_vect</h3>
+<div class="outline-text-3" id="text-orgc8c0fa5">
+<div class="org-src-container">
+
+<pre class="src src-cpp"><span style="color: #7CB8BB;">void</span>
+<span style="color: #93E0E3;">import_vect</span> (<span style="color: #7CB8BB;">env_t</span> &amp;<span style="color: #DFAF8F;">env</span>)
+{
+    define_prim (env,
+                 jj_list_to_vect_sig,
+                 jj_list_to_vect);
+    define_prim (env,
+                 jj_vect_to_list_sig,
+                 jj_vect_to_list);
+}
+</pre>
+</div>
+</div>
+</div>
+
+<div id="outline-container-org212953d" class="outline-3">
+<h3 id="org212953d">test_vect</h3>
+<div class="outline-text-3" id="text-org212953d">
+<div class="org-src-container">
+
+<pre class="src src-cpp"><span style="color: #7CB8BB;">void</span>
+<span style="color: #93E0E3;">test_vect</span> ()
+{
+    <span style="color: #F0DFAF; font-weight: bold;">auto</span> <span style="color: #DFAF8F;">env</span> = env_t ();
+
+    import_list (env);
+    import_vect (env);
+
+    define (env, <span style="color: #CC9393;">"s1"</span>, make_shared &lt;string_o&gt; (env, <span style="color: #CC9393;">"bye"</span>));
+    define (env, <span style="color: #CC9393;">"s2"</span>, make_shared &lt;string_o&gt; (env, <span style="color: #CC9393;">"world"</span>));
+
+    <span style="color: #7CB8BB;">jo_vector_t</span> <span style="color: #DFAF8F;">jo_vector</span> = {
+        <span style="color: #F0DFAF; font-weight: bold;">new</span> <span style="color: #7CB8BB;">ref_jo_t</span> (boxing (env, <span style="color: #CC9393;">"s1"</span>)),
+        <span style="color: #F0DFAF; font-weight: bold;">new</span> <span style="color: #7CB8BB;">ref_jo_t</span> (boxing (env, <span style="color: #CC9393;">"s2"</span>)),
+        <span style="color: #F0DFAF; font-weight: bold;">new</span> <span style="color: #7CB8BB;">ref_jo_t</span> (boxing (env, <span style="color: #CC9393;">"null-c"</span>)),
+        <span style="color: #F0DFAF; font-weight: bold;">new</span> <span style="color: #7CB8BB;">ref_jo_t</span> (boxing (env, <span style="color: #CC9393;">"cons-c"</span>)),
+        <span style="color: #F0DFAF; font-weight: bold;">new</span> <span style="color: #7CB8BB;">apply_jo_t</span> (2),
+        <span style="color: #F0DFAF; font-weight: bold;">new</span> <span style="color: #7CB8BB;">ref_jo_t</span> (boxing (env, <span style="color: #CC9393;">"cons-c"</span>)),
+        <span style="color: #F0DFAF; font-weight: bold;">new</span> <span style="color: #7CB8BB;">apply_jo_t</span> (2),
+        <span style="color: #F0DFAF; font-weight: bold;">new</span> <span style="color: #7CB8BB;">ref_jo_t</span> (boxing (env, <span style="color: #CC9393;">"list-to-vect"</span>)),
+        <span style="color: #F0DFAF; font-weight: bold;">new</span> <span style="color: #7CB8BB;">apply_jo_t</span> (1),
+        <span style="color: #F0DFAF; font-weight: bold;">new</span> <span style="color: #7CB8BB;">ref_jo_t</span> (boxing (env, <span style="color: #CC9393;">"vect-to-list"</span>)),
+        <span style="color: #F0DFAF; font-weight: bold;">new</span> <span style="color: #7CB8BB;">apply_jo_t</span> (1),
+        <span style="color: #F0DFAF; font-weight: bold;">new</span> <span style="color: #7CB8BB;">field_jo_t</span> (<span style="color: #CC9393;">"cdr"</span>),
+        <span style="color: #F0DFAF; font-weight: bold;">new</span> <span style="color: #7CB8BB;">field_jo_t</span> (<span style="color: #CC9393;">"car"</span>),
+    };
+
+    env.frame_stack.push (new_frame_from_jo_vector (jo_vector));
+
+    <span style="color: #5F7F5F;">// </span><span style="color: #7F9F7F;">{</span>
+    <span style="color: #5F7F5F;">//     </span><span style="color: #7F9F7F;">env.report ();</span>
+    <span style="color: #5F7F5F;">//     </span><span style="color: #7F9F7F;">env.run ();</span>
+    <span style="color: #5F7F5F;">//     </span><span style="color: #7F9F7F;">env.report ();</span>
+    <span style="color: #5F7F5F;">// </span><span style="color: #7F9F7F;">}</span>
+
+    {
+        env.run ();
+        assert_stack_size (env, 1);
+        assert_pop_eq (env, make_shared &lt;string_o&gt; (env, <span style="color: #CC9393;">"world"</span>));
+        assert_stack_size (env, 0);
+    }
+}
+</pre>
+</div>
+</div>
+</div>
+</div>
+
+<div id="outline-container-org50211e8" class="outline-2">
+<h2 id="org50211e8"><b>dict</b></h2>
+<div class="outline-text-2" id="text-org50211e8">
+</div><div id="outline-container-orgf656b3f" class="outline-3">
+<h3 id="orgf656b3f"><span class="todo _todo_">[todo]</span> test_dict</h3>
+<div class="outline-text-3" id="text-orgf656b3f">
+<div class="org-src-container">
+
+<pre class="src src-cpp"><span style="color: #7CB8BB;">void</span>
+<span style="color: #93E0E3;">test_dict</span> ()
+{
+
+}
+</pre>
+</div>
+</div>
+</div>
+</div>
+
+<div id="outline-container-org77caba" class="outline-2">
+<h2 id="org77caba"><b>sexp</b></h2>
+<div class="outline-text-2" id="text-org77caba">
+</div><div id="outline-container-org76fb8be" class="outline-3">
+<h3 id="org76fb8be">string_vector_t</h3>
+<div class="outline-text-3" id="text-org76fb8be">
 <div class="org-src-container">
 
 <pre class="src src-cpp"><span style="color: #F0DFAF; font-weight: bold;">using</span> <span style="color: #7CB8BB;">string_vector_t</span> = <span style="color: #7CB8BB;">vector</span> &lt;<span style="color: #7CB8BB;">string</span>&gt; ;
@@ -2708,9 +3452,9 @@ for the JavaScript code in this tag.
 </div>
 </div>
 
-<div id="outline-container-orgdf396e5" class="outline-3">
-<h3 id="orgdf396e5">space_char_p</h3>
-<div class="outline-text-3" id="text-orgdf396e5">
+<div id="outline-container-org8023f48" class="outline-3">
+<h3 id="org8023f48">space_char_p</h3>
+<div class="outline-text-3" id="text-org8023f48">
 <div class="org-src-container">
 
 <pre class="src src-cpp"><span style="color: #7CB8BB;">bool</span> <span style="color: #93E0E3;">space_char_p</span> (<span style="color: #7CB8BB;">char</span> <span style="color: #DFAF8F;">c</span>)
@@ -2724,9 +3468,9 @@ for the JavaScript code in this tag.
 </div>
 </div>
 
-<div id="outline-container-orgad7bb90" class="outline-3">
-<h3 id="orgad7bb90">delimiter_char_p</h3>
-<div class="outline-text-3" id="text-orgad7bb90">
+<div id="outline-container-orgbbde6cc" class="outline-3">
+<h3 id="orgbbde6cc">delimiter_char_p</h3>
+<div class="outline-text-3" id="text-orgbbde6cc">
 <div class="org-src-container">
 
 <pre class="src src-cpp"><span style="color: #7CB8BB;">bool</span> <span style="color: #93E0E3;">delimiter_char_p</span> (<span style="color: #7CB8BB;">char</span> <span style="color: #DFAF8F;">c</span>)
@@ -2747,9 +3491,9 @@ for the JavaScript code in this tag.
 </div>
 </div>
 
-<div id="outline-container-orga549bc" class="outline-3">
-<h3 id="orga549bc">string_from_char</h3>
-<div class="outline-text-3" id="text-orga549bc">
+<div id="outline-container-org9a348c7" class="outline-3">
+<h3 id="org9a348c7">string_from_char</h3>
+<div class="outline-text-3" id="text-org9a348c7">
 <div class="org-src-container">
 
 <pre class="src src-cpp"><span style="color: #7CB8BB;">string</span>
@@ -2764,9 +3508,9 @@ for the JavaScript code in this tag.
 </div>
 </div>
 
-<div id="outline-container-org86c9664" class="outline-3">
-<h3 id="org86c9664">doublequote_char_p</h3>
-<div class="outline-text-3" id="text-org86c9664">
+<div id="outline-container-org3b2e8f7" class="outline-3">
+<h3 id="org3b2e8f7">doublequote_char_p</h3>
+<div class="outline-text-3" id="text-org3b2e8f7">
 <div class="org-src-container">
 
 <pre class="src src-cpp"><span style="color: #7CB8BB;">bool</span> <span style="color: #93E0E3;">doublequote_char_p</span> (<span style="color: #7CB8BB;">char</span> <span style="color: #DFAF8F;">c</span>)
@@ -2778,9 +3522,9 @@ for the JavaScript code in this tag.
 </div>
 </div>
 
-<div id="outline-container-orgc8fef2d" class="outline-3">
-<h3 id="orgc8fef2d">find_word_length</h3>
-<div class="outline-text-3" id="text-orgc8fef2d">
+<div id="outline-container-org50c7fb4" class="outline-3">
+<h3 id="org50c7fb4">find_word_length</h3>
+<div class="outline-text-3" id="text-org50c7fb4">
 <div class="org-src-container">
 
 <pre class="src src-cpp"><span style="color: #7CB8BB;">size_t</span> <span style="color: #93E0E3;">find_word_length</span> (<span style="color: #7CB8BB;">string</span> <span style="color: #DFAF8F;">code</span>, <span style="color: #7CB8BB;">size_t</span> <span style="color: #DFAF8F;">begin</span>)
@@ -2803,13 +3547,13 @@ for the JavaScript code in this tag.
 </div>
 </div>
 
-<div id="outline-container-orgef633ab" class="outline-3">
-<h3 id="orgef633ab">code_scan</h3>
-<div class="outline-text-3" id="text-orgef633ab">
+<div id="outline-container-org521e7cd" class="outline-3">
+<h3 id="org521e7cd">scan_word_vector</h3>
+<div class="outline-text-3" id="text-org521e7cd">
 <div class="org-src-container">
 
 <pre class="src src-cpp"><span style="color: #7CB8BB;">string_vector_t</span>
-<span style="color: #93E0E3;">code_scan</span> (<span style="color: #7CB8BB;">string</span> <span style="color: #DFAF8F;">code</span>)
+<span style="color: #93E0E3;">scan_word_vector</span> (<span style="color: #7CB8BB;">string</span> <span style="color: #DFAF8F;">code</span>)
 {
     <span style="color: #F0DFAF; font-weight: bold;">auto</span> <span style="color: #DFAF8F;">string_vector</span> = string_vector_t ();
     <span style="color: #7CB8BB;">size_t</span> <span style="color: #DFAF8F;">i</span> = 0;
@@ -2836,103 +3580,670 @@ for the JavaScript code in this tag.
 </div>
 </div>
 </div>
-</div>
 
-<div id="outline-container-orgcd6f402" class="outline-2">
-<h2 id="orgcd6f402">sexp</h2>
-<div class="outline-text-2" id="text-orgcd6f402">
-</div><div id="outline-container-org3b78059" class="outline-3">
-<h3 id="org3b78059">sexp_t</h3>
-<div class="outline-text-3" id="text-org3b78059">
+<div id="outline-container-orgcc1737" class="outline-3">
+<h3 id="orgcc1737">string_vector_to_string_list</h3>
+<div class="outline-text-3" id="text-orgcc1737">
 <div class="org-src-container">
 
-<pre class="src src-cpp"></pre>
-</div>
-</div>
-</div>
-</div>
-
-<div id="outline-container-org730de6e" class="outline-2">
-<h2 id="org730de6e">epilog</h2>
-<div class="outline-text-2" id="text-org730de6e">
-</div><div id="outline-container-org64a25ea" class="outline-3">
-<h3 id="org64a25ea">new_frame_from_jojo</h3>
-<div class="outline-text-3" id="text-org64a25ea">
-<div class="org-src-container">
-
-<pre class="src src-cpp"><span style="color: #7CB8BB;">shared_ptr</span> &lt;<span style="color: #7CB8BB;">frame_t</span>&gt;
-<span style="color: #93E0E3;">new_frame_from_jojo</span> (<span style="color: #7CB8BB;">shared_ptr</span> &lt;<span style="color: #7CB8BB;">jojo_t</span>&gt; <span style="color: #DFAF8F;">jojo</span>)
+<pre class="src src-cpp"><span style="color: #7CB8BB;">shared_ptr</span> &lt;data_o&gt;
+<span style="color: #93E0E3;">string_vector_to_string_list</span>
+(<span style="color: #7CB8BB;">env_t</span> &amp;<span style="color: #DFAF8F;">env</span>, <span style="color: #7CB8BB;">string_vector_t</span> &amp;<span style="color: #DFAF8F;">string_vector</span>)
 {
-    <span style="color: #F0DFAF; font-weight: bold;">return</span> make_shared &lt;<span style="color: #7CB8BB;">frame_t</span>&gt;
-        (jojo, <span style="color: #7CB8BB;">local_scope_t</span> ());
+    <span style="color: #F0DFAF; font-weight: bold;">auto</span> <span style="color: #DFAF8F;">begin</span> = string_vector.rbegin ();
+    <span style="color: #F0DFAF; font-weight: bold;">auto</span> <span style="color: #DFAF8F;">end</span> = string_vector.rend ();
+    <span style="color: #F0DFAF; font-weight: bold;">auto</span> <span style="color: #DFAF8F;">collect</span> = null_c (env);
+    <span style="color: #F0DFAF; font-weight: bold;">for</span> (<span style="color: #F0DFAF; font-weight: bold;">auto</span> <span style="color: #DFAF8F;">it</span> = begin; it != end; it++) {
+        <span style="color: #F0DFAF; font-weight: bold;">auto</span> <span style="color: #DFAF8F;">obj</span> = make_shared &lt;string_o&gt; (env, *it);
+        collect = cons_c (env, obj, collect);
+    }
+    <span style="color: #F0DFAF; font-weight: bold;">return</span> collect;
 }
 </pre>
 </div>
 </div>
 </div>
 
-<div id="outline-container-orgd31e767" class="outline-3">
-<h3 id="orgd31e767">new_frame_from_jo_vector</h3>
-<div class="outline-text-3" id="text-orgd31e767">
+<div id="outline-container-org9f905d9" class="outline-3">
+<h3 id="org9f905d9"><span class="todo _note_">[note]</span> about literal in quote</h3>
+<div class="outline-text-3" id="text-org9f905d9">
+<table border="2" cellspacing="0" cellpadding="6" rules="groups" frame="hsides">
+
+
+<colgroup>
+<col  class="org-left" />
+
+<col  class="org-left" />
+</colgroup>
+<tbody>
+<tr>
+<td class="org-left">( )</td>
+<td class="org-left">list-t</td>
+</tr>
+
+<tr>
+<td class="org-left">[ ]</td>
+<td class="org-left">vect-t</td>
+</tr>
+
+<tr>
+<td class="org-left">{ }</td>
+<td class="org-left">dict-t</td>
+</tr>
+</tbody>
+</table>
+</div>
+</div>
+
+<div id="outline-container-org8891697" class="outline-3">
+<h3 id="org8891697">scan_word_list</h3>
+<div class="outline-text-3" id="text-org8891697">
 <div class="org-src-container">
 
-<pre class="src src-cpp"><span style="color: #7CB8BB;">shared_ptr</span> &lt;<span style="color: #7CB8BB;">frame_t</span>&gt;
-<span style="color: #93E0E3;">new_frame_from_jo_vector</span> (<span style="color: #7CB8BB;">jo_vector_t</span> <span style="color: #DFAF8F;">jo_vector</span>)
+<pre class="src src-cpp"><span style="color: #7CB8BB;">shared_ptr</span> &lt;data_o&gt;
+<span style="color: #5F7F5F;">// </span><span style="color: #7F9F7F;">scan_word_list (env_t &amp;env, shared_ptr &lt;string_o&gt; code)</span>
+<span style="color: #93E0E3;">scan_word_list</span> (<span style="color: #7CB8BB;">env_t</span> &amp;<span style="color: #DFAF8F;">env</span>, <span style="color: #7CB8BB;">shared_ptr</span> &lt;<span style="color: #7CB8BB;">obj_t</span>&gt; <span style="color: #DFAF8F;">a</span>)
 {
-    <span style="color: #F0DFAF; font-weight: bold;">auto</span> <span style="color: #DFAF8F;">jojo</span> = make_shared &lt;<span style="color: #7CB8BB;">jojo_t</span>&gt; (jo_vector);
-    <span style="color: #F0DFAF; font-weight: bold;">return</span> make_shared &lt;<span style="color: #7CB8BB;">frame_t</span>&gt;
-        (jojo, <span style="color: #7CB8BB;">local_scope_t</span> ());
+    <span style="color: #F0DFAF; font-weight: bold;">auto</span> <span style="color: #DFAF8F;">code</span> = static_pointer_cast &lt;string_o&gt; (a);
+    <span style="color: #F0DFAF; font-weight: bold;">auto</span> <span style="color: #DFAF8F;">word_vector</span> = scan_word_vector (code-&gt;str);
+    <span style="color: #F0DFAF; font-weight: bold;">return</span> string_vector_to_string_list
+        (env, word_vector);
 }
 </pre>
 </div>
 </div>
 </div>
 
-<div id="outline-container-org2383ef4" class="outline-3">
-<h3 id="org2383ef4">assert</h3>
-<div class="outline-text-3" id="text-org2383ef4">
-</div><div id="outline-container-org5151796" class="outline-4">
-<h4 id="org5151796">assert_pop_eq</h4>
-<div class="outline-text-4" id="text-org5151796">
+<div id="outline-container-org488e468" class="outline-3">
+<h3 id="org488e468">bar_word_p</h3>
+<div class="outline-text-3" id="text-org488e468">
+<div class="org-src-container">
+
+<pre class="src src-cpp"><span style="color: #7CB8BB;">bool</span>
+<span style="color: #93E0E3;">bar_word_p</span> (<span style="color: #7CB8BB;">string</span> <span style="color: #DFAF8F;">word</span>)
+{
+    <span style="color: #F0DFAF; font-weight: bold;">return</span> word == <span style="color: #CC9393;">"("</span>
+        || word == <span style="color: #CC9393;">"["</span>
+        || word == <span style="color: #CC9393;">"{"</span>;
+}
+</pre>
+</div>
+</div>
+</div>
+
+<div id="outline-container-orgcdcec8a" class="outline-3">
+<h3 id="orgcdcec8a">ket_word_p</h3>
+<div class="outline-text-3" id="text-orgcdcec8a">
+<div class="org-src-container">
+
+<pre class="src src-cpp"><span style="color: #7CB8BB;">bool</span>
+<span style="color: #93E0E3;">ket_word_p</span> (<span style="color: #7CB8BB;">string</span> <span style="color: #DFAF8F;">word</span>)
+{
+    <span style="color: #F0DFAF; font-weight: bold;">return</span> word == <span style="color: #CC9393;">")"</span>
+        || word == <span style="color: #CC9393;">"]"</span>
+        || word == <span style="color: #CC9393;">"}"</span>;
+}
+</pre>
+</div>
+</div>
+</div>
+
+<div id="outline-container-org7e8870b" class="outline-3">
+<h3 id="org7e8870b">quote_word_p</h3>
+<div class="outline-text-3" id="text-org7e8870b">
+<div class="org-src-container">
+
+<pre class="src src-cpp"><span style="color: #7CB8BB;">bool</span>
+<span style="color: #93E0E3;">quote_word_p</span> (<span style="color: #7CB8BB;">string</span> <span style="color: #DFAF8F;">word</span>)
+{
+    <span style="color: #F0DFAF; font-weight: bold;">return</span> word == <span style="color: #CC9393;">"'"</span>
+        || word == <span style="color: #CC9393;">"`"</span>;
+}
+</pre>
+</div>
+</div>
+</div>
+
+<div id="outline-container-orga102828" class="outline-3">
+<h3 id="orga102828">bar_word_to_ket_word</h3>
+<div class="outline-text-3" id="text-orga102828">
+<div class="org-src-container">
+
+<pre class="src src-cpp"><span style="color: #7CB8BB;">string</span>
+<span style="color: #93E0E3;">bar_word_to_ket_word</span> (<span style="color: #7CB8BB;">string</span> <span style="color: #DFAF8F;">bar</span>)
+{
+    assert (bar_word_p (bar));
+    <span style="color: #F0DFAF; font-weight: bold;">if</span> (bar == <span style="color: #CC9393;">"("</span>) <span style="color: #F0DFAF; font-weight: bold;">return</span> <span style="color: #CC9393;">")"</span>;
+    <span style="color: #F0DFAF; font-weight: bold;">if</span> (bar == <span style="color: #CC9393;">"["</span>) <span style="color: #F0DFAF; font-weight: bold;">return</span> <span style="color: #CC9393;">"]"</span>;
+    <span style="color: #F0DFAF; font-weight: bold;">if</span> (bar == <span style="color: #CC9393;">"{"</span>) <span style="color: #F0DFAF; font-weight: bold;">return</span> <span style="color: #CC9393;">"}"</span>;
+    cout &lt;&lt; <span style="color: #CC9393;">"bar_word_to_ket_word fail\n"</span>;
+    exit (1);
+}
+</pre>
+</div>
+</div>
+</div>
+
+<div id="outline-container-org19e41f3" class="outline-3">
+<h3 id="org19e41f3">word_list_head_with_bar_ket_counter</h3>
+<div class="outline-text-3" id="text-org19e41f3">
+<div class="org-src-container">
+
+<pre class="src src-cpp"><span style="color: #7CB8BB;">shared_ptr</span> &lt;data_o&gt;
+<span style="color: #93E0E3;">word_list_head_with_bar_ket_counter</span>
+(<span style="color: #7CB8BB;">env_t</span> &amp;<span style="color: #DFAF8F;">env</span>,
+ <span style="color: #7CB8BB;">shared_ptr</span> &lt;<span style="color: #7CB8BB;">obj_t</span>&gt; <span style="color: #DFAF8F;">a</span>,
+ <span style="color: #7CB8BB;">string</span> <span style="color: #DFAF8F;">bar</span>,
+ <span style="color: #7CB8BB;">string</span> <span style="color: #DFAF8F;">ket</span>,
+ <span style="color: #7CB8BB;">size_t</span> <span style="color: #DFAF8F;">counter</span>)
+{
+    <span style="color: #F0DFAF; font-weight: bold;">auto</span> <span style="color: #DFAF8F;">word_list</span> = static_pointer_cast &lt;data_o&gt; (a);
+    <span style="color: #F0DFAF; font-weight: bold;">if</span> (counter == 0)
+        <span style="color: #F0DFAF; font-weight: bold;">return</span> null_c (env);
+    <span style="color: #F0DFAF; font-weight: bold;">auto</span> <span style="color: #DFAF8F;">head</span> = static_pointer_cast &lt;string_o&gt;
+        (car (env, word_list));
+    <span style="color: #F0DFAF; font-weight: bold;">auto</span> <span style="color: #DFAF8F;">word</span> = head-&gt;str;
+    <span style="color: #F0DFAF; font-weight: bold;">if</span> (word == bar)
+        <span style="color: #F0DFAF; font-weight: bold;">return</span> cons_c
+            (env, head, word_list_head_with_bar_ket_counter
+             (env,
+              cdr (env, word_list),
+              bar, ket, counter + 1));
+    <span style="color: #F0DFAF; font-weight: bold;">if</span> (word == ket)
+        <span style="color: #F0DFAF; font-weight: bold;">return</span> cons_c
+            (env, head, word_list_head_with_bar_ket_counter
+             (env,
+              cdr (env, word_list),
+              bar, ket, counter - 1));
+    <span style="color: #F0DFAF; font-weight: bold;">else</span>
+        <span style="color: #F0DFAF; font-weight: bold;">return</span> cons_c
+            (env, head, word_list_head_with_bar_ket_counter
+             (env,
+              cdr (env, word_list),
+              bar, ket, counter));
+}
+</pre>
+</div>
+</div>
+</div>
+
+<div id="outline-container-org4bfd527" class="outline-3">
+<h3 id="org4bfd527">word_list_head</h3>
+<div class="outline-text-3" id="text-org4bfd527">
+<div class="org-src-container">
+
+<pre class="src src-cpp"><span style="color: #7CB8BB;">shared_ptr</span> &lt;data_o&gt;
+<span style="color: #93E0E3;">word_list_head</span> (<span style="color: #7CB8BB;">env_t</span> &amp;<span style="color: #DFAF8F;">env</span>, <span style="color: #7CB8BB;">shared_ptr</span> &lt;<span style="color: #7CB8BB;">obj_t</span>&gt; <span style="color: #DFAF8F;">a</span>)
+{
+    assert (cons_p (env, a));
+    <span style="color: #F0DFAF; font-weight: bold;">auto</span> <span style="color: #DFAF8F;">word_list</span> = static_pointer_cast &lt;data_o&gt; (a);
+    <span style="color: #F0DFAF; font-weight: bold;">auto</span> <span style="color: #DFAF8F;">head</span> = static_pointer_cast &lt;string_o&gt;
+        (car (env, word_list));
+    <span style="color: #F0DFAF; font-weight: bold;">auto</span> <span style="color: #DFAF8F;">word</span> = head-&gt;str;
+    <span style="color: #F0DFAF; font-weight: bold;">if</span> (bar_word_p (word)) {
+        <span style="color: #F0DFAF; font-weight: bold;">auto</span> <span style="color: #DFAF8F;">bar</span> = word;
+        <span style="color: #F0DFAF; font-weight: bold;">auto</span> <span style="color: #DFAF8F;">ket</span> = bar_word_to_ket_word (word);
+        <span style="color: #F0DFAF; font-weight: bold;">return</span> cons_c
+            (env, head, word_list_head_with_bar_ket_counter
+             (env,
+              cdr (env, word_list),
+              bar, ket, 1));
+    }
+    <span style="color: #F0DFAF; font-weight: bold;">else</span> {
+        <span style="color: #F0DFAF; font-weight: bold;">return</span> cons_c (env, head, null_c (env));
+    }
+}
+</pre>
+</div>
+</div>
+</div>
+
+<div id="outline-container-org9610635" class="outline-3">
+<h3 id="org9610635">word_list_rest_with_bar_ket_counter</h3>
+<div class="outline-text-3" id="text-org9610635">
+<div class="org-src-container">
+
+<pre class="src src-cpp"><span style="color: #7CB8BB;">shared_ptr</span> &lt;data_o&gt;
+<span style="color: #93E0E3;">word_list_rest_with_bar_ket_counter</span>
+(<span style="color: #7CB8BB;">env_t</span> &amp;<span style="color: #DFAF8F;">env</span>,
+ <span style="color: #7CB8BB;">shared_ptr</span> &lt;<span style="color: #7CB8BB;">obj_t</span>&gt; <span style="color: #DFAF8F;">a</span>,
+ <span style="color: #7CB8BB;">string</span> <span style="color: #DFAF8F;">bar</span>,
+ <span style="color: #7CB8BB;">string</span> <span style="color: #DFAF8F;">ket</span>,
+ <span style="color: #7CB8BB;">size_t</span> <span style="color: #DFAF8F;">counter</span>)
+{
+    <span style="color: #F0DFAF; font-weight: bold;">auto</span> <span style="color: #DFAF8F;">word_list</span> = static_pointer_cast &lt;data_o&gt; (a);
+    <span style="color: #F0DFAF; font-weight: bold;">if</span> (counter == 0)
+        <span style="color: #F0DFAF; font-weight: bold;">return</span> word_list;
+    <span style="color: #F0DFAF; font-weight: bold;">auto</span> <span style="color: #DFAF8F;">head</span> = static_pointer_cast &lt;string_o&gt;
+        (car (env, word_list));
+    <span style="color: #F0DFAF; font-weight: bold;">auto</span> <span style="color: #DFAF8F;">word</span> = head-&gt;str;
+    <span style="color: #F0DFAF; font-weight: bold;">if</span> (word == bar)
+        <span style="color: #F0DFAF; font-weight: bold;">return</span> word_list_rest_with_bar_ket_counter
+            (env,
+             cdr (env, word_list),
+             bar, ket, counter + 1);
+    <span style="color: #F0DFAF; font-weight: bold;">if</span> (word == ket)
+        <span style="color: #F0DFAF; font-weight: bold;">return</span> word_list_rest_with_bar_ket_counter
+            (env,
+             cdr (env, word_list),
+             bar, ket, counter - 1);
+    <span style="color: #F0DFAF; font-weight: bold;">else</span>
+        <span style="color: #F0DFAF; font-weight: bold;">return</span> word_list_rest_with_bar_ket_counter
+            (env,
+             cdr (env, word_list),
+             bar, ket, counter);
+}
+</pre>
+</div>
+</div>
+</div>
+
+<div id="outline-container-orgb4fd0b" class="outline-3">
+<h3 id="orgb4fd0b">word_list_rest</h3>
+<div class="outline-text-3" id="text-orgb4fd0b">
+<div class="org-src-container">
+
+<pre class="src src-cpp"><span style="color: #7CB8BB;">shared_ptr</span> &lt;data_o&gt;
+<span style="color: #93E0E3;">word_list_rest</span> (<span style="color: #7CB8BB;">env_t</span> &amp;<span style="color: #DFAF8F;">env</span>, <span style="color: #7CB8BB;">shared_ptr</span> &lt;<span style="color: #7CB8BB;">obj_t</span>&gt; <span style="color: #DFAF8F;">a</span>)
+{
+    assert (cons_p (env, a));
+    <span style="color: #F0DFAF; font-weight: bold;">auto</span> <span style="color: #DFAF8F;">word_list</span> = static_pointer_cast &lt;data_o&gt; (a);
+    <span style="color: #F0DFAF; font-weight: bold;">auto</span> <span style="color: #DFAF8F;">head</span> = static_pointer_cast &lt;string_o&gt;
+        (car (env, word_list));
+    <span style="color: #F0DFAF; font-weight: bold;">auto</span> <span style="color: #DFAF8F;">word</span> = head-&gt;str;
+    <span style="color: #F0DFAF; font-weight: bold;">if</span> (bar_word_p (word)) {
+        <span style="color: #F0DFAF; font-weight: bold;">auto</span> <span style="color: #DFAF8F;">bar</span> = word;
+        <span style="color: #F0DFAF; font-weight: bold;">auto</span> <span style="color: #DFAF8F;">ket</span> = bar_word_to_ket_word (word);
+        <span style="color: #F0DFAF; font-weight: bold;">return</span> word_list_rest_with_bar_ket_counter
+            (env,
+             cdr (env, word_list),
+             bar, ket, 1);
+    }
+    <span style="color: #F0DFAF; font-weight: bold;">else</span>
+        <span style="color: #F0DFAF; font-weight: bold;">return</span> static_pointer_cast &lt;data_o&gt;
+            (cdr (env, word_list));
+}
+</pre>
+</div>
+</div>
+</div>
+
+<div id="outline-container-org1cf930e" class="outline-3">
+<h3 id="org1cf930e">word_list_drop_ket</h3>
+<div class="outline-text-3" id="text-org1cf930e">
+<div class="org-src-container">
+
+<pre class="src src-cpp"><span style="color: #7CB8BB;">shared_ptr</span> &lt;data_o&gt;
+<span style="color: #93E0E3;">word_list_drop_ket</span>
+(<span style="color: #7CB8BB;">env_t</span> &amp;<span style="color: #DFAF8F;">env</span>,
+ <span style="color: #7CB8BB;">shared_ptr</span> &lt;<span style="color: #7CB8BB;">obj_t</span>&gt; <span style="color: #DFAF8F;">a</span>,
+ <span style="color: #7CB8BB;">string</span> <span style="color: #DFAF8F;">ket</span>)
+{
+    <span style="color: #F0DFAF; font-weight: bold;">auto</span> <span style="color: #DFAF8F;">word_list</span> = static_pointer_cast &lt;data_o&gt; (a);
+    <span style="color: #F0DFAF; font-weight: bold;">auto</span> <span style="color: #DFAF8F;">head</span> = car (env, word_list);
+    <span style="color: #F0DFAF; font-weight: bold;">auto</span> <span style="color: #DFAF8F;">rest</span> = cdr (env, word_list);
+    <span style="color: #F0DFAF; font-weight: bold;">auto</span> <span style="color: #DFAF8F;">next</span> = cdr (env, cdr (env, word_list));
+    <span style="color: #F0DFAF; font-weight: bold;">auto</span> <span style="color: #DFAF8F;">car_rest</span> = static_pointer_cast &lt;string_o&gt; (car (env, rest));
+    <span style="color: #F0DFAF; font-weight: bold;">auto</span> <span style="color: #DFAF8F;">word</span> = car_rest-&gt;str;
+    <span style="color: #F0DFAF; font-weight: bold;">if</span> (null_p (env, next)) {
+        assert (word == ket);
+        <span style="color: #F0DFAF; font-weight: bold;">return</span> cons_c (env, head, null_c (env));
+    }
+    <span style="color: #F0DFAF; font-weight: bold;">else</span> {
+        <span style="color: #F0DFAF; font-weight: bold;">return</span> cons_c (env, head,
+                       word_list_drop_ket (env, rest, ket));
+    }
+}
+</pre>
+</div>
+</div>
+</div>
+
+<div id="outline-container-org4ecd84b" class="outline-3">
+<h3 id="org4ecd84b">parse_sexp</h3>
+<div class="outline-text-3" id="text-org4ecd84b">
+<div class="org-src-container">
+
+<pre class="src src-cpp"><span style="color: #7CB8BB;">shared_ptr</span> &lt;data_o&gt;
+<span style="color: #93E0E3;">parse_sexp_list</span> (<span style="color: #7CB8BB;">env_t</span> &amp;<span style="color: #DFAF8F;">env</span>, <span style="color: #7CB8BB;">shared_ptr</span> &lt;<span style="color: #7CB8BB;">obj_t</span>&gt; <span style="color: #DFAF8F;">a</span>);
+
+<span style="color: #7CB8BB;">shared_ptr</span> &lt;<span style="color: #7CB8BB;">obj_t</span>&gt;
+<span style="color: #93E0E3;">parse_sexp</span> (<span style="color: #7CB8BB;">env_t</span> &amp;<span style="color: #DFAF8F;">env</span>, <span style="color: #7CB8BB;">shared_ptr</span> &lt;<span style="color: #7CB8BB;">obj_t</span>&gt; <span style="color: #DFAF8F;">a</span>)
+{
+    <span style="color: #F0DFAF; font-weight: bold;">auto</span> <span style="color: #DFAF8F;">word_list</span> = static_pointer_cast &lt;data_o&gt; (a);
+    <span style="color: #F0DFAF; font-weight: bold;">auto</span> <span style="color: #DFAF8F;">head</span> = static_pointer_cast &lt;string_o&gt;
+        (car (env, word_list));
+    <span style="color: #F0DFAF; font-weight: bold;">auto</span> <span style="color: #DFAF8F;">word</span> = head-&gt;str;
+    <span style="color: #F0DFAF; font-weight: bold;">auto</span> <span style="color: #DFAF8F;">rest</span> = cdr (env, word_list);
+    <span style="color: #F0DFAF; font-weight: bold;">if</span> (word == <span style="color: #CC9393;">"("</span>)
+        <span style="color: #F0DFAF; font-weight: bold;">return</span> parse_sexp_list
+            (env, word_list_drop_ket (env, rest, <span style="color: #CC9393;">")"</span>));
+    <span style="color: #F0DFAF; font-weight: bold;">else</span> <span style="color: #F0DFAF; font-weight: bold;">if</span> (word == <span style="color: #CC9393;">"["</span>)
+        <span style="color: #F0DFAF; font-weight: bold;">return</span> list_to_vect
+            (env, parse_sexp_list
+             (env, word_list_drop_ket (env, rest, <span style="color: #CC9393;">"]"</span>)));
+    <span style="color: #F0DFAF; font-weight: bold;">else</span> <span style="color: #F0DFAF; font-weight: bold;">if</span> (word == <span style="color: #CC9393;">"'"</span>)
+        <span style="color: #F0DFAF; font-weight: bold;">return</span> cons_c (env, make_shared &lt;string_o&gt; (env, <span style="color: #CC9393;">"quote"</span>),
+                       cons_c (env,
+                               parse_sexp (env, rest),
+                               null_c (env)));
+    <span style="color: #F0DFAF; font-weight: bold;">else</span> <span style="color: #F0DFAF; font-weight: bold;">if</span> (word == <span style="color: #CC9393;">"`"</span>)
+        <span style="color: #F0DFAF; font-weight: bold;">return</span> cons_c (env, make_shared &lt;string_o&gt; (env, <span style="color: #CC9393;">"partquote"</span>),
+                       cons_c (env,
+                               parse_sexp (env, rest),
+                               null_c (env)));
+    <span style="color: #F0DFAF; font-weight: bold;">else</span>
+        <span style="color: #F0DFAF; font-weight: bold;">return</span> head;
+}
+</pre>
+</div>
+</div>
+</div>
+
+<div id="outline-container-org2900be8" class="outline-3">
+<h3 id="org2900be8">parse_sexp_list</h3>
+<div class="outline-text-3" id="text-org2900be8">
+<div class="org-src-container">
+
+<pre class="src src-cpp"><span style="color: #7CB8BB;">shared_ptr</span> &lt;data_o&gt;
+<span style="color: #93E0E3;">parse_sexp_list</span> (<span style="color: #7CB8BB;">env_t</span> &amp;<span style="color: #DFAF8F;">env</span>, <span style="color: #7CB8BB;">shared_ptr</span> &lt;<span style="color: #7CB8BB;">obj_t</span>&gt; <span style="color: #DFAF8F;">a</span>)
+{
+    <span style="color: #F0DFAF; font-weight: bold;">auto</span> <span style="color: #DFAF8F;">word_list</span> = static_pointer_cast &lt;data_o&gt; (a);
+    <span style="color: #F0DFAF; font-weight: bold;">if</span> (null_p (env, word_list))
+        <span style="color: #F0DFAF; font-weight: bold;">return</span> word_list;
+    <span style="color: #F0DFAF; font-weight: bold;">else</span>
+        <span style="color: #F0DFAF; font-weight: bold;">return</span> cons_c
+            (env,
+             parse_sexp (env, word_list_head (env, word_list)),
+             parse_sexp_list (env, word_list_rest (env, word_list)));
+}
+</pre>
+</div>
+</div>
+</div>
+
+<div id="outline-container-org51c65a5" class="outline-3">
+<h3 id="org51c65a5">sexp_repr</h3>
+<div class="outline-text-3" id="text-org51c65a5">
+<div class="org-src-container">
+
+<pre class="src src-cpp"><span style="color: #7CB8BB;">string</span>
+<span style="color: #93E0E3;">sexp_list_repr</span> (<span style="color: #7CB8BB;">env_t</span> &amp;<span style="color: #DFAF8F;">env</span>, <span style="color: #7CB8BB;">shared_ptr</span> &lt;<span style="color: #7CB8BB;">obj_t</span>&gt; <span style="color: #DFAF8F;">a</span>);
+
+<span style="color: #7CB8BB;">string</span>
+<span style="color: #93E0E3;">sexp_repr</span> (<span style="color: #7CB8BB;">env_t</span> &amp;<span style="color: #DFAF8F;">env</span>, <span style="color: #7CB8BB;">shared_ptr</span> &lt;<span style="color: #7CB8BB;">obj_t</span>&gt; <span style="color: #DFAF8F;">a</span>)
+{
+    <span style="color: #F0DFAF; font-weight: bold;">if</span> (null_p (env, a)) {
+        <span style="color: #F0DFAF; font-weight: bold;">return</span> <span style="color: #CC9393;">"()"</span>;
+    }
+    <span style="color: #F0DFAF; font-weight: bold;">else</span> <span style="color: #F0DFAF; font-weight: bold;">if</span> (cons_p (env, a)) {
+        <span style="color: #F0DFAF; font-weight: bold;">return</span> <span style="color: #CC9393;">"("</span> + sexp_list_repr (env, a) + <span style="color: #CC9393;">")"</span>;
+    }
+    <span style="color: #F0DFAF; font-weight: bold;">else</span> <span style="color: #F0DFAF; font-weight: bold;">if</span> (vect_p (env, a)) {
+        <span style="color: #F0DFAF; font-weight: bold;">auto</span> <span style="color: #DFAF8F;">l</span> = vect_to_list (env, a);
+        <span style="color: #F0DFAF; font-weight: bold;">return</span> <span style="color: #CC9393;">"["</span> + sexp_list_repr (env, l) + <span style="color: #CC9393;">"]"</span>;
+    }
+    <span style="color: #F0DFAF; font-weight: bold;">else</span> {
+        <span style="color: #F0DFAF; font-weight: bold;">auto</span> <span style="color: #DFAF8F;">str</span> = static_pointer_cast &lt;string_o&gt; (a);
+        assert (str-&gt;tag == tagging (env, <span style="color: #CC9393;">"string-t"</span>));
+        <span style="color: #F0DFAF; font-weight: bold;">return</span> str-&gt;str;
+    }
+}
+</pre>
+</div>
+</div>
+</div>
+
+<div id="outline-container-org3cb0a8e" class="outline-3">
+<h3 id="org3cb0a8e">sexp_list_repr</h3>
+<div class="outline-text-3" id="text-org3cb0a8e">
+<div class="org-src-container">
+
+<pre class="src src-cpp"><span style="color: #7CB8BB;">string</span>
+<span style="color: #93E0E3;">sexp_list_repr</span> (<span style="color: #7CB8BB;">env_t</span> &amp;<span style="color: #DFAF8F;">env</span>, <span style="color: #7CB8BB;">shared_ptr</span> &lt;<span style="color: #7CB8BB;">obj_t</span>&gt; <span style="color: #DFAF8F;">a</span>)
+{
+    <span style="color: #F0DFAF; font-weight: bold;">auto</span> <span style="color: #DFAF8F;">sexp_list</span> = static_pointer_cast &lt;data_o&gt; (a);
+    <span style="color: #F0DFAF; font-weight: bold;">if</span> (null_p (env, sexp_list))
+        <span style="color: #F0DFAF; font-weight: bold;">return</span> <span style="color: #CC9393;">""</span>;
+    <span style="color: #F0DFAF; font-weight: bold;">else</span> <span style="color: #F0DFAF; font-weight: bold;">if</span> (null_p (env, cdr (env, sexp_list)))
+        <span style="color: #F0DFAF; font-weight: bold;">return</span> sexp_repr (env, car (env, sexp_list));
+    <span style="color: #F0DFAF; font-weight: bold;">else</span> {
+        <span style="color: #F0DFAF; font-weight: bold;">return</span>
+            sexp_repr (env, car (env, sexp_list)) + <span style="color: #CC9393;">" "</span> +
+            sexp_list_repr (env, cdr (env, sexp_list));
+    }
+}
+</pre>
+</div>
+</div>
+</div>
+
+<div id="outline-container-org707fe7" class="outline-3">
+<h3 id="org707fe7">jj_scan_word_list</h3>
+<div class="outline-text-3" id="text-org707fe7">
+<div class="org-src-container">
+
+<pre class="src src-cpp"><span style="color: #7CB8BB;">sig_t</span> <span style="color: #DFAF8F;">jj_scan_word_list_sig</span> = { <span style="color: #CC9393;">"scan-word-list"</span>, <span style="color: #CC9393;">"code"</span> };
+<span style="color: #5F7F5F;">// </span><span style="color: #7F9F7F;">-- string-t -&gt; (list-t string-t)</span>
+<span style="color: #7CB8BB;">void</span> <span style="color: #93E0E3;">jj_scan_word_list</span> (<span style="color: #7CB8BB;">env_t</span> &amp;<span style="color: #DFAF8F;">env</span>, <span style="color: #7CB8BB;">obj_map_t</span> &amp;<span style="color: #DFAF8F;">obj_map</span>)
+{
+    env.obj_stack.push (scan_word_list (env, obj_map [<span style="color: #CC9393;">"code"</span>]));
+}
+</pre>
+</div>
+</div>
+</div>
+
+<div id="outline-container-orgf70114e" class="outline-3">
+<h3 id="orgf70114e">jj_parse_sexp</h3>
+<div class="outline-text-3" id="text-orgf70114e">
+<div class="org-src-container">
+
+<pre class="src src-cpp"><span style="color: #7CB8BB;">sig_t</span> <span style="color: #DFAF8F;">jj_parse_sexp_sig</span> = { <span style="color: #CC9393;">"parse-sexp"</span>, <span style="color: #CC9393;">"word-list"</span> };
+<span style="color: #5F7F5F;">// </span><span style="color: #7F9F7F;">-- (list-t string-t) -&gt; sexp-t</span>
+<span style="color: #7CB8BB;">void</span> <span style="color: #93E0E3;">jj_parse_sexp</span> (<span style="color: #7CB8BB;">env_t</span> &amp;<span style="color: #DFAF8F;">env</span>, <span style="color: #7CB8BB;">obj_map_t</span> &amp;<span style="color: #DFAF8F;">obj_map</span>)
+{
+    env.obj_stack.push (parse_sexp (env, obj_map [<span style="color: #CC9393;">"word-list"</span>]));
+}
+</pre>
+</div>
+</div>
+</div>
+
+<div id="outline-container-org819be66" class="outline-3">
+<h3 id="org819be66">jj_parse_sexp_list</h3>
+<div class="outline-text-3" id="text-org819be66">
+<div class="org-src-container">
+
+<pre class="src src-cpp"><span style="color: #7CB8BB;">sig_t</span> <span style="color: #DFAF8F;">jj_parse_sexp_list_sig</span> = { <span style="color: #CC9393;">"parse-sexp-list"</span>, <span style="color: #CC9393;">"word-list"</span> };
+<span style="color: #5F7F5F;">// </span><span style="color: #7F9F7F;">-- (list-t string-t) -&gt; (list-t sexp-t)</span>
+<span style="color: #7CB8BB;">void</span> <span style="color: #93E0E3;">jj_parse_sexp_list</span> (<span style="color: #7CB8BB;">env_t</span> &amp;<span style="color: #DFAF8F;">env</span>, <span style="color: #7CB8BB;">obj_map_t</span> &amp;<span style="color: #DFAF8F;">obj_map</span>)
+{
+    env.obj_stack.push (parse_sexp_list (env, obj_map [<span style="color: #CC9393;">"word-list"</span>]));
+}
+</pre>
+</div>
+</div>
+</div>
+
+<div id="outline-container-org3beb2ec" class="outline-3">
+<h3 id="org3beb2ec">jj_sexp_repr</h3>
+<div class="outline-text-3" id="text-org3beb2ec">
+<div class="org-src-container">
+
+<pre class="src src-cpp"><span style="color: #7CB8BB;">sig_t</span> <span style="color: #DFAF8F;">jj_sexp_repr_sig</span> = { <span style="color: #CC9393;">"sexp-repr"</span>, <span style="color: #CC9393;">"sexp"</span> };
+<span style="color: #5F7F5F;">// </span><span style="color: #7F9F7F;">-- sexp-t -&gt;</span>
+<span style="color: #7CB8BB;">void</span> <span style="color: #93E0E3;">jj_sexp_repr</span> (<span style="color: #7CB8BB;">env_t</span> &amp;<span style="color: #DFAF8F;">env</span>, <span style="color: #7CB8BB;">obj_map_t</span> &amp;<span style="color: #DFAF8F;">obj_map</span>)
+{
+    <span style="color: #F0DFAF; font-weight: bold;">auto</span> <span style="color: #DFAF8F;">str</span> = sexp_repr (env, obj_map [<span style="color: #CC9393;">"sexp"</span>]);
+    env.obj_stack.push (make_shared &lt;string_o&gt; (env, str));
+}
+</pre>
+</div>
+</div>
+</div>
+
+<div id="outline-container-orgb34d0c" class="outline-3">
+<h3 id="orgb34d0c">jj_sexp_list_repr</h3>
+<div class="outline-text-3" id="text-orgb34d0c">
+<div class="org-src-container">
+
+<pre class="src src-cpp"><span style="color: #7CB8BB;">sig_t</span> <span style="color: #DFAF8F;">jj_sexp_list_repr_sig</span> = { <span style="color: #CC9393;">"sexp-list-repr"</span>, <span style="color: #CC9393;">"sexp-list"</span> };
+<span style="color: #5F7F5F;">// </span><span style="color: #7F9F7F;">-- (list-t sexp-t) -&gt;</span>
+<span style="color: #7CB8BB;">void</span> <span style="color: #93E0E3;">jj_sexp_list_repr</span> (<span style="color: #7CB8BB;">env_t</span> &amp;<span style="color: #DFAF8F;">env</span>, <span style="color: #7CB8BB;">obj_map_t</span> &amp;<span style="color: #DFAF8F;">obj_map</span>)
+{
+    <span style="color: #F0DFAF; font-weight: bold;">auto</span> <span style="color: #DFAF8F;">str</span> = sexp_list_repr (env, obj_map [<span style="color: #CC9393;">"sexp-list"</span>]);
+    env.obj_stack.push (make_shared &lt;string_o&gt; (env, str));
+}
+</pre>
+</div>
+</div>
+</div>
+
+<div id="outline-container-org5647a71" class="outline-3">
+<h3 id="org5647a71">import_sexp</h3>
+<div class="outline-text-3" id="text-org5647a71">
 <div class="org-src-container">
 
 <pre class="src src-cpp"><span style="color: #7CB8BB;">void</span>
-<span style="color: #93E0E3;">assert_pop_eq</span> (<span style="color: #7CB8BB;">env_t</span> &amp;<span style="color: #DFAF8F;">env</span>, <span style="color: #7CB8BB;">shared_ptr</span> &lt;<span style="color: #7CB8BB;">obj_t</span>&gt; <span style="color: #DFAF8F;">obj</span>)
+<span style="color: #93E0E3;">import_sexp</span> (<span style="color: #7CB8BB;">env_t</span> &amp;<span style="color: #DFAF8F;">env</span>)
 {
-    <span style="color: #F0DFAF; font-weight: bold;">auto</span> <span style="color: #DFAF8F;">that</span> = env.obj_stack.top ();
-    assert (obj-&gt;equal (env, that));
-    env.obj_stack.pop ();
+    define_prim (env,
+                 jj_scan_word_list_sig,
+                 jj_scan_word_list);
+    define_prim (env,
+                 jj_parse_sexp_list_sig,
+                 jj_parse_sexp_list);
+    define_prim (env,
+                 jj_parse_sexp_sig,
+                 jj_parse_sexp);
+    define_prim (env,
+                 jj_sexp_repr_sig,
+                 jj_sexp_repr);
+    define_prim (env,
+                 jj_sexp_list_repr_sig,
+                 jj_sexp_list_repr);
 }
 </pre>
 </div>
 </div>
 </div>
 
-<div id="outline-container-org306ec18" class="outline-4">
-<h4 id="org306ec18">assert_tos_eq</h4>
-<div class="outline-text-4" id="text-org306ec18">
+<div id="outline-container-org3801794" class="outline-3">
+<h3 id="org3801794">test_sexp_scan</h3>
+<div class="outline-text-3" id="text-org3801794">
 <div class="org-src-container">
 
 <pre class="src src-cpp"><span style="color: #7CB8BB;">void</span>
-<span style="color: #93E0E3;">assert_tos_eq</span> (<span style="color: #7CB8BB;">env_t</span> &amp;<span style="color: #DFAF8F;">env</span>, <span style="color: #7CB8BB;">shared_ptr</span> &lt;<span style="color: #7CB8BB;">obj_t</span>&gt; <span style="color: #DFAF8F;">obj</span>)
+<span style="color: #93E0E3;">test_sexp_scan</span> ()
 {
-    <span style="color: #F0DFAF; font-weight: bold;">auto</span> <span style="color: #DFAF8F;">that</span> = env.obj_stack.top ();
-    assert (obj-&gt;equal (env, that));
+    <span style="color: #F0DFAF; font-weight: bold;">auto</span> <span style="color: #DFAF8F;">code</span> = <span style="color: #CC9393;">"(cons-c &lt;car&gt; &lt;cdr&gt;)"</span>;
+    <span style="color: #F0DFAF; font-weight: bold;">auto</span> <span style="color: #DFAF8F;">string_vector</span> = scan_word_vector (code);
+    assert (string_vector.size () == 5);
+    assert (string_vector [0] == <span style="color: #CC9393;">"("</span>);
+    assert (string_vector [1] == <span style="color: #CC9393;">"cons-c"</span>);
+    assert (string_vector [2] == <span style="color: #CC9393;">"&lt;car&gt;"</span>);
+    assert (string_vector [3] == <span style="color: #CC9393;">"&lt;cdr&gt;"</span>);
+    assert (string_vector [4] == <span style="color: #CC9393;">")"</span>);
 }
 </pre>
 </div>
 </div>
 </div>
 
-<div id="outline-container-org9e99886" class="outline-4">
-<h4 id="org9e99886">assert_stack_size</h4>
-<div class="outline-text-4" id="text-org9e99886">
+<div id="outline-container-org9fd3cac" class="outline-3">
+<h3 id="org9fd3cac">test_sexp_list</h3>
+<div class="outline-text-3" id="text-org9fd3cac">
 <div class="org-src-container">
 
 <pre class="src src-cpp"><span style="color: #7CB8BB;">void</span>
-<span style="color: #93E0E3;">assert_stack_size</span> (<span style="color: #7CB8BB;">env_t</span> &amp;<span style="color: #DFAF8F;">env</span>, <span style="color: #7CB8BB;">size_t</span> <span style="color: #DFAF8F;">size</span>)
+<span style="color: #93E0E3;">test_sexp_list</span> ()
 {
-    assert (env.obj_stack.size () == size);
+    <span style="color: #F0DFAF; font-weight: bold;">auto</span> <span style="color: #DFAF8F;">env</span> = env_t ();
+
+    import_sexp (env);
+    import_string (env);
+
+    <span style="color: #F0DFAF; font-weight: bold;">auto</span> <span style="color: #DFAF8F;">code</span> =
+        <span style="color: #CC9393;">"(cons-c &lt;car&gt; &lt;cdr&gt;)"</span>
+        <span style="color: #CC9393;">"(cons-c (cons-c &lt;car&gt; &lt;cdr&gt;) (cons-c &lt;car&gt; &lt;cdr&gt;))"</span>;
+    <span style="color: #F0DFAF; font-weight: bold;">auto</span> <span style="color: #DFAF8F;">word_list</span> = scan_word_list
+        (env, make_shared &lt;string_o&gt; (env, code));
+    env.obj_stack.push (word_list);
+
+    <span style="color: #7CB8BB;">jo_vector_t</span> <span style="color: #DFAF8F;">jo_vector</span> = {
+        <span style="color: #F0DFAF; font-weight: bold;">new</span> <span style="color: #7CB8BB;">ref_jo_t</span> (boxing (env, <span style="color: #CC9393;">"parse-sexp-list"</span>)),
+        <span style="color: #F0DFAF; font-weight: bold;">new</span> <span style="color: #7CB8BB;">apply_jo_t</span> (1),
+        <span style="color: #F0DFAF; font-weight: bold;">new</span> <span style="color: #7CB8BB;">ref_jo_t</span> (boxing (env, <span style="color: #CC9393;">"sexp-list-repr"</span>)),
+        <span style="color: #F0DFAF; font-weight: bold;">new</span> <span style="color: #7CB8BB;">apply_jo_t</span> (1),
+        <span style="color: #F0DFAF; font-weight: bold;">new</span> <span style="color: #7CB8BB;">ref_jo_t</span> (boxing (env, <span style="color: #CC9393;">"string-print"</span>)),
+        <span style="color: #F0DFAF; font-weight: bold;">new</span> <span style="color: #7CB8BB;">apply_jo_t</span> (1),
+    };
+
+    env.frame_stack.push (new_frame_from_jo_vector (jo_vector));
+
+    <span style="color: #5F7F5F;">// </span><span style="color: #7F9F7F;">{</span>
+    <span style="color: #5F7F5F;">//     </span><span style="color: #7F9F7F;">env.report ();</span>
+    <span style="color: #5F7F5F;">//     </span><span style="color: #7F9F7F;">env.run ();</span>
+    <span style="color: #5F7F5F;">//     </span><span style="color: #7F9F7F;">env.report ();</span>
+    <span style="color: #5F7F5F;">// </span><span style="color: #7F9F7F;">}</span>
+}
+</pre>
+</div>
+</div>
+</div>
+
+<div id="outline-container-orgdac63e4" class="outline-3">
+<h3 id="orgdac63e4">test_sexp_vect</h3>
+<div class="outline-text-3" id="text-orgdac63e4">
+<div class="org-src-container">
+
+<pre class="src src-cpp"><span style="color: #7CB8BB;">void</span>
+<span style="color: #93E0E3;">test_sexp_vect</span> ()
+{
+    <span style="color: #F0DFAF; font-weight: bold;">auto</span> <span style="color: #DFAF8F;">env</span> = env_t ();
+
+    import_sexp (env);
+    import_string (env);
+
+    <span style="color: #F0DFAF; font-weight: bold;">auto</span> <span style="color: #DFAF8F;">code</span> = <span style="color: #CC9393;">"(a [a b c] c) [a b c] (a [a b c] c)"</span>;
+    <span style="color: #F0DFAF; font-weight: bold;">auto</span> <span style="color: #DFAF8F;">word_list</span> = scan_word_list
+        (env, make_shared &lt;string_o&gt; (env, code));
+    env.obj_stack.push (word_list);
+
+    <span style="color: #7CB8BB;">jo_vector_t</span> <span style="color: #DFAF8F;">jo_vector</span> = {
+        <span style="color: #F0DFAF; font-weight: bold;">new</span> <span style="color: #7CB8BB;">ref_jo_t</span> (boxing (env, <span style="color: #CC9393;">"parse-sexp-list"</span>)),
+        <span style="color: #F0DFAF; font-weight: bold;">new</span> <span style="color: #7CB8BB;">apply_jo_t</span> (1),
+        <span style="color: #F0DFAF; font-weight: bold;">new</span> <span style="color: #7CB8BB;">ref_jo_t</span> (boxing (env, <span style="color: #CC9393;">"sexp-list-repr"</span>)),
+        <span style="color: #F0DFAF; font-weight: bold;">new</span> <span style="color: #7CB8BB;">apply_jo_t</span> (1),
+        <span style="color: #F0DFAF; font-weight: bold;">new</span> <span style="color: #7CB8BB;">ref_jo_t</span> (boxing (env, <span style="color: #CC9393;">"string-print"</span>)),
+        <span style="color: #F0DFAF; font-weight: bold;">new</span> <span style="color: #7CB8BB;">apply_jo_t</span> (1),
+    };
+
+    env.frame_stack.push (new_frame_from_jo_vector (jo_vector));
+
+    <span style="color: #5F7F5F;">// </span><span style="color: #7F9F7F;">{</span>
+    <span style="color: #5F7F5F;">//     </span><span style="color: #7F9F7F;">env.report ();</span>
+    <span style="color: #5F7F5F;">//     </span><span style="color: #7F9F7F;">env.run ();</span>
+    <span style="color: #5F7F5F;">//     </span><span style="color: #7F9F7F;">env.report ();</span>
+    <span style="color: #5F7F5F;">// </span><span style="color: #7F9F7F;">}</span>
+}
+</pre>
+</div>
+</div>
+</div>
+
+<div id="outline-container-org1f88230" class="outline-3">
+<h3 id="org1f88230">test_sexp</h3>
+<div class="outline-text-3" id="text-org1f88230">
+<div class="org-src-container">
+
+<pre class="src src-cpp"><span style="color: #7CB8BB;">void</span>
+<span style="color: #93E0E3;">test_sexp</span> ()
+{
+    test_sexp_scan ();
+    test_sexp_list ();
+    test_sexp_vect ();
 }
 </pre>
 </div>
@@ -2940,12 +4251,75 @@ for the JavaScript code in this tag.
 </div>
 </div>
 
-<div id="outline-container-orgdd263ca" class="outline-3">
-<h3 id="orgdd263ca">test</h3>
-<div class="outline-text-3" id="text-orgdd263ca">
-</div><div id="outline-container-org10750b7" class="outline-4">
-<h4 id="org10750b7">test_step</h4>
-<div class="outline-text-4" id="text-org10750b7">
+<div id="outline-container-org9e95bc3" class="outline-2">
+<h2 id="org9e95bc3"><b>repl</b></h2>
+<div class="outline-text-2" id="text-org9e95bc3">
+</div><div id="outline-container-org56c2197" class="outline-3">
+<h3 id="org56c2197">repl</h3>
+<div class="outline-text-3" id="text-org56c2197">
+<div class="org-src-container">
+
+<pre class="src src-cpp"><span style="color: #7CB8BB;">void</span>
+<span style="color: #93E0E3;">repl</span> (<span style="color: #7CB8BB;">env_t</span> &amp;<span style="color: #DFAF8F;">env</span>)
+{
+
+}
+</pre>
+</div>
+</div>
+</div>
+
+<div id="outline-container-org1ae8c2a" class="outline-3">
+<h3 id="org1ae8c2a"><span class="todo _todo_">[todo]</span> jj_repl</h3>
+<div class="outline-text-3" id="text-org1ae8c2a">
+<div class="org-src-container">
+
+<pre class="src src-cpp"><span style="color: #5F7F5F;">// </span><span style="color: #7F9F7F;">jj_repl</span>
+</pre>
+</div>
+</div>
+</div>
+
+<div id="outline-container-orga5b459f" class="outline-3">
+<h3 id="orga5b459f">import_repl</h3>
+<div class="outline-text-3" id="text-orga5b459f">
+<div class="org-src-container">
+
+<pre class="src src-cpp"><span style="color: #7CB8BB;">void</span>
+<span style="color: #93E0E3;">import_repl</span> (<span style="color: #7CB8BB;">env_t</span> &amp;<span style="color: #DFAF8F;">env</span>)
+{
+
+}
+</pre>
+</div>
+</div>
+</div>
+
+<div id="outline-container-org5a4fd3b" class="outline-3">
+<h3 id="org5a4fd3b">test_repl</h3>
+<div class="outline-text-3" id="text-org5a4fd3b">
+<div class="org-src-container">
+
+<pre class="src src-cpp"><span style="color: #7CB8BB;">void</span>
+<span style="color: #93E0E3;">test_repl</span> ()
+{
+
+}
+</pre>
+</div>
+</div>
+</div>
+</div>
+
+<div id="outline-container-org3d2a342" class="outline-2">
+<h2 id="org3d2a342">epilog</h2>
+<div class="outline-text-2" id="text-org3d2a342">
+</div><div id="outline-container-org1ca0e7c" class="outline-3">
+<h3 id="org1ca0e7c">test</h3>
+<div class="outline-text-3" id="text-org1ca0e7c">
+</div><div id="outline-container-org385c5b" class="outline-4">
+<h4 id="org385c5b">test_step</h4>
+<div class="outline-text-4" id="text-org385c5b">
 <div class="org-src-container">
 
 <pre class="src src-cpp"><span style="color: #7CB8BB;">void</span>
@@ -2976,9 +4350,9 @@ for the JavaScript code in this tag.
 </div>
 </div>
 
-<div id="outline-container-org853a20" class="outline-4">
-<h4 id="org853a20">test_data</h4>
-<div class="outline-text-4" id="text-org853a20">
+<div id="outline-container-orgc04e464" class="outline-4">
+<h4 id="orgc04e464">test_data</h4>
+<div class="outline-text-4" id="text-orgc04e464">
 <div class="org-src-container">
 
 <pre class="src src-cpp"><span style="color: #7CB8BB;">void</span>
@@ -3022,9 +4396,9 @@ for the JavaScript code in this tag.
 </div>
 </div>
 
-<div id="outline-container-org797554b" class="outline-4">
-<h4 id="org797554b">test_apply</h4>
-<div class="outline-text-4" id="text-org797554b">
+<div id="outline-container-org9b2b182" class="outline-4">
+<h4 id="org9b2b182">test_apply</h4>
+<div class="outline-text-4" id="text-org9b2b182">
 <div class="org-src-container">
 
 <pre class="src src-cpp"><span style="color: #7CB8BB;">void</span>
@@ -3069,9 +4443,9 @@ for the JavaScript code in this tag.
 </div>
 </div>
 
-<div id="outline-container-org419548" class="outline-4">
-<h4 id="org419548">test_lambda_curry</h4>
-<div class="outline-text-4" id="text-org419548">
+<div id="outline-container-orgcd62df8" class="outline-4">
+<h4 id="orgcd62df8">test_lambda_curry</h4>
+<div class="outline-text-4" id="text-orgcd62df8">
 <div class="org-src-container">
 
 <pre class="src src-cpp"><span style="color: #7CB8BB;">void</span>
@@ -3122,9 +4496,9 @@ for the JavaScript code in this tag.
 </div>
 </div>
 
-<div id="outline-container-orge3fde29" class="outline-4">
-<h4 id="orge3fde29">test_data_cons</h4>
-<div class="outline-text-4" id="text-orge3fde29">
+<div id="outline-container-orgc49cae6" class="outline-4">
+<h4 id="orgc49cae6">test_data_cons</h4>
+<div class="outline-text-4" id="text-orgc49cae6">
 <div class="org-src-container">
 
 <pre class="src src-cpp"><span style="color: #7CB8BB;">void</span>
@@ -3168,9 +4542,9 @@ for the JavaScript code in this tag.
 </div>
 </div>
 
-<div id="outline-container-org8b9067b" class="outline-4">
-<h4 id="org8b9067b">test_data_cons_curry</h4>
-<div class="outline-text-4" id="text-org8b9067b">
+<div id="outline-container-org2096770" class="outline-4">
+<h4 id="org2096770">test_data_cons_curry</h4>
+<div class="outline-text-4" id="text-org2096770">
 <div class="org-src-container">
 
 <pre class="src src-cpp"><span style="color: #7CB8BB;">void</span>
@@ -3215,9 +4589,9 @@ for the JavaScript code in this tag.
 </div>
 </div>
 
-<div id="outline-container-org24c415" class="outline-4">
-<h4 id="org24c415">test_prim</h4>
-<div class="outline-text-4" id="text-org24c415">
+<div id="outline-container-orgb80c824" class="outline-4">
+<h4 id="orgb80c824">test_prim</h4>
+<div class="outline-text-4" id="text-orgb80c824">
 <div class="org-src-container">
 
 <pre class="src src-cpp"><span style="color: #7CB8BB;">void</span>
@@ -3275,120 +4649,16 @@ for the JavaScript code in this tag.
 </div>
 </div>
 </div>
-
-<div id="outline-container-org18b4b6c" class="outline-4">
-<h4 id="org18b4b6c">test_bool</h4>
-<div class="outline-text-4" id="text-org18b4b6c">
-<div class="org-src-container">
-
-<pre class="src src-cpp"><span style="color: #7CB8BB;">void</span>
-<span style="color: #93E0E3;">test_bool</span> ()
-{
-    <span style="color: #F0DFAF; font-weight: bold;">auto</span> <span style="color: #DFAF8F;">env</span> = env_t ();
-
-    import_bool (env);
-
-    <span style="color: #7CB8BB;">jo_vector_t</span> <span style="color: #DFAF8F;">jo_vector</span> = {
-        <span style="color: #F0DFAF; font-weight: bold;">new</span> <span style="color: #7CB8BB;">ref_jo_t</span> (boxing (env, <span style="color: #CC9393;">"true-c"</span>)),
-        <span style="color: #F0DFAF; font-weight: bold;">new</span> <span style="color: #7CB8BB;">ref_jo_t</span> (boxing (env, <span style="color: #CC9393;">"false-c"</span>)),
-    };
-
-    env.frame_stack.push (new_frame_from_jo_vector (jo_vector));
-
-    <span style="color: #5F7F5F;">// </span><span style="color: #7F9F7F;">{</span>
-    <span style="color: #5F7F5F;">//     </span><span style="color: #7F9F7F;">env.report ();</span>
-    <span style="color: #5F7F5F;">//     </span><span style="color: #7F9F7F;">env.run ();</span>
-    <span style="color: #5F7F5F;">//     </span><span style="color: #7F9F7F;">env.report ();</span>
-    <span style="color: #5F7F5F;">// </span><span style="color: #7F9F7F;">}</span>
-
-    {
-        env.run ();
-        assert_stack_size (env, 2);
-        assert_pop_eq (env, false_c (env));
-        assert_pop_eq (env, true_c (env));
-        assert_stack_size (env, 0);
-    }
-}
-</pre>
-</div>
-</div>
 </div>
 
-<div id="outline-container-org7883492" class="outline-4">
-<h4 id="org7883492">test_list</h4>
-<div class="outline-text-4" id="text-org7883492">
-<div class="org-src-container">
-
-<pre class="src src-cpp"><span style="color: #7CB8BB;">void</span>
-<span style="color: #93E0E3;">test_list</span> ()
-{
-    <span style="color: #F0DFAF; font-weight: bold;">auto</span> <span style="color: #DFAF8F;">env</span> = env_t ();
-
-    import_list (env);
-
-    define (env, <span style="color: #CC9393;">"s1"</span>, make_shared &lt;string_o&gt; (env, <span style="color: #CC9393;">"bye"</span>));
-    define (env, <span style="color: #CC9393;">"s2"</span>, make_shared &lt;string_o&gt; (env, <span style="color: #CC9393;">"world"</span>));
-
-    <span style="color: #7CB8BB;">jo_vector_t</span> <span style="color: #DFAF8F;">jo_vector</span> = {
-        <span style="color: #F0DFAF; font-weight: bold;">new</span> <span style="color: #7CB8BB;">ref_jo_t</span> (boxing (env, <span style="color: #CC9393;">"s1"</span>)),
-        <span style="color: #F0DFAF; font-weight: bold;">new</span> <span style="color: #7CB8BB;">ref_jo_t</span> (boxing (env, <span style="color: #CC9393;">"s2"</span>)),
-        <span style="color: #F0DFAF; font-weight: bold;">new</span> <span style="color: #7CB8BB;">ref_jo_t</span> (boxing (env, <span style="color: #CC9393;">"cons-c"</span>)),
-        <span style="color: #F0DFAF; font-weight: bold;">new</span> <span style="color: #7CB8BB;">apply_jo_t</span> (2),
-        <span style="color: #F0DFAF; font-weight: bold;">new</span> <span style="color: #7CB8BB;">field_jo_t</span> (<span style="color: #CC9393;">"cdr"</span>),
-    };
-
-    env.frame_stack.push (new_frame_from_jo_vector (jo_vector));
-
-    <span style="color: #5F7F5F;">// </span><span style="color: #7F9F7F;">{</span>
-    <span style="color: #5F7F5F;">//     </span><span style="color: #7F9F7F;">env.report ();</span>
-    <span style="color: #5F7F5F;">//     </span><span style="color: #7F9F7F;">env.run ();</span>
-    <span style="color: #5F7F5F;">//     </span><span style="color: #7F9F7F;">env.report ();</span>
-    <span style="color: #5F7F5F;">// </span><span style="color: #7F9F7F;">}</span>
-
-    {
-        env.run ();
-        assert_stack_size (env, 1);
-        assert_pop_eq (env, make_shared &lt;string_o&gt; (env, <span style="color: #CC9393;">"world"</span>));
-        assert_stack_size (env, 0);
-    }
-}
-</pre>
-</div>
-</div>
-</div>
-
-<div id="outline-container-org6590982" class="outline-4">
-<h4 id="org6590982">test_scan</h4>
-<div class="outline-text-4" id="text-org6590982">
-<div class="org-src-container">
-
-<pre class="src src-cpp"><span style="color: #7CB8BB;">void</span>
-<span style="color: #93E0E3;">test_scan</span> ()
-{
-    <span style="color: #F0DFAF; font-weight: bold;">auto</span> <span style="color: #DFAF8F;">code</span> = <span style="color: #CC9393;">"(cons-c &lt;car&gt; &lt;cdr&gt;)"</span>;
-    <span style="color: #F0DFAF; font-weight: bold;">auto</span> <span style="color: #DFAF8F;">string_vector</span> = code_scan (code);
-    assert (string_vector.size () == 5);
-    assert (string_vector [0] == <span style="color: #CC9393;">"("</span>);
-    assert (string_vector [1] == <span style="color: #CC9393;">"cons-c"</span>);
-    assert (string_vector [2] == <span style="color: #CC9393;">"&lt;car&gt;"</span>);
-    assert (string_vector [3] == <span style="color: #CC9393;">"&lt;cdr&gt;"</span>);
-    assert (string_vector [4] == <span style="color: #CC9393;">")"</span>);
-}
-</pre>
-</div>
-</div>
-</div>
-</div>
-
-<div id="outline-container-orgb885ecd" class="outline-3">
-<h3 id="orgb885ecd">test_all</h3>
-<div class="outline-text-3" id="text-orgb885ecd">
+<div id="outline-container-orgf123446" class="outline-3">
+<h3 id="orgf123446">test_all</h3>
+<div class="outline-text-3" id="text-orgf123446">
 <div class="org-src-container">
 
 <pre class="src src-cpp"><span style="color: #7CB8BB;">void</span>
 <span style="color: #93E0E3;">test_all</span> ()
 {
-    <span style="color: #5F7F5F;">// </span><span style="color: #7F9F7F;">core</span>
     test_step ();
     test_data ();
     test_apply ();
@@ -3396,20 +4666,22 @@ for the JavaScript code in this tag.
     test_data_cons ();
     test_data_cons_curry ();
     test_prim ();
-    <span style="color: #5F7F5F;">// </span><span style="color: #7F9F7F;">data</span>
     test_bool ();
     test_list ();
-    <span style="color: #5F7F5F;">// </span><span style="color: #7F9F7F;">parser</span>
-    test_scan ();
+    test_string ();
+    test_vect ();
+    test_dict ();
+    test_sexp ();
+    test_repl ();
 }
 </pre>
 </div>
 </div>
 </div>
 
-<div id="outline-container-org4a031e6" class="outline-3">
-<h3 id="org4a031e6">main</h3>
-<div class="outline-text-3" id="text-org4a031e6">
+<div id="outline-container-orgcd6ad55" class="outline-3">
+<h3 id="orgcd6ad55">main</h3>
+<div class="outline-text-3" id="text-orgcd6ad55">
 <div class="org-src-container">
 
 <pre class="src src-cpp"><span style="color: #7CB8BB;">int</span>
@@ -3425,7 +4697,7 @@ for the JavaScript code in this tag.
 </div>
 </div>
 <div id="postamble" class="status">
-<p class="date">Created: 2018-07-25 Wed 03:29</p>
+<p class="date">Created: 2018-07-28 Sat 16:40</p>
 <p class="validation"><a href="http://validator.w3.org/check?uri=referer">Validate</a></p>
 </div>
 </body>

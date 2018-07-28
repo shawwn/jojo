@@ -1,24 +1,36 @@
 #+html_head: <link rel="stylesheet" href="css/org-page.css"/>
 #+title: Story Map
 
-* repl
+* a interpreter uses dynamic threaded code
 
-* (=)
+*** predicate and branching
 
-* dict_o
+*** case_jo_t
 
-* dict literal -- { }
+*** data_pred_o -- for `<data>-p`
 
-* predicate and branching
+* with lisp like macro system
 
-* case_jo_t
+*** repl
 
-* data_pred_o -- for `<data>-p`
+*** (=)
 
-* looks better
+* with oop system
+
+* with simple ffi to c++
+
+*** dict_o
+
+*** dict literal -- { }
+
+* easy to use and debug
 
 *** repr for *_o
 
 *** fix print for *_o
 
-* quit org-mode -- use header file -- no forward declarations
+* maintained by a community as a live system
+
+*** quit org-mode -- use header file -- no forward declarations
+
+*** style guide
