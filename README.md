@@ -6,10 +6,6 @@
 
 ------
 
-![all jojos](https://github.com/xieyuheng/image/raw/master/jojo/all-jojos-1.jpg)
-
-------
-
 - [Semantic of De Bruijn Notation and Bizarre Syntax Adventure.][paper]
 - [The implemention in C++.][jojo]
 - [Basic functionalities.][prelude]

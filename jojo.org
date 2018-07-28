@@ -2815,39 +2815,39 @@
     }
     #+end_src
 
-* *repl*
+* *eval*
 
-*** repl
+*** eval
 
     #+begin_src cpp
     void
-    repl (env_t &env)
+    eval (env_t &env)
     {
 
     }
     #+end_src
 
-*** [todo] jj_repl
+*** [todo] jj_eval
 
     #+begin_src cpp
-    // jj_repl
+    // jj_eval
     #+end_src
 
-*** import_repl
+*** import_eval
 
     #+begin_src cpp
     void
-    import_repl (env_t &env)
+    import_eval (env_t &env)
     {
 
     }
     #+end_src
 
-*** test_repl
+*** test_eval
 
     #+begin_src cpp
     void
-    test_repl ()
+    test_eval ()
     {
 
     }
@@ -3174,7 +3174,7 @@
         test_vect ();
         test_dict ();
         test_sexp ();
-        test_repl ();
+        test_eval ();
     }
     #+end_src
 
