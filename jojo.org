@@ -2815,22 +2815,50 @@
     }
     #+end_src
 
+* *top-keyword*
+
+*** assign -- (=)
+
+* [todo] *keyword*
+
+* [todo] *macro*
+
 * *eval*
 
-*** eval
+*** code_eval
 
     #+begin_src cpp
     void
-    eval (env_t &env)
+    code_eval (env_t &env, shared_ptr <obj_t> a)
     {
+        auto code = static_pointer_cast <string_o> (a);
+        auto word_list = scan_word_list (code);
+        auto sexp_list = parse_sexp_list (word_list);
+        sexp_list_eval (env, sexp_list);
+    }
+    #+end_src
+
+*** sexp_list_eval
+
+    #+begin_src cpp
+    void
+    sexp_list_eval (env_t &env, shared_ptr <obj_t> a)
+    {
+        auto sexp_list = static_pointer_cast <data_o> (a);
 
     }
     #+end_src
 
-*** [todo] jj_eval
+*** sexp_eval
 
     #+begin_src cpp
-    // jj_eval
+
+    #+end_src
+
+*** [todo] jj_code_eval
+
+    #+begin_src cpp
+    // jj_code_eval
     #+end_src
 
 *** import_eval
@@ -2848,6 +2876,28 @@
     #+begin_src cpp
     void
     test_eval ()
+    {
+
+    }
+    #+end_src
+
+* *compile*
+
+*** import_compile
+
+    #+begin_src cpp
+    void
+    import_compile (env_t &env)
+    {
+
+    }
+    #+end_src
+
+*** test_compile
+
+    #+begin_src cpp
+    void
+    test_compile ()
     {
 
     }
