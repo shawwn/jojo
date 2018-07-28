@@ -1,0 +1,24 @@
+#+html_head: <link rel="stylesheet" href="css/org-page.css"/>
+#+title: Story Map
+
+* repl
+
+* (=)
+
+* dict_o
+
+* dict literal -- { }
+
+* predicate and branching
+
+* case_jo_t
+
+* data_pred_o -- for `<data>-p`
+
+* looks better
+
+*** repr for *_o
+
+*** fix print for *_o
+
+* quit org-mode -- use header file -- no forward declarations
