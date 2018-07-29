@@ -13,7 +13,15 @@
 
 *** *eval* & *compile*
 
-*** (=)
+*** *top-keyword*
+
+***** (lambda)
+
+***** (case)
+
+*** *keyword*
+
+***** (=)
 
 * with oop system
 
