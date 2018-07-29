@@ -2022,25 +2022,40 @@
         define (env, name, make_shared <top_keyword_o> (env, fn));
     }
     void
-    sexp_list_eval (env_t &env, shared_ptr <obj_t> sexp_list);
-
-    void tk_assign (env_t &env, shared_ptr <data_o> body)
-    {
-        auto head = static_pointer_cast <str_o> (car (env, body));
-        auto rest = cdr (env, body);
-        auto name = head->str;
-        sexp_list_eval (env, rest);
-        auto obj = env.obj_stack.top ();
-        env.obj_stack.pop ();
-        define (env, name, obj);
-    }
-    void
     import_top_keyword (env_t &env)
     {
-        define_top_keyword (env, "=", tk_assign);
+
+    }
+    using local_ref_map_t = map <name_t, local_ref_jo_t>;
+    local_ref_map_t
+    local_ref_map_extend (env_t &env,
+                          local_ref_map_t &old_local_ref_map,
+                          name_vector_t &name_vector)
+    {
+        auto local_ref_map = local_ref_map_t ();
+        for (auto &kv: old_local_ref_map) {
+            auto name = kv.first;
+            auto old_local_ref_jo = kv.second;
+            auto local_ref_jo = local_ref_jo_t
+                (old_local_ref_jo.level + 1,
+                 old_local_ref_jo.index);
+            local_ref_map.insert (make_pair (name, local_ref_jo));
+        }
+        auto index = 0;
+        auto size = name_vector.size ();
+        while (index < size) {
+            auto name = name_vector [index];
+            auto local_ref_jo = local_ref_jo_t (0, index);
+            local_ref_map.insert (make_pair (name, local_ref_jo));
+            index++;
+        }
+        return local_ref_map;
     }
     using keyword_fn = function
-        <shared_ptr <jojo_t> (env_t &, shared_ptr <data_o>)>;
+        <shared_ptr <jojo_t>
+         (env_t &,
+          local_ref_map_t &,
+          shared_ptr <data_o>)>;
     struct keyword_o: obj_t
     {
         keyword_fn fn;
@@ -2080,25 +2095,10 @@
         }
         return name_vector;
     }
-    shared_ptr <jojo_t>
-    sexp_list_compile (env_t &env, shared_ptr <obj_t> a);
-
-    shared_ptr <jojo_t>
-    k_lambda (env_t &env, shared_ptr <data_o> body)
-    {
-        auto name_vect = static_pointer_cast <vect_o> (car (env, body));
-        auto rest = static_pointer_cast <data_o> (cdr (env, body));
-        auto name_vector = obj_vect_to_name_vector (env, name_vect->vect);
-        auto rest_jojo = sexp_list_compile (env, rest);
-        jo_vector_t jo_vector = {
-            new lambda_jo_t (name_vector, rest_jojo),
-        };
-        return make_shared <jojo_t> (jo_vector);
-    }
     void
     import_keyword (env_t &env)
     {
-        define_keyword (env, "lambda", k_lambda);
+
     }
     bool
     keyword_sexp_p (env_t &env, shared_ptr <obj_t> a)
@@ -2159,54 +2159,72 @@
         return (pos != string::npos);
     }
     shared_ptr <jojo_t>
-    dot_string_compile (env_t &env, string str)
+    dot_string_compile (env_t &env,
+                        local_ref_map_t &local_ref_map,
+                        string str)
     {
         cout << "- WIP\n";
         exit (1);
     }
     shared_ptr <jojo_t>
-    ref_compile (env_t &env, name_t name)
+    ref_compile (env_t &env,
+                 local_ref_map_t &local_ref_map,
+                 name_t name)
     {
-        jo_vector_t jo_vector = {
-            new ref_jo_t (boxing (env, name)),
-        };
+        auto jo_vector = jo_vector_t ();
+        auto it = local_ref_map.find (name);
+        if (it != local_ref_map.end ())
+            jo_vector.push_back (it->second.copy ());
+        else
+            jo_vector.push_back (new ref_jo_t (boxing (env, name)));
         return make_shared <jojo_t> (jo_vector);
     }
     shared_ptr <jojo_t>
-    string_compile (env_t &env, string str)
+    string_compile (env_t &env,
+                    local_ref_map_t &local_ref_map,
+                    string str)
     {
         if (dot_string_p (str)) {
-            return dot_string_compile (env, str);
+            return dot_string_compile (env, local_ref_map, str);
         }
         // else if (string_string_p) {
         // }
         // else if (int_string_p) {
         // }
         else {
-            return ref_compile (env, str);
+            return ref_compile (env, local_ref_map, str);
         }
     }
     shared_ptr <jojo_t>
-    sexp_compile (env_t &env, shared_ptr <obj_t> sexp);
+    call_compile (env_t &env,
+                  local_ref_map_t &local_ref_map,
+                  shared_ptr <obj_t> sexp);
 
     shared_ptr <jojo_t>
-    sexp_list_compile (env_t &env, shared_ptr <obj_t> a);
-
-    shared_ptr <jojo_t>
-    call_compile (env_t &env, shared_ptr <obj_t> sexp)
+    sexp_compile (env_t &env,
+                  local_ref_map_t &local_ref_map,
+                  shared_ptr <obj_t> sexp)
     {
-        auto head = car (env, sexp);
-        auto body = cdr (env, sexp);
-        jo_vector_t jo_vector = {
-            new apply_jo_t (list_length (env, body)),
-        };
-        auto jojo = make_shared <jojo_t> (jo_vector);
-        jojo = jojo_append (sexp_compile (env, head), jojo);
-        jojo = jojo_append (sexp_list_compile (env, body), jojo);
-        return jojo;
+        if (str_p (env, sexp)) {
+            auto str = static_pointer_cast <str_o> (sexp);
+            return string_compile (env, local_ref_map, str->str);
+        }
+        else if (keyword_sexp_p (env, sexp)) {
+            auto head = static_pointer_cast <str_o> (car (env, sexp));
+            auto body = static_pointer_cast <data_o> (cdr (env, sexp));
+            auto name = head->str;
+            auto fn = get_keyword_fn (env, name);
+            return fn (env, local_ref_map, body);
+        }
+        else {
+            assert (cons_p (env, sexp));
+            return call_compile (env, local_ref_map, sexp);
+        }
     }
     shared_ptr <jojo_t>
-    sexp_list_compile (env_t &env, shared_ptr <obj_t> a)
+    sexp_list_compile (env_t &env,
+                       local_ref_map_t &local_ref_map,
+                       shared_ptr <obj_t> a)
     {
         auto sexp_list = static_pointer_cast <data_o> (a);
         auto jojo = make_shared <jojo_t> (jo_vector_t ());
@@ -2214,29 +2232,29 @@
             return jojo;
         else {
             assert (cons_p (env, sexp_list));
-            return jojo_append
-                (sexp_compile (env, car (env, sexp_list)),
-                 sexp_list_compile (env, cdr (env, sexp_list)));
+            auto head_jojo = sexp_compile
+                (env, local_ref_map, car (env, sexp_list));
+            auto body_jojo = sexp_list_compile
+                (env, local_ref_map, cdr (env, sexp_list));
+            return jojo_append (head_jojo, body_jojo);
         }
     }
     shared_ptr <jojo_t>
-    sexp_compile (env_t &env, shared_ptr <obj_t> sexp)
+    call_compile (env_t &env,
+                  local_ref_map_t &local_ref_map,
+                  shared_ptr <obj_t> sexp)
     {
-        if (str_p (env, sexp)) {
-            auto str = static_pointer_cast <str_o> (sexp);
-            return string_compile (env, str->str);
-        }
-        else if (keyword_sexp_p (env, sexp)) {
-            auto head = static_pointer_cast <str_o> (car (env, sexp));
-            auto body = static_pointer_cast <data_o> (cdr (env, sexp));
-            auto name = head->str;
-            auto fn = get_keyword_fn (env, name);
-            return fn (env, body);
-        }
-        else {
-            assert (cons_p (env, sexp));
-            return call_compile (env, sexp);
-        }
+        auto head = car (env, sexp);
+        auto body = cdr (env, sexp);
+        jo_vector_t jo_vector = {
+            new apply_jo_t (list_length (env, body)),
+        };
+        auto jojo = make_shared <jojo_t> (jo_vector);
+        auto head_jojo = sexp_compile (env, local_ref_map, head);
+        auto body_jojo = sexp_list_compile (env, local_ref_map, body);
+        jojo = jojo_append (head_jojo, jojo);
+        jojo = jojo_append (body_jojo, jojo);
+        return jojo;
     }
     void
     import_compile (env_t &env)
@@ -2309,7 +2327,8 @@
             fn (env, body);
         }
         else {
-            auto jojo = sexp_compile (env, sexp);
+            auto local_ref_map = local_ref_map_t ();
+            auto jojo = sexp_compile (env, local_ref_map, sexp);
             jojo_run (env, jojo);
         }
     }
@@ -2345,6 +2364,44 @@
     }
     void
     test_eval ()
+    {
+
+    }
+    void tk_assign (env_t &env, shared_ptr <data_o> body)
+    {
+        auto head = static_pointer_cast <str_o> (car (env, body));
+        auto rest = cdr (env, body);
+        auto name = head->str;
+        sexp_list_eval (env, rest);
+        auto obj = env.obj_stack.top ();
+        env.obj_stack.pop ();
+        define (env, name, obj);
+    }
+    shared_ptr <jojo_t>
+    k_lambda (env_t &env,
+              local_ref_map_t &old_local_ref_map,
+              shared_ptr <data_o> body)
+    {
+        auto name_vect = static_pointer_cast <vect_o> (car (env, body));
+        // auto rest = static_pointer_cast <data_o> (cdr (env, body));
+        auto rest = (cdr (env, body));
+        auto name_vector = obj_vect_to_name_vector (env, name_vect->vect);
+        auto local_ref_map = local_ref_map_extend
+            (env, old_local_ref_map, name_vector);
+        auto rest_jojo = sexp_list_compile (env, local_ref_map, rest);
+        jo_vector_t jo_vector = {
+            new lambda_jo_t (name_vector, rest_jojo),
+        };
+        return make_shared <jojo_t> (jo_vector);
+    }
+    void
+    import_syntax (env_t &env)
+    {
+        define_top_keyword (env, "=", tk_assign);
+        define_keyword (env, "lambda", k_lambda);
+    }
+    void
+    test_syntax ()
     {
 
     }
@@ -2649,6 +2706,7 @@
         test_dict ();
         test_sexp ();
         test_eval ();
+        test_syntax ();
         test_misc ();
     }
     void
@@ -2665,6 +2723,7 @@
         import_keyword (env);
         import_compile (env);
         import_eval (env);
+        import_syntax (env);
         import_misc (env);
     }
     void

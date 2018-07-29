@@ -1,5 +1,9 @@
-(print (lambda [x y] (cons-c null-c null-c))) (newline)
-
-(= f (lambda [] (cons-c null-c null-c)))
+(= f (lambda [x y] (cons-c x y)))
 (print f) (newline)
-(print (f)) (newline)
+(print (f null-c)) (newline)
+(print (f null-c (cons-c null-c null-c))) (newline)
+
+(= g (lambda [x] (lambda [y] (cons-c x y))))
+(print g) (newline)
+(print (g null-c)) (newline)
+(print ((g null-c) (cons-c null-c null-c))) (newline)
