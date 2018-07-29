@@ -232,29 +232,29 @@
                   sum++;
           return sum;
       }
-      struct lambda_o: obj_t
+      struct closure_o: obj_t
       {
           name_vector_t name_vector;
           shared_ptr <jojo_t> jojo;
           bind_vector_t bind_vector;
           local_scope_t local_scope;
-          lambda_o (env_t &env,
-                    name_vector_t name_vector,
-                    shared_ptr <jojo_t> jojo,
-                    bind_vector_t bind_vector,
-                    local_scope_t local_scope);
+          closure_o (env_t &env,
+                     name_vector_t name_vector,
+                     shared_ptr <jojo_t> jojo,
+                     bind_vector_t bind_vector,
+                     local_scope_t local_scope);
           bool equal (env_t &env, shared_ptr <obj_t> obj);
           void apply (env_t &env, size_t arity);
           string repr (env_t &env);
       };
-      lambda_o::
-      lambda_o (env_t &env,
-                name_vector_t name_vector,
-                shared_ptr <jojo_t> jojo,
-                bind_vector_t bind_vector,
-                local_scope_t local_scope)
+      closure_o::
+      closure_o (env_t &env,
+                 name_vector_t name_vector,
+                 shared_ptr <jojo_t> jojo,
+                 bind_vector_t bind_vector,
+                 local_scope_t local_scope)
       {
-          this->tag = tagging (env, "lambda-t");
+          this->tag = tagging (env, "closure-t");
           this->name_vector = name_vector;
           this->jojo = jojo;
           this->bind_vector = bind_vector;
@@ -309,7 +309,7 @@
           return local_scope;
       }
       void
-      lambda_o::apply (env_t &env, size_t arity)
+      closure_o::apply (env_t &env, size_t arity)
       {
           auto size = this->name_vector.size ();
           auto have = number_of_obj_in_bind_vector (this->bind_vector);
@@ -330,16 +330,16 @@
                   (env, arity);
               auto bind_vector = bind_vector_merge_obj_vector
                   (this->bind_vector, obj_vector);
-              auto lambda = make_shared <lambda_o>
+              auto closure = make_shared <closure_o>
                   (env,
                    this->name_vector,
                    this->jojo,
                    bind_vector,
                    this->local_scope);
-              env.obj_stack.push (lambda);
+              env.obj_stack.push (closure);
           }
           else {
-              cout << "- fatal error : lambda_o::apply" << "\n"
+              cout << "- fatal error : closure_o::apply" << "\n"
                    << "  over-arity apply" << "\n"
                    << "  arity > lack" << "\n"
                    << "  arity : " << arity << "\n"
@@ -387,11 +387,11 @@
           return true;
       }
       bool
-      lambda_o::equal (env_t &env, shared_ptr <obj_t> obj)
+      closure_o::equal (env_t &env, shared_ptr <obj_t> obj)
       {
           // raw pointers must be equal first
           if (this != obj.get ()) return false;
-          auto that = static_pointer_cast <lambda_o> (obj);
+          auto that = static_pointer_cast <closure_o> (obj);
           // then scopes
           if (local_scope_equal
               (env,
@@ -405,9 +405,9 @@
           else return true;
       }
       string
-      lambda_o::repr (env_t &env)
+      closure_o::repr (env_t &env)
       {
-          string repr = "(lambda ";
+          string repr = "(closure ";
           repr += name_vector_repr (this->name_vector);
           repr += " ";
           repr += jojo_repr (env, this->jojo);
@@ -1036,13 +1036,13 @@
       void
       lambda_jo_t::exe (env_t &env, local_scope_t &local_scope)
       {
-          auto lambda = make_shared <lambda_o>
+          auto closure = make_shared <closure_o>
               (env,
                this->name_vector,
                this->jojo,
                bind_vector_from_name_vector (this->name_vector),
                local_scope);
-          env.obj_stack.push (lambda);
+          env.obj_stack.push (closure);
       }
       string
       lambda_jo_t::repr (env_t &env)
