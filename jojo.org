@@ -2,12 +2,12 @@
 #+property: tangle jojo.cpp
 #+title: jojo
 - fix `closure_o::repr`
-- `equal` and `tag` in misc
 - tk_assign handle `()`
 - tk_assign handle `.`
 - tk_assign handle `recur`
 - (data)
 - tk_assign for (data) -- generate data_cons_o and data_pred_o
+- *tag*
 - (case)
 * prolog
 
@@ -1931,6 +1931,32 @@
 
 * *bool*
 
+*** true_c
+
+    #+begin_src cpp
+    shared_ptr <data_o>
+    true_c (env_t &env)
+    {
+       return make_shared <data_o>
+           (env,
+            tagging (env, "true-t"),
+            obj_map_t ());
+    }
+    #+end_src
+
+*** false_c
+
+    #+begin_src cpp
+    shared_ptr <data_o>
+    false_c (env_t &env)
+    {
+       return make_shared <data_o>
+           (env,
+            tagging (env, "false-t"),
+            obj_map_t ());
+    }
+    #+end_src
+
 *** jj_true_c
 
     #+begin_src cpp
@@ -3719,6 +3745,39 @@
     }
     #+end_src
 
+* *tag*
+
+*** tag
+
+***** tag_o
+
+      #+begin_src cpp
+
+      #+end_src
+
+*** [todo] jj_get_tag
+
+    #+begin_src cpp
+    // sig_t jj_get_tag_sig = { "get-tag", "obj" };
+    // void jj_get_tag (env_t &env, obj_map_t &obj_map)
+    // {
+    //     auto obj = obj_map ["obj"];
+    //     env.obj_stack.push (make_shared <tag_o> (env, obj->repr (env)));
+    // }
+    #+end_src
+
+*** [todo] import_tag
+
+    #+begin_src cpp
+
+    #+end_src
+
+*** [todo] test_tag
+
+    #+begin_src cpp
+
+    #+end_src
+
 * *misc*
 
 *** jj_repr
@@ -3755,6 +3814,21 @@
     }
     #+end_src
 
+*** jj_equal
+
+    #+begin_src cpp
+    sig_t jj_equal_sig = { "equal", "lhs", "rhs" };
+    void jj_equal (env_t &env, obj_map_t &obj_map)
+    {
+        auto lhs = obj_map ["lhs"];
+        auto rhs = obj_map ["rhs"];
+        if (obj_equal (env, lhs, rhs))
+            env.obj_stack.push (true_c (env));
+        else
+            env.obj_stack.push (false_c (env));
+    }
+    #+end_src
+
 *** import_misc
 
     #+begin_src cpp
@@ -3770,6 +3844,9 @@
         define_prim (env,
                      jj_newline_sig,
                      jj_newline);
+        define_prim (env,
+                     jj_equal_sig,
+                     jj_equal);
     }
     #+end_src
 

@@ -2,3 +2,4 @@
 (print cons-c) (newline)
 (print null-c) (newline)
 (print x) (newline)
+(print (equal x x)) (newline)

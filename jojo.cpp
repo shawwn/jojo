@@ -1196,6 +1196,22 @@
 
     }
     shared_ptr <data_o>
+    true_c (env_t &env)
+    {
+       return make_shared <data_o>
+           (env,
+            tagging (env, "true-t"),
+            obj_map_t ());
+    }
+    shared_ptr <data_o>
+    false_c (env_t &env)
+    {
+       return make_shared <data_o>
+           (env,
+            tagging (env, "false-t"),
+            obj_map_t ());
+    }
+    shared_ptr <data_o>
     jj_true_c (env_t &env)
     {
        return make_shared <data_o>
@@ -2405,6 +2421,15 @@
     {
 
     }
+
+    // sig_t jj_get_tag_sig = { "get-tag", "obj" };
+    // void jj_get_tag (env_t &env, obj_map_t &obj_map)
+    // {
+    //     auto obj = obj_map ["obj"];
+    //     env.obj_stack.push (make_shared <tag_o> (env, obj->repr (env)));
+    // }
+
+
     sig_t jj_repr_sig = { "repr", "obj" };
     void jj_repr (env_t &env, obj_map_t &obj_map)
     {
@@ -2424,6 +2449,16 @@
     {
         cout << "\n";
     }
+    sig_t jj_equal_sig = { "equal", "lhs", "rhs" };
+    void jj_equal (env_t &env, obj_map_t &obj_map)
+    {
+        auto lhs = obj_map ["lhs"];
+        auto rhs = obj_map ["rhs"];
+        if (obj_equal (env, lhs, rhs))
+            env.obj_stack.push (true_c (env));
+        else
+            env.obj_stack.push (false_c (env));
+    }
     void
     import_misc (env_t &env)
     {
@@ -2436,6 +2471,9 @@
         define_prim (env,
                      jj_newline_sig,
                      jj_newline);
+        define_prim (env,
+                     jj_equal_sig,
+                     jj_equal);
     }
     void
     test_misc ()
