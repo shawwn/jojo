@@ -1,13 +1,7 @@
 #+html_head: <link rel="stylesheet" href="css/org-page.css"/>
 #+property: tangle jojo.cpp
 #+title: jojo
-- tk_assign handle `()`
-- tk_assign handle `.`
-- tk_assign handle `recur`
-- (data)
-- tk_assign for (data) -- generate data_cons_o and data_pred_o
-- *tag*
-- (case)
+
 * prolog
 
 *** include
@@ -215,7 +209,7 @@
         void run ();
         void report ();
         void run_with_base (size_t base);
-        void run_and_report ();
+        void double_report ();
         void step_and_report ();
     };
     #+end_src
@@ -1371,11 +1365,11 @@
     }
     #+end_src
 
-*** env_t::run_and_report
+*** env_t::double_report
 
     #+begin_src cpp
     void
-    env_t::run_and_report ()
+    env_t::double_report ()
     {
         this->report ();
         this->run ();
@@ -2023,7 +2017,7 @@
 
         env.frame_stack.push (new_frame_from_jo_vector (jo_vector));
 
-        // env.run_and_report ();
+        // env.double_report ();
 
         {
             env.run ();
@@ -2200,7 +2194,7 @@
 
         env.frame_stack.push (new_frame_from_jo_vector (jo_vector));
 
-        // env.run_and_report ();
+        // env.double_report ();
 
         {
             env.run ();
@@ -2265,7 +2259,7 @@
     using obj_vect_t = vector <shared_ptr <obj_t>>;
     #+end_src
 
-*** [todo] vect_o
+*** vect_o
 
     #+begin_src cpp
     struct vect_o: obj_t
@@ -2461,7 +2455,7 @@
 
         env.frame_stack.push (new_frame_from_jo_vector (jo_vector));
 
-        // env.run_and_report ();
+        // env.double_report ();
 
         {
             env.run ();
@@ -3067,7 +3061,7 @@
 
         env.frame_stack.push (new_frame_from_jo_vector (jo_vector));
 
-        // env.run_and_report ();
+        // env.double_report ();
     }
     #+end_src
 
@@ -3781,13 +3775,21 @@
 *** [todo] import_tag
 
     #+begin_src cpp
+    void
+    import_tag (env_t &env)
+    {
 
+    }
     #+end_src
 
 *** [todo] test_tag
 
     #+begin_src cpp
+    void
+    test_tag ()
+    {
 
+    }
     #+end_src
 
 * *misc*
@@ -3971,7 +3973,7 @@
 
           env.frame_stack.push (new_frame_from_jo_vector (jo_vector));
 
-          // env.run_and_report ();
+          // env.double_report ();
 
           {
               env.run ();
@@ -4057,7 +4059,7 @@
 
           env.frame_stack.push (new_frame_from_jo_vector (jo_vector));
 
-          // env.run_and_report ();
+          // env.double_report ();
 
           {
               env.run ();
@@ -4095,7 +4097,7 @@
 
           env.frame_stack.push (new_frame_from_jo_vector (jo_vector));
 
-          // env.run_and_report ();
+          // env.double_report ();
 
           {
               env.run ();
@@ -4144,7 +4146,7 @@
 
           env.frame_stack.push (new_frame_from_jo_vector (jo_vector));
 
-          // env.run_and_report ();
+          // env.double_report ();
 
           {
               env.run ();
@@ -4179,6 +4181,7 @@
         test_sexp ();
         test_eval ();
         test_syntax ();
+        test_tag ();
         test_misc ();
     }
     #+end_src
@@ -4201,6 +4204,7 @@
         import_compile (env);
         import_eval (env);
         import_syntax (env);
+        import_tag (env);
         import_misc (env);
     }
     #+end_src
@@ -4229,7 +4233,6 @@
         import_all (env);
         for (auto file_name: arg_vector)
             eval_file (env, file_name);
-        // env.run_and_report ();
     }
     #+end_src
 

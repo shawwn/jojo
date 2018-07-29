@@ -81,7 +81,7 @@
         void run ();
         void report ();
         void run_with_base (size_t base);
-        void run_and_report ();
+        void double_report ();
         void step_and_report ();
     };
     string
@@ -892,7 +892,7 @@
         }
     }
     void
-    env_t::run_and_report ()
+    env_t::double_report ()
     {
         this->report ();
         this->run ();
@@ -1260,7 +1260,7 @@
 
         env.frame_stack.push (new_frame_from_jo_vector (jo_vector));
 
-        // env.run_and_report ();
+        // env.double_report ();
 
         {
             env.run ();
@@ -1375,7 +1375,7 @@
 
         env.frame_stack.push (new_frame_from_jo_vector (jo_vector));
 
-        // env.run_and_report ();
+        // env.double_report ();
 
         {
             env.run ();
@@ -1542,7 +1542,7 @@
 
         env.frame_stack.push (new_frame_from_jo_vector (jo_vector));
 
-        // env.run_and_report ();
+        // env.double_report ();
 
         {
             env.run ();
@@ -1978,7 +1978,7 @@
 
         env.frame_stack.push (new_frame_from_jo_vector (jo_vector));
 
-        // env.run_and_report ();
+        // env.double_report ();
     }
     void
     test_sexp_vect ()
@@ -2441,8 +2441,16 @@
     //     auto obj = obj_map ["obj"];
     //     env.obj_stack.push (make_shared <tag_o> (env, obj->repr (env)));
     // }
+    void
+    import_tag (env_t &env)
+    {
 
+    }
+    void
+    test_tag ()
+    {
 
+    }
     sig_t jj_repr_sig = { "repr", "obj" };
     void jj_repr (env_t &env, obj_map_t &obj_map)
     {
@@ -2575,7 +2583,7 @@
 
           env.frame_stack.push (new_frame_from_jo_vector (jo_vector));
 
-          // env.run_and_report ();
+          // env.double_report ();
 
           {
               env.run ();
@@ -2651,7 +2659,7 @@
 
           env.frame_stack.push (new_frame_from_jo_vector (jo_vector));
 
-          // env.run_and_report ();
+          // env.double_report ();
 
           {
               env.run ();
@@ -2684,7 +2692,7 @@
 
           env.frame_stack.push (new_frame_from_jo_vector (jo_vector));
 
-          // env.run_and_report ();
+          // env.double_report ();
 
           {
               env.run ();
@@ -2728,7 +2736,7 @@
 
           env.frame_stack.push (new_frame_from_jo_vector (jo_vector));
 
-          // env.run_and_report ();
+          // env.double_report ();
 
           {
               env.run ();
@@ -2758,6 +2766,7 @@
         test_sexp ();
         test_eval ();
         test_syntax ();
+        test_tag ();
         test_misc ();
     }
     void
@@ -2775,6 +2784,7 @@
         import_compile (env);
         import_eval (env);
         import_syntax (env);
+        import_tag (env);
         import_misc (env);
     }
     void
@@ -2793,7 +2803,6 @@
         import_all (env);
         for (auto file_name: arg_vector)
             eval_file (env, file_name);
-        // env.run_and_report ();
     }
     int
     main (int argc, char **argv)

@@ -3,7 +3,7 @@
 "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd">
 <html xmlns="http://www.w3.org/1999/xhtml" lang="en" xml:lang="en">
 <head>
-<!-- 2018-07-28 Sat 16:52 -->
+<!-- 2018-07-30 Mon 05:02 -->
 <meta http-equiv="Content-Type" content="text/html;charset=utf-8" />
 <meta name="viewport" content="width=device-width, initial-scale=1" />
 <title>Story Map</title>
@@ -63,112 +63,137 @@ for the JavaScript code in this tag.
 <h2>overview</h2>
 <div id="text-table-of-contents">
 <ul>
-<li><a href="#org33bddc2">a interpreter uses dynamic threaded code</a>
+<li><a href="#org3ec7264">a interpreter uses dynamic threaded code</a>
 <ul>
-<li><a href="#orgab585c">predicate and branching</a></li>
-<li><a href="#orge5fc6d1">case_jo_t</a></li>
-<li><a href="#orgaba56a">data_pred_o &#x2013; for `&lt;data&gt;-p`</a></li>
+<li><a href="#org40dae22">predicate and branching</a></li>
+<li><a href="#org2698ea1">case_jo_t</a></li>
+<li><a href="#org1491315">data_pred_o &#x2013; for `&lt;data&gt;-p`</a></li>
 </ul>
 </li>
-<li><a href="#orge9b7d1e">with lisp like macro system</a>
+<li><a href="#org555f02f">with lisp like macro system</a>
 <ul>
-<li><a href="#org74c5421">repl</a></li>
-<li><a href="#org22c75eb">(=)</a></li>
+<li><a href="#org33c2bdd">tk_assign handle `()`</a></li>
+<li><a href="#org4b1b867">tk_assign handle `.`</a></li>
+<li><a href="#org1c77676">tk_assign handle `recur`</a></li>
+<li><a href="#orge58363d">(data &#x2026;) &#x2013; literal data_cons_o</a></li>
+<li><a href="#org26a4f7c">(data) &#x2013; literal data_o</a></li>
+<li><a href="#orgeec8ac6">tk_assign for (data) &#x2013; generate data_cons_o and data_pred_o</a></li>
+<li><a href="#org4a7c8fc">(case)</a></li>
+<li><a href="#org3ae5dd4">(=)</a></li>
+<li><a href="#org24d5577">literal str</a></li>
 </ul>
 </li>
-<li><a href="#orgad96f69">with oop system</a></li>
-<li><a href="#orgc625811">with simple ffi to c++</a>
+<li><a href="#org42de258">with oop system</a></li>
+<li><a href="#org93830f">with simple ffi to c++</a>
 <ul>
-<li><a href="#orgc1e6c8c">dict_o</a></li>
-<li><a href="#org73366a4">dict literal &#x2013; { }</a></li>
+<li><a href="#orgb12421">dict_o</a></li>
+<li><a href="#orgc80208">dict literal &#x2013; { }</a></li>
+<li><a href="#org13530a3">tag_o</a></li>
 </ul>
 </li>
-<li><a href="#org3276e2c">easy to use and debug</a>
+<li><a href="#orgc4463ba">easy to use and debug</a></li>
+<li><a href="#org56d9b6c">with simple module system</a>
 <ul>
-<li><a href="#org3f1665">repr for *_o</a></li>
-<li><a href="#org5d890df">fix print for *_o</a></li>
+<li><a href="#orgaacd953"><span class="done _maybe_">[maybe]</span> scheme r7rs</a></li>
 </ul>
 </li>
-<li><a href="#org8428fe6">maintained by a community as a live system</a>
+<li><a href="#org5c825c9">with git based package manager</a></li>
+<li><a href="#org6f755fa">maintained by a community as a live system</a>
 <ul>
-<li><a href="#org614831f">quit org-mode &#x2013; use header file &#x2013; no forward declarations</a></li>
-<li><a href="#org9e72643">style guide</a></li>
+<li><a href="#orgf1e9aaa">quit org-mode &#x2013; use header file &#x2013; no forward declarations</a></li>
+<li><a href="#org4204d5d">style guide</a></li>
 </ul>
 </li>
 </ul>
 </div>
 </div>
 
-<div id="outline-container-org33bddc2" class="outline-2">
-<h2 id="org33bddc2">a interpreter uses dynamic threaded code</h2>
-<div class="outline-text-2" id="text-org33bddc2">
-</div><div id="outline-container-orgab585c" class="outline-3">
-<h3 id="orgab585c">predicate and branching</h3>
+<div id="outline-container-org3ec7264" class="outline-2">
+<h2 id="org3ec7264">a interpreter uses dynamic threaded code</h2>
+<div class="outline-text-2" id="text-org3ec7264">
+</div><div id="outline-container-org40dae22" class="outline-3">
+<h3 id="org40dae22">predicate and branching</h3>
 </div>
-
-<div id="outline-container-orge5fc6d1" class="outline-3">
-<h3 id="orge5fc6d1">case_jo_t</h3>
+<div id="outline-container-org2698ea1" class="outline-3">
+<h3 id="org2698ea1">case_jo_t</h3>
 </div>
-
-<div id="outline-container-orgaba56a" class="outline-3">
-<h3 id="orgaba56a">data_pred_o &#x2013; for `&lt;data&gt;-p`</h3>
+<div id="outline-container-org1491315" class="outline-3">
+<h3 id="org1491315">data_pred_o &#x2013; for `&lt;data&gt;-p`</h3>
 </div>
 </div>
-
-<div id="outline-container-orge9b7d1e" class="outline-2">
-<h2 id="orge9b7d1e">with lisp like macro system</h2>
-<div class="outline-text-2" id="text-orge9b7d1e">
-</div><div id="outline-container-org74c5421" class="outline-3">
-<h3 id="org74c5421">repl</h3>
+<div id="outline-container-org555f02f" class="outline-2">
+<h2 id="org555f02f">with lisp like macro system</h2>
+<div class="outline-text-2" id="text-org555f02f">
+</div><div id="outline-container-org33c2bdd" class="outline-3">
+<h3 id="org33c2bdd">tk_assign handle `()`</h3>
 </div>
-
-<div id="outline-container-org22c75eb" class="outline-3">
-<h3 id="org22c75eb">(=)</h3>
+<div id="outline-container-org4b1b867" class="outline-3">
+<h3 id="org4b1b867">tk_assign handle `.`</h3>
 </div>
+<div id="outline-container-org1c77676" class="outline-3">
+<h3 id="org1c77676">tk_assign handle `recur`</h3>
 </div>
-
-<div id="outline-container-orgad96f69" class="outline-2">
-<h2 id="orgad96f69">with oop system</h2>
+<div id="outline-container-orge58363d" class="outline-3">
+<h3 id="orge58363d">(data &#x2026;) &#x2013; literal data_cons_o</h3>
 </div>
-
-<div id="outline-container-orgc625811" class="outline-2">
-<h2 id="orgc625811">with simple ffi to c++</h2>
-<div class="outline-text-2" id="text-orgc625811">
-</div><div id="outline-container-orgc1e6c8c" class="outline-3">
-<h3 id="orgc1e6c8c">dict_o</h3>
+<div id="outline-container-org26a4f7c" class="outline-3">
+<h3 id="org26a4f7c">(data) &#x2013; literal data_o</h3>
 </div>
-
-<div id="outline-container-org73366a4" class="outline-3">
-<h3 id="org73366a4">dict literal &#x2013; { }</h3>
+<div id="outline-container-orgeec8ac6" class="outline-3">
+<h3 id="orgeec8ac6">tk_assign for (data) &#x2013; generate data_cons_o and data_pred_o</h3>
 </div>
+<div id="outline-container-org4a7c8fc" class="outline-3">
+<h3 id="org4a7c8fc">(case)</h3>
 </div>
-
-<div id="outline-container-org3276e2c" class="outline-2">
-<h2 id="org3276e2c">easy to use and debug</h2>
-<div class="outline-text-2" id="text-org3276e2c">
-</div><div id="outline-container-org3f1665" class="outline-3">
-<h3 id="org3f1665">repr for *_o</h3>
+<div id="outline-container-org3ae5dd4" class="outline-3">
+<h3 id="org3ae5dd4">(=)</h3>
 </div>
-
-<div id="outline-container-org5d890df" class="outline-3">
-<h3 id="org5d890df">fix print for *_o</h3>
+<div id="outline-container-org24d5577" class="outline-3">
+<h3 id="org24d5577">literal str</h3>
 </div>
 </div>
-
-<div id="outline-container-org8428fe6" class="outline-2">
-<h2 id="org8428fe6">maintained by a community as a live system</h2>
-<div class="outline-text-2" id="text-org8428fe6">
-</div><div id="outline-container-org614831f" class="outline-3">
-<h3 id="org614831f">quit org-mode &#x2013; use header file &#x2013; no forward declarations</h3>
+<div id="outline-container-org42de258" class="outline-2">
+<h2 id="org42de258">with oop system</h2>
 </div>
-
-<div id="outline-container-org9e72643" class="outline-3">
-<h3 id="org9e72643">style guide</h3>
+<div id="outline-container-org93830f" class="outline-2">
+<h2 id="org93830f">with simple ffi to c++</h2>
+<div class="outline-text-2" id="text-org93830f">
+</div><div id="outline-container-orgb12421" class="outline-3">
+<h3 id="orgb12421">dict_o</h3>
+</div>
+<div id="outline-container-orgc80208" class="outline-3">
+<h3 id="orgc80208">dict literal &#x2013; { }</h3>
+</div>
+<div id="outline-container-org13530a3" class="outline-3">
+<h3 id="org13530a3">tag_o</h3>
+</div>
+</div>
+<div id="outline-container-orgc4463ba" class="outline-2">
+<h2 id="orgc4463ba">easy to use and debug</h2>
+</div>
+<div id="outline-container-org56d9b6c" class="outline-2">
+<h2 id="org56d9b6c">with simple module system</h2>
+<div class="outline-text-2" id="text-org56d9b6c">
+</div><div id="outline-container-orgaacd953" class="outline-3">
+<h3 id="orgaacd953"><span class="done _maybe_">[maybe]</span> scheme r7rs</h3>
+</div>
+</div>
+<div id="outline-container-org5c825c9" class="outline-2">
+<h2 id="org5c825c9">with git based package manager</h2>
+</div>
+<div id="outline-container-org6f755fa" class="outline-2">
+<h2 id="org6f755fa">maintained by a community as a live system</h2>
+<div class="outline-text-2" id="text-org6f755fa">
+</div><div id="outline-container-orgf1e9aaa" class="outline-3">
+<h3 id="orgf1e9aaa">quit org-mode &#x2013; use header file &#x2013; no forward declarations</h3>
+</div>
+<div id="outline-container-org4204d5d" class="outline-3">
+<h3 id="org4204d5d">style guide</h3>
 </div>
 </div>
 </div>
 <div id="postamble" class="status">
-<p class="date">Created: 2018-07-28 Sat 16:52</p>
+<p class="date">Created: 2018-07-30 Mon 05:02</p>
 <p class="validation"><a href="http://validator.w3.org/check?uri=referer">Validate</a></p>
 </div>
 </body>
