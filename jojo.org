@@ -1,7 +1,6 @@
 #+html_head: <link rel="stylesheet" href="css/org-page.css"/>
 #+property: tangle jojo.cpp
 #+title: jojo
-- basic generic function of obj_t
 - k_lambda -- without local_ref_jo
 - k_lambda -- handle local_ref_jo
 - tk_assign -- handle `()`
@@ -3641,7 +3640,69 @@
     }
     #+end_src
 
-* *generic*
+* *misc*
+
+*** jj_repr
+
+    #+begin_src cpp
+    sig_t jj_repr_sig = { "repr", "obj" };
+    void jj_repr (env_t &env, obj_map_t &obj_map)
+    {
+        auto obj = obj_map ["obj"];
+        env.obj_stack.push
+            (make_shared <str_o>
+             (env, obj->repr (env)));
+    }
+    #+end_src
+
+*** jj_print
+
+    #+begin_src cpp
+    sig_t jj_print_sig = { "print", "obj" };
+    void jj_print (env_t &env, obj_map_t &obj_map)
+    {
+        auto obj = obj_map ["obj"];
+        cout << obj->repr (env);
+    }
+    #+end_src
+
+*** jj_newline
+
+    #+begin_src cpp
+    sig_t jj_newline_sig = { "newline" };
+    void jj_newline (env_t &env, obj_map_t &obj_map)
+    {
+        cout << "\n";
+    }
+    #+end_src
+
+*** import_misc
+
+    #+begin_src cpp
+    void
+    import_misc (env_t &env)
+    {
+        define_prim (env,
+                     jj_repr_sig,
+                     jj_repr);
+        define_prim (env,
+                     jj_print_sig,
+                     jj_print);
+        define_prim (env,
+                     jj_newline_sig,
+                     jj_newline);
+    }
+    #+end_src
+
+*** test_misc
+
+    #+begin_src cpp
+    void
+    test_misc ()
+    {
+
+    }
+    #+end_src
 
 * epilog
 
@@ -3949,6 +4010,7 @@
         test_dict ();
         test_sexp ();
         test_eval ();
+        test_misc ();
     }
     #+end_src
 
@@ -3969,6 +4031,7 @@
         import_keyword (env);
         import_compile (env);
         import_eval (env);
+        import_misc (env);
     }
     #+end_src
 

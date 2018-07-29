@@ -2343,6 +2343,43 @@
     {
 
     }
+    sig_t jj_repr_sig = { "repr", "obj" };
+    void jj_repr (env_t &env, obj_map_t &obj_map)
+    {
+        auto obj = obj_map ["obj"];
+        env.obj_stack.push
+            (make_shared <str_o>
+             (env, obj->repr (env)));
+    }
+    sig_t jj_print_sig = { "print", "obj" };
+    void jj_print (env_t &env, obj_map_t &obj_map)
+    {
+        auto obj = obj_map ["obj"];
+        cout << obj->repr (env);
+    }
+    sig_t jj_newline_sig = { "newline" };
+    void jj_newline (env_t &env, obj_map_t &obj_map)
+    {
+        cout << "\n";
+    }
+    void
+    import_misc (env_t &env)
+    {
+        define_prim (env,
+                     jj_repr_sig,
+                     jj_repr);
+        define_prim (env,
+                     jj_print_sig,
+                     jj_print);
+        define_prim (env,
+                     jj_newline_sig,
+                     jj_newline);
+    }
+    void
+    test_misc ()
+    {
+
+    }
       void
       test_step ()
       {
@@ -2607,6 +2644,7 @@
         test_dict ();
         test_sexp ();
         test_eval ();
+        test_misc ();
     }
     void
     import_all (env_t &env)
@@ -2622,6 +2660,7 @@
         import_keyword (env);
         import_compile (env);
         import_eval (env);
+        import_misc (env);
     }
     void
     eval_file (env_t &env, string file_name)
