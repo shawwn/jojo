@@ -11,8 +11,6 @@
 
 * with lisp like macro system
 
-*** *eval* & *compile*
-
 *** *top-keyword*
 
 ***** (lambda)
@@ -22,6 +20,8 @@
 *** *keyword*
 
 ***** (=)
+
+*** literal str
 
 * with oop system
 

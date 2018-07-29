@@ -8,6 +8,8 @@
 
     #+begin_src cpp
     #include <iostream>
+    #include <fstream>
+    #include <sstream>
     #include <algorithm>
     #include <functional>
     #include <cassert>
@@ -937,7 +939,8 @@
 ***** prim_fn
 
       #+begin_src cpp
-      using prim_fn = function <void (env_t &, obj_map_t &)>;
+      using prim_fn = function
+          <void (env_t &, obj_map_t &)>;
       #+end_src
 
 ***** prim_o
@@ -1723,9 +1726,9 @@
     {
         auto name = name_of_sig (sig);
         auto name_vector = name_vector_of_sig (sig);
-        auto prim = make_shared <prim_o>
-            (env, name_vector, fn, obj_map_t ());
-        define (env, name, prim);
+        define (env, name,
+                make_shared <prim_o>
+                (env, name_vector, fn, obj_map_t ()));
     }
     #+end_src
 
@@ -2074,11 +2077,11 @@
     }
     #+end_src
 
-*** import_string
+*** import_str
 
     #+begin_src cpp
     void
-    import_string (env_t &env)
+    import_str (env_t &env)
     {
         define_prim (env,
                      jj_str_print_sig,
@@ -2086,11 +2089,11 @@
     }
     #+end_src
 
-*** [todo] test_string
+*** [todo] test_str
 
     #+begin_src cpp
     void
-    test_string ()
+    test_str ()
     {
 
     }
@@ -2309,6 +2312,16 @@
     #+end_src
 
 * *dict*
+
+*** [todo] import_dict
+
+    #+begin_src cpp
+    void
+    import_dict (env_t &env)
+    {
+
+    }
+    #+end_src
 
 *** [todo] test_dict
 
@@ -2871,7 +2884,7 @@
         auto env = env_t ();
 
         import_sexp (env);
-        import_string (env);
+        import_str (env);
 
         auto code =
             "(cons-c <car> <cdr>)"
@@ -2908,7 +2921,7 @@
         auto env = env_t ();
 
         import_sexp (env);
-        import_string (env);
+        import_str (env);
 
         auto code = "(a [a b c] c) [a b c] (a [a b c] c)";
         auto word_list = scan_word_list
@@ -2948,13 +2961,20 @@
 
 * *top-keyword*
 
+*** top_keyword_fn
+
+    #+begin_src cpp
+    using top_keyword_fn = function
+        <void (env_t &, shared_ptr <data_o>)>;
+    #+end_src
+
 *** [todo] top_keyword_o
 
     #+begin_src cpp
     struct top_keyword_o: obj_t
     {
-        prim_fn fn;
-        top_keyword_o (env_t &env, prim_fn fn);
+        top_keyword_fn fn;
+        top_keyword_o (env_t &env, top_keyword_fn fn);
         // bool equal (env_t &env, shared_ptr <obj_t> obj);
         // void print (env_t &env);
     };
@@ -2963,7 +2983,8 @@
 *** top_keyword_o::top_keyword_o
 
     #+begin_src cpp
-    top_keyword_o::top_keyword_o (env_t &env, prim_fn fn)
+    top_keyword_o::
+    top_keyword_o (env_t &env, top_keyword_fn fn)
     {
         this->tag = tagging (env, "top-keyword-t");
         this->fn = fn;
@@ -2980,25 +3001,60 @@
     }
     #+end_src
 
+*** define_top_keyword
+
+    #+begin_src cpp
+    void
+    define_top_keyword (env_t &env, name_t name, top_keyword_fn fn)
+    {
+        define (env, name, make_shared <top_keyword_o> (env, fn));
+    }
+    #+end_src
+
+*** tk_assign
+
+    #+begin_src cpp
+    void
+    sexp_list_eval (env_t &env, shared_ptr <obj_t> sexp_list);
+
+    void tk_assign (env_t &env, shared_ptr <data_o> body)
+    {
+        auto head = static_pointer_cast <str_o> (car (env, body));
+        auto rest = cdr (env, body);
+        auto name = head->str;
+        sexp_list_eval (env, rest);
+        auto obj = env.obj_stack.top ();
+        env.obj_stack.pop ();
+        define (env, name, obj);
+    }
+    #+end_src
+
 *** import_top_keyword
 
     #+begin_src cpp
     void
     import_top_keyword (env_t &env)
     {
-
+        define_top_keyword (env, "=", tk_assign);
     }
     #+end_src
 
 * *keyword*
+
+*** keyword_fn
+
+    #+begin_src cpp
+    using keyword_fn = function
+        <shared_ptr <jojo_t> (env_t &, shared_ptr <data_o>)>;
+    #+end_src
 
 *** [todo] keyword_o
 
     #+begin_src cpp
     struct keyword_o: obj_t
     {
-        prim_fn fn;
-        keyword_o (env_t &env, prim_fn fn);
+        keyword_fn fn;
+        keyword_o (env_t &env, keyword_fn fn);
         // bool equal (env_t &env, shared_ptr <obj_t> obj);
         // void print (env_t &env);
     };
@@ -3007,7 +3063,8 @@
 *** keyword_o::keyword_o
 
     #+begin_src cpp
-    keyword_o::keyword_o (env_t &env, prim_fn fn)
+    keyword_o::
+    keyword_o (env_t &env, keyword_fn fn)
     {
         this->tag = tagging (env, "keyword-t");
         this->fn = fn;
@@ -3024,13 +3081,33 @@
     }
     #+end_src
 
+*** define_keyword
+
+    #+begin_src cpp
+    void
+    define_keyword (env_t &env, name_t name, keyword_fn fn)
+    {
+        define (env, name, make_shared <keyword_o> (env, fn));
+    }
+    #+end_src
+
+*** [todo] k_lambda
+
+    #+begin_src cpp
+    shared_ptr <jojo_t>
+    k_lambda (env_t &env, shared_ptr <data_o> body)
+    {
+
+    }
+    #+end_src
+
 *** import_keyword
 
     #+begin_src cpp
     void
     import_keyword (env_t &env)
     {
-
+        define_keyword (env, "lambda", k_lambda);
     }
     #+end_src
 
@@ -3057,6 +3134,36 @@
         }
         else {
             return false;
+        }
+    }
+    #+end_src
+
+*** get_keyword_fn
+
+    #+begin_src cpp
+    keyword_fn
+    get_keyword_fn (env_t &env, name_t name)
+    {
+        auto it = env.box_map.find (name);
+        if (it != env.box_map.end ()) {
+            box_t *box = it->second;
+            if (box->empty_p) {
+                cout << "- fatal error: get_keyword_fn fail\n";
+                exit (1);
+            }
+            if (keyword_p (env, box->obj)) {
+                auto keyword = static_pointer_cast <keyword_o>
+                    (box->obj);
+                return keyword->fn;
+            }
+            else {
+                cout << "- fatal error: get_keyword_fn fail\n";
+                exit (1);
+            };
+        }
+        else {
+            cout << "- fatal error: get_keyword_fn fail\n";
+            exit (1);
         }
     }
     #+end_src
@@ -3119,7 +3226,9 @@
         if (dot_string_p (str)) {
             return dot_string_compile (env, str);
         }
-        // else if () {
+        // else if (string_string_p) {
+        // }
+        // else if (int_string_p) {
         // }
         else {
             return ref_compile (env, str);
@@ -3170,7 +3279,7 @@
     }
     #+end_src
 
-*** [todo] sexp_compile
+*** sexp_compile
 
     #+begin_src cpp
     shared_ptr <jojo_t>
@@ -3181,8 +3290,11 @@
             return string_compile (env, str->str);
         }
         else if (keyword_sexp_p (env, sexp)) {
-            // [todo]
-            return nullptr;
+            auto head = static_pointer_cast <str_o> (car (env, sexp));
+            auto body = static_pointer_cast <data_o> (cdr (env, sexp));
+            auto name = head->str;
+            auto fn = get_keyword_fn (env, name);
+            return fn (env, body);
         }
         else {
             assert (cons_p (env, sexp));
@@ -3239,7 +3351,7 @@
 *** get_top_keyword_fn
 
     #+begin_src cpp
-    prim_fn
+    top_keyword_fn
     get_top_keyword_fn (env_t &env, name_t name)
     {
         auto it = env.box_map.find (name);
@@ -3286,12 +3398,10 @@
     {
         if (top_keyword_sexp_p (env, sexp)) {
             auto head = static_pointer_cast <str_o> (car (env, sexp));
-            auto body = cdr (env, sexp);
+            auto body = static_pointer_cast <data_o> (cdr (env, sexp));
             auto name = head->str;
             auto fn = get_top_keyword_fn (env, name);
-            auto obj_map = obj_map_t ();
-            obj_map ["body"] = body;
-            fn (env, obj_map);
+            fn (env, body);
         }
         else {
             auto jojo = sexp_compile (env, sexp);
@@ -3677,7 +3787,7 @@
         test_prim ();
         test_bool ();
         test_list ();
-        test_string ();
+        test_str ();
         test_vect ();
         test_dict ();
         test_sexp ();
@@ -3685,13 +3795,67 @@
     }
     #+end_src
 
+*** import_all
+
+    #+begin_src cpp
+    void
+    import_all (env_t &env)
+    {
+        import_test (env);
+        import_bool (env);
+        import_list (env);
+        import_str (env);
+        import_vect (env);
+        import_dict (env);
+        import_sexp (env);
+        import_top_keyword (env);
+        import_keyword (env);
+        import_compile (env);
+        import_eval (env);
+    }
+    #+end_src
+
+*** eval_file
+
+    #+begin_src cpp
+    void
+    eval_file (env_t &env, string file_name)
+    {
+        auto input_file = ifstream (file_name);
+        auto buffer = stringstream ();
+        buffer << input_file.rdbuf ();
+        auto code = make_shared <str_o> (env, buffer.str ());
+        cout << buffer.str ();
+        code_eval (env, code);
+    }
+    #+end_src
+
+*** the_story_begin
+
+    #+begin_src cpp
+    void
+    the_story_begin (string_vector_t arg_vector)
+    {
+        auto env = env_t ();
+        import_all (env);
+        for (auto file_name: arg_vector)
+            eval_file (env, file_name);
+        env.run_and_report ();
+    }
+    #+end_src
+
 *** main
 
     #+begin_src cpp
     int
-    main ()
+    main (int argc, char **argv)
     {
         test_all ();
+        auto arg_vector = string_vector_t ();
+        for (auto i = 1; i < argc; i++) {
+            arg_vector.push_back (string (argv[i]));
+        }
+        the_story_begin (arg_vector);
         return 0;
     }
     #+end_src
