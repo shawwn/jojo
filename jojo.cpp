@@ -11,6 +11,11 @@
     #include <set>
     #include <stack>
     using namespace std;
+      void debug_here (size_t index)
+      {
+          cout << "HERE: " << index << "\n"
+               << flush;
+      }
     struct env_t;
     struct obj_t;
     struct jo_t;
@@ -78,6 +83,7 @@
         void report ();
         void run_with_base (size_t base);
         void run_and_report ();
+        void step_and_report ();
     };
     string
     jojo_repr (env_t &env, shared_ptr <jojo_t> jojo)
@@ -792,7 +798,6 @@
               box->obj->print (env);
               cout << "\n";
           }
-          cout << "\n";
       }
       name_t
       name_of_box (env_t &env, box_t *box)
@@ -832,7 +837,6 @@
               cout << "\n";
               obj_stack.pop ();
           }
-          cout << "\n";
       }
     void
     env_t::step ()
@@ -876,6 +880,12 @@
     {
         this->report ();
         this->run ();
+        this->report ();
+    }
+    void
+    env_t::step_and_report ()
+    {
+        this->step ();
         this->report ();
     }
       jojo_t::
@@ -1218,11 +1228,7 @@
 
         env.frame_stack.push (new_frame_from_jo_vector (jo_vector));
 
-        // {
-        //     env.report ();
-        //     env.run ();
-        //     env.report ();
-        // }
+        // env.run_and_report ();
 
         {
             env.run ();
@@ -1337,11 +1343,7 @@
 
         env.frame_stack.push (new_frame_from_jo_vector (jo_vector));
 
-        // {
-        //     env.report ();
-        //     env.run ();
-        //     env.report ();
-        // }
+        // env.run_and_report ();
 
         {
             env.run ();
@@ -1380,7 +1382,7 @@
         obj_vect_t vect;
         vect_o (env_t &env, obj_vect_t vect);
         bool equal (env_t &env, shared_ptr <obj_t> obj);
-        // void print (env_t &env);
+        string repr (env_t &env);
     };
     vect_o::vect_o (env_t &env, vector <shared_ptr <obj_t>> vect)
     {
@@ -1416,11 +1418,18 @@
         auto that = static_pointer_cast <vect_o> (obj);
         return vect_equal (env, this->vect, that->vect);
     }
-    // void
-    // vect_o::print (env_t &env)
-    // {
-
-    // }
+    string
+    vect_o::repr (env_t &env)
+    {
+        string repr = "[";
+        for (auto &obj: this->vect) {
+            repr += obj->repr (env);
+            repr += " ";
+        }
+        if (! repr.empty ()) repr.pop_back ();
+        repr += "]";
+        return repr;
+    }
     bool
     vect_p (env_t &env, shared_ptr <obj_t> a)
     {
@@ -1501,11 +1510,7 @@
 
         env.frame_stack.push (new_frame_from_jo_vector (jo_vector));
 
-        // {
-        //     env.report ();
-        //     env.run ();
-        //     env.report ();
-        // }
+        // env.run_and_report ();
 
         {
             env.run ();
@@ -1939,11 +1944,7 @@
 
         env.frame_stack.push (new_frame_from_jo_vector (jo_vector));
 
-        // {
-        //     env.report ();
-        //     env.run ();
-        //     env.report ();
-        // }
+        // env.run_and_report ();
     }
     void
     test_sexp_vect ()
@@ -1953,15 +1954,15 @@
         import_sexp (env);
         import_str (env);
 
-        auto code = "(a [a b c] c) [a b c] (a [a b c] c)";
+        auto code = "[a b c]";
         auto word_list = scan_word_list
             (env, make_shared <str_o> (env, code));
         env.obj_stack.push (word_list);
 
         jo_vector_t jo_vector = {
-            new ref_jo_t (boxing (env, "parse-sexp-list")),
+            new ref_jo_t (boxing (env, "parse-sexp")),
             new apply_jo_t (1),
-            new ref_jo_t (boxing (env, "sexp-list-repr")),
+            new ref_jo_t (boxing (env, "sexp-repr")),
             new apply_jo_t (1),
             new ref_jo_t (boxing (env, "str-print")),
             new apply_jo_t (1),
@@ -1970,9 +1971,12 @@
         env.frame_stack.push (new_frame_from_jo_vector (jo_vector));
 
         // {
-        //     env.report ();
-        //     env.run ();
-        //     env.report ();
+        //     env.step_and_report ();
+        //     env.step_and_report ();
+        //     env.step_and_report ();
+        //     env.step_and_report ();
+        //     env.step_and_report ();
+        //     env.step_and_report ();
         // }
     }
     void
@@ -1988,14 +1992,19 @@
     {
         top_keyword_fn fn;
         top_keyword_o (env_t &env, top_keyword_fn fn);
-        // bool equal (env_t &env, shared_ptr <obj_t> obj);
-        // void print (env_t &env);
+        bool equal (env_t &env, shared_ptr <obj_t> obj);
     };
     top_keyword_o::
     top_keyword_o (env_t &env, top_keyword_fn fn)
     {
         this->tag = tagging (env, "top-keyword-t");
         this->fn = fn;
+    }
+    bool
+    top_keyword_o::equal (env_t &env, shared_ptr <obj_t> obj)
+    {
+        if (this->tag != obj->tag) return false;
+        return this != obj.get ();
     }
     bool
     top_keyword_p (env_t &env, shared_ptr <obj_t> a)
@@ -2031,14 +2040,19 @@
     {
         keyword_fn fn;
         keyword_o (env_t &env, keyword_fn fn);
-        // bool equal (env_t &env, shared_ptr <obj_t> obj);
-        // void print (env_t &env);
+        bool equal (env_t &env, shared_ptr <obj_t> obj);
     };
     keyword_o::
     keyword_o (env_t &env, keyword_fn fn)
     {
         this->tag = tagging (env, "keyword-t");
         this->fn = fn;
+    }
+    bool
+    keyword_o::equal (env_t &env, shared_ptr <obj_t> obj)
+    {
+        if (this->tag != obj->tag) return false;
+        return this != obj.get ();
     }
     bool
     keyword_p (env_t &env, shared_ptr <obj_t> a)
@@ -2050,10 +2064,31 @@
     {
         define (env, name, make_shared <keyword_o> (env, fn));
     }
+    name_vector_t
+    obj_vect_to_name_vector (env_t &env, obj_vect_t &obj_vect)
+    {
+        auto name_vector = name_vector_t ();
+        for (auto &obj: obj_vect) {
+            assert (str_p (env, obj));
+            auto str = static_pointer_cast <str_o> (obj);
+            name_vector.push_back (str->str);
+        }
+        return name_vector;
+    }
+    shared_ptr <jojo_t>
+    sexp_list_compile (env_t &env, shared_ptr <obj_t> a);
+
     shared_ptr <jojo_t>
     k_lambda (env_t &env, shared_ptr <data_o> body)
     {
-        return nullptr;
+        auto name_vect = static_pointer_cast <vect_o> (car (env, body));
+        auto rest = static_pointer_cast <data_o> (cdr (env, body));
+        auto name_vector = obj_vect_to_name_vector (env, name_vect->vect);
+        auto rest_jojo = sexp_list_compile (env, rest);
+        jo_vector_t jo_vector = {
+            new lambda_jo_t (name_vector, rest_jojo),
+        };
+        return make_shared <jojo_t> (jo_vector);
     }
     void
     import_keyword (env_t &env)
@@ -2390,11 +2425,7 @@
 
           env.frame_stack.push (new_frame_from_jo_vector (jo_vector));
 
-          // {
-          //     env.report ();
-          //     env.run ();
-          //     env.report ();
-          // }
+          // env.run_and_report ();
 
           {
               env.run ();
@@ -2430,13 +2461,13 @@
 
           // {
           //     env.report ();
-          //     env.step (); env.report ();
-          //     env.step (); env.report ();
-          //     env.step (); env.report ();
-          //     env.step (); env.report ();
-          //     env.step (); env.report ();
-          //     env.step (); env.report ();
-          //     env.step (); env.report ();
+          //     env.step_and_report ();
+          //     env.step_and_report ();
+          //     env.step_and_report ();
+          //     env.step_and_report ();
+          //     env.step_and_report ();
+          //     env.step_and_report ();
+          //     env.step_and_report ();
           // }
 
           {
@@ -2470,11 +2501,7 @@
 
           env.frame_stack.push (new_frame_from_jo_vector (jo_vector));
 
-          // {
-          //     env.report ();
-          //     env.run ();
-          //     env.report ();
-          // }
+          // env.run_and_report ();
 
           {
               env.run ();
@@ -2507,11 +2534,7 @@
 
           env.frame_stack.push (new_frame_from_jo_vector (jo_vector));
 
-          // {
-          //     env.report ();
-          //     env.run ();
-          //     env.report ();
-          // }
+          // env.run_and_report ();
 
           {
               env.run ();
@@ -2555,11 +2578,7 @@
 
           env.frame_stack.push (new_frame_from_jo_vector (jo_vector));
 
-          // {
-          //     env.report ();
-          //     env.run ();
-          //     env.report ();
-          // }
+          // env.run_and_report ();
 
           {
               env.run ();
@@ -2620,7 +2639,7 @@
         import_all (env);
         for (auto file_name: arg_vector)
             eval_file (env, file_name);
-        env.run_and_report ();
+        // env.run_and_report ();
     }
     int
     main (int argc, char **argv)
