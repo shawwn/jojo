@@ -1,8 +1,6 @@
 #+html_head: <link rel="stylesheet" href="css/org-page.css"/>
 #+property: tangle jojo.cpp
 #+title: jojo
-- repr for *_o
-- fix print for *_o
 - k_lambda -- handle local_ref_jo
 - tk_assign -- handle `()`
 - tk_assign -- handle `.`
@@ -131,6 +129,7 @@
     {
         tag_t tag;
         virtual ~obj_t ();
+        virtual string repr (env_t &env);
         virtual void print (env_t &env);
         virtual bool equal (env_t &env, shared_ptr <obj_t> obj);
         virtual void apply (env_t &env, size_t arity);
@@ -371,15 +370,23 @@
       }
       #+end_src
 
+***** obj_t::repr
+
+      #+begin_src cpp
+      string
+      obj_t::repr (env_t &env)
+      {
+          return "#<" + name_of_tag (env, this->tag) + ">";
+      }
+      #+end_src
+
 ***** obj_t::print
 
       #+begin_src cpp
       void
       obj_t::print (env_t &env)
       {
-          cout << "#<"
-               << name_of_tag (env, this->tag)
-               << ">";
+          cout << this->repr (env);
       }
       #+end_src
 
@@ -681,7 +688,7 @@
           string str;
           str_o (env_t &env, string str);
           bool equal (env_t &env, shared_ptr <obj_t> obj);
-          void print (env_t &env);
+          string repr (env_t &env);
       };
       #+end_src
 
@@ -695,12 +702,13 @@
       }
       #+end_src
 
-***** str_o::print
+***** str_o::repr
 
       #+begin_src cpp
-      void str_o::print (env_t &env)
+      string
+      str_o::repr (env_t &env)
       {
-          cout << '"' << this->str << '"';
+          return "\"" + this->str + "\"";
       }
       #+end_src
 
@@ -728,7 +736,7 @@
                   tag_t tag,
                   obj_map_t obj_map);
           bool equal (env_t &env, shared_ptr <obj_t> obj);
-          void print (env_t &env);
+          string repr (env_t &env);
       };
       #+end_src
 
@@ -775,13 +783,50 @@
       }
       #+end_src
 
-***** [todo] data_o::print
+***** obj_map_repr
 
       #+begin_src cpp
-      void
-      data_o::print (env_t &env)
+      string
+      obj_map_repr (env_t &env, obj_map_t &obj_map)
       {
-          // [todo]
+          string repr = "";
+          for (auto &kv: obj_map) {
+              auto name = kv.first;
+              repr += name;
+              repr += " = ";
+              auto obj = kv.second;
+              repr += obj->repr (env);
+              repr += " ";
+          }
+          if (! repr.empty ()) repr.pop_back ();
+          return repr;
+      }
+      #+end_src
+
+***** data_o::repr
+
+      #+begin_src cpp
+      string
+      data_o::repr (env_t &env)
+      {
+          if (this->obj_map.size () == 0) {
+              string repr = "";
+              repr += name_of_tag (env, this->tag);
+              repr.pop_back ();
+              repr.pop_back ();
+              repr += "-c";
+              return repr;
+          }
+          else {
+              string repr = "(";
+              repr += name_of_tag (env, this->tag);
+              repr.pop_back ();
+              repr.pop_back ();
+              repr += "-c ";
+              repr += obj_map_repr (env, this->obj_map);
+              repr += ")";
+              return repr;
+          }
       }
       #+end_src
 
@@ -801,7 +846,7 @@
                        obj_map_t obj_map);
           void apply (env_t &env, size_t arity);
           bool equal (env_t &env, shared_ptr <obj_t> obj);
-          void print (env_t &env);
+          string repr (env_t &env);
       };
       #+end_src
 
@@ -932,13 +977,60 @@
       }
       #+end_src
 
-***** [todo] data_cons_o::print
+***** name_vector_and_obj_map_repr
 
       #+begin_src cpp
-      void
-      data_cons_o::print (env_t &env)
+      string
+      name_vector_and_obj_map_repr (env_t &env,
+                                    name_vector_t &name_vector,
+                                    obj_map_t &obj_map)
       {
-          // [todo]
+          string repr = "";
+          for (auto &name: name_vector) {
+              auto it = obj_map.find (name);
+              if (it == obj_map.end ()) {
+                  repr += name;
+                  repr += " = _ ";
+              }
+          }
+          for (auto &kv: obj_map) {
+              auto name = kv.first;
+              repr += name;
+              repr += " = ";
+              auto obj = kv.second;
+              repr += obj->repr (env);
+              repr += " ";
+          }
+          if (! repr.empty ()) repr.pop_back ();
+          return repr;
+      }
+      #+end_src
+
+***** data_cons_o::repr
+
+      #+begin_src cpp
+      string
+      data_cons_o::repr (env_t &env)
+      {
+          if (this->name_vector.size () == 0) {
+              string repr = "";
+              repr += name_of_tag (env, this->type_tag);
+              repr.pop_back ();
+              repr.pop_back ();
+              repr += "-c";
+              return repr;
+          }
+          else {
+              string repr = "(";
+              repr += name_of_tag (env, this->type_tag);
+              repr.pop_back ();
+              repr.pop_back ();
+              repr += "-c ";
+              repr += name_vector_and_obj_map_repr
+                  (env, this->name_vector, this->obj_map);
+              repr += ")";
+              return repr;
+          }
       }
       #+end_src
 
@@ -963,9 +1055,9 @@
                   name_vector_t name_vector,
                   prim_fn fn,
                   obj_map_t obj_map);
-          void print (env_t &env);
           bool equal (env_t &env, shared_ptr <obj_t> obj);
           void apply (env_t &env, size_t arity);
+          string repr (env_t &env);
       };
       #+end_src
 
@@ -984,14 +1076,23 @@
       }
       #+end_src
 
-***** [todo] prim_o::print
+***** prim_o::repr
 
       #+begin_src cpp
-      void prim_o::print (env_t &env)
+      string
+      prim_o::repr (env_t &env)
       {
-          cout << "(prim "
-               << name_vector_repr (this->name_vector)
-               << ")";
+          if (this->name_vector.size () == 0) {
+              string repr = "(prim)";
+              return repr;
+          }
+          else {
+              string repr = "(prim ";
+              repr += name_vector_and_obj_map_repr
+                  (env, this->name_vector, this->obj_map);
+              repr += ")";
+              return repr;
+          }
       }
       #+end_src
 
@@ -1179,12 +1280,12 @@
           cout << "- [" << env.obj_stack.size () << "] "
                << "obj_stack - "
                << "\n";
-          cout << "  ";
           auto obj_stack = env.obj_stack;
           while (! obj_stack.empty ()) {
               auto obj = obj_stack.top ();
+              cout << "  ";
               obj->print (env);
-              cout << " ";
+              cout << "\n";
               obj_stack.pop ();
           }
           cout << "\n";
@@ -1733,8 +1834,7 @@
     {
         auto name = name_of_sig (sig);
         auto name_vector = name_vector_of_sig (sig);
-        define (env, name,
-                make_shared <prim_o>
+        define (env, name, make_shared <prim_o>
                 (env, name_vector, fn, obj_map_t ()));
     }
     #+end_src
