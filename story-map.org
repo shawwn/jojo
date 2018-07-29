@@ -11,7 +11,7 @@
 
 * with lisp like macro system
 
-*** repl
+*** *eval* & *compile*
 
 *** (=)
 

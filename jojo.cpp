@@ -72,6 +72,8 @@
         void step ();
         void run ();
         void report ();
+        void run_with_base (size_t base);
+        void run_and_report ();
     };
     string
     jojo_repr (env_t &env, shared_ptr <jojo_t> jojo)
@@ -396,27 +398,27 @@
                << jojo_repr (env, this->jojo)
                << ")";
       }
-      struct string_o: obj_t
+      struct str_o: obj_t
       {
           string str;
-          string_o (env_t &env, string str);
+          str_o (env_t &env, string str);
           bool equal (env_t &env, shared_ptr <obj_t> obj);
           void print (env_t &env);
       };
-      string_o::string_o (env_t &env, string str)
+      str_o::str_o (env_t &env, string str)
       {
-          this->tag = tagging (env, "string-t");
+          this->tag = tagging (env, "str-t");
           this->str = str;
       }
-      void string_o::print (env_t &env)
+      void str_o::print (env_t &env)
       {
           cout << '"' << this->str << '"';
       }
       bool
-      string_o::equal (env_t &env, shared_ptr <obj_t> obj)
+      str_o::equal (env_t &env, shared_ptr <obj_t> obj)
       {
           if (this->tag != obj->tag) return false;
-          auto that = static_pointer_cast <string_o> (obj);
+          auto that = static_pointer_cast <str_o> (obj);
           return (this->str == that->str);
       }
       struct data_o: obj_t
@@ -770,6 +772,20 @@
         frame_stack_report (*this);
         obj_stack_report (*this);
         cout << "\n";
+    }
+    void
+    env_t::run_with_base (size_t base)
+    {
+        while (this->frame_stack.size () > base) {
+            this->step ();
+        }
+    }
+    void
+    env_t::run_and_report ()
+    {
+        this->report ();
+        this->run ();
+        this->report ();
     }
       jojo_t::
       jojo_t (jo_vector_t jo_vector)
@@ -1165,8 +1181,8 @@
 
         import_list (env);
 
-        define (env, "s1", make_shared <string_o> (env, "bye"));
-        define (env, "s2", make_shared <string_o> (env, "world"));
+        define (env, "s1", make_shared <str_o> (env, "bye"));
+        define (env, "s2", make_shared <str_o> (env, "world"));
 
         jo_vector_t jo_vector = {
             new ref_jo_t (boxing (env, "s1")),
@@ -1187,23 +1203,28 @@
         {
             env.run ();
             assert_stack_size (env, 1);
-            assert_pop_eq (env, make_shared <string_o> (env, "world"));
+            assert_pop_eq (env, make_shared <str_o> (env, "world"));
             assert_stack_size (env, 0);
         }
     }
-    sig_t jj_string_print_sig = { "string-print", "string" };
-    // -- string-t ->
-    void jj_string_print (env_t &env, obj_map_t &obj_map)
+    bool
+    str_p (env_t &env, shared_ptr <obj_t> a)
     {
-        auto str = static_pointer_cast <string_o> (obj_map ["string"]);
+        return a->tag == tagging (env, "str-t");
+    }
+    sig_t jj_str_print_sig = { "str-print", "string" };
+    // -- str-t ->
+    void jj_str_print (env_t &env, obj_map_t &obj_map)
+    {
+        auto str = static_pointer_cast <str_o> (obj_map ["string"]);
         cout << str->str;
     }
     void
     import_string (env_t &env)
     {
         define_prim (env,
-                     jj_string_print_sig,
-                     jj_string_print);
+                     jj_str_print_sig,
+                     jj_str_print);
     }
     void
     test_string ()
@@ -1316,8 +1337,8 @@
         import_list (env);
         import_vect (env);
 
-        define (env, "s1", make_shared <string_o> (env, "bye"));
-        define (env, "s2", make_shared <string_o> (env, "world"));
+        define (env, "s1", make_shared <str_o> (env, "bye"));
+        define (env, "s2", make_shared <str_o> (env, "world"));
 
         jo_vector_t jo_vector = {
             new ref_jo_t (boxing (env, "s1")),
@@ -1346,7 +1367,7 @@
         {
             env.run ();
             assert_stack_size (env, 1);
-            assert_pop_eq (env, make_shared <string_o> (env, "world"));
+            assert_pop_eq (env, make_shared <str_o> (env, "world"));
             assert_stack_size (env, 0);
         }
     }
@@ -1433,16 +1454,16 @@
         auto end = string_vector.rend ();
         auto collect = null_c (env);
         for (auto it = begin; it != end; it++) {
-            auto obj = make_shared <string_o> (env, *it);
+            auto obj = make_shared <str_o> (env, *it);
             collect = cons_c (env, obj, collect);
         }
         return collect;
     }
     shared_ptr <data_o>
-    // scan_word_list (env_t &env, shared_ptr <string_o> code)
+    // scan_word_list (env_t &env, shared_ptr <str_o> code)
     scan_word_list (env_t &env, shared_ptr <obj_t> a)
     {
-        auto code = static_pointer_cast <string_o> (a);
+        auto code = static_pointer_cast <str_o> (a);
         auto word_vector = scan_word_vector (code->str);
         return string_vector_to_string_list
             (env, word_vector);
@@ -1488,7 +1509,7 @@
         auto word_list = static_pointer_cast <data_o> (a);
         if (counter == 0)
             return null_c (env);
-        auto head = static_pointer_cast <string_o>
+        auto head = static_pointer_cast <str_o>
             (car (env, word_list));
         auto word = head->str;
         if (word == bar)
@@ -1515,7 +1536,7 @@
     {
         assert (cons_p (env, a));
         auto word_list = static_pointer_cast <data_o> (a);
-        auto head = static_pointer_cast <string_o>
+        auto head = static_pointer_cast <str_o>
             (car (env, word_list));
         auto word = head->str;
         if (bar_word_p (word)) {
@@ -1542,7 +1563,7 @@
         auto word_list = static_pointer_cast <data_o> (a);
         if (counter == 0)
             return word_list;
-        auto head = static_pointer_cast <string_o>
+        auto head = static_pointer_cast <str_o>
             (car (env, word_list));
         auto word = head->str;
         if (word == bar)
@@ -1566,7 +1587,7 @@
     {
         assert (cons_p (env, a));
         auto word_list = static_pointer_cast <data_o> (a);
-        auto head = static_pointer_cast <string_o>
+        auto head = static_pointer_cast <str_o>
             (car (env, word_list));
         auto word = head->str;
         if (bar_word_p (word)) {
@@ -1591,7 +1612,7 @@
         auto head = car (env, word_list);
         auto rest = cdr (env, word_list);
         auto next = cdr (env, cdr (env, word_list));
-        auto car_rest = static_pointer_cast <string_o> (car (env, rest));
+        auto car_rest = static_pointer_cast <str_o> (car (env, rest));
         auto word = car_rest->str;
         if (null_p (env, next)) {
             assert (word == ket);
@@ -1609,7 +1630,7 @@
     parse_sexp (env_t &env, shared_ptr <obj_t> a)
     {
         auto word_list = static_pointer_cast <data_o> (a);
-        auto head = static_pointer_cast <string_o>
+        auto head = static_pointer_cast <str_o>
             (car (env, word_list));
         auto word = head->str;
         auto rest = cdr (env, word_list);
@@ -1621,12 +1642,12 @@
                 (env, parse_sexp_list
                  (env, word_list_drop_ket (env, rest, "]")));
         else if (word == "'")
-            return cons_c (env, make_shared <string_o> (env, "quote"),
+            return cons_c (env, make_shared <str_o> (env, "quote"),
                            cons_c (env,
                                    parse_sexp (env, rest),
                                    null_c (env)));
         else if (word == "`")
-            return cons_c (env, make_shared <string_o> (env, "partquote"),
+            return cons_c (env, make_shared <str_o> (env, "partquote"),
                            cons_c (env,
                                    parse_sexp (env, rest),
                                    null_c (env)));
@@ -1662,8 +1683,8 @@
             return "[" + sexp_list_repr (env, l) + "]";
         }
         else {
-            auto str = static_pointer_cast <string_o> (a);
-            assert (str->tag == tagging (env, "string-t"));
+            auto str = static_pointer_cast <str_o> (a);
+            assert (str->tag == tagging (env, "str-t"));
             return str->str;
         }
     }
@@ -1682,19 +1703,19 @@
         }
     }
     sig_t jj_scan_word_list_sig = { "scan-word-list", "code" };
-    // -- string-t -> (list-t string-t)
+    // -- str-t -> (list-t str-t)
     void jj_scan_word_list (env_t &env, obj_map_t &obj_map)
     {
         env.obj_stack.push (scan_word_list (env, obj_map ["code"]));
     }
     sig_t jj_parse_sexp_sig = { "parse-sexp", "word-list" };
-    // -- (list-t string-t) -> sexp-t
+    // -- (list-t str-t) -> sexp-t
     void jj_parse_sexp (env_t &env, obj_map_t &obj_map)
     {
         env.obj_stack.push (parse_sexp (env, obj_map ["word-list"]));
     }
     sig_t jj_parse_sexp_list_sig = { "parse-sexp-list", "word-list" };
-    // -- (list-t string-t) -> (list-t sexp-t)
+    // -- (list-t str-t) -> (list-t sexp-t)
     void jj_parse_sexp_list (env_t &env, obj_map_t &obj_map)
     {
         env.obj_stack.push (parse_sexp_list (env, obj_map ["word-list"]));
@@ -1704,14 +1725,14 @@
     void jj_sexp_repr (env_t &env, obj_map_t &obj_map)
     {
         auto str = sexp_repr (env, obj_map ["sexp"]);
-        env.obj_stack.push (make_shared <string_o> (env, str));
+        env.obj_stack.push (make_shared <str_o> (env, str));
     }
     sig_t jj_sexp_list_repr_sig = { "sexp-list-repr", "sexp-list" };
     // -- (list-t sexp-t) ->
     void jj_sexp_list_repr (env_t &env, obj_map_t &obj_map)
     {
         auto str = sexp_list_repr (env, obj_map ["sexp-list"]);
-        env.obj_stack.push (make_shared <string_o> (env, str));
+        env.obj_stack.push (make_shared <str_o> (env, str));
     }
     void
     import_sexp (env_t &env)
@@ -1756,7 +1777,7 @@
             "(cons-c <car> <cdr>)"
             "(cons-c (cons-c <car> <cdr>) (cons-c <car> <cdr>))";
         auto word_list = scan_word_list
-            (env, make_shared <string_o> (env, code));
+            (env, make_shared <str_o> (env, code));
         env.obj_stack.push (word_list);
 
         jo_vector_t jo_vector = {
@@ -1764,7 +1785,7 @@
             new apply_jo_t (1),
             new ref_jo_t (boxing (env, "sexp-list-repr")),
             new apply_jo_t (1),
-            new ref_jo_t (boxing (env, "string-print")),
+            new ref_jo_t (boxing (env, "str-print")),
             new apply_jo_t (1),
         };
 
@@ -1786,7 +1807,7 @@
 
         auto code = "(a [a b c] c) [a b c] (a [a b c] c)";
         auto word_list = scan_word_list
-            (env, make_shared <string_o> (env, code));
+            (env, make_shared <str_o> (env, code));
         env.obj_stack.push (word_list);
 
         jo_vector_t jo_vector = {
@@ -1794,7 +1815,7 @@
             new apply_jo_t (1),
             new ref_jo_t (boxing (env, "sexp-list-repr")),
             new apply_jo_t (1),
-            new ref_jo_t (boxing (env, "string-print")),
+            new ref_jo_t (boxing (env, "str-print")),
             new apply_jo_t (1),
         };
 
@@ -1813,19 +1834,194 @@
         test_sexp_list ();
         test_sexp_vect ();
     }
+    struct top_keyword_o: obj_t
+    {
+        prim_fn fn;
+        top_keyword_o (env_t &env, prim_fn fn);
+        // bool equal (env_t &env, shared_ptr <obj_t> obj);
+        // void print (env_t &env);
+    };
+    top_keyword_o::top_keyword_o (env_t &env, prim_fn fn)
+    {
+        this->tag = tagging (env, "top-keyword-t");
+        this->fn = fn;
+    }
+    bool
+    top_keyword_p (env_t &env, shared_ptr <obj_t> a)
+    {
+        return a->tag == tagging (env, "top-keyword-t");
+    }
     void
-    repl (env_t &env)
+    import_top_keyword (env_t &env)
     {
 
     }
-    // jj_repl
+    shared_ptr <jojo_t>
+    jojo_append (shared_ptr <jojo_t> ante,
+                 shared_ptr <jojo_t> succ)
+    {
+    //     auto jo_vector = jo_vector_t ();
+    //     for (auto x: ante) jo_vector.push_back (x);
+    //     for (auto x: succ) jo_vector.push_back (x);
+    //     return jo_vector;
+        return nullptr;
+    }
+    // bool
+    // keyword_sexp_p (env_t &env, shared_ptr <obj_t> a)
+    // {
+
+    // }
+    shared_ptr <jojo_t>
+    string_compile (env_t &env, string str)
+    {
+        return nullptr;
+    //     if (dot_str_p (str)) {
+
+    //     }
+    //     else {
+
+    //     }
+    }
+    shared_ptr <jojo_t>
+    call_compile (env_t &env, shared_ptr <obj_t> sexp)
+    {
+    //     auto head = car (env, sexp);
+    //     auto body = cdr (env, sexp);
+
+    //     return jojo;
+        return nullptr;
+    }
+    shared_ptr <jojo_t>
+    sexp_list_compile (env_t &env,
+                       shared_ptr <obj_t> a)
+    {
+        auto sexp_list = static_pointer_cast <data_o> (a);
+        return nullptr;
+    }
+    shared_ptr <jojo_t>
+    sexp_compile (env_t &env, shared_ptr <obj_t> sexp)
+    {
+        if (str_p (env, sexp)) {
+            auto str = static_pointer_cast <str_o> (sexp);
+            return string_compile (env, str->str);
+        }
+        // else if (keyword_sexp_p (env, sexp)) {
+        //
+        // }
+        else {
+            assert (cons_p (env, sexp));
+            return call_compile (env, sexp);
+        }
+    }
     void
-    import_repl (env_t &env)
+    import_compile (env_t &env)
     {
 
     }
     void
-    test_repl ()
+    test_compile ()
+    {
+
+    }
+    bool
+    top_keyword_sexp_p (env_t &env, shared_ptr <obj_t> a)
+    {
+        if (! cons_p (env, a)) return false;
+        auto sexp = static_pointer_cast <data_o> (a);
+        auto head = static_pointer_cast <str_o> (car (env, sexp));
+        auto name = head->str;
+        auto it = env.box_map.find (name);
+        if (it != env.box_map.end ()) {
+            box_t *box = it->second;
+            if (box->empty_p) return false;
+            if (top_keyword_p (env, box->obj)) return true;
+            else return false;
+        }
+        else {
+            return false;
+        }
+    }
+    prim_fn
+    get_top_keyword_fn (env_t &env, name_t name)
+    {
+        auto it = env.box_map.find (name);
+        if (it != env.box_map.end ()) {
+            box_t *box = it->second;
+            if (box->empty_p) {
+                cout << "- fatal error: get_top_keyword_fn fail\n";
+                exit (1);
+            }
+            if (top_keyword_p (env, box->obj)) {
+                auto top_keyword = static_pointer_cast <top_keyword_o>
+                    (box->obj);
+                return top_keyword->fn;
+            }
+            else {
+                cout << "- fatal error: get_top_keyword_fn fail\n";
+                exit (1);
+            };
+        }
+        else {
+            cout << "- fatal error: get_top_keyword_fn fail\n";
+            exit (1);
+        }
+    }
+    void
+    jojo_run (env_t &env, shared_ptr <jojo_t> jojo)
+    {
+        auto base = env.frame_stack.size ();
+        env.frame_stack.push (new_frame_from_jojo (jojo));
+        env.run_with_base (base);
+    }
+    void
+    sexp_eval (env_t &env, shared_ptr <obj_t> sexp)
+    {
+        if (top_keyword_sexp_p (env, sexp)) {
+            auto head = static_pointer_cast <str_o> (car (env, sexp));
+            auto body = cdr (env, sexp);
+            auto name = head->str;
+            auto fn = get_top_keyword_fn (env, name);
+            auto obj_map = obj_map_t ();
+            obj_map ["body"] = body;
+            fn (env, obj_map);
+        }
+        else {
+            auto jojo = sexp_compile (env, sexp);
+            jojo_run (env, jojo);
+        }
+    }
+    void
+    sexp_list_eval (env_t &env, shared_ptr <obj_t> sexp_list)
+    {
+        if (null_p (env, sexp_list))
+            return;
+        else {
+            sexp_eval (env, car (env, sexp_list));
+            sexp_list_eval (env, cdr (env, sexp_list));
+        }
+    }
+    void
+    code_eval (env_t &env, shared_ptr <obj_t> a)
+    {
+        auto code = static_pointer_cast <str_o> (a);
+        auto word_list = scan_word_list (env, code);
+        auto sexp_list = parse_sexp_list (env, word_list);
+        sexp_list_eval (env, sexp_list);
+    }
+    sig_t jj_code_eval_sig = { "code-eval", "code" };
+    void jj_code_eval (env_t &env, obj_map_t &obj_map)
+    {
+        code_eval (env, obj_map ["code"]);
+    }
+    void
+    import_eval (env_t &env)
+    {
+        define_prim (env,
+                     jj_code_eval_sig,
+                     jj_code_eval);
+    }
+    void
+    test_eval ()
     {
 
     }
@@ -1834,8 +2030,8 @@
       {
           auto env = env_t ();
 
-          define (env, "s1", make_shared <string_o> (env, "bye"));
-          define (env, "s2", make_shared <string_o> (env, "world"));
+          define (env, "s1", make_shared <str_o> (env, "bye"));
+          define (env, "s2", make_shared <str_o> (env, "world"));
 
           jo_vector_t jo_vector = {
               new ref_jo_t (boxing (env, "s1")),
@@ -1847,8 +2043,8 @@
           {
               env.run ();
               assert_stack_size (env, 2);
-              assert_pop_eq (env, make_shared <string_o> (env, "world"));
-              assert_pop_eq (env, make_shared <string_o> (env, "bye"));
+              assert_pop_eq (env, make_shared <str_o> (env, "world"));
+              assert_pop_eq (env, make_shared <str_o> (env, "bye"));
               assert_stack_size (env, 0);
           }
       }
@@ -1858,8 +2054,8 @@
           auto env = env_t ();
 
           obj_map_t obj_map = {
-              {"car", make_shared <string_o> (env, "bye")},
-              {"cdr", make_shared <string_o> (env, "world")},
+              {"car", make_shared <str_o> (env, "bye")},
+              {"cdr", make_shared <str_o> (env, "world")},
           };
 
           define (env, "last-cry", make_shared <data_o>
@@ -1883,8 +2079,8 @@
                              (env,
                               tagging (env, "cons-t"),
                               obj_map));
-              assert_pop_eq (env, make_shared <string_o> (env, "world"));
-              assert_pop_eq (env, make_shared <string_o> (env, "bye"));
+              assert_pop_eq (env, make_shared <str_o> (env, "world"));
+              assert_pop_eq (env, make_shared <str_o> (env, "bye"));
               assert_stack_size (env, 0);
           }
       }
@@ -1893,8 +2089,8 @@
       {
           auto env = env_t ();
 
-          define (env, "s1", make_shared <string_o> (env, "bye"));
-          define (env, "s2", make_shared <string_o> (env, "world"));
+          define (env, "s1", make_shared <str_o> (env, "bye"));
+          define (env, "s2", make_shared <str_o> (env, "world"));
 
           jo_vector_t body = {
               new local_ref_jo_t (0, 0),
@@ -1920,8 +2116,8 @@
           {
               env.run ();
               assert_stack_size (env, 2);
-              assert_pop_eq (env, make_shared <string_o> (env, "world"));
-              assert_pop_eq (env, make_shared <string_o> (env, "bye"));
+              assert_pop_eq (env, make_shared <str_o> (env, "world"));
+              assert_pop_eq (env, make_shared <str_o> (env, "bye"));
               assert_stack_size (env, 0);
           }
       }
@@ -1930,8 +2126,8 @@
       {
           auto env = env_t ();
 
-          define (env, "s1", make_shared <string_o> (env, "bye"));
-          define (env, "s2", make_shared <string_o> (env, "world"));
+          define (env, "s1", make_shared <str_o> (env, "bye"));
+          define (env, "s2", make_shared <str_o> (env, "world"));
 
           jo_vector_t body = {
               new local_ref_jo_t (0, 0),
@@ -1963,8 +2159,8 @@
           {
               env.run ();
               assert_stack_size (env, 2);
-              assert_pop_eq (env, make_shared <string_o> (env, "bye"));
-              assert_pop_eq (env, make_shared <string_o> (env, "world"));
+              assert_pop_eq (env, make_shared <str_o> (env, "bye"));
+              assert_pop_eq (env, make_shared <str_o> (env, "world"));
               assert_stack_size (env, 0);
           }
       }
@@ -1973,8 +2169,8 @@
       {
           auto env = env_t ();
 
-          define (env, "s1", make_shared <string_o> (env, "bye"));
-          define (env, "s2", make_shared <string_o> (env, "world"));
+          define (env, "s1", make_shared <str_o> (env, "bye"));
+          define (env, "s2", make_shared <str_o> (env, "world"));
           define (env, "cons-c", make_shared <data_cons_o>
                   (env,
                    tagging (env, "cons-t"),
@@ -2000,7 +2196,7 @@
           {
               env.run ();
               assert_stack_size (env, 1);
-              assert_pop_eq (env, make_shared <string_o> (env, "world"));
+              assert_pop_eq (env, make_shared <str_o> (env, "world"));
               assert_stack_size (env, 0);
           }
       }
@@ -2009,8 +2205,8 @@
       {
           auto env = env_t ();
 
-          define (env, "s1", make_shared <string_o> (env, "bye"));
-          define (env, "s2", make_shared <string_o> (env, "world"));
+          define (env, "s1", make_shared <str_o> (env, "bye"));
+          define (env, "s2", make_shared <str_o> (env, "world"));
           define (env, "cons-c", make_shared <data_cons_o>
                   (env,
                    tagging (env, "cons-t"),
@@ -2037,7 +2233,7 @@
           {
               env.run ();
               assert_stack_size (env, 1);
-              assert_pop_eq (env, make_shared <string_o> (env, "world"));
+              assert_pop_eq (env, make_shared <str_o> (env, "world"));
               assert_stack_size (env, 0);
           }
       }
@@ -2046,8 +2242,8 @@
       {
           auto env = env_t ();
 
-          define (env, "s1", make_shared <string_o> (env, "bye"));
-          define (env, "s2", make_shared <string_o> (env, "world"));
+          define (env, "s1", make_shared <str_o> (env, "bye"));
+          define (env, "s2", make_shared <str_o> (env, "world"));
 
           auto swap =
               [] (env_t &env, obj_map_t &obj_map)
@@ -2085,10 +2281,10 @@
           {
               env.run ();
               assert_stack_size (env, 4);
-              assert_pop_eq (env, make_shared <string_o> (env, "world"));
-              assert_pop_eq (env, make_shared <string_o> (env, "bye"));
-              assert_pop_eq (env, make_shared <string_o> (env, "bye"));
-              assert_pop_eq (env, make_shared <string_o> (env, "world"));
+              assert_pop_eq (env, make_shared <str_o> (env, "world"));
+              assert_pop_eq (env, make_shared <str_o> (env, "bye"));
+              assert_pop_eq (env, make_shared <str_o> (env, "bye"));
+              assert_pop_eq (env, make_shared <str_o> (env, "world"));
               assert_stack_size (env, 0);
           }
       }
@@ -2108,7 +2304,7 @@
         test_vect ();
         test_dict ();
         test_sexp ();
-        test_repl ();
+        test_eval ();
     }
     int
     main ()
