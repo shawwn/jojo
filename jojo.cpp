@@ -161,34 +161,46 @@
       {
           return env.tag_name_vector [tag];
       }
-      void
-      bind_vector_print (env_t &env, bind_vector_t bind_vector)
+      string
+      bind_vector_repr (env_t &env, bind_vector_t bind_vector)
       {
+          string repr = "";
           for (auto it = bind_vector.rbegin ();
                it != bind_vector.rend ();
                it++) {
-              cout << "("
-                   << distance(bind_vector.rbegin (), it)
-                   << " ";
-              cout << it->first
-                   << " = ";
+              repr += "(";
+              repr += to_string (distance (bind_vector.rbegin (), it));
+              repr += " ";
+              repr += it->first;
+              repr += " = ";
               auto obj = it->second;
-              cout << obj->repr (env);
-              cout << ") ";
+              if (obj == nullptr)
+                  repr += "_";
+              else
+                  repr += obj->repr (env);
+              repr += ") ";
           }
+          return repr;
       }
-      void
-      local_scope_print (env_t &env, local_scope_t local_scope)
+      string
+      local_scope_repr (env_t &env, local_scope_t local_scope)
       {
+          string repr = "";
+          repr += "  - [";
+          repr += to_string (local_scope.size ());
+          repr += "] ";
+          repr += "local_scope - ";
+          repr += "\n";
           for (auto it = local_scope.rbegin ();
                it != local_scope.rend ();
                it++) {
-              cout << "    "
-                   << distance(local_scope.rbegin (), it)
-                   << " ";
-              bind_vector_print (env, *it);
-              cout << "\n";
+              repr += "    ";
+              repr += to_string (distance (local_scope.rbegin (), it));
+              repr += " ";
+              repr += bind_vector_repr (env, *it);
+              repr += "\n";
           }
+          return repr;
       }
       obj_t::~obj_t ()
       {
@@ -407,11 +419,15 @@
       string
       closure_o::repr (env_t &env)
       {
-          string repr = "(closure ";
+          string repr = "- closure ";
           repr += name_vector_repr (this->name_vector);
-          repr += " ";
+          repr += "\n";
+          repr += "  ";
           repr += jojo_repr (env, this->jojo);
-          repr += ")";
+          repr += "\n";
+          auto local_scope = this->local_scope;
+          local_scope.push_back (this->bind_vector);
+          repr += local_scope_repr (env, local_scope);
           return repr;
       }
       struct str_o: obj_t
@@ -762,10 +778,7 @@
                << "] ";
           jojo_print_with_index (env, frame->jojo, frame->index);
           cout << "\n";
-          cout << "  - [" << frame->local_scope.size () << "] "
-               << "local_scope - "
-               << "\n";
-          local_scope_print (env, frame->local_scope);
+          cout << local_scope_repr (env, frame->local_scope);
       }
       box_t::box_t ()
       {
@@ -997,9 +1010,9 @@
       string
       local_ref_jo_t::repr (env_t &env)
       {
-          return "(local " +
-              to_string (this->level) + " " +
-              to_string (this->index) + ")";
+          return "local." +
+              to_string (this->level) + "." +
+              to_string (this->index);
       }
       struct lambda_jo_t: jo_t
       {
