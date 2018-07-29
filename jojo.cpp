@@ -698,12 +698,11 @@
           cout << "- [" << env.box_map.size () << "] "
                << "box_map - "
                << "\n";
-          cout << "  ";
           for (auto &kv: env.box_map) {
-              cout << "(" << kv.first << " = ";
+              cout << "  " << kv.first << " = ";
               auto box = kv.second;
               box->obj->print (env);
-              cout << ") ";
+              cout << "\n";
           }
           cout << "\n";
       }
@@ -1967,7 +1966,7 @@
     shared_ptr <jojo_t>
     k_lambda (env_t &env, shared_ptr <data_o> body)
     {
-
+        return nullptr;
     }
     void
     import_keyword (env_t &env)
@@ -2525,7 +2524,6 @@
         auto buffer = stringstream ();
         buffer << input_file.rdbuf ();
         auto code = make_shared <str_o> (env, buffer.str ());
-        cout << buffer.str ();
         code_eval (env, code);
     }
     void

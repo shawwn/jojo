@@ -33,10 +33,6 @@
 
 * easy to use and debug
 
-*** repr for *_o
-
-*** fix print for *_o
-
 * maintained by a community as a live system
 
 *** quit org-mode -- use header file -- no forward declarations

@@ -1,4 +1,4 @@
-(= null null-c)
-null
-null
-null
+(= x (cons-c null-c null-c))
+x
+x
+x

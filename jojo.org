@@ -1,7 +1,15 @@
 #+html_head: <link rel="stylesheet" href="css/org-page.css"/>
 #+property: tangle jojo.cpp
 #+title: jojo
-
+- repr for *_o
+- fix print for *_o
+- k_lambda -- handle local_ref_jo
+- tk_assign -- handle `()`
+- tk_assign -- handle `.`
+- (data)
+- hook in obj_t::assign -- (data) generate data_cons_o and data_pred_o
+  - `recur` should be handled here
+- (case)
 * prolog
 
 *** include
@@ -1114,12 +1122,11 @@
           cout << "- [" << env.box_map.size () << "] "
                << "box_map - "
                << "\n";
-          cout << "  ";
           for (auto &kv: env.box_map) {
-              cout << "(" << kv.first << " = ";
+              cout << "  " << kv.first << " = ";
               auto box = kv.second;
               box->obj->print (env);
-              cout << ") ";
+              cout << "\n";
           }
           cout << "\n";
       }
@@ -3097,7 +3104,7 @@
     shared_ptr <jojo_t>
     k_lambda (env_t &env, shared_ptr <data_o> body)
     {
-
+        return nullptr;
     }
     #+end_src
 
@@ -3825,7 +3832,6 @@
         auto buffer = stringstream ();
         buffer << input_file.rdbuf ();
         auto code = make_shared <str_o> (env, buffer.str ());
-        cout << buffer.str ();
         code_eval (env, code);
     }
     #+end_src
