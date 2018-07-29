@@ -48,7 +48,6 @@
         tag_t tag;
         virtual ~obj_t ();
         virtual string repr (env_t &env);
-        virtual void print (env_t &env);
         virtual bool equal (env_t &env, shared_ptr <obj_t> obj);
         virtual void apply (env_t &env, size_t arity);
     };
@@ -126,13 +125,21 @@
     string
     name_vector_repr (name_vector_t &name_vector)
     {
-        string repr = "[ ";
-        for (auto name: name_vector) {
-            repr += name;
-            repr += " ";
+        if (name_vector.size () == 0) {
+            string repr = "[";
+            repr += "]";
+            return repr;
         }
-        repr += "]";
-        return repr;
+        else {
+            string repr = "[";
+            for (auto name: name_vector) {
+                repr += name;
+                repr += " ";
+            }
+            if (! repr.empty ()) repr.pop_back ();
+            repr += "]";
+            return repr;
+        }
     }
       tag_t
       tagging (env_t &env, name_t name)
@@ -166,7 +173,7 @@
               cout << it->first
                    << " = ";
               auto obj = it->second;
-              obj->print (env);
+              cout << obj->repr (env);
               cout << ") ";
           }
       }
@@ -194,11 +201,6 @@
       obj_t::repr (env_t &env)
       {
           return "#<" + name_of_tag (env, this->tag) + ">";
-      }
-      void
-      obj_t::print (env_t &env)
-      {
-          cout << this->repr (env);
       }
       bool
       obj_t::equal (env_t &env, shared_ptr <obj_t> obj)
@@ -243,7 +245,7 @@
                     local_scope_t local_scope);
           bool equal (env_t &env, shared_ptr <obj_t> obj);
           void apply (env_t &env, size_t arity);
-          void print (env_t &env);
+          string repr (env_t &env);
       };
       lambda_o::
       lambda_o (env_t &env,
@@ -402,14 +404,15 @@
                that->bind_vector)) return false;
           else return true;
       }
-      void
-      lambda_o::print (env_t &env)
+      string
+      lambda_o::repr (env_t &env)
       {
-          cout << "(lambda "
-               << name_vector_repr (this->name_vector)
-               << " "
-               << jojo_repr (env, this->jojo)
-               << ")";
+          string repr = "(lambda ";
+          repr += name_vector_repr (this->name_vector);
+          repr += " ";
+          repr += jojo_repr (env, this->jojo);
+          repr += ")";
+          return repr;
       }
       struct str_o: obj_t
       {
@@ -795,7 +798,7 @@
           for (auto &kv: env.box_map) {
               cout << "  " << kv.first << " = ";
               auto box = kv.second;
-              box->obj->print (env);
+              cout << box->obj->repr (env);
               cout << "\n";
           }
       }
@@ -833,7 +836,7 @@
           while (! obj_stack.empty ()) {
               auto obj = obj_stack.top ();
               cout << "  ";
-              obj->print (env);
+              cout << obj->repr (env);
               cout << "\n";
               obj_stack.pop ();
           }
@@ -1033,13 +1036,12 @@
       void
       lambda_jo_t::exe (env_t &env, local_scope_t &local_scope)
       {
-          auto frame = env.frame_stack.top ();
           auto lambda = make_shared <lambda_o>
               (env,
                this->name_vector,
                this->jojo,
                bind_vector_from_name_vector (this->name_vector),
-               frame->local_scope);
+               local_scope);
           env.obj_stack.push (lambda);
       }
       string
@@ -1117,7 +1119,8 @@
       string
       apply_jo_t::repr (env_t &env)
       {
-          return "apply";
+          return "(apply " +
+              to_string (this->arity) + ")";
       }
     void
     define (env_t &env, name_t name, shared_ptr <obj_t> obj)
@@ -1764,10 +1767,12 @@
         auto word_list = static_pointer_cast <data_o> (a);
         auto head = car (env, word_list);
         auto rest = cdr (env, word_list);
-        auto next = cdr (env, cdr (env, word_list));
+        if (null_p (env, rest))
+            return null_c (env);
+        auto cdr_rest = cdr (env, rest);
         auto car_rest = static_pointer_cast <str_o> (car (env, rest));
         auto word = car_rest->str;
-        if (null_p (env, next)) {
+        if (null_p (env, cdr_rest)) {
             assert (word == ket);
             return cons_c (env, head, null_c (env));
         }

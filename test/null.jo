@@ -1,4 +1,4 @@
 (= x (cons-c null-c null-c))
-(print x) (newline)
-(print x) (newline)
+(print cons-c) (newline)
+(print null-c) (newline)
 (print x) (newline)
