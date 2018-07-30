@@ -159,7 +159,12 @@
       name_t
       name_of_tag (env_t &env, tag_t tag)
       {
-          return env.tag_name_vector [tag];
+          if (tag >= env.tag_name_vector.size ()) {
+              return "#<unknown-tag-" + to_string (tag) + ">";
+          }
+          else {
+              return env.tag_name_vector [tag];
+          }
       }
       string
       bind_vector_repr (env_t &env, bind_vector_t bind_vector)
@@ -763,6 +768,29 @@
               exit (1);
           }
       }
+      struct tag_o: obj_t
+      {
+          tag_t tag;
+          tag_o (env_t &env, tag_t tag);
+          bool equal (env_t &env, shared_ptr <obj_t> obj);
+          string repr (env_t &env);
+      };
+      tag_o::tag_o (env_t &env, tag_t tag)
+      {
+          this->tag = tag;
+      }
+      string
+      tag_o::repr (env_t &env)
+      {
+          return name_of_tag (env, this->tag);
+      }
+      bool
+      tag_o::equal (env_t &env, shared_ptr <obj_t> obj)
+      {
+          if (this->tag != obj->tag) return false;
+          auto that = static_pointer_cast <tag_o> (obj);
+          return (this->tag == that->tag);
+      }
       frame_t::frame_t (shared_ptr <jojo_t> jojo,
                         local_scope_t local_scope)
       {
@@ -937,7 +965,7 @@
       string
       jo_t::repr (env_t &env)
       {
-          return "(unknown)";
+          return "#<unknown-jo>";
       }
       struct ref_jo_t: jo_t
       {
@@ -1135,17 +1163,48 @@
           return "(apply " +
               to_string (this->arity) + ")";
       }
+      using jojo_map_t = map <tag_t, shared_ptr <jojo_t>>;
       struct case_jo_t: jo_t
       {
-          case_jo_t ();
+          jojo_map_t jojo_map;
+          case_jo_t (jojo_map_t jojo_map);
           jo_t * copy ();
           void exe (env_t &env, local_scope_t &local_scope);
           string repr (env_t &env);
       };
-
-
-
-
+      case_jo_t::
+      case_jo_t (jojo_map_t jojo_map)
+      {
+          this->jojo_map = jojo_map;
+      }
+      jo_t *
+      case_jo_t::copy ()
+      {
+          return new case_jo_t (this->jojo_map);
+      }
+      void
+      case_jo_t::exe (env_t &env, local_scope_t &local_scope)
+      {
+          auto obj = env.obj_stack.top ();
+          env.obj_stack.pop ();
+          auto tag = static_pointer_cast <tag_o> (obj);
+          auto it = this->jojo_map.find (tag->tag);
+          if (it != this->jojo_map.end ()) {
+              cout << "- fatal error : case_jo_t::exe mismatch" << "\n";
+              cout << "  tag : " << name_of_tag (env, tag->tag) << "\n";
+              exit (1);
+          }
+          else {
+              auto jojo = it->second;
+              auto frame = make_shared <frame_t> (jojo, local_scope);
+              env.frame_stack.push (frame);
+          }
+      }
+      string
+      case_jo_t::repr (env_t &env)
+      {
+          return "(case)";
+      }
     void
     define (env_t &env, name_t name, shared_ptr <obj_t> obj)
     {
@@ -2445,7 +2504,6 @@
     {
 
     }
-
     // sig_t jj_get_tag_sig = { "get-tag", "obj" };
     // void jj_get_tag (env_t &env, obj_map_t &obj_map)
     // {
