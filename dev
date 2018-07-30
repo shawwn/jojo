@@ -1,9 +1,8 @@
 #!/usr/bin/env bash
 
-# c="g++"
-c="clang++"
-
-prefix=$HOME
+# C="g++"
+C="clang++"
+PREFIX=$HOME
 
 tangle () {
     ./tangle.js
@@ -11,15 +10,17 @@ tangle () {
 
 build ()
 {
+    clean
     tangle
-    f="-Wall -Wno-infinite-recursion"
-    time $c $f jojo.cpp -o jojo
+    F="-Wall -Wno-infinite-recursion"
+    time $C $F jojo.cpp -o jojo
 }
 
 release () {
+    clean
     tangle
-    f="-Wall -Wno-infinite-recursion -foptimize-sibling-calls -O2"
-    time $c $f jojo.cpp -o jojo
+    F="-Wall -Wno-infinite-recursion -foptimize-sibling-calls -O2"
+    time $C $F jojo.cpp -o jojo
 }
 
 clean () {
@@ -27,38 +28,32 @@ clean () {
 }
 
 test () {
-    tangle
-    clean
-    build
     time ./jojo
-
-    for file in $(ls test | grep "\.jo")
+    for FILE in $(ls test | grep "\.jo")
     do
-        ./jojo "test/$file"
+        ./jojo "test/$FILE"
     done
 }
 
 debug () {
-    tangle
-    clean
     build
     time valgrind ./jojo
     # time valgrind --leak-check=full ./jojo
 }
 
 install () {
-    cp jojo $prefix/bin/
+    cp jojo $PREFIX/bin/
 }
 
 
 uninstall () {
-    rm $prefix/bin/jojo
+    rm $PREFIX/bin/jojo
 }
 
 main () {
-    for fun in $@
+    for TASK in $@
     do
-        $fun
+        $TASK
     done
 }
 

@@ -1,8 +1,7 @@
-(= bool-not
-   (lambda [x]
-      (case x
-        (true-t false-c)
-        (false-t true-c))))
+(= (bool-not x)
+   (case x
+     (true-t false-c)
+     (false-t true-c)))
 
 (println (bool-not true-c))
 (println (bool-not false-c))

@@ -2480,70 +2480,135 @@
     {
 
     }
-    bool
-    assign_data_p (env_t &env, shared_ptr <data_o> body)
-    {
-        if (! cons_p (env, body))
-            return false;
-        if (! cons_p (env, cdr (env, body)))
-            return false;
-        if (! cons_p (env, car (env, cdr (env, body))))
-            return false;
-        if (! str_p (env, car (env, car (env, cdr (env, body)))))
-            return false;
-        auto str = static_pointer_cast <str_o>
-            (car (env, car (env, cdr (env, body))));
-        return str->str == "data";
-    }
-    name_t
-    type_name_to_data_name (name_t type_name)
-    {
-        auto data_name = type_name;
-        data_name.pop_back ();
-        data_name.pop_back ();
-        data_name += "-c";
-        return data_name;
-    }
+      bool
+      assign_data_p (env_t &env, shared_ptr <data_o> body)
+      {
+          if (! cons_p (env, body))
+              return false;
+          if (! str_p (env, car (env, body)))
+              return false;
+          if (! cons_p (env, cdr (env, body)))
+              return false;
+          if (! cons_p (env, car (env, cdr (env, body))))
+              return false;
+          if (! str_p (env, car (env, car (env, cdr (env, body)))))
+              return false;
+          auto str = static_pointer_cast <str_o>
+              (car (env, car (env, cdr (env, body))));
+          return str->str == "data";
+      }
+      name_t
+      type_name_to_data_name (name_t type_name)
+      {
+          auto data_name = type_name;
+          data_name.pop_back ();
+          data_name.pop_back ();
+          data_name += "-c";
+          return data_name;
+      }
+      void
+      tk_assign_data (env_t &env, shared_ptr <data_o> body)
+      {
+          auto head = static_pointer_cast <str_o> (car (env, body));
+          auto type_name = head->str;
+          auto data_name = type_name_to_data_name (type_name);
+          auto type_tag = tagging (env, type_name);
+          auto rest = cdr (env, body);
+          auto data_body = cdr (env, (car (env, rest)));
+          if (null_p (env, data_body)) {
+              auto data = make_shared <data_o>
+                  (env, type_tag, obj_map_t ());
+              define (env, data_name, data);
+          }
+          else {
+              auto name_vect = list_to_vect (env, data_body);
+              auto name_vector = name_vector_t ();
+              for (auto obj: name_vect->vect) {
+                  auto str = static_pointer_cast <str_o> (obj);
+                  name_vector.push_back (str->str);
+              }
+              auto data_cons = make_shared <data_cons_o>
+                  (env, type_tag, name_vector, obj_map_t ());
+              define (env, data_name, data_cons);
+          }
+      }
+      bool
+      assign_lambda_p (env_t &env, shared_ptr <data_o> body)
+      {
+          if (! cons_p (env, body))
+              return false;
+          if (! str_p (env, car (env, body)))
+              return false;
+          if (! cons_p (env, cdr (env, body)))
+              return false;
+          if (! cons_p (env, car (env, cdr (env, body))))
+              return false;
+          if (! str_p (env, car (env, car (env, cdr (env, body)))))
+              return false;
+          auto str = static_pointer_cast <str_o>
+              (car (env, car (env, cdr (env, body))));
+          return str->str == "lambda";
+      }
+      void tk_assign_lambda (env_t &env, shared_ptr <data_o> body)
+      {
+          auto head = static_pointer_cast <str_o> (car (env, body));
+          auto name = head->str;
+          auto rest = cdr (env, body);
+          sexp_list_eval (env, rest);
+          auto obj = env.obj_stack.top ();
+          env.obj_stack.pop ();
+          define (env, name, obj);
+      }
+      bool
+      assign_lambda_sugar_p (env_t &env, shared_ptr <data_o> body)
+      {
+          if (! cons_p (env, body))
+              return false;
+          if (! cons_p (env, car (env, body)))
+              return false;
+          return true;
+      }
+      shared_ptr <data_o>
+      assign_lambda_desugar (env_t &env, shared_ptr <data_o> body)
+      {
+          auto head = car (env, body);
+          auto name = car (env, head);
+          auto lambda_body = cdr (env, body);
+          lambda_body = cons_c
+              (env,
+               list_to_vect (env, cdr (env, head)),
+               lambda_body);
+          lambda_body = cons_c
+              (env,
+               make_shared <str_o> (env, "lambda"),
+               lambda_body);
+          lambda_body = cons_c
+              (env,
+               lambda_body,
+               null_c (env));
+          return cons_c (env, name, lambda_body);
+      }
+      void tk_assign_value (env_t &env, shared_ptr <data_o> body)
+      {
+          auto head = static_pointer_cast <str_o> (car (env, body));
+          auto name = head->str;
+          auto rest = cdr (env, body);
+          sexp_list_eval (env, rest);
+          auto obj = env.obj_stack.top ();
+          env.obj_stack.pop ();
+          define (env, name, obj);
+      }
     void
-    tk_assign_data (env_t &env, shared_ptr <data_o> body)
+    tk_assign (env_t &env, shared_ptr <data_o> body)
     {
-        auto head = static_pointer_cast <str_o> (car (env, body));
-        auto type_name = head->str;
-        auto data_name = type_name_to_data_name (type_name);
-        auto type_tag = tagging (env, type_name);
-        auto rest = cdr (env, body);
-        auto data_body = cdr (env, (car (env, rest)));
-        if (null_p (env, data_body)) {
-            auto data = make_shared <data_o>
-                (env, type_tag, obj_map_t ());
-            define (env, data_name, data);
-        }
-        else {
-            auto name_vect = list_to_vect (env, data_body);
-            auto name_vector = name_vector_t ();
-            for (auto obj: name_vect->vect) {
-                auto str = static_pointer_cast <str_o> (obj);
-                name_vector.push_back (str->str);
-            }
-            auto data_cons = make_shared <data_cons_o>
-                (env, type_tag, name_vector, obj_map_t ());
-            define (env, data_name, data_cons);
-        }
-    }
-    void tk_assign (env_t &env, shared_ptr <data_o> body)
-    {
-        if (assign_data_p (env, body)) {
+        if (assign_data_p (env, body))
             tk_assign_data (env, body);
-        }
-        else {
-            auto head = static_pointer_cast <str_o> (car (env, body));
-            auto name = head->str;
-            auto rest = cdr (env, body);
-            sexp_list_eval (env, rest);
-            auto obj = env.obj_stack.top ();
-            env.obj_stack.pop ();
-            define (env, name, obj);
-        }
+        else if (assign_lambda_p (env, body))
+            tk_assign_lambda (env, body);
+        else if (assign_lambda_sugar_p (env, body))
+            tk_assign_lambda (env, assign_lambda_desugar (env, body));
+        else
+            tk_assign_value (env, body);
     }
     shared_ptr <jojo_t>
     k_lambda (env_t &env,

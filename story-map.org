@@ -7,9 +7,7 @@
 * a interpreter uses dynamic threaded code
 *** data_pred_o -- for `<data>-p`
 * with lisp like macro system
-*** tk_assign handle `()`
 *** tk_assign handle `.`
-*** tk_assign handle `recur`
 *** tk_assign_data -- generate data_pred_o
 *** (cond)
 *** (match)
