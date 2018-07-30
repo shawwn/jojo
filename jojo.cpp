@@ -16,6 +16,24 @@
           cout << " - HERE: " << index << "\n"
                << flush;
       }
+      template<typename Out>
+      void
+      string_split (const string &s, char delim, Out result)
+      {
+          stringstream ss (s);
+          string item;
+          while (getline (ss, item, delim)) {
+              *(result++) = item;
+          }
+      }
+
+      vector <string>
+      string_split (const string &s, char delim)
+      {
+          vector <string> elems;
+          string_split (s, delim, back_inserter (elems));
+          return elems;
+      }
     struct env_t;
     struct obj_t;
     struct jo_t;
@@ -2272,12 +2290,28 @@
         return (pos != string::npos);
     }
     shared_ptr <jojo_t>
+    string_compile (env_t &env,
+                    local_ref_map_t &local_ref_map,
+                    string str);
+
+    shared_ptr <jojo_t>
     dot_string_compile (env_t &env,
                         local_ref_map_t &local_ref_map,
                         string str)
     {
-        cout << "- WIP\n";
-        exit (1);
+        auto string_vector = string_split (str, '.');
+        auto jojo = string_compile
+            (env, local_ref_map, string_vector [0]);
+        auto begin = string_vector.begin () + 1;
+        auto end = string_vector.end ();
+        for (auto it = begin; it != end; it++) {
+            jo_vector_t jo_vector = {
+                new field_jo_t (*it),
+            };
+            auto field_jojo = make_shared <jojo_t> (jo_vector);
+            jojo = jojo_append (jojo, field_jojo);
+        }
+        return jojo;
     }
     shared_ptr <jojo_t>
     ref_compile (env_t &env,
