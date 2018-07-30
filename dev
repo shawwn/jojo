@@ -3,6 +3,8 @@
 # c="g++"
 c="clang++"
 
+prefix=$HOME
+
 tangle () {
     ./tangle.js
 }
@@ -24,11 +26,16 @@ clean () {
     rm -f jojo
 }
 
-testing () {
+test () {
     tangle
     clean
     build
     time ./jojo
+
+    for file in $(ls test | grep "\.jo")
+    do
+        ./jojo "test/$file"
+    done
 }
 
 debug () {
@@ -40,11 +47,19 @@ debug () {
 }
 
 install () {
-    cp jojo ~/bin/
+    cp jojo $prefix/bin/
 }
 
-default () {
-    $@
+
+uninstall () {
+    rm $prefix/bin/jojo
 }
 
-default $@
+main () {
+    for fun in $@
+    do
+        $fun
+    done
+}
+
+main $@
