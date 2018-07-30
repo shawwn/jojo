@@ -34,7 +34,7 @@
       #+begin_src cpp
       void debug_here (size_t index)
       {
-          cout << "HERE: " << index << "\n"
+          cout << " - HERE: " << index << "\n"
                << flush;
       }
       #+end_src
@@ -1799,6 +1799,44 @@
           return "(apply " +
               to_string (this->arity) + ")";
       }
+      #+end_src
+
+*** case_jo
+
+***** [todo] case_jo_t
+
+      #+begin_src cpp
+      struct case_jo_t: jo_t
+      {
+          case_jo_t ();
+          jo_t * copy ();
+          void exe (env_t &env, local_scope_t &local_scope);
+          string repr (env_t &env);
+      };
+      #+end_src
+
+***** case_jo_t::case_jo_t
+
+      #+begin_src cpp
+
+      #+end_src
+
+***** case_jo_t::copy
+
+      #+begin_src cpp
+
+      #+end_src
+
+***** case_jo_t::exe
+
+      #+begin_src cpp
+
+      #+end_src
+
+***** case_jo_t::repr
+
+      #+begin_src cpp
+
       #+end_src
 
 * define

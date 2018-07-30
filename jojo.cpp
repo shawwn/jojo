@@ -13,7 +13,7 @@
     using namespace std;
       void debug_here (size_t index)
       {
-          cout << "HERE: " << index << "\n"
+          cout << " - HERE: " << index << "\n"
                << flush;
       }
     struct env_t;
@@ -1135,6 +1135,17 @@
           return "(apply " +
               to_string (this->arity) + ")";
       }
+      struct case_jo_t: jo_t
+      {
+          case_jo_t ();
+          jo_t * copy ();
+          void exe (env_t &env, local_scope_t &local_scope);
+          string repr (env_t &env);
+      };
+
+
+
+
     void
     define (env_t &env, name_t name, shared_ptr <obj_t> obj)
     {

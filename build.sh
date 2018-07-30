@@ -4,8 +4,7 @@
 c="clang++"
 
 f="-Wall -Wno-infinite-recursion"
-# -foptimize-sibling-calls
-# -O2
+# f="-Wall -Wno-infinite-recursion -foptimize-sibling-calls -O2"
 
 build ()
 {

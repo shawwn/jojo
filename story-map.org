@@ -1,8 +1,10 @@
 #+html_head: <link rel="stylesheet" href="css/org-page.css"/>
 #+title: Story Map
 
+* [bug]
+*** fix the use of recursion in sexp parser
+*** use native cpp list as list instead of data_o cons_o
 * a interpreter uses dynamic threaded code
-*** predicate and branching
 *** case_jo_t
 *** data_pred_o -- for `<data>-p`
 * with lisp like macro system
@@ -22,7 +24,7 @@
 *** tag_o
 * easy to use and debug
 * with simple module system
-*** [maybe] scheme r7rs
+*** one file one module
 * with git based package manager
 * maintained by a community as a live system
 *** quit org-mode -- use header file -- no forward declarations
