@@ -1194,9 +1194,17 @@
               env.frame_stack.push (frame);
           }
           else {
-              cout << "- fatal error : case_jo_t::exe mismatch" << "\n";
-              cout << "  tag : " << name_of_tag (env, obj->tag) << "\n";
-              exit (1);
+              auto it = this->jojo_map.find (tagging (env, "_"));
+              if (it != this->jojo_map.end ()) {
+                  auto jojo = it->second;
+                  auto frame = make_shared <frame_t> (jojo, local_scope);
+                  env.frame_stack.push (frame);
+              }
+              else {
+                  cout << "- fatal error : case_jo_t::exe mismatch" << "\n";
+                  cout << "  tag : " << name_of_tag (env, obj->tag) << "\n";
+                  exit (1);
+              }
           }
       }
       string
