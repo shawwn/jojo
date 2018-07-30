@@ -1,0 +1,8 @@
+(= bool-not
+   (lambda [x]
+      (case x
+        (true-t false-c)
+        (false-t true-c))))
+
+(print (bool-not true-c)) (newline)
+(print (bool-not false-c)) (newline)

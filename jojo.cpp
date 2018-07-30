@@ -1187,17 +1187,16 @@
       {
           auto obj = env.obj_stack.top ();
           env.obj_stack.pop ();
-          auto tag = static_pointer_cast <tag_o> (obj);
-          auto it = this->jojo_map.find (tag->tag);
+          auto it = this->jojo_map.find (obj->tag);
           if (it != this->jojo_map.end ()) {
-              cout << "- fatal error : case_jo_t::exe mismatch" << "\n";
-              cout << "  tag : " << name_of_tag (env, tag->tag) << "\n";
-              exit (1);
-          }
-          else {
               auto jojo = it->second;
               auto frame = make_shared <frame_t> (jojo, local_scope);
               env.frame_stack.push (frame);
+          }
+          else {
+              cout << "- fatal error : case_jo_t::exe mismatch" << "\n";
+              cout << "  tag : " << name_of_tag (env, obj->tag) << "\n";
+              exit (1);
           }
       }
       string
@@ -2482,8 +2481,7 @@
               shared_ptr <data_o> body)
     {
         auto name_vect = static_pointer_cast <vect_o> (car (env, body));
-        // auto rest = static_pointer_cast <data_o> (cdr (env, body));
-        auto rest = (cdr (env, body));
+        auto rest = cdr (env, body);
         auto name_vector = obj_vect_to_name_vector (env, name_vect->vect);
         auto local_ref_map = local_ref_map_extend
             (env, old_local_ref_map, name_vector);
@@ -2493,11 +2491,44 @@
         };
         return make_shared <jojo_t> (jo_vector);
     }
+    shared_ptr <jojo_t>
+    case_compile (env_t &env,
+                  local_ref_map_t &local_ref_map,
+                  shared_ptr <obj_t> body)
+    {
+        auto jojo_map = jojo_map_t ();
+        while (! null_p (env, body)) {
+            auto one = car (env, body);
+            auto head = static_pointer_cast <str_o> (car (env, one));
+            auto rest = cdr (env, one);
+            auto name = head->str;
+            auto tag = tagging (env, name);
+            auto jojo = sexp_list_compile (env, local_ref_map, rest);
+            jojo_map.insert (make_pair (tag, jojo));
+            body = cdr (env, body);
+        }
+        jo_vector_t jo_vector = {
+            new case_jo_t (jojo_map),
+        };
+        return make_shared <jojo_t> (jo_vector);
+    }
+    shared_ptr <jojo_t>
+    k_case (env_t &env,
+            local_ref_map_t &local_ref_map,
+            shared_ptr <data_o> body)
+    {
+        auto head = car (env, body);
+        auto rest = cdr (env, body);
+        auto head_jojo = sexp_compile (env, local_ref_map, head);
+        auto rest_jojo = case_compile (env, local_ref_map, rest);
+        return jojo_append (head_jojo, rest_jojo);
+    }
     void
     import_syntax (env_t &env)
     {
         define_top_keyword (env, "=", tk_assign);
         define_keyword (env, "lambda", k_lambda);
+        define_keyword (env, "case", k_case);
     }
     void
     test_syntax ()

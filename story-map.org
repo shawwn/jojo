@@ -5,7 +5,6 @@
 *** fix the use of recursion in sexp parser
 *** use native cpp list as list instead of data_o cons_o
 * a interpreter uses dynamic threaded code
-*** case_jo_t
 *** data_pred_o -- for `<data>-p`
 * with lisp like macro system
 *** tk_assign handle `()`
@@ -14,14 +13,12 @@
 *** (data ...) -- literal data_cons_o
 *** (data) -- literal data_o
 *** tk_assign for (data) -- generate data_cons_o and data_pred_o
-*** (case)
 *** (=)
 *** literal str
 * with oop system
 * with simple ffi to c++
 *** dict_o
 *** dict literal -- { }
-*** tag_o
 * easy to use and debug
 * with simple module system
 *** one file one module
