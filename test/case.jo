@@ -4,5 +4,6 @@
         (true-t false-c)
         (false-t true-c))))
 
-(print (bool-not true-c)) (newline)
-(print (bool-not false-c)) (newline)
+(println (bool-not true-c))
+(println (bool-not false-c))
+(newline)

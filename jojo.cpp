@@ -987,8 +987,15 @@
       void
       ref_jo_t::exe (env_t &env, local_scope_t &local_scope)
       {
-          assert (! this->box->empty_p);
-          env.obj_stack.push (this->box->obj);
+          if (this->box->empty_p) {
+              cout << "- fatal error : ref_jo_t::exe fail" << "\n";
+              cout << "  undefined name : "
+                   << name_of_box (env, box) << "\n";
+              exit (1);
+          }
+          else {
+              env.obj_stack.push (this->box->obj);
+          }
       }
       string
       ref_jo_t::repr (env_t &env)
@@ -2627,11 +2634,21 @@
     {
         auto obj = obj_map ["obj"];
         cout << obj->repr (env);
+        cout << flush;
+    }
+    sig_t jj_println_sig = { "println", "obj" };
+    void jj_println (env_t &env, obj_map_t &obj_map)
+    {
+        auto obj = obj_map ["obj"];
+        cout << obj->repr (env);
+        cout << "\n";
+        cout << flush;
     }
     sig_t jj_newline_sig = { "newline" };
     void jj_newline (env_t &env, obj_map_t &obj_map)
     {
         cout << "\n";
+        cout << flush;
     }
     sig_t jj_equal_sig = { "equal", "lhs", "rhs" };
     void jj_equal (env_t &env, obj_map_t &obj_map)
@@ -2652,6 +2669,9 @@
         define_prim (env,
                      jj_print_sig,
                      jj_print);
+        define_prim (env,
+                     jj_println_sig,
+                     jj_println);
         define_prim (env,
                      jj_newline_sig,
                      jj_newline);

@@ -5,6 +5,7 @@
 (= one (succ-c zero-c))
 (= two (succ-c (succ-c zero-c)))
 
-(print zero) (newline)
-(print one) (newline)
-(print two) (newline)
+(println zero)
+(println one)
+(println two)
+(newline)
