@@ -2549,11 +2549,38 @@
               (car (env, car (env, cdr (env, body))));
           return str->str == "lambda";
       }
-      void tk_assign_lambda (env_t &env, shared_ptr <data_o> body)
+      shared_ptr <obj_t>
+      sexp_substitute_recur (env_t &env,
+                             shared_ptr <obj_t> sub,
+                             shared_ptr <obj_t> sexp)
+      {
+          if (str_p (env, sexp)) {
+              auto str = static_pointer_cast <str_o> (sexp);
+              if (str->str == "recur")
+                  return sub;
+              else
+                  return sexp;
+          }
+          if (cons_p (env, sexp))
+              return cons_c
+                  (env,
+                   sexp_substitute_recur (env, sub, car (env, sexp)),
+                   sexp_substitute_recur (env, sub, cdr (env, sexp)));
+          if (vect_p (env, sexp)) {
+              auto list_sexp = vect_to_list (env, sexp);
+              auto new_list_sexp = sexp_substitute_recur (env, sub, list_sexp);
+              return list_to_vect (env, new_list_sexp);
+          }
+          else
+              return sexp;
+      }
+      void
+      tk_assign_lambda (env_t &env, shared_ptr <data_o> body)
       {
           auto head = static_pointer_cast <str_o> (car (env, body));
           auto name = head->str;
           auto rest = cdr (env, body);
+          rest = sexp_substitute_recur (env, head, rest);
           sexp_list_eval (env, rest);
           auto obj = env.obj_stack.top ();
           env.obj_stack.pop ();
@@ -2588,7 +2615,8 @@
                null_c (env));
           return cons_c (env, name, lambda_body);
       }
-      void tk_assign_value (env_t &env, shared_ptr <data_o> body)
+      void
+      tk_assign_value (env_t &env, shared_ptr <data_o> body)
       {
           auto head = static_pointer_cast <str_o> (car (env, body));
           auto name = head->str;

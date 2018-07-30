@@ -1,11 +1,3 @@
-  (= zero-t (data))
-  (= succ-t (data prev))
-
-  (= (nat-add x y) )
-
-  (= (nat-mul x y) )
-
-  (= (nat-factorial x) )
   (= null-t (data))
   (= cons-t (data car cdr))
 

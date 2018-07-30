@@ -2,19 +2,6 @@
 #+property: tangle prelude.jo
 #+title: prelude.org
 
-* nat
-
-  #+begin_src cicada
-  (= zero-t (data))
-  (= succ-t (data prev))
-
-  (= (nat-add x y) )
-
-  (= (nat-mul x y) )
-
-  (= (nat-factorial x) )
-  #+end_src
-
 * list
 
   #+begin_src cicada
