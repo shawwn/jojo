@@ -1,9 +1,8 @@
 #+html_head: <link rel="stylesheet" href="css/org-page.css"/>
 #+title: Story Map
 
-* [bug]
-*** fix the use of recursion in sexp parser
-*** use native cpp list as list instead of data_o cons_o
+* [note]
+*** can not handle big file -- due to the recursion in sexp parser
 * a interpreter uses dynamic threaded code
 *** data_pred_o -- for `<data>-p`
 * with lisp like macro system
@@ -12,6 +11,7 @@
 *** (match)
 *** (if)
 *** literal str
+*** literal int -- big number
 * with oop system
 * with simple ffi to c++
 *** dict_o

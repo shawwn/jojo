@@ -3,7 +3,7 @@
 "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd">
 <html xmlns="http://www.w3.org/1999/xhtml" lang="en" xml:lang="en">
 <head>
-<!-- 2018-07-30 Mon 05:02 -->
+<!-- 2018-07-31 Tue 04:48 -->
 <meta http-equiv="Content-Type" content="text/html;charset=utf-8" />
 <meta name="viewport" content="width=device-width, initial-scale=1" />
 <title>Story Map</title>
@@ -63,137 +63,125 @@ for the JavaScript code in this tag.
 <h2>overview</h2>
 <div id="text-table-of-contents">
 <ul>
-<li><a href="#org3ec7264">a interpreter uses dynamic threaded code</a>
+<li><a href="#org487497d"><span class="todo _note_">[note]</span> </a>
 <ul>
-<li><a href="#org40dae22">predicate and branching</a></li>
-<li><a href="#org2698ea1">case_jo_t</a></li>
-<li><a href="#org1491315">data_pred_o &#x2013; for `&lt;data&gt;-p`</a></li>
+<li><a href="#orgda6bbf8">can not handle big file &#x2013; due to the recursion in sexp parser</a></li>
 </ul>
 </li>
-<li><a href="#org555f02f">with lisp like macro system</a>
+<li><a href="#org4c69925">a interpreter uses dynamic threaded code</a>
 <ul>
-<li><a href="#org33c2bdd">tk_assign handle `()`</a></li>
-<li><a href="#org4b1b867">tk_assign handle `.`</a></li>
-<li><a href="#org1c77676">tk_assign handle `recur`</a></li>
-<li><a href="#orge58363d">(data &#x2026;) &#x2013; literal data_cons_o</a></li>
-<li><a href="#org26a4f7c">(data) &#x2013; literal data_o</a></li>
-<li><a href="#orgeec8ac6">tk_assign for (data) &#x2013; generate data_cons_o and data_pred_o</a></li>
-<li><a href="#org4a7c8fc">(case)</a></li>
-<li><a href="#org3ae5dd4">(=)</a></li>
-<li><a href="#org24d5577">literal str</a></li>
+<li><a href="#orgb52f798">data_pred_o &#x2013; for `&lt;data&gt;-p`</a></li>
 </ul>
 </li>
-<li><a href="#org42de258">with oop system</a></li>
-<li><a href="#org93830f">with simple ffi to c++</a>
+<li><a href="#org9e20bd4">with lisp like macro system</a>
 <ul>
-<li><a href="#orgb12421">dict_o</a></li>
-<li><a href="#orgc80208">dict literal &#x2013; { }</a></li>
-<li><a href="#org13530a3">tag_o</a></li>
+<li><a href="#org97f7df1">tk_assign_data &#x2013; generate data_pred_o</a></li>
+<li><a href="#org4a0ed08">(cond)</a></li>
+<li><a href="#org41d12ce">(match)</a></li>
+<li><a href="#org5ff752">(if)</a></li>
+<li><a href="#org60aa01c">literal str</a></li>
+<li><a href="#org1a93127">literal int &#x2013; big number</a></li>
 </ul>
 </li>
-<li><a href="#orgc4463ba">easy to use and debug</a></li>
-<li><a href="#org56d9b6c">with simple module system</a>
+<li><a href="#org52df58a">with oop system</a></li>
+<li><a href="#org78e7062">with simple ffi to c++</a>
 <ul>
-<li><a href="#orgaacd953"><span class="done _maybe_">[maybe]</span> scheme r7rs</a></li>
+<li><a href="#orge846ec">dict_o</a></li>
+<li><a href="#org25f8211">dict literal &#x2013; { }</a></li>
 </ul>
 </li>
-<li><a href="#org5c825c9">with git based package manager</a></li>
-<li><a href="#org6f755fa">maintained by a community as a live system</a>
+<li><a href="#orgb2f5f6">easy to use and debug</a></li>
+<li><a href="#org2e9ecff">with simple module system</a>
 <ul>
-<li><a href="#orgf1e9aaa">quit org-mode &#x2013; use header file &#x2013; no forward declarations</a></li>
-<li><a href="#org4204d5d">style guide</a></li>
+<li><a href="#org591794d">one file one module</a></li>
+</ul>
+</li>
+<li><a href="#orga08276a">with git based package manager</a></li>
+<li><a href="#orgec2621d">maintained by a community as a live system</a>
+<ul>
+<li><a href="#orga52d8d7">quit org-mode &#x2013; use header file &#x2013; no forward declarations</a></li>
+<li><a href="#org3c2a3cd">style guide</a></li>
 </ul>
 </li>
 </ul>
 </div>
 </div>
 
-<div id="outline-container-org3ec7264" class="outline-2">
-<h2 id="org3ec7264">a interpreter uses dynamic threaded code</h2>
-<div class="outline-text-2" id="text-org3ec7264">
-</div><div id="outline-container-org40dae22" class="outline-3">
-<h3 id="org40dae22">predicate and branching</h3>
-</div>
-<div id="outline-container-org2698ea1" class="outline-3">
-<h3 id="org2698ea1">case_jo_t</h3>
-</div>
-<div id="outline-container-org1491315" class="outline-3">
-<h3 id="org1491315">data_pred_o &#x2013; for `&lt;data&gt;-p`</h3>
+<div id="outline-container-org487497d" class="outline-2">
+<h2 id="org487497d"><span class="todo _note_">[note]</span> </h2>
+<div class="outline-text-2" id="text-org487497d">
+</div><div id="outline-container-orgda6bbf8" class="outline-3">
+<h3 id="orgda6bbf8">can not handle big file &#x2013; due to the recursion in sexp parser</h3>
 </div>
 </div>
-<div id="outline-container-org555f02f" class="outline-2">
-<h2 id="org555f02f">with lisp like macro system</h2>
-<div class="outline-text-2" id="text-org555f02f">
-</div><div id="outline-container-org33c2bdd" class="outline-3">
-<h3 id="org33c2bdd">tk_assign handle `()`</h3>
-</div>
-<div id="outline-container-org4b1b867" class="outline-3">
-<h3 id="org4b1b867">tk_assign handle `.`</h3>
-</div>
-<div id="outline-container-org1c77676" class="outline-3">
-<h3 id="org1c77676">tk_assign handle `recur`</h3>
-</div>
-<div id="outline-container-orge58363d" class="outline-3">
-<h3 id="orge58363d">(data &#x2026;) &#x2013; literal data_cons_o</h3>
-</div>
-<div id="outline-container-org26a4f7c" class="outline-3">
-<h3 id="org26a4f7c">(data) &#x2013; literal data_o</h3>
-</div>
-<div id="outline-container-orgeec8ac6" class="outline-3">
-<h3 id="orgeec8ac6">tk_assign for (data) &#x2013; generate data_cons_o and data_pred_o</h3>
-</div>
-<div id="outline-container-org4a7c8fc" class="outline-3">
-<h3 id="org4a7c8fc">(case)</h3>
-</div>
-<div id="outline-container-org3ae5dd4" class="outline-3">
-<h3 id="org3ae5dd4">(=)</h3>
-</div>
-<div id="outline-container-org24d5577" class="outline-3">
-<h3 id="org24d5577">literal str</h3>
+<div id="outline-container-org4c69925" class="outline-2">
+<h2 id="org4c69925">a interpreter uses dynamic threaded code</h2>
+<div class="outline-text-2" id="text-org4c69925">
+</div><div id="outline-container-orgb52f798" class="outline-3">
+<h3 id="orgb52f798">data_pred_o &#x2013; for `&lt;data&gt;-p`</h3>
 </div>
 </div>
-<div id="outline-container-org42de258" class="outline-2">
-<h2 id="org42de258">with oop system</h2>
+<div id="outline-container-org9e20bd4" class="outline-2">
+<h2 id="org9e20bd4">with lisp like macro system</h2>
+<div class="outline-text-2" id="text-org9e20bd4">
+</div><div id="outline-container-org97f7df1" class="outline-3">
+<h3 id="org97f7df1">tk_assign_data &#x2013; generate data_pred_o</h3>
 </div>
-<div id="outline-container-org93830f" class="outline-2">
-<h2 id="org93830f">with simple ffi to c++</h2>
-<div class="outline-text-2" id="text-org93830f">
-</div><div id="outline-container-orgb12421" class="outline-3">
-<h3 id="orgb12421">dict_o</h3>
+<div id="outline-container-org4a0ed08" class="outline-3">
+<h3 id="org4a0ed08">(cond)</h3>
 </div>
-<div id="outline-container-orgc80208" class="outline-3">
-<h3 id="orgc80208">dict literal &#x2013; { }</h3>
+<div id="outline-container-org41d12ce" class="outline-3">
+<h3 id="org41d12ce">(match)</h3>
 </div>
-<div id="outline-container-org13530a3" class="outline-3">
-<h3 id="org13530a3">tag_o</h3>
+<div id="outline-container-org5ff752" class="outline-3">
+<h3 id="org5ff752">(if)</h3>
 </div>
+<div id="outline-container-org60aa01c" class="outline-3">
+<h3 id="org60aa01c">literal str</h3>
 </div>
-<div id="outline-container-orgc4463ba" class="outline-2">
-<h2 id="orgc4463ba">easy to use and debug</h2>
-</div>
-<div id="outline-container-org56d9b6c" class="outline-2">
-<h2 id="org56d9b6c">with simple module system</h2>
-<div class="outline-text-2" id="text-org56d9b6c">
-</div><div id="outline-container-orgaacd953" class="outline-3">
-<h3 id="orgaacd953"><span class="done _maybe_">[maybe]</span> scheme r7rs</h3>
+<div id="outline-container-org1a93127" class="outline-3">
+<h3 id="org1a93127">literal int &#x2013; big number</h3>
 </div>
 </div>
-<div id="outline-container-org5c825c9" class="outline-2">
-<h2 id="org5c825c9">with git based package manager</h2>
+<div id="outline-container-org52df58a" class="outline-2">
+<h2 id="org52df58a">with oop system</h2>
 </div>
-<div id="outline-container-org6f755fa" class="outline-2">
-<h2 id="org6f755fa">maintained by a community as a live system</h2>
-<div class="outline-text-2" id="text-org6f755fa">
-</div><div id="outline-container-orgf1e9aaa" class="outline-3">
-<h3 id="orgf1e9aaa">quit org-mode &#x2013; use header file &#x2013; no forward declarations</h3>
+<div id="outline-container-org78e7062" class="outline-2">
+<h2 id="org78e7062">with simple ffi to c++</h2>
+<div class="outline-text-2" id="text-org78e7062">
+</div><div id="outline-container-orge846ec" class="outline-3">
+<h3 id="orge846ec">dict_o</h3>
 </div>
-<div id="outline-container-org4204d5d" class="outline-3">
-<h3 id="org4204d5d">style guide</h3>
+<div id="outline-container-org25f8211" class="outline-3">
+<h3 id="org25f8211">dict literal &#x2013; { }</h3>
+</div>
+</div>
+<div id="outline-container-orgb2f5f6" class="outline-2">
+<h2 id="orgb2f5f6">easy to use and debug</h2>
+</div>
+<div id="outline-container-org2e9ecff" class="outline-2">
+<h2 id="org2e9ecff">with simple module system</h2>
+<div class="outline-text-2" id="text-org2e9ecff">
+</div><div id="outline-container-org591794d" class="outline-3">
+<h3 id="org591794d">one file one module</h3>
+</div>
+</div>
+<div id="outline-container-orga08276a" class="outline-2">
+<h2 id="orga08276a">with git based package manager</h2>
+</div>
+<div id="outline-container-orgec2621d" class="outline-2">
+<h2 id="orgec2621d">maintained by a community as a live system</h2>
+<div class="outline-text-2" id="text-orgec2621d">
+</div><div id="outline-container-orga52d8d7" class="outline-3">
+<h3 id="orga52d8d7">quit org-mode &#x2013; use header file &#x2013; no forward declarations</h3>
+</div>
+<div id="outline-container-org3c2a3cd" class="outline-3">
+<h3 id="org3c2a3cd">style guide</h3>
 </div>
 </div>
 </div>
 <div id="postamble" class="status">
-<p class="date">Created: 2018-07-30 Mon 05:02</p>
+<p class="date">Created: 2018-07-31 Tue 04:48</p>
 <p class="validation"><a href="http://validator.w3.org/check?uri=referer">Validate</a></p>
 </div>
 </body>
