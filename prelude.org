@@ -8,17 +8,11 @@
   (= zero-t (data))
   (= succ-t (data prev))
 
-  (= nat-add
-     (lambda [x y]
-       ))
+  (= (nat-add x y) )
 
-  (= nat-mul
-     (lambda [x y]
-       ))
+  (= (nat-mul x y) )
 
-  (= nat-factorial
-     (lambda [x]
-       ))
+  (= (nat-factorial x) )
   #+end_src
 
 * list
