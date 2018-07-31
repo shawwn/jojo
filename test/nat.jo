@@ -27,7 +27,15 @@
 
 (println (nat-mul two two))
 
-(note
-  (= (zero.double-println)
-     (println this)
-     (println this)))
+
+(= (zero.double-println)
+   (println this)
+   (println this))
+
+(zero.double-println)
+
+(= (succ.inc)
+   (nat-add this one))
+
+(println (one.inc))
+(println (two.inc))

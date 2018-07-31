@@ -4,9 +4,7 @@
 * [note]
 *** can not handle big file -- due to the recursion in sexp parser
 * a interpreter uses dynamic threaded code
-*** data_pred_o -- for `<data>-p`
 * with lisp like macro system
-*** tk_assign_data -- generate data_pred_o
 *** (cond)
 *** (match)
 *** (if)

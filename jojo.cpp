@@ -15,7 +15,7 @@
       {
           cout << " - HERE: " << index << "\n" << flush;
       }
-      template<typename Out>
+      template <typename Out>
       void
       string_split (const string &s, char delim, Out result)
       {
@@ -1174,6 +1174,11 @@
       {
           return new field_jo_t (this->name);
       }
+      bool
+      closure_p (env_t &env, shared_ptr <obj_t> a)
+      {
+          return a->tag == tagging (env, "closure-t");
+      }
       void
       field_jo_t::exe (env_t &env, local_scope_t &local_scope)
       {
@@ -1192,9 +1197,11 @@
                        << "  empty box" << "\n";
                   exit (1);
               }
-              auto obj = box->obj;
-              auto it = obj->obj_map.find (this->name);
-              if (it != obj->obj_map.end ()) {
+              auto it = box->obj->obj_map.find (this->name);
+              if (it != box->obj->obj_map.end ()) {
+                  if (closure_p (env, it->second)) {
+                      env.obj_stack.push (obj);
+                  }
                   env.obj_stack.push (it->second);
                   return;
               }
@@ -1313,7 +1320,9 @@
           return "nop";
       }
     void
-    define (env_t &env, name_t name, shared_ptr <obj_t> obj)
+    define (env_t &env,
+            name_t name,
+            shared_ptr <obj_t> obj)
     {
         auto it = env.box_map.find (name);
         if (it != env.box_map.end ()) {
@@ -1323,6 +1332,35 @@
         }
         else {
             env.box_map [name] = new box_t (obj);
+        }
+    }
+    bool
+    type_p (env_t &env, shared_ptr <obj_t> a)
+    {
+        return a->tag == tagging (env, "type-t");
+    }
+    void
+    assign (env_t &env,
+            name_t prefix,
+            name_t name,
+            shared_ptr <obj_t> obj)
+    {
+        if (prefix == "") {
+            define (env, name, obj);
+            return;
+        }
+        auto it = env.box_map.find (prefix + "-t");
+        if (it != env.box_map.end ()) {
+            auto box = it->second;
+            assert (! box->empty_p);
+            assert (type_p (env, box->obj));
+            auto type = static_pointer_cast <type_o> (box->obj);
+            type->obj_map [name] = obj;
+        }
+        else {
+            cout << "- fatal error : assign fail" << "\n";
+            cout << "  unknown prefix : " << prefix << "\n";
+            exit (1);
         }
     }
     using sig_t = name_vector_t;
@@ -2453,6 +2491,13 @@
             return jojo_append (head_jojo, body_jojo);
         }
     }
+    bool
+    dot_head_p (env_t &env, shared_ptr <obj_t> head)
+    {
+        if (! str_p (env, head)) return false;
+        auto str = static_pointer_cast <str_o> (head);
+        return dot_string_p (str->str);
+    }
     shared_ptr <jojo_t>
     call_compile (env_t &env,
                   local_ref_map_t &local_ref_map,
@@ -2460,9 +2505,15 @@
     {
         auto head = car (env, sexp);
         auto body = cdr (env, sexp);
-        jo_vector_t jo_vector = {
-            new apply_jo_t (list_length (env, body)),
-        };
+        auto jo_vector = jo_vector_t ();
+        if (dot_head_p (env, head)) {
+            jo_vector.push_back
+                (new apply_jo_t (list_length (env, body) + 1));
+        }
+        else {
+            jo_vector.push_back
+                (new apply_jo_t (list_length (env, body)));
+        }
         auto jojo = make_shared <jojo_t> (jo_vector);
         auto head_jojo = sexp_compile (env, local_ref_map, head);
         auto body_jojo = sexp_list_compile (env, local_ref_map, body);
@@ -2622,6 +2673,9 @@
               auto data = make_shared <data_o>
                   (env, type_tag, obj_map_t ());
               define (env, data_name, data);
+              auto type = make_shared <type_o>
+                  (env, type_tag, obj_map_t ());
+              define (env, type_name, type);
           }
           else {
               auto name_vect = list_to_vect (env, data_body);
@@ -2633,62 +2687,10 @@
               auto data_cons = make_shared <data_cons_o>
                   (env, type_tag, name_vector, obj_map_t ());
               define (env, data_name, data_cons);
+              auto type = make_shared <type_o>
+                  (env, type_tag, obj_map_t ());
+              define (env, type_name, type);
           }
-      }
-      bool
-      assign_lambda_p (env_t &env, shared_ptr <obj_t> body)
-      {
-          if (! cons_p (env, body))
-              return false;
-          if (! str_p (env, car (env, body)))
-              return false;
-          if (! cons_p (env, cdr (env, body)))
-              return false;
-          if (! cons_p (env, car (env, cdr (env, body))))
-              return false;
-          if (! str_p (env, car (env, car (env, cdr (env, body)))))
-              return false;
-          auto str = static_pointer_cast <str_o>
-              (car (env, car (env, cdr (env, body))));
-          return str->str == "lambda";
-      }
-      shared_ptr <obj_t>
-      sexp_substitute_recur (env_t &env,
-                             shared_ptr <obj_t> sub,
-                             shared_ptr <obj_t> sexp)
-      {
-          if (str_p (env, sexp)) {
-              auto str = static_pointer_cast <str_o> (sexp);
-              if (str->str == "recur")
-                  return sub;
-              else
-                  return sexp;
-          }
-          if (cons_p (env, sexp))
-              return cons_c
-                  (env,
-                   sexp_substitute_recur (env, sub, car (env, sexp)),
-                   sexp_substitute_recur (env, sub, cdr (env, sexp)));
-          if (vect_p (env, sexp)) {
-              auto vect_sexp = static_pointer_cast <vect_o> (sexp);
-              auto list_sexp = vect_to_list (env, vect_sexp);
-              auto new_list_sexp = sexp_substitute_recur (env, sub, list_sexp);
-              return list_to_vect (env, new_list_sexp);
-          }
-          else
-              return sexp;
-      }
-      void
-      tk_assign_lambda (env_t &env, shared_ptr <obj_t> body)
-      {
-          auto head = static_pointer_cast <str_o> (car (env, body));
-          auto name = head->str;
-          auto rest = cdr (env, body);
-          rest = sexp_substitute_recur (env, head, rest);
-          sexp_list_eval (env, rest);
-          auto obj = env.obj_stack.top ();
-          env.obj_stack.pop ();
-          define (env, name, obj);
       }
       bool
       assign_lambda_sugar_p (env_t &env, shared_ptr <obj_t> body)
@@ -2719,26 +2721,96 @@
                null_c (env));
           return cons_c (env, name, lambda_body);
       }
+      shared_ptr <obj_t>
+      sexp_substitute_recur (env_t &env,
+                             shared_ptr <obj_t> sub,
+                             shared_ptr <obj_t> sexp)
+      {
+          if (str_p (env, sexp)) {
+              auto str = static_pointer_cast <str_o> (sexp);
+              if (str->str == "recur")
+                  return sub;
+              else
+                  return sexp;
+          }
+          if (cons_p (env, sexp))
+              return cons_c
+                  (env,
+                   sexp_substitute_recur (env, sub, car (env, sexp)),
+                   sexp_substitute_recur (env, sub, cdr (env, sexp)));
+          if (vect_p (env, sexp)) {
+              auto vect_sexp = static_pointer_cast <vect_o> (sexp);
+              auto list_sexp = vect_to_list (env, vect_sexp);
+              auto new_list_sexp = sexp_substitute_recur (env, sub, list_sexp);
+              return list_to_vect (env, new_list_sexp);
+          }
+          else
+              return sexp;
+      }
+      shared_ptr <obj_t>
+      lambda_sexp_patch_this (env_t &env, shared_ptr <obj_t> lambda_sexp)
+      {
+          auto vect = static_pointer_cast <vect_o>
+              (car (env, (cdr (env, lambda_sexp))));
+          auto vector = vect->vect;
+          reverse (vector.begin (),
+                   vector.end ());
+          vector.push_back (make_shared <str_o> (env, "this"));
+          reverse (vector.begin (),
+                   vector.end ());
+          return cons_c (env,
+                         car (env, lambda_sexp),
+                         cons_c (env,
+                                 make_shared <vect_o> (env, vector),
+                                 cdr (env, cdr (env, lambda_sexp))));
+      }
+      shared_ptr <obj_t>
+      rest_patch_this (env_t &env, shared_ptr <obj_t> rest)
+      {
+          if (null_p (env, rest))
+              return rest;
+          auto sexp = car (env, rest);
+          if (! cons_p (env, sexp))
+              return rest;
+          auto head = car (env, sexp);
+          if (! str_p (env, head))
+              return rest;
+          auto str = static_pointer_cast <str_o> (head);
+          if (str->str == "lambda") {
+              return cons_c
+                  (env,
+                   lambda_sexp_patch_this (env, sexp),
+                   cdr (env, rest));
+          }
+          else return rest;
+      }
       void
       tk_assign_value (env_t &env, shared_ptr <obj_t> body)
       {
           auto head = static_pointer_cast <str_o> (car (env, body));
-          auto name = head->str;
           auto rest = cdr (env, body);
+          auto name = head->str;
+          string prefix = "";
+          auto string_vector = string_split (name, '.');
+          assert (string_vector.size () <= 2);
+          if (string_vector.size () == 2) {
+              prefix = string_vector [0];
+              name = string_vector [1];
+              rest = rest_patch_this (env, rest);
+          }
+          rest = sexp_substitute_recur (env, head, rest);
           sexp_list_eval (env, rest);
           auto obj = env.obj_stack.top ();
           env.obj_stack.pop ();
-          define (env, name, obj);
+          assign (env, prefix, name, obj);
       }
     void
     tk_assign (env_t &env, shared_ptr <obj_t> body)
     {
         if (assign_data_p (env, body))
             tk_assign_data (env, body);
-        else if (assign_lambda_p (env, body))
-            tk_assign_lambda (env, body);
         else if (assign_lambda_sugar_p (env, body))
-            tk_assign_lambda (env, assign_lambda_desugar (env, body));
+            tk_assign_value (env, assign_lambda_desugar (env, body));
         else
             tk_assign_value (env, body);
     }
