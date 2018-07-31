@@ -2273,7 +2273,7 @@
       }
       #+end_src
 
-*** [todo] import_test
+*** import_test
 
     #+begin_src cpp
     void import_test (env_t &env)
@@ -2443,7 +2443,7 @@
     }
     #+end_src
 
-*** [todo] test_int
+*** test_int
 
     #+begin_src cpp
     void
@@ -2535,7 +2535,7 @@
     }
     #+end_src
 
-*** [todo] test_str
+*** test_str
 
     #+begin_src cpp
     void
@@ -2936,7 +2936,7 @@
 
 * *dict*
 
-*** [todo] import_dict
+*** import_dict
 
     #+begin_src cpp
     void
@@ -2946,7 +2946,7 @@
     }
     #+end_src
 
-*** [todo] test_dict
+*** test_dict
 
     #+begin_src cpp
     void
@@ -3968,7 +3968,39 @@
     }
     #+end_src
 
-*** [todo] string_compile
+*** int_string_p
+
+    #+begin_src cpp
+    bool
+    int_string_p (string str)
+    {
+        auto size = str.size ();
+        if (size < 1) return false;
+        if (str [0] == '-')
+            return int_string_p (str.substr (1, size - 1));
+        auto pos = str.find_first_not_of ("0123456789");
+        return pos == string::npos;
+    }
+    #+end_src
+
+*** int_string_compile
+
+    #+begin_src cpp
+    shared_ptr <jojo_t>
+    int_string_compile (env_t &env,
+                        local_ref_map_t &local_ref_map,
+                        string str)
+    {
+        auto i = stoi (str);
+        jo_vector_t jo_vector = {
+            new lit_jo_t (make_shared <int_o> (env, i)),
+        };
+        auto jojo = make_shared <jojo_t> (jo_vector);
+        return jojo;
+    }
+    #+end_src
+
+*** string_compile
 
     #+begin_src cpp
     shared_ptr <jojo_t>
@@ -3976,17 +4008,14 @@
                     local_ref_map_t &local_ref_map,
                     string str)
     {
-        if (dot_string_p (str)) {
+        if (dot_string_p (str))
             return dot_string_compile (env, local_ref_map, str);
-        }
-        else if (string_string_p (str)) {
+        else if (string_string_p (str))
             return string_string_compile (env, local_ref_map, str);
-        }
-        // else if (int_string_p) {
-        // }
-        else {
+        else if (int_string_p (str))
+            return int_string_compile (env, local_ref_map, str);
+        else
             return ref_compile (env, local_ref_map, str);
-        }
     }
     #+end_src
 
@@ -4600,28 +4629,30 @@
 
 * *tag*
 
-*** [todo] jj_get_tag
+*** jj_get_tag
 
     #+begin_src cpp
-    // sig_t jj_get_tag_sig = { "get-tag", "obj" };
-    // void jj_get_tag (env_t &env, obj_map_t &obj_map)
-    // {
-    //     auto obj = obj_map ["obj"];
-    //     env.obj_stack.push (make_shared <tag_o> (env, obj->repr (env)));
-    // }
+    sig_t jj_get_tag_sig = { "get-tag", "obj" };
+    void jj_get_tag (env_t &env, obj_map_t &obj_map)
+    {
+        auto obj = obj_map ["obj"];
+        env.obj_stack.push (make_shared <tag_o> (env, obj->tag));
+    }
     #+end_src
 
-*** [todo] import_tag
+*** import_tag
 
     #+begin_src cpp
     void
     import_tag (env_t &env)
     {
-
+        define_prim (env,
+                     jj_get_tag_sig,
+                     jj_get_tag);
     }
     #+end_src
 
-*** [todo] test_tag
+*** test_tag
 
     #+begin_src cpp
     void

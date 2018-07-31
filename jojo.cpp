@@ -2549,22 +2549,41 @@
         auto jojo = make_shared <jojo_t> (jo_vector);
         return jojo;
     }
+    bool
+    int_string_p (string str)
+    {
+        auto size = str.size ();
+        if (size < 1) return false;
+        if (str [0] == '-')
+            return int_string_p (str.substr (1, size - 1));
+        auto pos = str.find_first_not_of ("0123456789");
+        return pos == string::npos;
+    }
+    shared_ptr <jojo_t>
+    int_string_compile (env_t &env,
+                        local_ref_map_t &local_ref_map,
+                        string str)
+    {
+        auto i = stoi (str);
+        jo_vector_t jo_vector = {
+            new lit_jo_t (make_shared <int_o> (env, i)),
+        };
+        auto jojo = make_shared <jojo_t> (jo_vector);
+        return jojo;
+    }
     shared_ptr <jojo_t>
     string_compile (env_t &env,
                     local_ref_map_t &local_ref_map,
                     string str)
     {
-        if (dot_string_p (str)) {
+        if (dot_string_p (str))
             return dot_string_compile (env, local_ref_map, str);
-        }
-        else if (string_string_p (str)) {
+        else if (string_string_p (str))
             return string_string_compile (env, local_ref_map, str);
-        }
-        // else if (int_string_p) {
-        // }
-        else {
+        else if (int_string_p (str))
+            return int_string_compile (env, local_ref_map, str);
+        else
             return ref_compile (env, local_ref_map, str);
-        }
     }
     shared_ptr <jojo_t>
     call_compile (env_t &env,
@@ -3005,16 +3024,18 @@
     {
 
     }
-    // sig_t jj_get_tag_sig = { "get-tag", "obj" };
-    // void jj_get_tag (env_t &env, obj_map_t &obj_map)
-    // {
-    //     auto obj = obj_map ["obj"];
-    //     env.obj_stack.push (make_shared <tag_o> (env, obj->repr (env)));
-    // }
+    sig_t jj_get_tag_sig = { "get-tag", "obj" };
+    void jj_get_tag (env_t &env, obj_map_t &obj_map)
+    {
+        auto obj = obj_map ["obj"];
+        env.obj_stack.push (make_shared <tag_o> (env, obj->tag));
+    }
     void
     import_tag (env_t &env)
     {
-
+        define_prim (env,
+                     jj_get_tag_sig,
+                     jj_get_tag);
     }
     void
     test_tag ()
