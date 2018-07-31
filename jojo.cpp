@@ -467,30 +467,6 @@
           repr += local_scope_repr (env, local_scope);
           return repr;
       }
-      struct str_o: obj_t
-      {
-          string str;
-          str_o (env_t &env, string str);
-          bool equal (env_t &env, shared_ptr <obj_t> obj);
-          string repr (env_t &env);
-      };
-      str_o::str_o (env_t &env, string str)
-      {
-          this->tag = tagging (env, "str-t");
-          this->str = str;
-      }
-      string
-      str_o::repr (env_t &env)
-      {
-          return "\"" + this->str + "\"";
-      }
-      bool
-      str_o::equal (env_t &env, shared_ptr <obj_t> obj)
-      {
-          if (this->tag != obj->tag) return false;
-          auto that = static_pointer_cast <str_o> (obj);
-          return (this->str == that->str);
-      }
       struct data_o: obj_t
       {
           data_o (env_t &env,
@@ -1513,6 +1489,95 @@
             assert_stack_size (env, 0);
         }
     }
+    struct int_o: obj_t
+    {
+        int i;
+        int_o (env_t &env, int i);
+        bool equal (env_t &env, shared_ptr <obj_t> obj);
+        string repr (env_t &env);
+    };
+    int_o::int_o (env_t &env, int i)
+    {
+        this->tag = tagging (env, "int-t");
+        this->i = i;
+    }
+    string
+    int_o::repr (env_t &env)
+    {
+        return to_string (this->i);
+    }
+    bool
+    int_o::equal (env_t &env, shared_ptr <obj_t> obj)
+    {
+        if (this->tag != obj->tag) return false;
+        auto that = static_pointer_cast <int_o> (obj);
+        return (this->i == that->i);
+    }
+    bool
+    int_p (env_t &env, shared_ptr <obj_t> a)
+    {
+        return a->tag == tagging (env, "int-t");
+    }
+    void
+    import_int (env_t &env)
+    {
+
+    }
+    void
+    test_int ()
+    {
+
+    }
+    struct str_o: obj_t
+    {
+        string str;
+        str_o (env_t &env, string str);
+        bool equal (env_t &env, shared_ptr <obj_t> obj);
+        string repr (env_t &env);
+    };
+    str_o::str_o (env_t &env, string str)
+    {
+        this->tag = tagging (env, "str-t");
+        this->str = str;
+    }
+    string
+    str_o::repr (env_t &env)
+    {
+        return "\"" + this->str + "\"";
+    }
+    bool
+    str_o::equal (env_t &env, shared_ptr <obj_t> obj)
+    {
+        if (this->tag != obj->tag) return false;
+        auto that = static_pointer_cast <str_o> (obj);
+        return (this->str == that->str);
+    }
+    bool
+    str_p (env_t &env, shared_ptr <obj_t> a)
+    {
+        return a->tag == tagging (env, "str-t");
+    }
+    sig_t jj_str_print_sig = { "str-print", "str" };
+    // -- str-t ->
+    void jj_str_print (env_t &env, obj_map_t &obj_map)
+    {
+        auto obj = obj_map ["str"];
+        assert (str_p (env, obj));
+        auto str = static_pointer_cast <str_o> (obj);
+        cout << str->str;
+    }
+    void
+    import_str (env_t &env)
+    {
+        define_prim (env,
+                     jj_str_print_sig,
+                     jj_str_print);
+    }
+    void
+    test_str ()
+    {
+
+    }
     shared_ptr <obj_t>
     null_c (env_t &env)
     {
@@ -1624,32 +1689,6 @@
             assert_pop_eq (env, make_shared <str_o> (env, "world"));
             assert_stack_size (env, 0);
         }
-    }
-    bool
-    str_p (env_t &env, shared_ptr <obj_t> a)
-    {
-        return a->tag == tagging (env, "str-t");
-    }
-    sig_t jj_str_print_sig = { "str-print", "str" };
-    // -- str-t ->
-    void jj_str_print (env_t &env, obj_map_t &obj_map)
-    {
-        auto obj = obj_map ["str"];
-        assert (str_p (env, obj));
-        auto str = static_pointer_cast <str_o> (obj);
-        cout << str->str;
-    }
-    void
-    import_str (env_t &env)
-    {
-        define_prim (env,
-                     jj_str_print_sig,
-                     jj_str_print);
-    }
-    void
-    test_str ()
-    {
-
     }
     using obj_vect_t = vector <shared_ptr <obj_t>>;
     struct vect_o: obj_t
@@ -3300,8 +3339,9 @@
         test_data_cons_curry ();
         test_prim ();
         test_bool ();
-        test_list ();
+        test_int ();
         test_str ();
+        test_list ();
         test_vect ();
         test_dict ();
         test_sexp ();
@@ -3315,8 +3355,9 @@
     {
         import_test (env);
         import_bool (env);
-        import_list (env);
+        import_int (env);
         import_str (env);
+        import_list (env);
         import_vect (env);
         import_dict (env);
         import_sexp (env);

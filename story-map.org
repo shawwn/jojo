@@ -11,9 +11,12 @@
 *** (cond)
 *** (match)
 *** (if)
-*** literal int -- big number
+*** (quote)
+*** (partquote)
+*** (= <name> (macro))
 * with oop system
 * with simple ffi to c++
+*** int literal
 *** dict_o
 *** dict literal -- { }
 * easy to use and debug
