@@ -1319,6 +1319,34 @@
       {
           return "nop";
       }
+      struct lit_jo_t: jo_t
+      {
+          shared_ptr <obj_t> obj;
+          lit_jo_t (shared_ptr <obj_t> obj);
+          jo_t * copy ();
+          void exe (env_t &env, local_scope_t &local_scope);
+          string repr (env_t &env);
+      };
+      lit_jo_t::
+      lit_jo_t (shared_ptr <obj_t> obj)
+      {
+          this->obj = obj;
+      }
+      jo_t *
+      lit_jo_t::copy ()
+      {
+          return new lit_jo_t (this->obj);
+      }
+      void
+      lit_jo_t::exe (env_t &env, local_scope_t &local_scope)
+      {
+          env.obj_stack.push (this->obj);
+      }
+      string
+      lit_jo_t::repr (env_t &env)
+      {
+          return this->obj->repr (env);
+      }
     void
     define (env_t &env,
             name_t name,
@@ -1822,6 +1850,22 @@
             index++;
         }
     }
+    size_t find_string_length (string code, size_t begin)
+    {
+        size_t length = code.length ();
+        size_t index = begin + 1;
+        while (true) {
+            if (index == length) {
+                cout << "- fatal error : find_string_length" << "\n";
+                cout << "  doublequote mismatch" << "\n";
+                exit (1);
+            }
+            char c = code [index];
+            if (doublequote_char_p (c))
+                return index - begin + 1;
+            index++;
+        }
+    }
     string_vector_t
     scan_word_vector (string code)
     {
@@ -1835,8 +1879,12 @@
                 string_vector.push_back (string_from_char (c));
                 i++;
             }
-            // else if (doublequote_char_p (c)) {
-            // }
+            else if (doublequote_char_p (c)) {
+                auto string_length = find_string_length (code, i);
+                string str = code.substr (i, string_length);
+                string_vector.push_back (str);
+                i += string_length;
+            }
             else {
                 auto word_length = find_word_length (code, i);
                 string word = code.substr (i, word_length);
@@ -2159,6 +2207,14 @@
         assert (string_vector [2] == "<car>");
         assert (string_vector [3] == "<cdr>");
         assert (string_vector [4] == ")");
+
+        {
+            auto code = "\"123\"";
+            auto string_vector = scan_word_vector (code);
+            assert (string_vector.size () == 1);
+            assert (string_vector [0] == "\"123\"");
+        }
+
     }
     void
     test_sexp_list ()
@@ -2432,6 +2488,28 @@
             jo_vector.push_back (new ref_jo_t (boxing (env, name)));
         return make_shared <jojo_t> (jo_vector);
     }
+    bool
+    string_string_p (string str)
+    {
+        auto size = str.size ();
+        if (size < 2) return false;
+        if (str [0] != '"') return false;
+        if (str [size-1] != '"') return false;
+        return true;
+    }
+    shared_ptr <jojo_t>
+    string_string_compile (env_t &env,
+                           local_ref_map_t &local_ref_map,
+                           string str)
+    {
+        auto size = str.size () - 2;
+        str = str.substr (1, size);
+        jo_vector_t jo_vector = {
+            new lit_jo_t (make_shared <str_o> (env, str)),
+        };
+        auto jojo = make_shared <jojo_t> (jo_vector);
+        return jojo;
+    }
     shared_ptr <jojo_t>
     string_compile (env_t &env,
                     local_ref_map_t &local_ref_map,
@@ -2440,8 +2518,9 @@
         if (dot_string_p (str)) {
             return dot_string_compile (env, local_ref_map, str);
         }
-        // else if (string_string_p) {
-        // }
+        else if (string_string_p (str)) {
+            return string_string_compile (env, local_ref_map, str);
+        }
         // else if (int_string_p) {
         // }
         else {

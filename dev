@@ -27,6 +27,10 @@ clean () {
     rm -f jojo
 }
 
+run () {
+    time ./jojo
+}
+
 test () {
     time ./jojo
     for FILE in $(ls test | grep "\.jo")

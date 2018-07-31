@@ -11,7 +11,6 @@
 *** (cond)
 *** (match)
 *** (if)
-*** literal str
 *** literal int -- big number
 * with oop system
 * with simple ffi to c++
@@ -19,7 +18,8 @@
 *** dict literal -- { }
 * easy to use and debug
 * with simple module system
-*** one file one module
+*** [maybe] one file one module
+*** [maybe] r7rs module system
 * with git based package manager
 * maintained by a community as a live system
 *** quit org-mode -- use header file -- no forward declarations
