@@ -62,15 +62,16 @@
     using tag_t = size_t;
     using tag_name_box_vector_t = vector <pair <name_t, box_t *>>;
     using tag_map_t = map <name_t, tag_t>;
+    using obj_map_t = map <name_t, shared_ptr <obj_t>>;
     struct obj_t
     {
         tag_t tag;
+        obj_map_t obj_map;
         virtual ~obj_t ();
         virtual string repr (env_t &env);
         virtual bool equal (env_t &env, shared_ptr <obj_t> obj);
         virtual void apply (env_t &env, size_t arity);
     };
-    using obj_map_t = map <name_t, shared_ptr <obj_t>>;
     using obj_vector_t = vector <shared_ptr <obj_t>>;
     struct frame_t
     {
@@ -174,8 +175,8 @@
           else {
               auto tag = env.tag_name_box_vector.size ();
               env.tag_map [name] = tag;
-              env.tag_name_box_vector.push_back
-                  (make_pair (name, boxing (env, name)));
+              box_t *box = boxing (env, name);
+              env.tag_name_box_vector.push_back (make_pair (name, box));
               return tag;
           }
       }
@@ -187,6 +188,19 @@
           }
           else {
               return env.tag_name_box_vector [tag] .first;
+          }
+      }
+      box_t *
+      box_of_tag (env_t &env, tag_t tag)
+      {
+          if (tag >= env.tag_name_box_vector.size ()) {
+              cout << "- fatal error : box_of_tag" << "\n"
+                   << "  unknown tag : " << tag
+                   << "\n";
+              exit (1);
+          }
+          else {
+              return env.tag_name_box_vector [tag] .second;
           }
       }
       string
@@ -312,7 +326,7 @@
                   return;
               }
           }
-          cout << "- fatal error ! bind_vector_insert_obj" << "\n"
+          cout << "- fatal error : bind_vector_insert_obj" << "\n"
                << "  the bind_vector is filled" << "\n"
                << "\n";
           exit (1);
@@ -484,7 +498,6 @@
       }
       struct data_o: obj_t
       {
-          obj_map_t obj_map;
           data_o (env_t &env,
                   tag_t tag,
                   obj_map_t obj_map);
@@ -560,7 +573,6 @@
       {
           tag_t type_tag;
           name_vector_t name_vector;
-          obj_map_t obj_map;
           data_cons_o (env_t &env,
                        tag_t type_tag,
                        name_vector_t name_vector,
@@ -719,7 +731,6 @@
       {
           name_vector_t name_vector;
           prim_fn fn;
-          obj_map_t obj_map;
           prim_o (env_t &env,
                   name_vector_t name_vector,
                   prim_fn fn,
@@ -817,7 +828,6 @@
       struct type_o: obj_t
       {
           tag_t type_tag;
-          obj_map_t obj_map;
           type_o (env_t &env,
                   tag_t type_tag,
                   obj_map_t obj_map);
@@ -876,8 +886,10 @@
       boxing (env_t &env, name_t name)
       {
           auto it = env.box_map.find (name);
-          if (it != env.box_map.end ())
-              return it->second;
+          if (it != env.box_map.end ()) {
+              auto box = it->second;
+              return box;
+          }
           else {
               auto box = new box_t ();
               env.box_map [name] = box;
@@ -1177,16 +1189,20 @@
       {
           auto obj = env.obj_stack.top ();
           env.obj_stack.pop ();
-          auto data = static_pointer_cast <data_o> (obj);
-          auto it = data->obj_map.find (this->name);
-          if (it != data->obj_map.end ()) {
+          auto it = obj->obj_map.find (this->name);
+          if (it != obj->obj_map.end ()) {
               env.obj_stack.push (it->second);
               return;
           }
-          cout << "- fatal error ! unknown field : "
-               << this->name
-               << "\n";
-          exit (1);
+      //     if () {
+
+      //     }
+          else {
+              cout << "- fatal error : field_jo_t::exe" << "\n"
+                   << "  unknown field : " << this->name
+                   << "\n";
+              exit (1);
+          }
       }
       string
       field_jo_t::repr (env_t &env)
@@ -1278,7 +1294,7 @@
     {
         auto it = env.box_map.find (name);
         if (it != env.box_map.end ()) {
-            box_t *box = it->second;
+            auto box = it->second;
             box->empty_p = false;
             box->obj = obj;
         }
@@ -1346,7 +1362,7 @@
     {
 
     }
-    shared_ptr <data_o>
+    shared_ptr <obj_t>
     true_c (env_t &env)
     {
        return make_shared <data_o>
@@ -1354,7 +1370,7 @@
             tagging (env, "true-t"),
             obj_map_t ());
     }
-    shared_ptr <data_o>
+    shared_ptr <obj_t>
     false_c (env_t &env)
     {
        return make_shared <data_o>
@@ -1362,7 +1378,7 @@
             tagging (env, "false-t"),
             obj_map_t ());
     }
-    shared_ptr <data_o>
+    shared_ptr <obj_t>
     jj_true_c (env_t &env)
     {
        return make_shared <data_o>
@@ -1370,7 +1386,7 @@
             tagging (env, "true-t"),
             obj_map_t ());
     }
-    shared_ptr <data_o>
+    shared_ptr <obj_t>
     jj_false_c (env_t &env)
     {
        return make_shared <data_o>
@@ -1408,7 +1424,7 @@
             assert_stack_size (env, 0);
         }
     }
-    shared_ptr <data_o>
+    shared_ptr <obj_t>
     null_c (env_t &env)
     {
        return make_shared <data_o>
@@ -1416,7 +1432,7 @@
             tagging (env, "null-t"),
             obj_map_t ());
     }
-    shared_ptr <data_o>
+    shared_ptr <obj_t>
     cons_c (env_t &env,
             shared_ptr <obj_t> car,
             shared_ptr <obj_t> cdr)
@@ -1429,29 +1445,27 @@
              tagging (env, "cons-t"),
              obj_map);
     }
-    shared_ptr <obj_t>
-    car (env_t &env, shared_ptr <obj_t> a)
+    bool
+    cons_p (env_t &env, shared_ptr <obj_t> a)
     {
-        assert (a->tag == tagging (env, "cons-t"));
-        auto cons = static_pointer_cast <data_o> (a);
+        return a->tag == tagging (env, "cons-t");
+    }
+    shared_ptr <obj_t>
+    car (env_t &env, shared_ptr <obj_t> cons)
+    {
+        assert (cons_p (env, cons));
         return cons->obj_map ["car"];
     }
     shared_ptr <obj_t>
-    cdr (env_t &env, shared_ptr <obj_t> a)
+    cdr (env_t &env, shared_ptr <obj_t> cons)
     {
-        assert (a->tag == tagging (env, "cons-t"));
-        auto cons = static_pointer_cast <data_o> (a);
+        assert (cons_p (env, cons));
         return cons->obj_map ["cdr"];
     }
     bool
     null_p (env_t &env, shared_ptr <obj_t> a)
     {
         return a->tag == tagging (env, "null-t");
-    }
-    bool
-    cons_p (env_t &env, shared_ptr <obj_t> a)
-    {
-        return a->tag == tagging (env, "cons-t");
     }
     bool
     list_p (env_t &env, shared_ptr <obj_t> a)
@@ -1470,7 +1484,7 @@
         }
         return length;
     }
-    shared_ptr <data_o>
+    shared_ptr <obj_t>
     jj_null_c (env_t &env)
     {
        return make_shared <data_o>
@@ -1527,11 +1541,13 @@
     {
         return a->tag == tagging (env, "str-t");
     }
-    sig_t jj_str_print_sig = { "str-print", "string" };
+    sig_t jj_str_print_sig = { "str-print", "str" };
     // -- str-t ->
     void jj_str_print (env_t &env, obj_map_t &obj_map)
     {
-        auto str = static_pointer_cast <str_o> (obj_map ["string"]);
+        auto obj = obj_map ["str"];
+        assert (str_p (env, obj));
+        auto str = static_pointer_cast <str_o> (obj);
         cout << str->str;
     }
     void
@@ -1606,14 +1622,12 @@
         return a->tag == tagging (env, "vect-t");
     }
     shared_ptr <vect_o>
-    list_to_vect (env_t &env, shared_ptr <obj_t> a)
+    list_to_vect (env_t &env, shared_ptr <obj_t> l)
     {
         auto vect = obj_vect_t ();
-        auto l = static_pointer_cast <data_o> (a);
         while (! null_p (env, l)) {
             vect.push_back (car (env, l));
-            l = static_pointer_cast <data_o>
-                (cdr (env, l));
+            l = cdr (env, l);
         }
         return make_shared <vect_o> (env, vect);
     }
@@ -1623,10 +1637,9 @@
     {
         env.obj_stack.push (list_to_vect (env, obj_map ["list"]));
     }
-    shared_ptr <data_o>
-    vect_to_list (env_t &env, shared_ptr <obj_t> a)
+    shared_ptr <obj_t>
+    vect_to_list (env_t &env, shared_ptr <vect_o> v)
     {
-        auto v = static_pointer_cast <vect_o> (a);
         auto vect = v->vect;
         auto result = null_c (env);
         auto begin = vect.rbegin ();
@@ -1639,7 +1652,10 @@
     // -- (vect-t t) -> (list-t t)
     void jj_vect_to_list (env_t &env, obj_map_t &obj_map)
     {
-        env.obj_stack.push (vect_to_list (env, obj_map ["vect"]));
+        auto obj = obj_map ["vect"];
+        assert (vect_p (env, obj));
+        auto vect = static_pointer_cast <vect_o> (obj);
+        env.obj_stack.push (vect_to_list (env, vect));
     }
     void
     import_vect (env_t &env)
@@ -1769,7 +1785,7 @@
         }
         return string_vector;
     }
-    shared_ptr <data_o>
+    shared_ptr <obj_t>
     string_vector_to_string_list
     (env_t &env, string_vector_t &string_vector)
     {
@@ -1782,11 +1798,9 @@
         }
         return collect;
     }
-    shared_ptr <data_o>
-    // scan_word_list (env_t &env, shared_ptr <str_o> code)
-    scan_word_list (env_t &env, shared_ptr <obj_t> a)
+    shared_ptr <obj_t>
+    scan_word_list (env_t &env, shared_ptr <str_o> code)
     {
-        auto code = static_pointer_cast <str_o> (a);
         auto word_vector = scan_word_vector (code->str);
         return string_vector_to_string_list
             (env, word_vector);
@@ -1821,15 +1835,14 @@
         cout << "bar_word_to_ket_word fail\n";
         exit (1);
     }
-    shared_ptr <data_o>
+    shared_ptr <obj_t>
     word_list_head_with_bar_ket_counter
     (env_t &env,
-     shared_ptr <obj_t> a,
+     shared_ptr <obj_t> word_list,
      string bar,
      string ket,
      size_t counter)
     {
-        auto word_list = static_pointer_cast <data_o> (a);
         if (counter == 0)
             return null_c (env);
         auto head = static_pointer_cast <str_o>
@@ -1854,11 +1867,10 @@
                   cdr (env, word_list),
                   bar, ket, counter));
     }
-    shared_ptr <data_o>
-    word_list_head (env_t &env, shared_ptr <obj_t> a)
+    shared_ptr <obj_t>
+    word_list_head (env_t &env, shared_ptr <obj_t> word_list)
     {
-        assert (cons_p (env, a));
-        auto word_list = static_pointer_cast <data_o> (a);
+        assert (cons_p (env, word_list));
         auto head = static_pointer_cast <str_o>
             (car (env, word_list));
         auto word = head->str;
@@ -1875,15 +1887,14 @@
             return cons_c (env, head, null_c (env));
         }
     }
-    shared_ptr <data_o>
+    shared_ptr <obj_t>
     word_list_rest_with_bar_ket_counter
     (env_t &env,
-     shared_ptr <obj_t> a,
+     shared_ptr <obj_t> word_list,
      string bar,
      string ket,
      size_t counter)
     {
-        auto word_list = static_pointer_cast <data_o> (a);
         if (counter == 0)
             return word_list;
         auto head = static_pointer_cast <str_o>
@@ -1905,11 +1916,10 @@
                  cdr (env, word_list),
                  bar, ket, counter);
     }
-    shared_ptr <data_o>
-    word_list_rest (env_t &env, shared_ptr <obj_t> a)
+    shared_ptr <obj_t>
+    word_list_rest (env_t &env, shared_ptr <obj_t> word_list)
     {
-        assert (cons_p (env, a));
-        auto word_list = static_pointer_cast <data_o> (a);
+        assert (cons_p (env, word_list));
         auto head = static_pointer_cast <str_o>
             (car (env, word_list));
         auto word = head->str;
@@ -1922,16 +1932,14 @@
                  bar, ket, 1);
         }
         else
-            return static_pointer_cast <data_o>
-                (cdr (env, word_list));
+            return cdr (env, word_list);
     }
-    shared_ptr <data_o>
+    shared_ptr <obj_t>
     word_list_drop_ket
     (env_t &env,
-     shared_ptr <obj_t> a,
+     shared_ptr <obj_t> word_list,
      string ket)
     {
-        auto word_list = static_pointer_cast <data_o> (a);
         auto head = car (env, word_list);
         auto rest = cdr (env, word_list);
         if (null_p (env, rest))
@@ -1948,13 +1956,12 @@
                            word_list_drop_ket (env, rest, ket));
         }
     }
-    shared_ptr <data_o>
+    shared_ptr <obj_t>
     parse_sexp_list (env_t &env, shared_ptr <obj_t> a);
 
     shared_ptr <obj_t>
-    parse_sexp (env_t &env, shared_ptr <obj_t> a)
+    parse_sexp (env_t &env, shared_ptr <obj_t> word_list)
     {
-        auto word_list = static_pointer_cast <data_o> (a);
         auto head = static_pointer_cast <str_o>
             (car (env, word_list));
         auto word = head->str;
@@ -1979,10 +1986,9 @@
         else
             return head;
     }
-    shared_ptr <data_o>
-    parse_sexp_list (env_t &env, shared_ptr <obj_t> a)
+    shared_ptr <obj_t>
+    parse_sexp_list (env_t &env, shared_ptr <obj_t> word_list)
     {
-        auto word_list = static_pointer_cast <data_o> (a);
         if (null_p (env, word_list))
             return word_list;
         else
@@ -2004,7 +2010,8 @@
             return "(" + sexp_list_repr (env, a) + ")";
         }
         else if (vect_p (env, a)) {
-            auto l = vect_to_list (env, a);
+            auto v = static_pointer_cast <vect_o> (a);
+            auto l = vect_to_list (env, v);
             return "[" + sexp_list_repr (env, l) + "]";
         }
         else {
@@ -2014,9 +2021,8 @@
         }
     }
     string
-    sexp_list_repr (env_t &env, shared_ptr <obj_t> a)
+    sexp_list_repr (env_t &env, shared_ptr <obj_t> sexp_list)
     {
-        auto sexp_list = static_pointer_cast <data_o> (a);
         if (null_p (env, sexp_list))
             return "";
         else if (null_p (env, cdr (env, sexp_list)))
@@ -2031,7 +2037,10 @@
     // -- str-t -> (list-t str-t)
     void jj_scan_word_list (env_t &env, obj_map_t &obj_map)
     {
-        env.obj_stack.push (scan_word_list (env, obj_map ["code"]));
+        auto obj = obj_map ["code"];
+        assert (str_p (env, obj));
+        auto code = static_pointer_cast <str_o> (obj);
+        env.obj_stack.push (scan_word_list (env, code));
     }
     sig_t jj_parse_sexp_sig = { "parse-sexp", "word-list" };
     // -- (list-t str-t) -> sexp-t
@@ -2159,7 +2168,7 @@
         test_sexp_vect ();
     }
     using top_keyword_fn = function
-        <void (env_t &, shared_ptr <data_o>)>;
+        <void (env_t &, shared_ptr <obj_t>)>;
     struct top_keyword_o: obj_t
     {
         top_keyword_fn fn;
@@ -2222,7 +2231,7 @@
         <shared_ptr <jojo_t>
          (env_t &,
           local_ref_map_t &,
-          shared_ptr <data_o>)>;
+          shared_ptr <obj_t>)>;
     struct keyword_o: obj_t
     {
         keyword_fn fn;
@@ -2268,10 +2277,10 @@
 
     }
     bool
-    keyword_sexp_p (env_t &env, shared_ptr <obj_t> a)
+    keyword_sexp_p (env_t &env, shared_ptr <obj_t> sexp)
     {
-        if (! cons_p (env, a)) return false;
-        auto sexp = static_pointer_cast <data_o> (a);
+        if (! cons_p (env, sexp)) return false;
+        if (! str_p (env, (car (env, sexp)))) return false;
         auto head = static_pointer_cast <str_o> (car (env, sexp));
         auto name = head->str;
         auto it = env.box_map.find (name);
@@ -2394,7 +2403,7 @@
         }
         else if (keyword_sexp_p (env, sexp)) {
             auto head = static_pointer_cast <str_o> (car (env, sexp));
-            auto body = static_pointer_cast <data_o> (cdr (env, sexp));
+            auto body = cdr (env, sexp);
             auto name = head->str;
             auto fn = get_keyword_fn (env, name);
             return fn (env, local_ref_map, body);
@@ -2407,9 +2416,8 @@
     shared_ptr <jojo_t>
     sexp_list_compile (env_t &env,
                        local_ref_map_t &local_ref_map,
-                       shared_ptr <obj_t> a)
+                       shared_ptr <obj_t> sexp_list)
     {
-        auto sexp_list = static_pointer_cast <data_o> (a);
         auto jojo = make_shared <jojo_t> (jo_vector_t ());
         if (null_p (env, sexp_list))
             return jojo;
@@ -2450,10 +2458,10 @@
 
     }
     bool
-    top_keyword_sexp_p (env_t &env, shared_ptr <obj_t> a)
+    top_keyword_sexp_p (env_t &env, shared_ptr <obj_t> sexp)
     {
-        if (! cons_p (env, a)) return false;
-        auto sexp = static_pointer_cast <data_o> (a);
+        if (! cons_p (env, sexp)) return false;
+        if (! str_p (env, (car (env, sexp)))) return false;
         auto head = static_pointer_cast <str_o> (car (env, sexp));
         auto name = head->str;
         auto it = env.box_map.find (name);
@@ -2504,7 +2512,7 @@
     {
         if (top_keyword_sexp_p (env, sexp)) {
             auto head = static_pointer_cast <str_o> (car (env, sexp));
-            auto body = static_pointer_cast <data_o> (cdr (env, sexp));
+            auto body = cdr (env, sexp);
             auto name = head->str;
             auto fn = get_top_keyword_fn (env, name);
             fn (env, body);
@@ -2526,9 +2534,8 @@
         }
     }
     void
-    code_eval (env_t &env, shared_ptr <obj_t> a)
+    code_eval (env_t &env, shared_ptr <str_o> code)
     {
-        auto code = static_pointer_cast <str_o> (a);
         auto word_list = scan_word_list (env, code);
         auto sexp_list = parse_sexp_list (env, word_list);
         sexp_list_eval (env, sexp_list);
@@ -2536,7 +2543,10 @@
     sig_t jj_code_eval_sig = { "code-eval", "code" };
     void jj_code_eval (env_t &env, obj_map_t &obj_map)
     {
-        code_eval (env, obj_map ["code"]);
+        auto obj = obj_map ["code"];
+        assert (str_p (env, obj));
+        auto code = static_pointer_cast <str_o> (obj);
+        code_eval (env, code);
     }
     void
     import_eval (env_t &env)
@@ -2551,7 +2561,7 @@
 
     }
       bool
-      assign_data_p (env_t &env, shared_ptr <data_o> body)
+      assign_data_p (env_t &env, shared_ptr <obj_t> body)
       {
           if (! cons_p (env, body))
               return false;
@@ -2577,7 +2587,7 @@
           return data_name;
       }
       void
-      tk_assign_data (env_t &env, shared_ptr <data_o> body)
+      tk_assign_data (env_t &env, shared_ptr <obj_t> body)
       {
           auto head = static_pointer_cast <str_o> (car (env, body));
           auto type_name = head->str;
@@ -2603,7 +2613,7 @@
           }
       }
       bool
-      assign_lambda_p (env_t &env, shared_ptr <data_o> body)
+      assign_lambda_p (env_t &env, shared_ptr <obj_t> body)
       {
           if (! cons_p (env, body))
               return false;
@@ -2637,7 +2647,8 @@
                    sexp_substitute_recur (env, sub, car (env, sexp)),
                    sexp_substitute_recur (env, sub, cdr (env, sexp)));
           if (vect_p (env, sexp)) {
-              auto list_sexp = vect_to_list (env, sexp);
+              auto vect_sexp = static_pointer_cast <vect_o> (sexp);
+              auto list_sexp = vect_to_list (env, vect_sexp);
               auto new_list_sexp = sexp_substitute_recur (env, sub, list_sexp);
               return list_to_vect (env, new_list_sexp);
           }
@@ -2645,7 +2656,7 @@
               return sexp;
       }
       void
-      tk_assign_lambda (env_t &env, shared_ptr <data_o> body)
+      tk_assign_lambda (env_t &env, shared_ptr <obj_t> body)
       {
           auto head = static_pointer_cast <str_o> (car (env, body));
           auto name = head->str;
@@ -2657,7 +2668,7 @@
           define (env, name, obj);
       }
       bool
-      assign_lambda_sugar_p (env_t &env, shared_ptr <data_o> body)
+      assign_lambda_sugar_p (env_t &env, shared_ptr <obj_t> body)
       {
           if (! cons_p (env, body))
               return false;
@@ -2665,8 +2676,8 @@
               return false;
           return true;
       }
-      shared_ptr <data_o>
-      assign_lambda_desugar (env_t &env, shared_ptr <data_o> body)
+      shared_ptr <obj_t>
+      assign_lambda_desugar (env_t &env, shared_ptr <obj_t> body)
       {
           auto head = car (env, body);
           auto name = car (env, head);
@@ -2686,7 +2697,7 @@
           return cons_c (env, name, lambda_body);
       }
       void
-      tk_assign_value (env_t &env, shared_ptr <data_o> body)
+      tk_assign_value (env_t &env, shared_ptr <obj_t> body)
       {
           auto head = static_pointer_cast <str_o> (car (env, body));
           auto name = head->str;
@@ -2697,7 +2708,7 @@
           define (env, name, obj);
       }
     void
-    tk_assign (env_t &env, shared_ptr <data_o> body)
+    tk_assign (env_t &env, shared_ptr <obj_t> body)
     {
         if (assign_data_p (env, body))
             tk_assign_data (env, body);
@@ -2711,7 +2722,7 @@
     shared_ptr <jojo_t>
     k_lambda (env_t &env,
               local_ref_map_t &old_local_ref_map,
-              shared_ptr <data_o> body)
+              shared_ptr <obj_t> body)
     {
         auto name_vect = static_pointer_cast <vect_o> (car (env, body));
         auto rest = cdr (env, body);
@@ -2748,7 +2759,7 @@
     shared_ptr <jojo_t>
     k_case (env_t &env,
             local_ref_map_t &local_ref_map,
-            shared_ptr <data_o> body)
+            shared_ptr <obj_t> body)
     {
         auto head = car (env, body);
         auto rest = cdr (env, body);
