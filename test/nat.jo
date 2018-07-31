@@ -26,3 +26,8 @@
      (succ-t (nat-mul x (recur x.prev)))))
 
 (println (nat-mul two two))
+
+(note
+  (= (zero.double-println)
+     (println this)
+     (println this)))

@@ -1291,6 +1291,27 @@
       {
           return "(case)";
       }
+      struct nop_jo_t: jo_t
+      {
+          jo_t * copy ();
+          void exe (env_t &env, local_scope_t &local_scope);
+          string repr (env_t &env);
+      };
+      jo_t *
+      nop_jo_t::copy ()
+      {
+          return new nop_jo_t ();
+      }
+      void
+      nop_jo_t::exe (env_t &env, local_scope_t &local_scope)
+      {
+          // do nothing
+      }
+      string
+      nop_jo_t::repr (env_t &env)
+      {
+          return "nop";
+      }
     void
     define (env_t &env, name_t name, shared_ptr <obj_t> obj)
     {
@@ -2769,12 +2790,25 @@
         auto rest_jojo = case_compile (env, local_ref_map, rest);
         return jojo_append (head_jojo, rest_jojo);
     }
+    shared_ptr <jojo_t>
+    k_note (env_t &env,
+            local_ref_map_t &local_ref_map,
+            shared_ptr <obj_t> body)
+    {
+
+        jo_vector_t jo_vector = {
+            new nop_jo_t (),
+        };
+        auto jojo = make_shared <jojo_t> (jo_vector);
+        return jojo;
+    }
     void
     import_syntax (env_t &env)
     {
         define_top_keyword (env, "=", tk_assign);
         define_keyword (env, "lambda", k_lambda);
         define_keyword (env, "case", k_case);
+        define_keyword (env, "note", k_note);
     }
     void
     test_syntax ()

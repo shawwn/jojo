@@ -2049,6 +2049,49 @@
       }
       #+end_src
 
+*** nop_jo
+
+***** nop_jo_t
+
+      #+begin_src cpp
+      struct nop_jo_t: jo_t
+      {
+          jo_t * copy ();
+          void exe (env_t &env, local_scope_t &local_scope);
+          string repr (env_t &env);
+      };
+      #+end_src
+
+***** nop_jo_t::copy
+
+      #+begin_src cpp
+      jo_t *
+      nop_jo_t::copy ()
+      {
+          return new nop_jo_t ();
+      }
+      #+end_src
+
+***** nop_jo_t::exe
+
+      #+begin_src cpp
+      void
+      nop_jo_t::exe (env_t &env, local_scope_t &local_scope)
+      {
+          // do nothing
+      }
+      #+end_src
+
+***** nop_jo_t::repr
+
+      #+begin_src cpp
+      string
+      nop_jo_t::repr (env_t &env)
+      {
+          return "nop";
+      }
+      #+end_src
+
 * define
 
 *** define
@@ -4231,6 +4274,23 @@
     }
     #+end_src
 
+*** k_note
+
+    #+begin_src cpp
+    shared_ptr <jojo_t>
+    k_note (env_t &env,
+            local_ref_map_t &local_ref_map,
+            shared_ptr <obj_t> body)
+    {
+
+        jo_vector_t jo_vector = {
+            new nop_jo_t (),
+        };
+        auto jojo = make_shared <jojo_t> (jo_vector);
+        return jojo;
+    }
+    #+end_src
+
 *** import_syntax
 
     #+begin_src cpp
@@ -4240,6 +4300,7 @@
         define_top_keyword (env, "=", tk_assign);
         define_keyword (env, "lambda", k_lambda);
         define_keyword (env, "case", k_case);
+        define_keyword (env, "note", k_note);
     }
     #+end_src
 
