@@ -13,8 +13,7 @@
     using namespace std;
       void debug_here (size_t index)
       {
-          cout << " - HERE: " << index << "\n"
-               << flush;
+          cout << " - HERE: " << index << "\n" << flush;
       }
       template<typename Out>
       void
@@ -195,8 +194,7 @@
       {
           if (tag >= env.tag_name_box_vector.size ()) {
               cout << "- fatal error : box_of_tag" << "\n"
-                   << "  unknown tag : " << tag
-                   << "\n";
+                   << "  unknown tag : " << tag << "\n";
               exit (1);
           }
           else {
@@ -264,8 +262,7 @@
           else {
               cout << "- fatal error : obj_t::equal" << "\n"
                    << "  equal is not implemented for  : "
-                   << name_of_tag (env, obj->tag) << "\n"
-                   << "\n";
+                   << name_of_tag (env, obj->tag) << "\n";
               exit (1);
           }
       }
@@ -327,8 +324,7 @@
               }
           }
           cout << "- fatal error : bind_vector_insert_obj" << "\n"
-               << "  the bind_vector is filled" << "\n"
-               << "\n";
+               << "  the bind_vector is filled" << "\n";
           exit (1);
       }
       bind_vector_t
@@ -397,8 +393,7 @@
                    << "  over-arity apply" << "\n"
                    << "  arity > lack" << "\n"
                    << "  arity : " << arity << "\n"
-                   << "  lack : " << lack << "\n"
-                   << "\n";
+                   << "  lack : " << lack << "\n";
               exit (1);
           }
       }
@@ -665,8 +660,7 @@
                    << "  over-arity apply" << "\n"
                    << "  arity > lack" << "\n"
                    << "  arity : " << arity << "\n"
-                   << "  lack : " << lack << "\n"
-                   << "\n";
+                   << "  lack : " << lack << "\n";
               exit (1);
           }
       }
@@ -797,8 +791,7 @@
                    << "  over-arity apply" << "\n"
                    << "  arity > lack" << "\n"
                    << "  arity : " << arity << "\n"
-                   << "  lack : " << lack << "\n"
-                   << "\n";
+                   << "  lack : " << lack << "\n";
               exit (1);
           }
       }
@@ -900,8 +893,7 @@
       box_map_report (env_t &env)
       {
           cout << "- [" << env.box_map.size () << "] "
-               << "box_map - "
-               << "\n";
+               << "box_map - " << "\n";
           for (auto &kv: env.box_map) {
               cout << "  " << kv.first << " = ";
               auto box = kv.second;
@@ -924,8 +916,7 @@
       frame_stack_report (env_t &env)
       {
           cout << "- [" << env.frame_stack.size () << "] "
-               << "frame_stack - "
-               << "\n";
+               << "frame_stack - " << "\n";
           frame_stack_t frame_stack = env.frame_stack;
           while (! frame_stack.empty ()) {
              auto frame = frame_stack.top ();
@@ -937,8 +928,7 @@
       obj_stack_report (env_t &env)
       {
           cout << "- [" << env.obj_stack.size () << "] "
-               << "obj_stack - "
-               << "\n";
+               << "obj_stack - " << "\n";
           auto obj_stack = env.obj_stack;
           while (! obj_stack.empty ()) {
               auto obj = obj_stack.top ();
@@ -1194,14 +1184,26 @@
               env.obj_stack.push (it->second);
               return;
           }
-      //     if () {
-
-      //     }
           else {
-              cout << "- fatal error : field_jo_t::exe" << "\n"
-                   << "  unknown field : " << this->name
-                   << "\n";
-              exit (1);
+              auto box = box_of_tag (env, obj->tag);
+              if (box->empty_p) {
+                  cout << "- fatal error : field_jo_t::exe" << "\n"
+                       << "  unknown field : " << this->name << "\n"
+                       << "  empty box" << "\n";
+                  exit (1);
+              }
+              auto obj = box->obj;
+              auto it = obj->obj_map.find (this->name);
+              if (it != obj->obj_map.end ()) {
+                  env.obj_stack.push (it->second);
+                  return;
+              }
+              else {
+                  cout << "- fatal error : field_jo_t::exe" << "\n"
+                       << "  unknown field : " << this->name << "\n"
+                       << "  fail to find it in both object and type" << "\n";
+                  exit (1);
+              }
           }
       }
       string
@@ -1957,7 +1959,7 @@
         }
     }
     shared_ptr <obj_t>
-    parse_sexp_list (env_t &env, shared_ptr <obj_t> a);
+    parse_sexp_list (env_t &env, shared_ptr <obj_t> word_list);
 
     shared_ptr <obj_t>
     parse_sexp (env_t &env, shared_ptr <obj_t> word_list)
@@ -2814,15 +2816,12 @@
     void jj_println (env_t &env, obj_map_t &obj_map)
     {
         auto obj = obj_map ["obj"];
-        cout << obj->repr (env);
-        cout << "\n";
-        cout << flush;
+        cout << obj->repr (env) << "\n" << flush;
     }
     sig_t jj_newline_sig = { "newline" };
     void jj_newline (env_t &env, obj_map_t &obj_map)
     {
-        cout << "\n";
-        cout << flush;
+        cout << "\n" << flush;
     }
     sig_t jj_equal_sig = { "equal", "lhs", "rhs" };
     void jj_equal (env_t &env, obj_map_t &obj_map)
