@@ -37,6 +37,7 @@
     struct env_t;
     struct obj_t;
     struct jo_t;
+    struct box_t;
     using name_t = string;
     using name_vector_t = vector <name_t>;
     using bind_t = pair <name_t, shared_ptr <obj_t>>;
@@ -59,7 +60,7 @@
         virtual string repr (env_t &env);
     };
     using tag_t = size_t;
-    using tag_name_vector_t = vector <name_t>;
+    using tag_name_box_vector_t = vector <pair <name_t, box_t *>>;
     using tag_map_t = map <name_t, tag_t>;
     struct obj_t
     {
@@ -93,7 +94,7 @@
         box_map_t box_map;
         obj_stack_t obj_stack;
         frame_stack_t frame_stack;
-        tag_name_vector_t tag_name_vector;
+        tag_name_box_vector_t tag_name_box_vector;
         tag_map_t tag_map;
         void step ();
         void run ();
@@ -159,6 +160,9 @@
             return repr;
         }
     }
+      box_t *
+      boxing (env_t &env, name_t name);
+
       tag_t
       tagging (env_t &env, name_t name)
       {
@@ -168,20 +172,21 @@
               return tag;
           }
           else {
-              auto tag = env.tag_name_vector.size ();
+              auto tag = env.tag_name_box_vector.size ();
               env.tag_map [name] = tag;
-              env.tag_name_vector.push_back (name);
+              env.tag_name_box_vector.push_back
+                  (make_pair (name, boxing (env, name)));
               return tag;
           }
       }
       name_t
       name_of_tag (env_t &env, tag_t tag)
       {
-          if (tag >= env.tag_name_vector.size ()) {
+          if (tag >= env.tag_name_box_vector.size ()) {
               return "#<unknown-tag-" + to_string (tag) + ">";
           }
           else {
-              return env.tag_name_vector [tag];
+              return env.tag_name_box_vector [tag] .first;
           }
       }
       string
