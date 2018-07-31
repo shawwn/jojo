@@ -809,6 +809,37 @@
           auto that = static_pointer_cast <tag_o> (obj);
           return (this->tag == that->tag);
       }
+      struct type_o: obj_t
+      {
+          tag_t type_tag;
+          obj_map_t obj_map;
+          type_o (env_t &env,
+                  tag_t type_tag,
+                  obj_map_t obj_map);
+          bool equal (env_t &env, shared_ptr <obj_t> obj);
+          string repr (env_t &env);
+      };
+      type_o::type_o (env_t &env,
+                      tag_t type_tag,
+                      obj_map_t obj_map)
+      {
+          this->tag = tagging (env, "type-t");
+          this->type_tag = type_tag;
+          this->obj_map = obj_map;
+      }
+      string
+      type_o::repr (env_t &env)
+      {
+          return name_of_tag (env, this->type_tag);
+      }
+      bool
+      type_o::equal (env_t &env, shared_ptr <obj_t> obj)
+      {
+          if (this->tag != obj->tag) return false;
+          auto that = static_pointer_cast <type_o> (obj);
+          if (this->type_tag != that->type_tag) return false;
+          return true;
+      }
       frame_t::frame_t (shared_ptr <jojo_t> jojo,
                         local_scope_t local_scope)
       {
