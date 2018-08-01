@@ -1232,7 +1232,11 @@
       struct case_jo_t: jo_t
       {
           jojo_map_t jojo_map;
+          shared_ptr <jojo_t> default_jojo;
           case_jo_t (jojo_map_t jojo_map);
+          case_jo_t (jojo_map_t jojo_map,
+                     shared_ptr <jojo_t> default_jojo);
+          bool has_default_jojo_p ();
           jo_t * copy ();
           void exe (env_t &env, local_scope_t &local_scope);
           string repr (env_t &env);
@@ -1241,11 +1245,27 @@
       case_jo_t (jojo_map_t jojo_map)
       {
           this->jojo_map = jojo_map;
+          this->default_jojo = nullptr;
+      }
+
+      case_jo_t::
+      case_jo_t (jojo_map_t jojo_map,
+                 shared_ptr <jojo_t> default_jojo)
+      {
+          this->jojo_map = jojo_map;
+          this->default_jojo = default_jojo;
+      }
+      bool
+      case_jo_t::has_default_jojo_p ()
+      {
+          return this->default_jojo != nullptr;
       }
       jo_t *
       case_jo_t::copy ()
       {
-          return new case_jo_t (this->jojo_map);
+          return new case_jo_t
+              (this->jojo_map,
+               this->default_jojo);
       }
       void
       case_jo_t::exe (env_t &env, local_scope_t &local_scope)
@@ -1258,19 +1278,17 @@
               auto frame = make_shared <frame_t> (jojo, local_scope);
               env.frame_stack.push (frame);
           }
-          else {
-              auto it = this->jojo_map.find (tagging (env, "_"));
-              if (it != this->jojo_map.end ()) {
-                  auto jojo = it->second;
-                  auto frame = make_shared <frame_t> (jojo, local_scope);
-                  env.frame_stack.push (frame);
-              }
-              else {
-                  cout << "- fatal error : case_jo_t::exe mismatch" << "\n";
-                  cout << "  tag : " << name_of_tag (env, obj->tag) << "\n";
-                  exit (1);
-              }
+          else if (this->has_default_jojo_p ()) {
+              auto jojo = this->default_jojo;
+              auto frame = make_shared <frame_t> (jojo, local_scope);
+              env.frame_stack.push (frame);
           }
+          else {
+              cout << "- fatal error : case_jo_t::exe mismatch" << "\n";
+              cout << "  tag : " << name_of_tag (env, obj->tag) << "\n";
+              exit (1);
+          }
+
       }
       string
       case_jo_t::repr (env_t &env)
@@ -3188,18 +3206,26 @@
                   shared_ptr <obj_t> body)
     {
         auto jojo_map = jojo_map_t ();
+        shared_ptr <jojo_t> default_jojo = nullptr;
         while (! null_p (env, body)) {
             auto one = car (env, body);
             auto head = static_pointer_cast <str_o> (car (env, one));
             auto rest = cdr (env, one);
             auto name = head->str;
-            auto tag = tagging (env, name);
-            auto jojo = sexp_list_compile (env, local_ref_map, rest);
-            jojo_map.insert (make_pair (tag, jojo));
-            body = cdr (env, body);
+            if (name == "_") {
+                auto jojo = sexp_list_compile (env, local_ref_map, rest);
+                body = cdr (env, body);
+                default_jojo = jojo;
+            }
+            else {
+                auto tag = tagging (env, name);
+                auto jojo = sexp_list_compile (env, local_ref_map, rest);
+                jojo_map.insert (make_pair (tag, jojo));
+                body = cdr (env, body);
+            }
         }
         jo_vector_t jo_vector = {
-            new case_jo_t (jojo_map),
+            new case_jo_t (jojo_map, default_jojo),
         };
         return make_shared <jojo_t> (jo_vector);
     }

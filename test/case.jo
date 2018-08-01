@@ -1,0 +1,8 @@
+(= (bool-not x)
+   (case x
+     (true-t false-c)
+     (_ true-c)))
+
+(println (bool-not true-c))
+(println (bool-not false-c))
+(nl)
