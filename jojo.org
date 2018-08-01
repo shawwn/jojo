@@ -2936,6 +2936,52 @@
 
 * *dict*
 
+*** dict_o
+
+    #+begin_src cpp
+    struct dict_o: obj_t
+    {
+        dict_o (env_t &env, obj_map_t obj_map);
+        bool equal (env_t &env, shared_ptr <obj_t> obj);
+        string repr (env_t &env);
+    };
+    #+end_src
+
+*** dict_o::dict_o
+
+    #+begin_src cpp
+    dict_o::dict_o (env_t &env, obj_map_t obj_map)
+    {
+        this->tag = tagging (env, "dict-t");
+        this->obj_map = obj_map;
+    }
+    #+end_src
+
+*** dict_o::equal
+
+    #+begin_src cpp
+    bool
+    dict_o::equal (env_t &env, shared_ptr <obj_t> obj)
+    {
+        if (this->tag != obj->tag) return false;
+        auto that = static_pointer_cast <dict_o> (obj);
+        return obj_map_equal (env, this->obj_map, that->obj_map);
+    }
+    #+end_src
+
+*** dict_o::repr
+
+    #+begin_src cpp
+    string
+    dict_o::repr (env_t &env)
+    {
+        string repr = "{";
+        repr += obj_map_repr (env, this->obj_map);
+        repr += "}";
+        return repr;
+    }
+    #+end_src
+
 *** import_dict
 
     #+begin_src cpp

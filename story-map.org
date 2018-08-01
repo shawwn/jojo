@@ -6,7 +6,6 @@
 * a interpreter uses dynamic threaded code
 *** data_pred_o -- for `<data>-p`
 *** tk_assign_data -- generate data_pred_o
-
 * with lisp like macro system
 *** (cond)
 *** (match)
@@ -16,7 +15,7 @@
 *** (= <name> (macro))
 * with oop system
 * with simple ffi to c++
-*** dict_o
+*** handle name.name.name
 *** dict literal -- { }
 * easy to use and debug
 * with simple module system

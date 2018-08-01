@@ -1833,6 +1833,32 @@
             assert_stack_size (env, 0);
         }
     }
+    struct dict_o: obj_t
+    {
+        dict_o (env_t &env, obj_map_t obj_map);
+        bool equal (env_t &env, shared_ptr <obj_t> obj);
+        string repr (env_t &env);
+    };
+    dict_o::dict_o (env_t &env, obj_map_t obj_map)
+    {
+        this->tag = tagging (env, "dict-t");
+        this->obj_map = obj_map;
+    }
+    bool
+    dict_o::equal (env_t &env, shared_ptr <obj_t> obj)
+    {
+        if (this->tag != obj->tag) return false;
+        auto that = static_pointer_cast <dict_o> (obj);
+        return obj_map_equal (env, this->obj_map, that->obj_map);
+    }
+    string
+    dict_o::repr (env_t &env)
+    {
+        string repr = "{";
+        repr += obj_map_repr (env, this->obj_map);
+        repr += "}";
+        return repr;
+    }
     void
     import_dict (env_t &env)
     {
