@@ -3398,6 +3398,19 @@
         return jojo;
     }
     shared_ptr <jojo_t>
+    k_note (env_t &env,
+            local_ref_map_t &local_ref_map,
+            shared_ptr <obj_t> body)
+    {
+        body = cons_c (env, make_shared <str_o> (env, "note"),
+                       body);
+        jo_vector_t jo_vector = {
+            new lit_jo_t (body),
+        };
+        auto jojo = make_shared <jojo_t> (jo_vector);
+        return jojo;
+    }
+    shared_ptr <jojo_t>
     k_assert (env_t &env,
               local_ref_map_t &local_ref_map,
               shared_ptr <obj_t> body)
@@ -3416,6 +3429,7 @@
         define_keyword (env, "lambda", k_lambda);
         define_keyword (env, "case", k_case);
         define_keyword (env, "quote", k_quote);
+        define_keyword (env, "note", k_note);
         define_keyword (env, "assert", k_assert);
     }
     void
