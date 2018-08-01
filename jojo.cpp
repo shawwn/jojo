@@ -1540,6 +1540,8 @@
     void
     import_bool (env_t &env)
     {
+        tagging (env, "true-t");
+        tagging (env, "false-t");
         define (env, "true-c", jj_true_c (env));
         define (env, "false-c", jj_false_c (env));
     }
@@ -1599,7 +1601,7 @@
     void
     import_int (env_t &env)
     {
-
+        tagging (env, "int-t");
     }
     void
     test_int ()
@@ -1647,6 +1649,7 @@
     void
     import_str (env_t &env)
     {
+        tagging (env, "str-t");
         define_prim (env,
                      jj_str_print_sig,
                      jj_str_print);
@@ -1736,6 +1739,8 @@
     void
     import_list (env_t &env)
     {
+        tagging (env, "null-t");
+        tagging (env, "cons-t");
         define (env, "null-c", jj_null_c (env));
         define (env, "cons-c", jj_cons_c (env));
     }
@@ -1904,6 +1909,7 @@
     void
     import_vect (env_t &env)
     {
+        tagging (env, "vect-t");
         define_prim (env,
                      jj_list_to_vect_sig,
                      jj_list_to_vect);
@@ -2051,7 +2057,7 @@
     void
     import_dict (env_t &env)
     {
-
+        tagging (env, "dict-t");
     }
     void
     test_dict ()
@@ -2386,6 +2392,11 @@
             auto l = vect_to_list (env, v);
             return "[" + sexp_list_repr (env, l) + "]";
         }
+        else if (dict_p (env, a)) {
+            auto d = static_pointer_cast <dict_o> (a);
+            auto l = dict_to_list (env, d);
+            return "{" + sexp_list_repr (env, l) + "}";
+        }
         else {
             auto str = static_pointer_cast <str_o> (a);
             assert (str->tag == tagging (env, "str-t"));
@@ -2580,7 +2591,7 @@
     void
     import_top_keyword (env_t &env)
     {
-
+        tagging (env, "top-keyword-t");
     }
     using local_ref_map_t = map <name_t, local_ref_jo_t>;
     local_ref_map_t
@@ -2654,7 +2665,7 @@
     void
     import_keyword (env_t &env)
     {
-
+        tagging (env, "keyword-t");
     }
     bool
     keyword_sexp_p (env_t &env, shared_ptr <obj_t> sexp)
@@ -3465,14 +3476,15 @@
         env.obj_stack.push (box->obj);
     }
     void
-    import_tag (env_t &env)
+    import_type (env_t &env)
     {
+        tagging (env, "type-t");
         define_prim (env,
                      jj_typeof_sig,
                      jj_typeof);
     }
     void
-    test_tag ()
+    test_type ()
     {
 
     }
@@ -3541,6 +3553,9 @@
     void
     import_misc (env_t &env)
     {
+        tagging (env, "closure-t");
+        tagging (env, "data-cons-t");
+        tagging (env, "prim-t");
         define_prim (env,
                      jj_repr_sig,
                      jj_repr);
@@ -3831,7 +3846,7 @@
         test_sexp ();
         test_eval ();
         test_syntax ();
-        test_tag ();
+        test_type ();
         test_stack ();
         test_misc ();
     }
@@ -3851,7 +3866,7 @@
         import_compile (env);
         import_eval (env);
         import_syntax (env);
-        import_tag (env);
+        import_type (env);
         import_stack (env);
         import_misc (env);
     }
