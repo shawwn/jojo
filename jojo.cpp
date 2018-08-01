@@ -1804,12 +1804,12 @@
         env.obj_stack.push (list_to_vect (env, obj_map ["list"]));
     }
     shared_ptr <obj_t>
-    vect_to_list (env_t &env, shared_ptr <vect_o> v)
+    vect_to_list (env_t &env, shared_ptr <vect_o> vect)
     {
-        auto vect = v->obj_vector;
+        auto obj_vector = vect->obj_vector;
         auto result = null_c (env);
-        auto begin = vect.rbegin ();
-        auto end = vect.rend ();
+        auto begin = obj_vector.rbegin ();
+        auto end = obj_vector.rend ();
         for (auto it = begin; it != end; it++)
             result = cons_c (env, *it, result);
         return result;
@@ -1877,6 +1877,47 @@
         bool equal (env_t &env, shared_ptr <obj_t> obj);
         string repr (env_t &env);
     };
+      struct collect_dict_jo_t: jo_t
+      {
+          size_t counter;
+          collect_dict_jo_t (size_t counter);
+          jo_t * copy ();
+          void exe (env_t &env, local_scope_t &local_scope);
+          string repr (env_t &env);
+      };
+      collect_dict_jo_t::
+      collect_dict_jo_t (size_t counter)
+      {
+          this->counter = counter;
+      }
+      jo_t *
+      collect_dict_jo_t::copy ()
+      {
+          return new collect_dict_jo_t (this->counter);
+      }
+      void
+      collect_dict_jo_t::exe (env_t &env, local_scope_t &local_scope)
+      {
+          auto index = 0;
+          auto obj_map = obj_map_t ();
+          while (index < this->counter) {
+              auto obj = env.obj_stack.top ();
+              env.obj_stack.pop ();
+              auto str = env.obj_stack.top ();
+              env.obj_stack.pop ();
+              assert (str_p (env, str));
+              auto key = static_pointer_cast <str_o> (str);
+              obj_map [key->str] = obj;
+              index++;
+          }
+          auto dict = make_shared <dict_o> (env, obj_map);
+          env.obj_stack.push (dict);
+      }
+      string
+      collect_dict_jo_t::repr (env_t &env)
+      {
+          return "(collect-dict " + to_string (this->counter) + ")";
+      }
     dict_o::dict_o (env_t &env, obj_map_t obj_map)
     {
         this->tag = tagging (env, "dict-t");
@@ -1897,6 +1938,11 @@
         repr += "}";
         return repr;
     }
+    bool
+    dict_p (env_t &env, shared_ptr <obj_t> a)
+    {
+        return a->tag == tagging (env, "dict-t");
+    }
     shared_ptr <dict_o>
     list_to_dict (env_t &env, shared_ptr <obj_t> l)
     {
@@ -1911,6 +1957,18 @@
             l = cdr (env, cdr (env, l));
         }
         return make_shared <dict_o> (env, obj_map);
+    }
+    shared_ptr <obj_t>
+    dict_to_list (env_t &env, shared_ptr <dict_o> dict)
+    {
+        auto result = null_c (env);
+        for (auto &kv: dict->obj_map) {
+            auto str = make_shared <str_o> (env, kv.first);
+            auto obj = kv.second;
+            result = cons_c (env, obj, result);
+            result = cons_c (env, str, result);
+        }
+        return result;
     }
     void
     import_dict (env_t &env)
@@ -2013,15 +2071,18 @@
         return string_vector;
     }
     shared_ptr <obj_t>
-    string_vector_to_string_list
-    (env_t &env, string_vector_t &string_vector)
+    word_vector_to_word_list
+    (env_t &env, string_vector_t &word_vector)
     {
-        auto begin = string_vector.rbegin ();
-        auto end = string_vector.rend ();
+        auto begin = word_vector.rbegin ();
+        auto end = word_vector.rend ();
         auto collect = null_c (env);
         for (auto it = begin; it != end; it++) {
-            auto obj = make_shared <str_o> (env, *it);
-            collect = cons_c (env, obj, collect);
+            auto word = *it;
+            if (word != ",") {
+                auto obj = make_shared <str_o> (env, word);
+                collect = cons_c (env, obj, collect);
+            }
         }
         return collect;
     }
@@ -2029,7 +2090,7 @@
     scan_word_list (env_t &env, shared_ptr <str_o> code)
     {
         auto word_vector = scan_word_vector (code->str);
-        return string_vector_to_string_list
+        return word_vector_to_word_list
             (env, word_vector);
     }
     bool
@@ -2691,6 +2752,22 @@
         return jojo_append (jojo, ending_jojo);
     }
     shared_ptr <jojo_t>
+    dict_compile (env_t &env,
+                  local_ref_map_t &local_ref_map,
+                  shared_ptr <dict_o> dict)
+    {
+        auto sexp_list = dict_to_list (env, dict);
+        auto jojo = sexp_list_compile
+            (env, local_ref_map, sexp_list);
+        auto counter = list_length (env, sexp_list);
+        counter = counter / 2;
+        jo_vector_t jo_vector = {
+            new collect_dict_jo_t (counter),
+        };
+        auto ending_jojo = make_shared <jojo_t> (jo_vector);
+        return jojo_append (jojo, ending_jojo);
+    }
+    shared_ptr <jojo_t>
     call_compile (env_t &env,
                   local_ref_map_t &local_ref_map,
                   shared_ptr <obj_t> sexp);
@@ -2707,6 +2784,10 @@
         if (vect_p (env, sexp)) {
             auto vect = static_pointer_cast <vect_o> (sexp);
             return vect_compile (env, local_ref_map, vect);
+        }
+        if (dict_p (env, sexp)) {
+            auto dict = static_pointer_cast <dict_o> (sexp);
+            return dict_compile (env, local_ref_map, dict);
         }
         if (keyword_sexp_p (env, sexp)) {
             auto head = static_pointer_cast <str_o> (car (env, sexp));
