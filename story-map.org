@@ -10,7 +10,6 @@
 *** (cond)
 *** (match)
 *** (if)
-*** (quote)
 *** (partquote)
 *** (= <name> (macro))
 * with oop system

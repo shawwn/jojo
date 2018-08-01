@@ -1790,12 +1790,12 @@
     shared_ptr <vect_o>
     list_to_vect (env_t &env, shared_ptr <obj_t> l)
     {
-        auto vect = obj_vector_t ();
-        while (! null_p (env, l)) {
-            vect.push_back (car (env, l));
+        auto obj_vector = obj_vector_t ();
+        while (cons_p (env, l)) {
+            obj_vector.push_back (car (env, l));
             l = cdr (env, l);
         }
-        return make_shared <vect_o> (env, vect);
+        return make_shared <vect_o> (env, obj_vector);
     }
     sig_t jj_list_to_vect_sig = { "list-to-vect", "list" };
     // -- (list-t t) -> (vect-t t)
@@ -1897,16 +1897,21 @@
         repr += "}";
         return repr;
     }
-    // shared_ptr <dict_o>
-    // list_to_dict (env_t &env, shared_ptr <obj_t> l)
-    // {
-    //     auto vect = obj_vector_t ();
-    //     while (! null_p (env, l)) {
-    //         vect.push_back (car (env, l));
-    //         l = cdr (env, l);
-    //     }
-    //     return make_shared <vect_o> (env, vect);
-    // }
+    shared_ptr <dict_o>
+    list_to_dict (env_t &env, shared_ptr <obj_t> l)
+    {
+        auto obj_map = obj_map_t ();
+        while (cons_p (env, l)) {
+            auto head = car (env, l);
+            assert (str_p (env, head));
+            auto key = static_pointer_cast <str_o> (head);
+            assert (cons_p (env, cdr (env, l)));
+            auto obj = car (env, cdr (env, l));
+            obj_map [key->str] = obj;
+            l = cdr (env, cdr (env, l));
+        }
+        return make_shared <dict_o> (env, obj_map);
+    }
     void
     import_dict (env_t &env)
     {
@@ -2105,9 +2110,11 @@
                   cdr (env, word_list),
                   bar, ket, 1));
         }
-        else {
+        else if (quote_word_p (word))
+            return cons_c (env, head,
+                           word_list_head (env, cdr (env, word_list)));
+        else
             return cons_c (env, head, null_c (env));
-        }
     }
     shared_ptr <obj_t>
     word_list_rest_with_bar_ket_counter
@@ -2153,6 +2160,8 @@
                  cdr (env, word_list),
                  bar, ket, 1);
         }
+        else if (quote_word_p (word))
+            return word_list_rest (env, cdr (env, word_list));
         else
             return cdr (env, word_list);
     }
@@ -2195,19 +2204,17 @@
             return list_to_vect
                 (env, parse_sexp_list
                  (env, word_list_drop_ket (env, rest, "]")));
-        // else if (word == "{")
-        //     return list_to_dict
-        //         (env, parse_sexp_list
-        //          (env, word_list_drop_ket (env, rest, "}")));
+        else if (word == "{")
+            return list_to_dict
+                (env, parse_sexp_list
+                 (env, word_list_drop_ket (env, rest, "}")));
         else if (word == "'")
             return cons_c (env, make_shared <str_o> (env, "quote"),
-                           cons_c (env,
-                                   parse_sexp (env, rest),
+                           cons_c (env, parse_sexp (env, rest),
                                    null_c (env)));
         else if (word == "`")
             return cons_c (env, make_shared <str_o> (env, "partquote"),
-                           cons_c (env,
-                                   parse_sexp (env, rest),
+                           cons_c (env, parse_sexp (env, rest),
                                    null_c (env)));
         else
             return head;
@@ -3113,6 +3120,19 @@
         auto jojo = make_shared <jojo_t> (jo_vector);
         return jojo;
     }
+    shared_ptr <jojo_t>
+    k_quote (env_t &env,
+             local_ref_map_t &local_ref_map,
+             shared_ptr <obj_t> body)
+    {
+        assert (cons_p (env, body));
+        auto obj = car (env, body);
+        jo_vector_t jo_vector = {
+            new lit_jo_t (obj),
+        };
+        auto jojo = make_shared <jojo_t> (jo_vector);
+        return jojo;
+    }
     void
     import_syntax (env_t &env)
     {
@@ -3120,6 +3140,7 @@
         define_keyword (env, "lambda", k_lambda);
         define_keyword (env, "case", k_case);
         define_keyword (env, "note", k_note);
+        define_keyword (env, "quote", k_quote);
     }
     void
     test_syntax ()

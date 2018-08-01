@@ -1,0 +1,11 @@
+(println (quote a))
+(println 'a)
+
+(println (quote (a b c)))
+(println '(a b c))
+
+(println (quote [a b c]))
+(println '[a b c])
+
+(println (quote {a b c d}))
+(println '{a b c d})
