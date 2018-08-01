@@ -1690,18 +1690,56 @@
             assert_stack_size (env, 0);
         }
     }
-    using obj_vect_t = vector <shared_ptr <obj_t>>;
     struct vect_o: obj_t
     {
-        obj_vect_t vect;
-        vect_o (env_t &env, obj_vect_t vect);
+        obj_vector_t obj_vector;
+        vect_o (env_t &env, obj_vector_t obj_vector);
         bool equal (env_t &env, shared_ptr <obj_t> obj);
         string repr (env_t &env);
     };
-    vect_o::vect_o (env_t &env, vector <shared_ptr <obj_t>> vect)
+      struct collect_vect_jo_t: jo_t
+      {
+          size_t counter;
+          collect_vect_jo_t (size_t counter);
+          jo_t * copy ();
+          void exe (env_t &env, local_scope_t &local_scope);
+          string repr (env_t &env);
+      };
+      collect_vect_jo_t::
+      collect_vect_jo_t (size_t counter)
+      {
+          this->counter = counter;
+      }
+      jo_t *
+      collect_vect_jo_t::copy ()
+      {
+          return new collect_vect_jo_t (this->counter);
+      }
+      void
+      collect_vect_jo_t::exe (env_t &env, local_scope_t &local_scope)
+      {
+          auto index = 0;
+          auto obj_vector = obj_vector_t ();
+          while (index < this->counter) {
+              auto obj = env.obj_stack.top ();
+              env.obj_stack.pop ();
+              obj_vector.push_back (obj);
+              index++;
+          }
+          reverse (obj_vector.begin (),
+                   obj_vector.end ());
+          auto vect = make_shared <vect_o> (env, obj_vector);
+          env.obj_stack.push (vect);
+      }
+      string
+      collect_vect_jo_t::repr (env_t &env)
+      {
+          return "(collect-vect " + to_string (this->counter) + ")";
+      }
+    vect_o::vect_o (env_t &env, obj_vector_t obj_vector)
     {
         this->tag = tagging (env, "vect-t");
-        this->vect = vect;
+        this->obj_vector = obj_vector;
     }
     bool
     obj_equal (env_t &env,
@@ -1712,8 +1750,8 @@
     }
     bool
     vect_equal (env_t &env,
-                obj_vect_t &lhs,
-                obj_vect_t &rhs)
+                obj_vector_t &lhs,
+                obj_vector_t &rhs)
     {
         if (lhs.size () != rhs.size ()) return false;
         auto size = lhs.size ();
@@ -1730,13 +1768,13 @@
     {
         if (this->tag != obj->tag) return false;
         auto that = static_pointer_cast <vect_o> (obj);
-        return vect_equal (env, this->vect, that->vect);
+        return vect_equal (env, this->obj_vector, that->obj_vector);
     }
     string
     vect_o::repr (env_t &env)
     {
         string repr = "[";
-        for (auto &obj: this->vect) {
+        for (auto &obj: this->obj_vector) {
             repr += obj->repr (env);
             repr += " ";
         }
@@ -1752,7 +1790,7 @@
     shared_ptr <vect_o>
     list_to_vect (env_t &env, shared_ptr <obj_t> l)
     {
-        auto vect = obj_vect_t ();
+        auto vect = obj_vector_t ();
         while (! null_p (env, l)) {
             vect.push_back (car (env, l));
             l = cdr (env, l);
@@ -1768,7 +1806,7 @@
     shared_ptr <obj_t>
     vect_to_list (env_t &env, shared_ptr <vect_o> v)
     {
-        auto vect = v->vect;
+        auto vect = v->obj_vector;
         auto result = null_c (env);
         auto begin = vect.rbegin ();
         auto end = vect.rend ();
@@ -1859,6 +1897,16 @@
         repr += "}";
         return repr;
     }
+    // shared_ptr <dict_o>
+    // list_to_dict (env_t &env, shared_ptr <obj_t> l)
+    // {
+    //     auto vect = obj_vector_t ();
+    //     while (! null_p (env, l)) {
+    //         vect.push_back (car (env, l));
+    //         l = cdr (env, l);
+    //     }
+    //     return make_shared <vect_o> (env, vect);
+    // }
     void
     import_dict (env_t &env)
     {
@@ -2147,6 +2195,10 @@
             return list_to_vect
                 (env, parse_sexp_list
                  (env, word_list_drop_ket (env, rest, "]")));
+        // else if (word == "{")
+        //     return list_to_dict
+        //         (env, parse_sexp_list
+        //          (env, word_list_drop_ket (env, rest, "}")));
         else if (word == "'")
             return cons_c (env, make_shared <str_o> (env, "quote"),
                            cons_c (env,
@@ -2443,7 +2495,7 @@
         define (env, name, make_shared <keyword_o> (env, fn));
     }
     name_vector_t
-    obj_vect_to_name_vector (env_t &env, obj_vect_t &obj_vect)
+    obj_vector_to_name_vector (env_t &env, obj_vector_t &obj_vect)
     {
         auto name_vector = name_vector_t ();
         for (auto &obj: obj_vect) {
@@ -2612,6 +2664,26 @@
             return ref_compile (env, local_ref_map, str);
     }
     shared_ptr <jojo_t>
+    sexp_list_compile (env_t &env,
+                       local_ref_map_t &local_ref_map,
+                       shared_ptr <obj_t> sexp_list);
+
+    shared_ptr <jojo_t>
+    vect_compile (env_t &env,
+                  local_ref_map_t &local_ref_map,
+                  shared_ptr <vect_o> vect)
+    {
+        auto sexp_list = vect_to_list (env, vect);
+        auto jojo = sexp_list_compile
+            (env, local_ref_map, sexp_list);
+        auto counter = list_length (env, sexp_list);
+        jo_vector_t jo_vector = {
+            new collect_vect_jo_t (counter),
+        };
+        auto ending_jojo = make_shared <jojo_t> (jo_vector);
+        return jojo_append (jojo, ending_jojo);
+    }
+    shared_ptr <jojo_t>
     call_compile (env_t &env,
                   local_ref_map_t &local_ref_map,
                   shared_ptr <obj_t> sexp);
@@ -2625,7 +2697,11 @@
             auto str = static_pointer_cast <str_o> (sexp);
             return string_compile (env, local_ref_map, str->str);
         }
-        else if (keyword_sexp_p (env, sexp)) {
+        if (vect_p (env, sexp)) {
+            auto vect = static_pointer_cast <vect_o> (sexp);
+            return vect_compile (env, local_ref_map, vect);
+        }
+        if (keyword_sexp_p (env, sexp)) {
             auto head = static_pointer_cast <str_o> (car (env, sexp));
             auto body = cdr (env, sexp);
             auto name = head->str;
@@ -2843,7 +2919,7 @@
           else {
               auto name_vect = list_to_vect (env, data_body);
               auto name_vector = name_vector_t ();
-              for (auto obj: name_vect->vect) {
+              for (auto obj: name_vect->obj_vector) {
                   auto str = static_pointer_cast <str_o> (obj);
                   name_vector.push_back (str->str);
               }
@@ -2915,7 +2991,7 @@
       {
           auto vect = static_pointer_cast <vect_o>
               (car (env, (cdr (env, lambda_sexp))));
-          auto vector = vect->vect;
+          auto vector = vect->obj_vector;
           reverse (vector.begin (),
                    vector.end ());
           vector.push_back (make_shared <str_o> (env, "this"));
@@ -2984,7 +3060,7 @@
     {
         auto name_vect = static_pointer_cast <vect_o> (car (env, body));
         auto rest = cdr (env, body);
-        auto name_vector = obj_vect_to_name_vector (env, name_vect->vect);
+        auto name_vector = obj_vector_to_name_vector (env, name_vect->obj_vector);
         auto local_ref_map = local_ref_map_extend
             (env, old_local_ref_map, name_vector);
         auto rest_jojo = sexp_list_compile (env, local_ref_map, rest);
