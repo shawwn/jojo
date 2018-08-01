@@ -2696,6 +2696,27 @@
         return jojo;
     }
     bool
+    key_string_p (string str)
+    {
+        auto size = str.size ();
+        if (size < 2) return false;
+        if (str [size-1] != ':') return false;
+        return true;
+    }
+    shared_ptr <jojo_t>
+    key_string_compile (env_t &env,
+                        local_ref_map_t &local_ref_map,
+                        string str)
+    {
+        auto size = str.size () - 1;
+        str = str.substr (0, size);
+        jo_vector_t jo_vector = {
+            new lit_jo_t (make_shared <str_o> (env, str)),
+        };
+        auto jojo = make_shared <jojo_t> (jo_vector);
+        return jojo;
+    }
+    bool
     int_string_p (string str)
     {
         auto size = str.size ();
@@ -2726,6 +2747,8 @@
             return dot_string_compile (env, local_ref_map, str);
         else if (string_string_p (str))
             return string_string_compile (env, local_ref_map, str);
+        else if (key_string_p (str))
+            return key_string_compile (env, local_ref_map, str);
         else if (int_string_p (str))
             return int_string_compile (env, local_ref_map, str);
         else
