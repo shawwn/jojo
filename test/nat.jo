@@ -2,12 +2,10 @@
 (= succ-t (data prev))
 
 (= zero zero-c)
-(= one (succ-c zero-c))
-(= two (succ-c (succ-c zero-c)))
-
-(println zero)
-(println one)
-(println two)
+(= one (succ-c zero))
+(= two (succ-c one))
+(= three (succ-c two))
+(= four (succ-c three))
 
 (= (nat-add x y)
    (case x
@@ -24,17 +22,11 @@
      (zero-t (succ-c zero-c))
      (succ-t (nat-mul x (recur x.prev)))))
 
-(println (nat-mul two two))
-
-
-(= (zero.double-println)
-   (println this)
-   (println this))
-
-(zero.double-println)
+(assert (equal (nat-add two two) four))
+(assert (equal (nat-mul two two) four))
 
 (= (succ.inc)
    (nat-add this one))
 
-(println (one.inc))
-(println (two.inc))
+(assert (equal (one.inc) two))
+(assert (equal (two.inc) three))

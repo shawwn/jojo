@@ -1,1 +1,1 @@
-(println [1 2 3 ["a" "b" "c"]])
+(assert (equal vect-t (typeof [1 2 3 ["a" "b" "c"]])))

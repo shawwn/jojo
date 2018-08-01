@@ -1,6 +1,7 @@
 (= (three)
    1 2 3)
 
-(three)
+(assert (equal 3 (three)))
 
-(quote (env-report))
+(note
+  (env-report))

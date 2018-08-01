@@ -3,6 +3,8 @@
 #+title: jojo
 - fix `closure_o::repr`
 - top level should drop too
+- fix cons_o::print and null_o::print
+- sexp_repr should handle vect_o and dict_o too
 * prolog
 
 *** include

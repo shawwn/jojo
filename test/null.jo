@@ -1,14 +1,12 @@
 (= x (cons-c null-c null-c))
-(println cons-c)
-(println null-c)
-(println x)
-(println (equal x x))
-(nl)
-
-(= (null.double-println)
-   (println this)
-   (println this))
+(assert (equal data-cons-t (typeof cons-c)))
+(assert (equal null-t (typeof null-c)))
+(assert (equal x x))
 
 (= null null-c)
 
-(null.double-println)
+(= (null.cons x)
+   (cons-c x null-c))
+
+(assert (equal (null.cons null)
+               (cons-c null null)))

@@ -1,1 +1,2 @@
-(println (println (println 1)))
+(note
+  (assert (equal 1 (println (println (println 1))))))

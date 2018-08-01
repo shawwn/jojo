@@ -1,14 +1,27 @@
-(println (quote a))
-(println 'a)
+(assert (equal "a" (quote a)))
+(assert (equal "a" 'a))
+(assert (equal "a" (quote "a")))
+(assert (equal "a" '"a"))
 
-(println (quote "a"))
-(println '"a")
+(assert (equal (quote (a b c))
+               (cons-c 'a
+                 (cons-c 'b
+                   (cons-c 'c
+                     null-c)))))
 
-(println (quote (a b c)))
-(println '(a b c))
+(assert (equal '(a b c)
+               (cons-c 'a
+                 (cons-c 'b
+                   (cons-c 'c
+                     null-c)))))
 
-(println (quote [a b c]))
-(println '[a b c])
+(assert (equal vect-t (typeof (quote [a b c]))))
+(assert (equal vect-t (typeof '[a b c])))
 
-(println (quote {a b c d}))
-(println '{a b c d})
+(assert (equal dict-t (typeof (quote {a b c d}))))
+(assert (equal dict-t (typeof '{a b c d})))
+
+(= d '{a b c d})
+
+(assert (equal d.a "b"))
+(assert (equal d.c "d"))

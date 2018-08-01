@@ -1,7 +1,7 @@
 (= f (lambda [x y] (cons-c x y)))
 
-(assert (equal (typeof f) closure-t))
-(assert (equal (typeof (f null-c)) closure-t))
+(assert (equal closure-t (typeof f)))
+(assert (equal closure-t (typeof (f null-c))))
 (assert (equal (f null-c (cons-c null-c null-c))
          (cons-c null-c (cons-c null-c null-c))))
 
@@ -12,8 +12,8 @@
 
 (= g (lambda [x] (lambda [y] (cons-c x y))))
 
-(assert (equal (typeof g) closure-t))
-(assert (equal (typeof (g null-c)) closure-t))
+(assert (equal closure-t (typeof g)))
+(assert (equal closure-t (typeof (g null-c))))
 (assert (equal ((g null-c) (cons-c null-c null-c))
                (cons-c null-c (cons-c null-c null-c))))
 
@@ -21,5 +21,3 @@
   (println g)
   (println (g null-c))
   (println ((g null-c) (cons-c null-c null-c))))
-
-(env-report)
