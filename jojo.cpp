@@ -3034,26 +3034,44 @@
         }
     }
     void
+    top_sexp_eval (env_t &env, shared_ptr <obj_t> sexp)
+    {
+        if (top_keyword_sexp_p (env, sexp)) {
+            auto head = static_pointer_cast <str_o> (car (env, sexp));
+            auto body = cdr (env, sexp);
+            auto name = head->str;
+            auto fn = get_top_keyword_fn (env, name);
+            fn (env, body);
+        }
+        else {
+            auto local_ref_map = local_ref_map_t ();
+            auto jojo = sexp_compile (env, local_ref_map, sexp);
+            jojo_run (env, jojo);
+            if (! env.obj_stack.empty ())
+                env.obj_stack.pop ();
+        }
+    }
+    void
+    top_sexp_list_eval (env_t &env, shared_ptr <obj_t> sexp_list)
+    {
+        if (null_p (env, sexp_list))
+            return;
+        else {
+            top_sexp_eval (env, car (env, sexp_list));
+            top_sexp_list_eval (env, cdr (env, sexp_list));
+        }
+    }
+    void
     code_eval (env_t &env, shared_ptr <str_o> code)
     {
         auto word_list = scan_word_list (env, code);
         auto sexp_list = parse_sexp_list (env, word_list);
-        sexp_list_eval (env, sexp_list);
-    }
-    sig_t jj_code_eval_sig = { "code-eval", "code" };
-    void jj_code_eval (env_t &env, obj_map_t &obj_map)
-    {
-        auto obj = obj_map ["code"];
-        assert (str_p (env, obj));
-        auto code = static_pointer_cast <str_o> (obj);
-        code_eval (env, code);
+        top_sexp_list_eval (env, sexp_list);
     }
     void
     import_eval (env_t &env)
     {
-        define_prim (env,
-                     jj_code_eval_sig,
-                     jj_code_eval);
+
     }
     void
     test_eval ()
@@ -3516,6 +3534,7 @@
     void jj_env_report (env_t &env, obj_map_t &obj_map)
     {
         env.report ();
+        env.obj_stack.push (true_c (env));
     }
     void
     import_misc (env_t &env)

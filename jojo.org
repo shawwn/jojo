@@ -2,7 +2,6 @@
 #+property: tangle jojo.cpp
 #+title: jojo
 - fix `closure_o::repr`
-- top level should drop too
 - fix cons_o::print and null_o::print
 - sexp_repr should handle vect_o and dict_o too
 * prolog
@@ -4633,6 +4632,44 @@
     }
     #+end_src
 
+*** top_sexp_eval
+
+    #+begin_src cpp
+    void
+    top_sexp_eval (env_t &env, shared_ptr <obj_t> sexp)
+    {
+        if (top_keyword_sexp_p (env, sexp)) {
+            auto head = static_pointer_cast <str_o> (car (env, sexp));
+            auto body = cdr (env, sexp);
+            auto name = head->str;
+            auto fn = get_top_keyword_fn (env, name);
+            fn (env, body);
+        }
+        else {
+            auto local_ref_map = local_ref_map_t ();
+            auto jojo = sexp_compile (env, local_ref_map, sexp);
+            jojo_run (env, jojo);
+            if (! env.obj_stack.empty ())
+                env.obj_stack.pop ();
+        }
+    }
+    #+end_src
+
+*** top_sexp_list_eval
+
+    #+begin_src cpp
+    void
+    top_sexp_list_eval (env_t &env, shared_ptr <obj_t> sexp_list)
+    {
+        if (null_p (env, sexp_list))
+            return;
+        else {
+            top_sexp_eval (env, car (env, sexp_list));
+            top_sexp_list_eval (env, cdr (env, sexp_list));
+        }
+    }
+    #+end_src
+
 *** code_eval
 
     #+begin_src cpp
@@ -4641,20 +4678,7 @@
     {
         auto word_list = scan_word_list (env, code);
         auto sexp_list = parse_sexp_list (env, word_list);
-        sexp_list_eval (env, sexp_list);
-    }
-    #+end_src
-
-*** jj_code_eval
-
-    #+begin_src cpp
-    sig_t jj_code_eval_sig = { "code-eval", "code" };
-    void jj_code_eval (env_t &env, obj_map_t &obj_map)
-    {
-        auto obj = obj_map ["code"];
-        assert (str_p (env, obj));
-        auto code = static_pointer_cast <str_o> (obj);
-        code_eval (env, code);
+        top_sexp_list_eval (env, sexp_list);
     }
     #+end_src
 
@@ -4664,9 +4688,7 @@
     void
     import_eval (env_t &env)
     {
-        define_prim (env,
-                     jj_code_eval_sig,
-                     jj_code_eval);
+
     }
     #+end_src
 
@@ -5334,6 +5356,7 @@
     void jj_env_report (env_t &env, obj_map_t &obj_map)
     {
         env.report ();
+        env.obj_stack.push (true_c (env));
     }
     #+end_src
 

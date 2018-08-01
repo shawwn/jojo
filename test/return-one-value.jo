@@ -2,6 +2,3 @@
    1 2 3)
 
 (assert (equal 3 (three)))
-
-(note
-  (env-report))
