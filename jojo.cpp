@@ -873,7 +873,10 @@
           for (auto &kv: env.box_map) {
               cout << "  " << kv.first << " = ";
               auto box = kv.second;
-              cout << box->obj->repr (env);
+              if (box->empty_p)
+                  cout << "_";
+              else
+                  cout << box->obj->repr (env);
               cout << "\n";
           }
       }
@@ -3143,6 +3146,23 @@
         else
             tk_assign_value (env, body);
     }
+    shared_ptr <obj_t>
+    lambda_patch_drop (env_t &env, shared_ptr <obj_t> sexp_list)
+    {
+        assert (cons_p (env, sexp_list));
+        auto head = car (env, sexp_list);
+        auto rest = cdr (env, sexp_list);
+        if (null_p (env, rest)) return sexp_list;
+        else {
+            auto drop = cons_c
+                (env, make_shared <str_o> (env, "drop"),
+                 null_c (env));
+            sexp_list = lambda_patch_drop (env, rest);
+            sexp_list = cons_c (env, drop, sexp_list);
+            sexp_list = cons_c (env, head, sexp_list);
+            return sexp_list;
+        }
+    }
     shared_ptr <jojo_t>
     k_lambda (env_t &env,
               local_ref_map_t &old_local_ref_map,
@@ -3150,10 +3170,13 @@
     {
         auto name_vect = static_pointer_cast <vect_o> (car (env, body));
         auto rest = cdr (env, body);
-        auto name_vector = obj_vector_to_name_vector (env, name_vect->obj_vector);
+        auto name_vector = obj_vector_to_name_vector
+            (env, name_vect->obj_vector);
         auto local_ref_map = local_ref_map_extend
             (env, old_local_ref_map, name_vector);
-        auto rest_jojo = sexp_list_compile (env, local_ref_map, rest);
+        rest = lambda_patch_drop (env, rest);
+        auto rest_jojo = sexp_list_compile
+            (env, local_ref_map, rest);
         jo_vector_t jo_vector = {
             new lambda_jo_t (name_vector, rest_jojo),
         };
@@ -3303,6 +3326,23 @@
     {
 
     }
+    sig_t jj_drop_sig = { "drop" };
+    void jj_drop (env_t &env, obj_map_t &obj_map)
+    {
+        env.obj_stack.pop ();
+    }
+    void
+    import_stack (env_t &env)
+    {
+        define_prim (env,
+                     jj_drop_sig,
+                     jj_drop);
+    }
+    void
+    test_stack ()
+    {
+
+    }
     sig_t jj_repr_sig = { "repr", "obj" };
     void jj_repr (env_t &env, obj_map_t &obj_map)
     {
@@ -3342,6 +3382,11 @@
         else
             env.obj_stack.push (false_c (env));
     }
+    sig_t jj_env_report_sig = { "env-report" };
+    void jj_env_report (env_t &env, obj_map_t &obj_map)
+    {
+        env.report ();
+    }
     void
     import_misc (env_t &env)
     {
@@ -3360,6 +3405,9 @@
         define_prim (env,
                      jj_equal_sig,
                      jj_equal);
+        define_prim (env,
+                     jj_env_report_sig,
+                     jj_env_report);
     }
     void
     test_misc ()
@@ -3633,6 +3681,7 @@
         test_eval ();
         test_syntax ();
         test_tag ();
+        test_stack ();
         test_misc ();
     }
     void
@@ -3652,6 +3701,7 @@
         import_eval (env);
         import_syntax (env);
         import_tag (env);
+        import_stack (env);
         import_misc (env);
     }
     void

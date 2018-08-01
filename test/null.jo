@@ -4,3 +4,11 @@
 (println x)
 (println (equal x x))
 (nl)
+
+(= (null.double-println)
+   (println this)
+   (println this))
+
+(= null null-c)
+
+(null.double-println)

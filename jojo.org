@@ -1,7 +1,7 @@
 #+html_head: <link rel="stylesheet" href="css/org-page.css"/>
 #+property: tangle jojo.cpp
 #+title: jojo
-- k_lambda patch drop
+
 * prolog
 
 *** include
@@ -1338,7 +1338,10 @@
           for (auto &kv: env.box_map) {
               cout << "  " << kv.first << " = ";
               auto box = kv.second;
-              cout << box->obj->repr (env);
+              if (box->empty_p)
+                  cout << "_";
+              else
+                  cout << box->obj->repr (env);
               cout << "\n";
           }
       }
@@ -4798,6 +4801,28 @@
     }
     #+end_src
 
+*** lambda_patch_drop
+
+    #+begin_src cpp
+    shared_ptr <obj_t>
+    lambda_patch_drop (env_t &env, shared_ptr <obj_t> sexp_list)
+    {
+        assert (cons_p (env, sexp_list));
+        auto head = car (env, sexp_list);
+        auto rest = cdr (env, sexp_list);
+        if (null_p (env, rest)) return sexp_list;
+        else {
+            auto drop = cons_c
+                (env, make_shared <str_o> (env, "drop"),
+                 null_c (env));
+            sexp_list = lambda_patch_drop (env, rest);
+            sexp_list = cons_c (env, drop, sexp_list);
+            sexp_list = cons_c (env, head, sexp_list);
+            return sexp_list;
+        }
+    }
+    #+end_src
+
 *** k_lambda
 
     #+begin_src cpp
@@ -4808,10 +4833,13 @@
     {
         auto name_vect = static_pointer_cast <vect_o> (car (env, body));
         auto rest = cdr (env, body);
-        auto name_vector = obj_vector_to_name_vector (env, name_vect->obj_vector);
+        auto name_vector = obj_vector_to_name_vector
+            (env, name_vect->obj_vector);
         auto local_ref_map = local_ref_map_extend
             (env, old_local_ref_map, name_vector);
-        auto rest_jojo = sexp_list_compile (env, local_ref_map, rest);
+        rest = lambda_patch_drop (env, rest);
+        auto rest_jojo = sexp_list_compile
+            (env, local_ref_map, rest);
         jo_vector_t jo_vector = {
             new lambda_jo_t (name_vector, rest_jojo),
         };
@@ -5032,6 +5060,40 @@
     }
     #+end_src
 
+* *stack*
+
+*** jj_drop
+
+    #+begin_src cpp
+    sig_t jj_drop_sig = { "drop" };
+    void jj_drop (env_t &env, obj_map_t &obj_map)
+    {
+        env.obj_stack.pop ();
+    }
+    #+end_src
+
+*** import_stack
+
+    #+begin_src cpp
+    void
+    import_stack (env_t &env)
+    {
+        define_prim (env,
+                     jj_drop_sig,
+                     jj_drop);
+    }
+    #+end_src
+
+*** test_stack
+
+    #+begin_src cpp
+    void
+    test_stack ()
+    {
+
+    }
+    #+end_src
+
 * *misc*
 
 *** jj_repr
@@ -5098,6 +5160,16 @@
     }
     #+end_src
 
+*** jj_env_report
+
+    #+begin_src cpp
+    sig_t jj_env_report_sig = { "env-report" };
+    void jj_env_report (env_t &env, obj_map_t &obj_map)
+    {
+        env.report ();
+    }
+    #+end_src
+
 *** import_misc
 
     #+begin_src cpp
@@ -5119,6 +5191,9 @@
         define_prim (env,
                      jj_equal_sig,
                      jj_equal);
+        define_prim (env,
+                     jj_env_report_sig,
+                     jj_env_report);
     }
     #+end_src
 
@@ -5441,6 +5516,7 @@
         test_eval ();
         test_syntax ();
         test_tag ();
+        test_stack ();
         test_misc ();
     }
     #+end_src
@@ -5465,6 +5541,7 @@
         import_eval (env);
         import_syntax (env);
         import_tag (env);
+        import_stack (env);
         import_misc (env);
     }
     #+end_src
