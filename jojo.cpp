@@ -429,15 +429,17 @@
       string
       closure_o::repr (env_t &env)
       {
-          string repr = "- closure ";
+          string repr = "(closure ";
           repr += name_vector_repr (this->name_vector);
-          repr += "\n";
-          repr += "  ";
+          repr += " ";
           repr += jojo_repr (env, this->jojo);
           repr += "\n";
           auto local_scope = this->local_scope;
           local_scope.push_back (this->bind_vector);
           repr += local_scope_repr (env, local_scope);
+          if (! repr.empty ()) repr.pop_back ();
+          if (! repr.empty ()) repr.pop_back ();
+          repr += ")";
           return repr;
       }
       struct data_o: obj_t
