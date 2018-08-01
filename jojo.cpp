@@ -98,6 +98,9 @@
         tag_map_t tag_map;
         void step ();
         void run ();
+        void box_map_report ();
+        void frame_stack_report ();
+        void obj_stack_report ();
         void report ();
         void run_with_base (size_t base);
         void double_report ();
@@ -741,29 +744,6 @@
               exit (1);
           }
       }
-      struct tag_o: obj_t
-      {
-          tag_t tag;
-          tag_o (env_t &env, tag_t tag);
-          bool equal (env_t &env, shared_ptr <obj_t> obj);
-          string repr (env_t &env);
-      };
-      tag_o::tag_o (env_t &env, tag_t tag)
-      {
-          this->tag = tag;
-      }
-      string
-      tag_o::repr (env_t &env)
-      {
-          return name_of_tag (env, this->tag);
-      }
-      bool
-      tag_o::equal (env_t &env, shared_ptr <obj_t> obj)
-      {
-          if (this->tag != obj->tag) return false;
-          auto that = static_pointer_cast <tag_o> (obj);
-          return (this->tag == that->tag);
-      }
       struct type_o: obj_t
       {
           tag_t type_tag;
@@ -894,21 +874,6 @@
               return box;
           }
       }
-      void
-      box_map_report (env_t &env)
-      {
-          cout << "- [" << env.box_map.size () << "] "
-               << "box_map - " << "\n";
-          for (auto &kv: env.box_map) {
-              cout << "  " << kv.first << " = ";
-              auto box = kv.second;
-              if (box->empty_p)
-                  cout << "_";
-              else
-                  cout << box->obj->repr (env);
-              cout << "\n";
-          }
-      }
       name_t
       name_of_box (env_t &env, box_t *box)
       {
@@ -919,32 +884,6 @@
               }
           }
           return "#non-name";
-      }
-      void
-      frame_stack_report (env_t &env)
-      {
-          cout << "- [" << env.frame_stack.size () << "] "
-               << "frame_stack - " << "\n";
-          frame_stack_t frame_stack = env.frame_stack;
-          while (! frame_stack.empty ()) {
-             auto frame = frame_stack.top ();
-             frame_report (env, frame);
-             frame_stack.pop ();
-          }
-      }
-      void
-      obj_stack_report (env_t &env)
-      {
-          cout << "- [" << env.obj_stack.size () << "] "
-               << "obj_stack - " << "\n";
-          auto obj_stack = env.obj_stack;
-          while (! obj_stack.empty ()) {
-              auto obj = obj_stack.top ();
-              cout << "  ";
-              cout << obj->repr (env);
-              cout << "\n";
-              obj_stack.pop ();
-          }
       }
     void
     env_t::step ()
@@ -969,12 +908,55 @@
         }
     }
     void
+    env_t::box_map_report ()
+    {
+        auto &env = *this;
+        cout << "- [" << env.box_map.size () << "] "
+             << "box_map - " << "\n";
+        for (auto &kv: env.box_map) {
+            cout << "  " << kv.first << " = ";
+            auto box = kv.second;
+            if (box->empty_p)
+                cout << "_";
+            else
+                cout << box->obj->repr (env);
+            cout << "\n";
+        }
+    }
+    void
+    env_t::frame_stack_report ()
+    {
+        auto &env = *this;
+        cout << "- [" << env.frame_stack.size () << "] "
+             << "frame_stack - " << "\n";
+        frame_stack_t frame_stack = env.frame_stack;
+        while (! frame_stack.empty ()) {
+           auto frame = frame_stack.top ();
+           frame_report (env, frame);
+           frame_stack.pop ();
+        }
+    }
+    void
+    env_t::obj_stack_report ()
+    {
+        auto &env = *this;
+        cout << "- [" << env.obj_stack.size () << "] "
+             << "obj_stack - " << "\n";
+        auto obj_stack = env.obj_stack;
+        while (! obj_stack.empty ()) {
+            auto obj = obj_stack.top ();
+            cout << "  ";
+            cout << obj->repr (env);
+            cout << "\n";
+            obj_stack.pop ();
+        }
+    }
+    void
     env_t::report ()
     {
-        box_map_report (*this);
-        frame_stack_report (*this);
-        obj_stack_report (*this);
-        cout << "\n";
+        this->box_map_report ();
+        this->frame_stack_report ();
+        this->obj_stack_report ();
     }
     void
     env_t::run_with_base (size_t base)
@@ -1352,6 +1334,61 @@
       {
           return this->obj->repr (env);
       }
+      struct assert_jo_t: jo_t
+      {
+          shared_ptr <obj_t> body;
+          shared_ptr <jojo_t> jojo;
+          assert_jo_t (shared_ptr <obj_t> body,
+                       shared_ptr <jojo_t> jojo);
+          jo_t * copy ();
+          void exe (env_t &env, local_scope_t &local_scope);
+          string repr (env_t &env);
+      };
+      assert_jo_t::
+      assert_jo_t (shared_ptr <obj_t> body,
+                   shared_ptr <jojo_t> jojo)
+      {
+          this->body = body;
+          this->jojo = jojo;
+      }
+      jo_t *
+      assert_jo_t::copy ()
+      {
+          return new assert_jo_t
+              (this->body,
+               this->jojo);
+      }
+      bool
+      true_p (env_t &env, shared_ptr <obj_t> a);
+
+      string
+      sexp_list_repr (env_t &env, shared_ptr <obj_t> a);
+
+      void
+      assert_jo_t::exe (env_t &env, local_scope_t &local_scope)
+      {
+          auto base = env.frame_stack.size ();
+          auto jojo = this->jojo;
+          auto frame = make_shared <frame_t> (jojo, local_scope);
+          env.frame_stack.push (frame);
+          env.run_with_base (base);
+          auto result = env.obj_stack.top ();
+          if (true_p (env, result)) {
+              return;
+          }
+          else {
+              env.frame_stack_report ();
+              env.obj_stack_report ();
+              cout << "- assert fail : " << "\n";
+              cout << "  " << sexp_list_repr (env, this->body) << "\n";
+              exit (1);
+          }
+      }
+      string
+      assert_jo_t::repr (env_t &env)
+      {
+          return "(assert)";
+      }
     void
     define (env_t &env,
             name_t name,
@@ -1464,6 +1501,11 @@
             tagging (env, "true-t"),
             obj_map_t ());
     }
+    bool
+    true_p (env_t &env, shared_ptr <obj_t> a)
+    {
+        return a->tag == tagging (env, "true-t");
+    }
     shared_ptr <obj_t>
     false_c (env_t &env)
     {
@@ -1471,6 +1513,11 @@
            (env,
             tagging (env, "false-t"),
             obj_map_t ());
+    }
+    bool
+    false_p (env_t &env, shared_ptr <obj_t> a)
+    {
+        return a->tag == tagging (env, "false-t");
     }
     shared_ptr <obj_t>
     jj_true_c (env_t &env)
@@ -3350,6 +3397,18 @@
         auto jojo = make_shared <jojo_t> (jo_vector);
         return jojo;
     }
+    shared_ptr <jojo_t>
+    k_assert (env_t &env,
+              local_ref_map_t &local_ref_map,
+              shared_ptr <obj_t> body)
+    {
+        auto jojo = sexp_list_compile (env, local_ref_map, body);
+        jo_vector_t jo_vector = {
+            // new assert_jo_t (sexp_literalize (env, body), jojo),
+            new assert_jo_t (body, jojo),
+        };
+        return make_shared <jojo_t> (jo_vector);
+    }
     void
     import_syntax (env_t &env)
     {
@@ -3357,24 +3416,26 @@
         define_keyword (env, "lambda", k_lambda);
         define_keyword (env, "case", k_case);
         define_keyword (env, "quote", k_quote);
+        define_keyword (env, "assert", k_assert);
     }
     void
     test_syntax ()
     {
 
     }
-    sig_t jj_get_tag_sig = { "get-tag", "obj" };
-    void jj_get_tag (env_t &env, obj_map_t &obj_map)
+    sig_t jj_typeof_sig = { "typeof", "obj" };
+    void jj_typeof (env_t &env, obj_map_t &obj_map)
     {
         auto obj = obj_map ["obj"];
-        env.obj_stack.push (make_shared <tag_o> (env, obj->tag));
+        auto box = box_of_tag (env, obj->tag);
+        env.obj_stack.push (box->obj);
     }
     void
     import_tag (env_t &env)
     {
         define_prim (env,
-                     jj_get_tag_sig,
-                     jj_get_tag);
+                     jj_typeof_sig,
+                     jj_typeof);
     }
     void
     test_tag ()

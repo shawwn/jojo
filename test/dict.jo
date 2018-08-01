@@ -1,13 +1,11 @@
 (= d {a: (cons-c 1 null-c)
       b: (cons-c 1 (cons-c 2 null-c))})
 
-(println d)
-(println d.a.car)
-(println d.b.cdr.car)
+(assert (equal d.a.car 1))
+(assert (equal d.b.cdr.car 2))
 
 (= d {a: '(1)
       b: '(1 2)})
 
-(println d)
-(println d.a.car)
-(println d.b.cdr.car)
+(assert (equal d.a.car 1))
+(assert (equal d.b.cdr.car 2))

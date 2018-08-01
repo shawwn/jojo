@@ -3,6 +3,13 @@
      (true-t false-c)
      (false-t true-c)))
 
-(println (bool-not true-c))
-(println (bool-not false-c))
-(nl)
+(assert (equal (bool-not true-c) false-c))
+(assert (equal (bool-not false-c) true-c))
+
+(= (bool-not x)
+   (case x
+     (true-t false-c)
+     (_ true-c)))
+
+(assert (equal (bool-not true-c) false-c))
+(assert (equal (bool-not false-c) true-c))

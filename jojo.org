@@ -1,7 +1,7 @@
 #+html_head: <link rel="stylesheet" href="css/org-page.css"/>
 #+property: tangle jojo.cpp
 #+title: jojo
-- assert_jo_t -- for better *test*
+- fix `closure_o::repr`
 * prolog
 
 *** include
@@ -231,6 +231,9 @@
         tag_map_t tag_map;
         void step ();
         void run ();
+        void box_map_report ();
+        void frame_stack_report ();
+        void obj_stack_report ();
         void report ();
         void run_with_base (size_t base);
         void double_report ();
@@ -1119,51 +1122,6 @@
       }
       #+end_src
 
-*** tag
-
-***** tag_o
-
-      #+begin_src cpp
-      struct tag_o: obj_t
-      {
-          tag_t tag;
-          tag_o (env_t &env, tag_t tag);
-          bool equal (env_t &env, shared_ptr <obj_t> obj);
-          string repr (env_t &env);
-      };
-      #+end_src
-
-***** tag_o::tag_o
-
-      #+begin_src cpp
-      tag_o::tag_o (env_t &env, tag_t tag)
-      {
-          this->tag = tag;
-      }
-      #+end_src
-
-***** tag_o::repr
-
-      #+begin_src cpp
-      string
-      tag_o::repr (env_t &env)
-      {
-          return name_of_tag (env, this->tag);
-      }
-      #+end_src
-
-***** tag_o::equal
-
-      #+begin_src cpp
-      bool
-      tag_o::equal (env_t &env, shared_ptr <obj_t> obj)
-      {
-          if (this->tag != obj->tag) return false;
-          auto that = static_pointer_cast <tag_o> (obj);
-          return (this->tag == that->tag);
-      }
-      #+end_src
-
 *** type
 
 ***** type_o
@@ -1364,28 +1322,6 @@
       }
       #+end_src
 
-*** box_map
-
-***** box_map_report
-
-      #+begin_src cpp
-      void
-      box_map_report (env_t &env)
-      {
-          cout << "- [" << env.box_map.size () << "] "
-               << "box_map - " << "\n";
-          for (auto &kv: env.box_map) {
-              cout << "  " << kv.first << " = ";
-              auto box = kv.second;
-              if (box->empty_p)
-                  cout << "_";
-              else
-                  cout << box->obj->repr (env);
-              cout << "\n";
-          }
-      }
-      #+end_src
-
 ***** name_of_box
 
       #+begin_src cpp
@@ -1399,46 +1335,6 @@
               }
           }
           return "#non-name";
-      }
-      #+end_src
-
-*** obj_stack
-
-***** frame_stack_report
-
-      #+begin_src cpp
-      void
-      frame_stack_report (env_t &env)
-      {
-          cout << "- [" << env.frame_stack.size () << "] "
-               << "frame_stack - " << "\n";
-          frame_stack_t frame_stack = env.frame_stack;
-          while (! frame_stack.empty ()) {
-             auto frame = frame_stack.top ();
-             frame_report (env, frame);
-             frame_stack.pop ();
-          }
-      }
-      #+end_src
-
-*** frame_stack
-
-***** obj_stack_report
-
-      #+begin_src cpp
-      void
-      obj_stack_report (env_t &env)
-      {
-          cout << "- [" << env.obj_stack.size () << "] "
-               << "obj_stack - " << "\n";
-          auto obj_stack = env.obj_stack;
-          while (! obj_stack.empty ()) {
-              auto obj = obj_stack.top ();
-              cout << "  ";
-              cout << obj->repr (env);
-              cout << "\n";
-              obj_stack.pop ();
-          }
       }
       #+end_src
 
@@ -1474,16 +1370,74 @@
     }
     #+end_src
 
+*** env_t::box_map_report
+
+    #+begin_src cpp
+    void
+    env_t::box_map_report ()
+    {
+        auto &env = *this;
+        cout << "- [" << env.box_map.size () << "] "
+             << "box_map - " << "\n";
+        for (auto &kv: env.box_map) {
+            cout << "  " << kv.first << " = ";
+            auto box = kv.second;
+            if (box->empty_p)
+                cout << "_";
+            else
+                cout << box->obj->repr (env);
+            cout << "\n";
+        }
+    }
+    #+end_src
+
+*** env_t::frame_stack_report
+
+    #+begin_src cpp
+    void
+    env_t::frame_stack_report ()
+    {
+        auto &env = *this;
+        cout << "- [" << env.frame_stack.size () << "] "
+             << "frame_stack - " << "\n";
+        frame_stack_t frame_stack = env.frame_stack;
+        while (! frame_stack.empty ()) {
+           auto frame = frame_stack.top ();
+           frame_report (env, frame);
+           frame_stack.pop ();
+        }
+    }
+    #+end_src
+
+*** env_t::obj_stack_report
+
+    #+begin_src cpp
+    void
+    env_t::obj_stack_report ()
+    {
+        auto &env = *this;
+        cout << "- [" << env.obj_stack.size () << "] "
+             << "obj_stack - " << "\n";
+        auto obj_stack = env.obj_stack;
+        while (! obj_stack.empty ()) {
+            auto obj = obj_stack.top ();
+            cout << "  ";
+            cout << obj->repr (env);
+            cout << "\n";
+            obj_stack.pop ();
+        }
+    }
+    #+end_src
+
 *** env_t::report
 
     #+begin_src cpp
     void
     env_t::report ()
     {
-        box_map_report (*this);
-        frame_stack_report (*this);
-        obj_stack_report (*this);
-        cout << "\n";
+        this->box_map_report ();
+        this->frame_stack_report ();
+        this->obj_stack_report ();
     }
     #+end_src
 
@@ -2129,6 +2083,88 @@
       }
       #+end_src
 
+*** assert_jo
+
+***** assert_jo_t
+
+      #+begin_src cpp
+      struct assert_jo_t: jo_t
+      {
+          shared_ptr <obj_t> body;
+          shared_ptr <jojo_t> jojo;
+          assert_jo_t (shared_ptr <obj_t> body,
+                       shared_ptr <jojo_t> jojo);
+          jo_t * copy ();
+          void exe (env_t &env, local_scope_t &local_scope);
+          string repr (env_t &env);
+      };
+      #+end_src
+
+***** assert_jo_t::assert_jo_t
+
+      #+begin_src cpp
+      assert_jo_t::
+      assert_jo_t (shared_ptr <obj_t> body,
+                   shared_ptr <jojo_t> jojo)
+      {
+          this->body = body;
+          this->jojo = jojo;
+      }
+      #+end_src
+
+***** assert_jo_t::copy
+
+      #+begin_src cpp
+      jo_t *
+      assert_jo_t::copy ()
+      {
+          return new assert_jo_t
+              (this->body,
+               this->jojo);
+      }
+      #+end_src
+
+***** assert_jo_t::exe
+
+      #+begin_src cpp
+      bool
+      true_p (env_t &env, shared_ptr <obj_t> a);
+
+      string
+      sexp_list_repr (env_t &env, shared_ptr <obj_t> a);
+
+      void
+      assert_jo_t::exe (env_t &env, local_scope_t &local_scope)
+      {
+          auto base = env.frame_stack.size ();
+          auto jojo = this->jojo;
+          auto frame = make_shared <frame_t> (jojo, local_scope);
+          env.frame_stack.push (frame);
+          env.run_with_base (base);
+          auto result = env.obj_stack.top ();
+          if (true_p (env, result)) {
+              return;
+          }
+          else {
+              env.frame_stack_report ();
+              env.obj_stack_report ();
+              cout << "- assert fail : " << "\n";
+              cout << "  " << sexp_list_repr (env, this->body) << "\n";
+              exit (1);
+          }
+      }
+      #+end_src
+
+***** [todo] assert_jo_t::repr
+
+      #+begin_src cpp
+      string
+      assert_jo_t::repr (env_t &env)
+      {
+          return "(assert)";
+      }
+      #+end_src
+
 * define
 
 *** define
@@ -2319,6 +2355,16 @@
     }
     #+end_src
 
+*** true_p
+
+    #+begin_src cpp
+    bool
+    true_p (env_t &env, shared_ptr <obj_t> a)
+    {
+        return a->tag == tagging (env, "true-t");
+    }
+    #+end_src
+
 *** false_c
 
     #+begin_src cpp
@@ -2329,6 +2375,16 @@
            (env,
             tagging (env, "false-t"),
             obj_map_t ());
+    }
+    #+end_src
+
+*** false_p
+
+    #+begin_src cpp
+    bool
+    false_p (env_t &env, shared_ptr <obj_t> a)
+    {
+        return a->tag == tagging (env, "false-t");
     }
     #+end_src
 
@@ -5072,6 +5128,23 @@
     }
     #+end_src
 
+*** k_assert
+
+    #+begin_src cpp
+    shared_ptr <jojo_t>
+    k_assert (env_t &env,
+              local_ref_map_t &local_ref_map,
+              shared_ptr <obj_t> body)
+    {
+        auto jojo = sexp_list_compile (env, local_ref_map, body);
+        jo_vector_t jo_vector = {
+            // new assert_jo_t (sexp_literalize (env, body), jojo),
+            new assert_jo_t (body, jojo),
+        };
+        return make_shared <jojo_t> (jo_vector);
+    }
+    #+end_src
+
 *** import_syntax
 
     #+begin_src cpp
@@ -5082,6 +5155,7 @@
         define_keyword (env, "lambda", k_lambda);
         define_keyword (env, "case", k_case);
         define_keyword (env, "quote", k_quote);
+        define_keyword (env, "assert", k_assert);
     }
     #+end_src
 
@@ -5097,14 +5171,15 @@
 
 * *tag*
 
-*** jj_get_tag
+*** jj_typeof
 
     #+begin_src cpp
-    sig_t jj_get_tag_sig = { "get-tag", "obj" };
-    void jj_get_tag (env_t &env, obj_map_t &obj_map)
+    sig_t jj_typeof_sig = { "typeof", "obj" };
+    void jj_typeof (env_t &env, obj_map_t &obj_map)
     {
         auto obj = obj_map ["obj"];
-        env.obj_stack.push (make_shared <tag_o> (env, obj->tag));
+        auto box = box_of_tag (env, obj->tag);
+        env.obj_stack.push (box->obj);
     }
     #+end_src
 
@@ -5115,8 +5190,8 @@
     import_tag (env_t &env)
     {
         define_prim (env,
-                     jj_get_tag_sig,
-                     jj_get_tag);
+                     jj_typeof_sig,
+                     jj_typeof);
     }
     #+end_src
 
