@@ -7,6 +7,9 @@
 *** data_pred_o -- for `<data>-p`
 *** tk_assign_data -- generate data_pred_o
 * with lisp like macro system
+*** (~>)
+*** (vect~>)
+*** (list~>)
 *** (cond)
 *** (match)
 *** (if)
@@ -15,7 +18,6 @@
 * with oop system
 * with simple ffi to c++
 *** handle name.name.name
-*** dict literal -- { }
 * easy to use and debug
 * with simple module system
 *** [maybe] one file one module

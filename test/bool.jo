@@ -5,4 +5,4 @@
 
 (println (bool-not true-c))
 (println (bool-not false-c))
-(newline)
+(nl)

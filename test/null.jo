@@ -3,4 +3,4 @@
 (println null-c)
 (println x)
 (println (equal x x))
-(newline)
+(nl)

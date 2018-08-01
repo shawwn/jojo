@@ -1,7 +1,7 @@
 #+html_head: <link rel="stylesheet" href="css/org-page.css"/>
 #+property: tangle jojo.cpp
 #+title: jojo
-
+- k_lambda patch drop
 * prolog
 
 *** include
@@ -2006,49 +2006,6 @@
       case_jo_t::repr (env_t &env)
       {
           return "(case)";
-      }
-      #+end_src
-
-*** nop_jo
-
-***** nop_jo_t
-
-      #+begin_src cpp
-      struct nop_jo_t: jo_t
-      {
-          jo_t * copy ();
-          void exe (env_t &env, local_scope_t &local_scope);
-          string repr (env_t &env);
-      };
-      #+end_src
-
-***** nop_jo_t::copy
-
-      #+begin_src cpp
-      jo_t *
-      nop_jo_t::copy ()
-      {
-          return new nop_jo_t ();
-      }
-      #+end_src
-
-***** nop_jo_t::exe
-
-      #+begin_src cpp
-      void
-      nop_jo_t::exe (env_t &env, local_scope_t &local_scope)
-      {
-          // do nothing
-      }
-      #+end_src
-
-***** nop_jo_t::repr
-
-      #+begin_src cpp
-      string
-      nop_jo_t::repr (env_t &env)
-      {
-          return "nop";
       }
       #+end_src
 
@@ -4904,23 +4861,6 @@
     }
     #+end_src
 
-*** k_note
-
-    #+begin_src cpp
-    shared_ptr <jojo_t>
-    k_note (env_t &env,
-            local_ref_map_t &local_ref_map,
-            shared_ptr <obj_t> body)
-    {
-
-        jo_vector_t jo_vector = {
-            new nop_jo_t (),
-        };
-        auto jojo = make_shared <jojo_t> (jo_vector);
-        return jojo;
-    }
-    #+end_src
-
 *** sexp_literalize
 
 ***** forward declaration
@@ -5043,7 +4983,6 @@
         define_top_keyword (env, "=", tk_assign);
         define_keyword (env, "lambda", k_lambda);
         define_keyword (env, "case", k_case);
-        define_keyword (env, "note", k_note);
         define_keyword (env, "quote", k_quote);
     }
     #+end_src
@@ -5115,8 +5054,8 @@
     void jj_print (env_t &env, obj_map_t &obj_map)
     {
         auto obj = obj_map ["obj"];
-        cout << obj->repr (env);
-        cout << flush;
+        cout << obj->repr (env) << flush;
+        env.obj_stack.push (obj);
     }
     #+end_src
 
@@ -5128,16 +5067,19 @@
     {
         auto obj = obj_map ["obj"];
         cout << obj->repr (env) << "\n" << flush;
+        env.obj_stack.push (obj);
     }
     #+end_src
 
-*** jj_newline
+*** jj_nl
 
     #+begin_src cpp
-    sig_t jj_newline_sig = { "newline" };
-    void jj_newline (env_t &env, obj_map_t &obj_map)
+    sig_t jj_nl_sig = { "nl" };
+    void jj_nl (env_t &env, obj_map_t &obj_map)
     {
         cout << "\n" << flush;
+        auto nl = make_shared <str_o> (env, "\n");
+        env.obj_stack.push (nl);
     }
     #+end_src
 
@@ -5172,8 +5114,8 @@
                      jj_println_sig,
                      jj_println);
         define_prim (env,
-                     jj_newline_sig,
-                     jj_newline);
+                     jj_nl_sig,
+                     jj_nl);
         define_prim (env,
                      jj_equal_sig,
                      jj_equal);

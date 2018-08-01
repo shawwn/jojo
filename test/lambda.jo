@@ -2,10 +2,10 @@
 (println f)
 (println (f null-c))
 (println (f null-c (cons-c null-c null-c)))
-(newline)
+(nl)
 
 (= g (lambda [x] (lambda [y] (cons-c x y))))
 (println g)
 (println (g null-c))
 (println ((g null-c) (cons-c null-c null-c)))
-(newline)
+(nl)

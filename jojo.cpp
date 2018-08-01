@@ -1274,27 +1274,6 @@
       {
           return "(case)";
       }
-      struct nop_jo_t: jo_t
-      {
-          jo_t * copy ();
-          void exe (env_t &env, local_scope_t &local_scope);
-          string repr (env_t &env);
-      };
-      jo_t *
-      nop_jo_t::copy ()
-      {
-          return new nop_jo_t ();
-      }
-      void
-      nop_jo_t::exe (env_t &env, local_scope_t &local_scope)
-      {
-          // do nothing
-      }
-      string
-      nop_jo_t::repr (env_t &env)
-      {
-          return "nop";
-      }
       struct lit_jo_t: jo_t
       {
           shared_ptr <obj_t> obj;
@@ -3212,18 +3191,6 @@
         auto rest_jojo = case_compile (env, local_ref_map, rest);
         return jojo_append (head_jojo, rest_jojo);
     }
-    shared_ptr <jojo_t>
-    k_note (env_t &env,
-            local_ref_map_t &local_ref_map,
-            shared_ptr <obj_t> body)
-    {
-
-        jo_vector_t jo_vector = {
-            new nop_jo_t (),
-        };
-        auto jojo = make_shared <jojo_t> (jo_vector);
-        return jojo;
-    }
       shared_ptr <obj_t>
       sexp_literalize (env_t &env, shared_ptr <obj_t> sexp);
       shared_ptr <obj_t>
@@ -3311,7 +3278,6 @@
         define_top_keyword (env, "=", tk_assign);
         define_keyword (env, "lambda", k_lambda);
         define_keyword (env, "case", k_case);
-        define_keyword (env, "note", k_note);
         define_keyword (env, "quote", k_quote);
     }
     void
@@ -3349,19 +3315,22 @@
     void jj_print (env_t &env, obj_map_t &obj_map)
     {
         auto obj = obj_map ["obj"];
-        cout << obj->repr (env);
-        cout << flush;
+        cout << obj->repr (env) << flush;
+        env.obj_stack.push (obj);
     }
     sig_t jj_println_sig = { "println", "obj" };
     void jj_println (env_t &env, obj_map_t &obj_map)
     {
         auto obj = obj_map ["obj"];
         cout << obj->repr (env) << "\n" << flush;
+        env.obj_stack.push (obj);
     }
-    sig_t jj_newline_sig = { "newline" };
-    void jj_newline (env_t &env, obj_map_t &obj_map)
+    sig_t jj_nl_sig = { "nl" };
+    void jj_nl (env_t &env, obj_map_t &obj_map)
     {
         cout << "\n" << flush;
+        auto nl = make_shared <str_o> (env, "\n");
+        env.obj_stack.push (nl);
     }
     sig_t jj_equal_sig = { "equal", "lhs", "rhs" };
     void jj_equal (env_t &env, obj_map_t &obj_map)
@@ -3386,8 +3355,8 @@
                      jj_println_sig,
                      jj_println);
         define_prim (env,
-                     jj_newline_sig,
-                     jj_newline);
+                     jj_nl_sig,
+                     jj_nl);
         define_prim (env,
                      jj_equal_sig,
                      jj_equal);

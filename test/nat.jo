@@ -8,7 +8,6 @@
 (println zero)
 (println one)
 (println two)
-(newline)
 
 (= (nat-add x y)
    (case x
