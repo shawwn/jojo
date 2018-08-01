@@ -1,6 +1,9 @@
 (println (quote a))
 (println 'a)
 
+(println (quote "a"))
+(println '"a")
+
 (println (quote (a b c)))
 (println '(a b c))
 

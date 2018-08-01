@@ -1,3 +1,13 @@
-(println
- {a: (cons-c 1 null-c)
-  b: (cons-c 1 (cons-c 2 null-c))})
+(= d {a: (cons-c 1 null-c)
+      b: (cons-c 1 (cons-c 2 null-c))})
+
+(println d)
+(println d.a.car)
+(println d.b.cdr.car)
+
+(= d {a: '(1)
+      b: '(1 2)})
+
+(println d)
+(println d.a.car)
+(println d.b.cdr.car)
