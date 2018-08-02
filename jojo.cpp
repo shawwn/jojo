@@ -11,10 +11,6 @@
     #include <set>
     #include <stack>
     using namespace std;
-      void debug_here (size_t index)
-      {
-          cout << " - HERE: " << index << "\n" << flush;
-      }
       template <typename Out>
       void
       string_split (const string &s, char delim, Out result)
@@ -58,9 +54,7 @@
         virtual void exe (env_t &env, local_scope_t &local_scope);
         virtual string repr (env_t &env);
     };
-    using tag_t = size_t;
-    using tag_name_box_vector_t = vector <pair <name_t, box_t *>>;
-    using tag_map_t = map <name_t, tag_t>;
+    using tag_t = string;
     using obj_map_t = map <name_t, shared_ptr <obj_t>>;
     struct obj_t
     {
@@ -94,8 +88,6 @@
         box_map_t box_map;
         obj_stack_t obj_stack;
         frame_stack_t frame_stack;
-        tag_name_box_vector_t tag_name_box_vector;
-        tag_map_t tag_map;
         void step ();
         void run ();
         void box_map_report ();
@@ -163,17 +155,6 @@
             return repr;
         }
     }
-    box_t *
-    boxing (env_t &env, name_t name);
-
-    tag_t
-    tagging (env_t &env, name_t name);
-
-    name_t
-    name_of_tag (env_t &env, tag_t tag);
-
-    box_t *
-    box_of_tag (env_t &env, tag_t tag);
       string
       bind_vector_repr (env_t &env, bind_vector_t bind_vector)
       {
@@ -225,7 +206,7 @@
       string
       obj_t::repr (env_t &env)
       {
-          return "#<" + name_of_tag (env, this->tag) + ">";
+          return "#<" + this->tag + ">";
       }
       bool
       obj_t::equal (env_t &env, shared_ptr <obj_t> obj)
@@ -235,7 +216,7 @@
           else {
               cout << "- fatal error : obj_t::equal" << "\n"
                    << "  equal is not implemented for  : "
-                   << name_of_tag (env, obj->tag) << "\n";
+                   << obj->tag << "\n";
               exit (1);
           }
       }
@@ -278,7 +259,7 @@
                  bind_vector_t bind_vector,
                  local_scope_t local_scope)
       {
-          this->tag = tagging (env, "closure-t");
+          this->tag = "closure-t";
           this->name_vector = name_vector;
           this->jojo = jojo;
           this->bind_vector = bind_vector;
@@ -498,7 +479,7 @@
       {
           if (this->obj_map.size () == 0) {
               string repr = "";
-              repr += name_of_tag (env, this->tag);
+              repr += this->tag;
               repr.pop_back ();
               repr.pop_back ();
               repr += "-c";
@@ -506,7 +487,7 @@
           }
           else {
               string repr = "(";
-              repr += name_of_tag (env, this->tag);
+              repr += this->tag;
               repr.pop_back ();
               repr.pop_back ();
               repr += "-c ";
@@ -533,7 +514,7 @@
                    name_vector_t name_vector,
                    obj_map_t obj_map)
       {
-          this->tag = tagging (env, "data-cons-t");
+          this->tag = "data-cons-t";
           this->type_tag = type_tag;
           this->name_vector = name_vector;
           this->obj_map = obj_map;
@@ -652,7 +633,7 @@
       {
           if (this->name_vector.size () == 0) {
               string repr = "";
-              repr += name_of_tag (env, this->type_tag);
+              repr += this->type_tag;
               repr.pop_back ();
               repr.pop_back ();
               repr += "-c";
@@ -660,7 +641,7 @@
           }
           else {
               string repr = "(";
-              repr += name_of_tag (env, this->type_tag);
+              repr += this->type_tag;
               repr.pop_back ();
               repr.pop_back ();
               repr += "-c ";
@@ -689,7 +670,7 @@
                       prim_fn fn,
                       obj_map_t obj_map)
       {
-          this->tag = tagging (env, "prim-t");
+          this->tag = "prim-t";
           this->name_vector = name_vector;
           this->fn = fn;
           this->obj_map = obj_map;
@@ -759,14 +740,14 @@
                       tag_t type_tag,
                       obj_map_t obj_map)
       {
-          this->tag = tagging (env, "type-t");
+          this->tag = "type-t";
           this->type_tag = type_tag;
           this->obj_map = obj_map;
       }
       string
       type_o::repr (env_t &env)
       {
-          return name_of_tag (env, this->type_tag);
+          return this->type_tag;
       }
       bool
       type_o::equal (env_t &env, shared_ptr <obj_t> obj)
@@ -775,65 +756,6 @@
           auto that = static_pointer_cast <type_o> (obj);
           if (this->type_tag != that->type_tag) return false;
           return true;
-      }
-      bool
-      tag_name_p (name_t name)
-      {
-          auto size = name.size ();
-          if (size < 3) return false;
-          if (name [size - 1] != 't') return false;
-          if (name [size - 2] != '-') return false;
-          return true;
-      }
-      box_t *
-      boxing (env_t &env, name_t name);
-
-      void
-      define (env_t &env,
-              name_t name,
-              shared_ptr <obj_t> obj);
-
-      tag_t
-      tagging (env_t &env, name_t name)
-      {
-          assert (tag_name_p (name));
-          auto it = env.tag_map.find (name);
-          if (it != env.tag_map.end ()) {
-              tag_t tag = it->second;
-              return tag;
-          }
-          else {
-              auto tag = env.tag_name_box_vector.size ();
-              env.tag_map [name] = tag;
-              box_t *box = boxing (env, name);
-              env.tag_name_box_vector.push_back (make_pair (name, box));
-              auto type = make_shared <type_o>
-                  (env, tag, obj_map_t ());
-              define (env, name, type);
-              return tag;
-          }
-      }
-      name_t
-      name_of_tag (env_t &env, tag_t tag)
-      {
-          if (tag >= env.tag_name_box_vector.size ()) {
-              return "#<unknown-tag-" + to_string (tag) + ">";
-          }
-          else {
-              return env.tag_name_box_vector [tag] .first;
-          }
-      }
-      box_t *
-      box_of_tag (env_t &env, tag_t tag)
-      {
-          if (tag >= env.tag_name_box_vector.size ()) {
-              cout << "- fatal error : box_of_tag" << "\n"
-                   << "  unknown tag : " << tag << "\n";
-              exit (1);
-          }
-          else {
-              return env.tag_name_box_vector [tag] .second;
-          }
       }
       frame_t::frame_t (shared_ptr <jojo_t> jojo,
                         local_scope_t local_scope)
@@ -1169,7 +1091,7 @@
       bool
       closure_p (env_t &env, shared_ptr <obj_t> a)
       {
-          return a->tag == tagging (env, "closure-t");
+          return a->tag == "closure-t";
       }
       void
       field_jo_t::exe (env_t &env, local_scope_t &local_scope)
@@ -1182,13 +1104,9 @@
               return;
           }
           else {
-              auto box = box_of_tag (env, obj->tag);
-              if (box->empty_p) {
-                  cout << "- fatal error : field_jo_t::exe" << "\n"
-                       << "  unknown field : " << this->name << "\n"
-                       << "  empty box" << "\n";
-                  exit (1);
-              }
+              auto it_box = env.box_map.find (obj->tag);
+              assert (it_box != env.box_map.end ());
+              auto box = it_box->second;
               auto it = box->obj->obj_map.find (this->name);
               if (it != box->obj->obj_map.end ()) {
                   if (closure_p (env, it->second)) {
@@ -1298,7 +1216,7 @@
           }
           else {
               cout << "- fatal error : case_jo_t::exe mismatch" << "\n";
-              cout << "  tag : " << name_of_tag (env, obj->tag) << "\n";
+              cout << "  tag : " << obj->tag << "\n";
               exit (1);
           }
 
@@ -1409,7 +1327,7 @@
     bool
     type_p (env_t &env, shared_ptr <obj_t> a)
     {
-        return a->tag == tagging (env, "type-t");
+        return a->tag == "type-t";
     }
     void
     assign (env_t &env,
@@ -1460,6 +1378,21 @@
         define (env, name, make_shared <prim_o>
                 (env, name_vector, fn, obj_map_t ()));
     }
+    bool
+    tag_name_p (name_t name)
+    {
+        auto size = name.size ();
+        if (size < 3) return false;
+        if (name [size - 1] != 't') return false;
+        if (name [size - 2] != '-') return false;
+        return true;
+    }
+    void
+    define_type (env_t &env, name_t name)
+    {
+        define (env, name, make_shared <type_o>
+                (env, name, obj_map_t ()));
+    }
     shared_ptr <frame_t>
     new_frame_from_jojo (shared_ptr <jojo_t> jojo)
     {
@@ -1500,33 +1433,33 @@
     {
        return make_shared <data_o>
            (env,
-            tagging (env, "true-t"),
+            "true-t",
             obj_map_t ());
     }
     bool
     true_p (env_t &env, shared_ptr <obj_t> a)
     {
-        return a->tag == tagging (env, "true-t");
+        return a->tag == "true-t";
     }
     shared_ptr <obj_t>
     false_c (env_t &env)
     {
        return make_shared <data_o>
            (env,
-            tagging (env, "false-t"),
+            "false-t",
             obj_map_t ());
     }
     bool
     false_p (env_t &env, shared_ptr <obj_t> a)
     {
-        return a->tag == tagging (env, "false-t");
+        return a->tag == "false-t";
     }
     shared_ptr <obj_t>
     jj_true_c (env_t &env)
     {
        return make_shared <data_o>
            (env,
-            tagging (env, "true-t"),
+            "true-t",
             obj_map_t ());
     }
     shared_ptr <obj_t>
@@ -1534,14 +1467,14 @@
     {
        return make_shared <data_o>
            (env,
-            tagging (env, "false-t"),
+            "false-t",
             obj_map_t ());
     }
     void
     import_bool (env_t &env)
     {
-        tagging (env, "true-t");
-        tagging (env, "false-t");
+        define_type (env, "true-t");
+        define_type (env, "false-t");
         define (env, "true-c", jj_true_c (env));
         define (env, "false-c", jj_false_c (env));
     }
@@ -1578,7 +1511,7 @@
     };
     int_o::int_o (env_t &env, int i)
     {
-        this->tag = tagging (env, "int-t");
+        this->tag = "int-t";
         this->i = i;
     }
     string
@@ -1596,12 +1529,12 @@
     bool
     int_p (env_t &env, shared_ptr <obj_t> a)
     {
-        return a->tag == tagging (env, "int-t");
+        return a->tag == "int-t";
     }
     void
     import_int (env_t &env)
     {
-        tagging (env, "int-t");
+        define_type (env, "int-t");
     }
     void
     test_int ()
@@ -1617,7 +1550,7 @@
     };
     str_o::str_o (env_t &env, string str)
     {
-        this->tag = tagging (env, "str-t");
+        this->tag = "str-t";
         this->str = str;
     }
     string
@@ -1635,7 +1568,7 @@
     bool
     str_p (env_t &env, shared_ptr <obj_t> a)
     {
-        return a->tag == tagging (env, "str-t");
+        return a->tag == "str-t";
     }
     sig_t jj_str_print_sig = { "str-print", "str" };
     // -- str-t ->
@@ -1649,7 +1582,7 @@
     void
     import_str (env_t &env)
     {
-        tagging (env, "str-t");
+        define_type (env, "str-t");
         define_prim (env,
                      jj_str_print_sig,
                      jj_str_print);
@@ -1664,7 +1597,7 @@
     {
        return make_shared <data_o>
            (env,
-            tagging (env, "null-t"),
+            "null-t",
             obj_map_t ());
     }
     shared_ptr <obj_t>
@@ -1677,13 +1610,13 @@
         obj_map ["cdr"] = cdr;
         return make_shared <data_o>
             (env,
-             tagging (env, "cons-t"),
+             "cons-t",
              obj_map);
     }
     bool
     cons_p (env_t &env, shared_ptr <obj_t> a)
     {
-        return a->tag == tagging (env, "cons-t");
+        return a->tag == "cons-t";
     }
     shared_ptr <obj_t>
     car (env_t &env, shared_ptr <obj_t> cons)
@@ -1700,7 +1633,7 @@
     bool
     null_p (env_t &env, shared_ptr <obj_t> a)
     {
-        return a->tag == tagging (env, "null-t");
+        return a->tag == "null-t";
     }
     bool
     list_p (env_t &env, shared_ptr <obj_t> a)
@@ -1724,7 +1657,7 @@
     {
        return make_shared <data_o>
            (env,
-            tagging (env, "null-t"),
+            "null-t",
             obj_map_t ());
     }
     shared_ptr <data_cons_o>
@@ -1732,15 +1665,15 @@
     {
         return make_shared <data_cons_o>
             (env,
-             tagging (env, "cons-t"),
+             "cons-t",
              name_vector_t ({ "car", "cdr" }),
              obj_map_t ());
     }
     void
     import_list (env_t &env)
     {
-        tagging (env, "null-t");
-        tagging (env, "cons-t");
+        define_type (env, "null-t");
+        define_type (env, "cons-t");
         define (env, "null-c", jj_null_c (env));
         define (env, "cons-c", jj_cons_c (env));
     }
@@ -1821,7 +1754,7 @@
       }
     vect_o::vect_o (env_t &env, obj_vector_t obj_vector)
     {
-        this->tag = tagging (env, "vect-t");
+        this->tag = "vect-t";
         this->obj_vector = obj_vector;
     }
     bool
@@ -1868,7 +1801,7 @@
     bool
     vect_p (env_t &env, shared_ptr <obj_t> a)
     {
-        return a->tag == tagging (env, "vect-t");
+        return a->tag == "vect-t";
     }
     shared_ptr <vect_o>
     list_to_vect (env_t &env, shared_ptr <obj_t> l)
@@ -1909,7 +1842,7 @@
     void
     import_vect (env_t &env)
     {
-        tagging (env, "vect-t");
+        define_type (env, "vect-t");
         define_prim (env,
                      jj_list_to_vect_sig,
                      jj_list_to_vect);
@@ -2004,7 +1937,7 @@
       }
     dict_o::dict_o (env_t &env, obj_map_t obj_map)
     {
-        this->tag = tagging (env, "dict-t");
+        this->tag = "dict-t";
         this->obj_map = obj_map;
     }
     bool
@@ -2025,7 +1958,7 @@
     bool
     dict_p (env_t &env, shared_ptr <obj_t> a)
     {
-        return a->tag == tagging (env, "dict-t");
+        return a->tag == "dict-t";
     }
     shared_ptr <dict_o>
     list_to_dict (env_t &env, shared_ptr <obj_t> l)
@@ -2057,7 +1990,7 @@
     void
     import_dict (env_t &env)
     {
-        tagging (env, "dict-t");
+        define_type (env, "dict-t");
     }
     void
     test_dict ()
@@ -2398,8 +2331,8 @@
             return "{" + sexp_list_repr (env, l) + "}";
         }
         else {
+            assert (str_p (env, a));
             auto str = static_pointer_cast <str_o> (a);
-            assert (str->tag == tagging (env, "str-t"));
             return str->str;
         }
     }
@@ -2569,7 +2502,7 @@
     top_keyword_o::
     top_keyword_o (env_t &env, top_keyword_fn fn)
     {
-        this->tag = tagging (env, "top-keyword-t");
+        this->tag = "top-keyword-t";
         this->fn = fn;
     }
     bool
@@ -2581,7 +2514,7 @@
     bool
     top_keyword_p (env_t &env, shared_ptr <obj_t> a)
     {
-        return a->tag == tagging (env, "top-keyword-t");
+        return a->tag == "top-keyword-t";
     }
     void
     define_top_keyword (env_t &env, name_t name, top_keyword_fn fn)
@@ -2591,7 +2524,7 @@
     void
     import_top_keyword (env_t &env)
     {
-        tagging (env, "top-keyword-t");
+        define_type (env, "top-keyword-t");
     }
     using local_ref_map_t = map <name_t, local_ref_jo_t>;
     local_ref_map_t
@@ -2632,7 +2565,7 @@
     keyword_o::
     keyword_o (env_t &env, keyword_fn fn)
     {
-        this->tag = tagging (env, "keyword-t");
+        this->tag = "keyword-t";
         this->fn = fn;
     }
     bool
@@ -2644,7 +2577,7 @@
     bool
     keyword_p (env_t &env, shared_ptr <obj_t> a)
     {
-        return a->tag == tagging (env, "keyword-t");
+        return a->tag == "keyword-t";
     }
     void
     define_keyword (env_t &env, name_t name, keyword_fn fn)
@@ -2665,7 +2598,7 @@
     void
     import_keyword (env_t &env)
     {
-        tagging (env, "keyword-t");
+        define_type (env, "keyword-t");
     }
     bool
     keyword_sexp_p (env_t &env, shared_ptr <obj_t> sexp)
@@ -3123,7 +3056,7 @@
           auto head = static_pointer_cast <str_o> (car (env, body));
           auto type_name = head->str;
           auto data_name = type_name_to_data_name (type_name);
-          auto type_tag = tagging (env, type_name);
+          auto type_tag = type_name;
           auto rest = cdr (env, body);
           auto data_body = cdr (env, (car (env, rest)));
           if (null_p (env, data_body)) {
@@ -3325,7 +3258,7 @@
                 default_jojo = jojo;
             }
             else {
-                auto tag = tagging (env, name);
+                auto tag = name;
                 auto jojo = sexp_list_compile (env, local_ref_map, rest);
                 jojo_map.insert (make_pair (tag, jojo));
                 body = cdr (env, body);
@@ -3472,13 +3405,15 @@
     void jj_typeof (env_t &env, obj_map_t &obj_map)
     {
         auto obj = obj_map ["obj"];
-        auto box = box_of_tag (env, obj->tag);
+        auto it_box = env.box_map.find (obj->tag);
+        assert (it_box != env.box_map.end ());
+        auto box = it_box->second;
         env.obj_stack.push (box->obj);
     }
     void
     import_type (env_t &env)
     {
-        tagging (env, "type-t");
+        define_type (env, "type-t");
         define_prim (env,
                      jj_typeof_sig,
                      jj_typeof);
@@ -3553,9 +3488,9 @@
     void
     import_misc (env_t &env)
     {
-        tagging (env, "closure-t");
-        tagging (env, "data-cons-t");
-        tagging (env, "prim-t");
+        define_type (env, "closure-t");
+        define_type (env, "data-cons-t");
+        define_type (env, "prim-t");
         define_prim (env,
                      jj_repr_sig,
                      jj_repr);
@@ -3614,7 +3549,7 @@
           };
 
           define (env, "last-cry", make_shared <data_o>
-                  (env, tagging (env, "cons-t"), obj_map));
+                  (env, "cons-t", obj_map));
 
           jo_vector_t jo_vector = {
               new ref_jo_t (boxing (env, "last-cry")),
@@ -3632,7 +3567,7 @@
               assert_stack_size (env, 3);
               assert_pop_eq (env, make_shared <data_o>
                              (env,
-                              tagging (env, "cons-t"),
+                              "cons-t",
                               obj_map));
               assert_pop_eq (env, make_shared <str_o> (env, "world"));
               assert_pop_eq (env, make_shared <str_o> (env, "bye"));
@@ -3724,7 +3659,7 @@
           define (env, "s2", make_shared <str_o> (env, "world"));
           define (env, "cons-c", make_shared <data_cons_o>
                   (env,
-                   tagging (env, "cons-t"),
+                   "cons-t",
                    name_vector_t ({ "car", "cdr" }),
                    obj_map_t ()));
 
@@ -3756,7 +3691,7 @@
           define (env, "s2", make_shared <str_o> (env, "world"));
           define (env, "cons-c", make_shared <data_cons_o>
                   (env,
-                   tagging (env, "cons-t"),
+                   "cons-t",
                    name_vector_t ({ "car", "cdr" }),
                    obj_map_t ()));
 

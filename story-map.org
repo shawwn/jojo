@@ -1,11 +1,11 @@
 #+html_head: <link rel="stylesheet" href="css/org-page.css"/>
 #+title: Story Map
-
+- data_pred_o -- for `<data>-p`
+- tk_assign_data -- generate data_pred_o
+- handle nested-fields
 * [note]
 *** can not handle big file -- due to the recursion in sexp parser
 * a interpreter uses dynamic threaded code
-*** data_pred_o -- for `<data>-p`
-*** tk_assign_data -- generate data_pred_o
 * with lisp like macro system
 *** (~>)
 *** (vect~>)
@@ -17,7 +17,6 @@
 *** (= <name> (macro))
 * with oop system
 * with simple ffi to c++
-*** handle name.name.name
 * easy to use and debug
 * with simple module system
 *** [maybe] one file one module
