@@ -118,8 +118,3 @@ code_eval (env_t &env, shared_ptr <str_o> code)
     auto sexp_list = parse_sexp_list (env, word_list);
     top_sexp_list_eval (env, sexp_list);
 }
-
-void
-test_eval ()
-{
-}

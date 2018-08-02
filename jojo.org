@@ -1629,15 +1629,6 @@
     }
     #+end_src
 
-*** test_type
-
-    #+begin_src cpp
-    void
-    test_type ()
-    {
-    }
-    #+end_src
-
 * bool
 
 *** true_c
@@ -2660,15 +2651,6 @@
     }
     #+end_src
 
-*** test_sexp
-
-    #+begin_src cpp
-    void
-    test_sexp ()
-    {
-    }
-    #+end_src
-
 * top_keyword
 
 *** top_keyword_fn
@@ -3663,15 +3645,6 @@
     }
     #+end_src
 
-*** test_compile
-
-    #+begin_src cpp
-    void
-    test_compile ()
-    {
-    }
-    #+end_src
-
 * eval
 
 *** top_keyword_sexp_p
@@ -3822,15 +3795,6 @@
         auto word_list = scan_word_list (env, code);
         auto sexp_list = parse_sexp_list (env, word_list);
         top_sexp_list_eval (env, sexp_list);
-    }
-    #+end_src
-
-*** test_eval
-
-    #+begin_src cpp
-    void
-    test_eval ()
-    {
     }
     #+end_src
 
@@ -4918,28 +4882,6 @@
       }
       #+end_src
 
-*** import_compile
-
-***** import_compile
-
-      #+begin_src cpp
-      void
-      import_compile (env_t &env)
-      {
-      }
-      #+end_src
-
-*** import_eval
-
-***** import_eval
-
-      #+begin_src cpp
-      void
-      import_eval (env_t &env)
-      {
-      }
-      #+end_src
-
 *** import_syntax
 
 ***** import_syntax
@@ -5394,9 +5336,6 @@
         test_vect ();
         test_dict ();
         test_scan ();
-        test_sexp ();
-        test_eval ();
-        test_type ();
     }
     #+end_src
 
@@ -5415,8 +5354,6 @@
         import_sexp (env);
         import_top_keyword (env);
         import_keyword (env);
-        import_compile (env);
-        import_eval (env);
         import_syntax (env);
         import_type (env);
         import_stack (env);

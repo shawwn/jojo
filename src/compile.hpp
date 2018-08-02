@@ -16,6 +16,3 @@ shared_ptr <jojo_t>
 sexp_list_compile (env_t &env,
                    local_ref_map_t &local_ref_map,
                    shared_ptr <obj_t> sexp_list);
-
-void
-test_compile ();

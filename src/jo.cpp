@@ -27,4 +27,3 @@ jo_t::repr (env_t &env)
 {
     return "#<unknown-jo>";
 }
-#+end_src

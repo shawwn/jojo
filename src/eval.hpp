@@ -27,6 +27,3 @@ top_sexp_list_eval (env_t &env, shared_ptr <obj_t> sexp_list);
 
 void
 code_eval (env_t &env, shared_ptr <str_o> code);
-
-void
-test_eval ();

@@ -1,5 +1,6 @@
 #include "assign.hpp"
 
+#include "../object/type.hpp"
 #include "../object/data.hpp"
 #include "../object/data_cons.hpp"
 #include "../object/list.hpp"

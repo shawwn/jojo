@@ -1111,10 +1111,6 @@
         define (env, name, make_shared <type_o>
                 (env, name, obj_map_t ()));
     }
-    void
-    test_type ()
-    {
-    }
     shared_ptr <obj_t>
     true_c (env_t &env)
     {
@@ -1785,10 +1781,6 @@
                 sexp_list_repr (env, cdr (env, sexp_list));
         }
     }
-    void
-    test_sexp ()
-    {
-    }
     using top_keyword_fn = function
         <void (env_t &, shared_ptr <obj_t>)>;
     struct top_keyword_o: obj_t
@@ -2412,10 +2404,6 @@
             return jojo_append (head_jojo, body_jojo);
         }
     }
-    void
-    test_compile ()
-    {
-    }
     bool
     top_keyword_sexp_p (env_t &env, shared_ptr <obj_t> sexp)
     {
@@ -2526,10 +2514,6 @@
         auto word_list = scan_word_list (env, code);
         auto sexp_list = parse_sexp_list (env, word_list);
         top_sexp_list_eval (env, sexp_list);
-    }
-    void
-    test_eval ()
-    {
     }
         bool
         assign_data_p (env_t &env, shared_ptr <obj_t> body)
@@ -3250,14 +3234,6 @@
           define_type (env, "keyword-t");
       }
       void
-      import_compile (env_t &env)
-      {
-      }
-      void
-      import_eval (env_t &env)
-      {
-      }
-      void
       import_syntax (env_t &env)
       {
           define_top_keyword (env, "=", tk_assign);
@@ -3613,9 +3589,6 @@
         test_vect ();
         test_dict ();
         test_scan ();
-        test_sexp ();
-        test_eval ();
-        test_type ();
     }
     void
     import_all (env_t &env)
@@ -3629,8 +3602,6 @@
         import_sexp (env);
         import_top_keyword (env);
         import_keyword (env);
-        import_compile (env);
-        import_eval (env);
         import_syntax (env);
         import_type (env);
         import_stack (env);

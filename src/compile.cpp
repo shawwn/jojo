@@ -68,8 +68,3 @@ sexp_list_compile (env_t &env,
         return jojo_append (head_jojo, body_jojo);
     }
 }
-
-void
-test_compile ()
-{
-}

@@ -63,6 +63,3 @@ sexp_repr (env_t &env, shared_ptr <obj_t> a);
 
 string
 sexp_list_repr (env_t &env, shared_ptr <obj_t> sexp_list);
-
-void
-test_sexp ();
