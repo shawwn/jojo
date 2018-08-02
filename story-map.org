@@ -3,6 +3,7 @@
 - data_pred_o -- for `<data>-p`
 - tk_assign_data -- generate data_pred_o
 - handle nested-fields
+- every obj_t store a box to its type -- to make method call faster
 * [note]
 *** can not handle big file -- due to the recursion in sexp parser
 * a interpreter uses dynamic threaded code

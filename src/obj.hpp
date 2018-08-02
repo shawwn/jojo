@@ -1,8 +1,8 @@
 #pragma once
 
-#include "jojo.hpp"
+#include "libjojo.hpp"
 
-struct obj_t;
+struct obj_t
 {
     tag_t tag;
     obj_map_t obj_map;

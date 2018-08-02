@@ -1,6 +1,6 @@
 #pragma once
 
-#include "jojo.hpp"
+#include "libjojo.hpp"
 
 struct jo_t
 {
