@@ -2,6 +2,9 @@
 
 #include "../libjojo.hpp"
 
+#include "str.hpp"
+#include "list.hpp"
+
 struct vect_o: obj_t
 {
     obj_vector_t obj_vector;

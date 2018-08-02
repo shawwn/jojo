@@ -1,5 +1,7 @@
 #include "sexp.hpp"
 
+#include "scan.hpp"
+
 // - about literal in quote
 //   | ( ) | list-t |
 //   | [ ] | vect-t |

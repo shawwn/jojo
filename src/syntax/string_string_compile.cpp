@@ -2,6 +2,8 @@
 
 #include "lit_jo.hpp"
 
+#include "../object/str.hpp"
+
 bool
 string_string_p (string str)
 {

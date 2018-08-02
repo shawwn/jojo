@@ -1,4 +1,5 @@
 #include "data_cons.hpp"
+#include "data.hpp"
 
 data_cons_o::
 data_cons_o (env_t &env,

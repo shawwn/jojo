@@ -1,6 +1,6 @@
 #include "libjojo.hpp"
 
-#include "../object/str.hpp"
+#include "object/str.hpp"
 
 #include "eval.hpp"
 

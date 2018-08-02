@@ -1,6 +1,5 @@
 #include "import_sexp.hpp"
 
-#include "../object/sexp.hpp"
 #include "../object/str.hpp"
 #include "../object/prim.hpp"
 

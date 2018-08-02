@@ -10,16 +10,6 @@ struct str_o: obj_t
     string repr (env_t &env);
 };
 
-str_o::str_o (env_t &env, string str);
+bool str_p (env_t &env, shared_ptr <obj_t> a);
 
-string
-str_o::repr (env_t &env);
-
-bool
-str_o::equal (env_t &env, shared_ptr <obj_t> obj);
-
-bool
-str_p (env_t &env, shared_ptr <obj_t> a);
-
-void
-test_str ();
+void test_str ();

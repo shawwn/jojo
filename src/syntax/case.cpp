@@ -3,6 +3,7 @@
 #include "case_jo.hpp"
 
 #include "../object/str.hpp"
+#include "../object/list.hpp"
 
 #include "../compile.hpp"
 

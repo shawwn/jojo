@@ -2,8 +2,13 @@
 
 #include "lit_jo.hpp"
 
+#include "int_string_compile.hpp"
+#include "string_string_compile.hpp"
+#include "key_string_compile.hpp"
+
 #include "../object/str.hpp"
 #include "../object/int.hpp"
+#include "../object/list.hpp"
 #include "../object/vect.hpp"
 #include "../object/dict.hpp"
 

@@ -1,4 +1,7 @@
-#include "collect_dict_jo_t.hpp"
+#include "collect_dict_jo.hpp"
+
+#include "../object/str.hpp"
+#include "../object/dict.hpp"
 
 collect_dict_jo_t::
 collect_dict_jo_t (size_t counter)

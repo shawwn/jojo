@@ -1,5 +1,7 @@
 #include "collect_vect_jo.hpp"
 
+#include "../object/vect.hpp"
+
 collect_vect_jo_t::
 collect_vect_jo_t (size_t counter)
 {

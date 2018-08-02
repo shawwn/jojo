@@ -2,6 +2,13 @@
 
 #include "apply_jo.hpp"
 
+#include "field_string_compile.hpp"
+
+#include "../object/str.hpp"
+#include "../object/list.hpp"
+
+#include "../compile.hpp"
+
 bool
 field_head_p (env_t &env, shared_ptr <obj_t> head)
 {

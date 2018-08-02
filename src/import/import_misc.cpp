@@ -3,6 +3,7 @@
 #include "../object/type.hpp"
 #include "../object/prim.hpp"
 #include "../object/str.hpp"
+#include "../object/bool.hpp"
 
 sig_t jj_repr_sig = { "repr", "obj" };
 void jj_repr (env_t &env, obj_map_t &obj_map)

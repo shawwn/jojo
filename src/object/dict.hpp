@@ -2,6 +2,9 @@
 
 #include "../libjojo.hpp"
 
+#include "str.hpp"
+#include "list.hpp"
+
 struct dict_o: obj_t
 {
     dict_o (env_t &env, obj_map_t obj_map);

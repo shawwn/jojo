@@ -2,6 +2,10 @@
 
 #include "collect_vect_jo.hpp"
 
+#include "../object/list.hpp"
+
+#include "../compile.hpp"
+
 shared_ptr <jojo_t>
 vect_compile (env_t &env,
               local_ref_map_t &local_ref_map,

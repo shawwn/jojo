@@ -2,6 +2,8 @@
 
 #include "field_jo.hpp"
 
+#include "../compile.hpp"
+
 bool
 field_string_p (string str)
 {

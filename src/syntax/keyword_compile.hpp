@@ -2,6 +2,10 @@
 
 #include "../libjojo.hpp"
 
+#include "../object/keyword.hpp"
+#include "../object/str.hpp"
+#include "../object/list.hpp"
+
 bool
 keyword_sexp_p (env_t &env, shared_ptr <obj_t> sexp);
 

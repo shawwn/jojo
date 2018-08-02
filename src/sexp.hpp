@@ -3,6 +3,9 @@
 #include "libjojo.hpp"
 
 #include "object/str.hpp"
+#include "object/list.hpp"
+#include "object/vect.hpp"
+#include "object/dict.hpp"
 
 // drop `,`
 shared_ptr <obj_t>

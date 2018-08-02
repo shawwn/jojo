@@ -2,6 +2,8 @@
 
 #include "assert_jo.hpp"
 
+#include "../compile.hpp"
+
 shared_ptr <jojo_t>
 k_assert (env_t &env,
           local_ref_map_t &local_ref_map,

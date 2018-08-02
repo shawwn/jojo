@@ -3,6 +3,7 @@
 #include "lit_jo.hpp"
 
 #include "../object/str.hpp"
+#include "../object/list.hpp"
 
 shared_ptr <jojo_t>
 k_note (env_t &env,

@@ -3,6 +3,7 @@
 #include "lambda_jo.hpp"
 
 #include "../object/str.hpp"
+#include "../object/list.hpp"
 #include "../object/vect.hpp"
 
 #include "../compile.hpp"

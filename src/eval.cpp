@@ -1,5 +1,10 @@
 #include "eval.hpp"
 
+#include "object/top_keyword.hpp"
+
+#include "sexp.hpp"
+#include "compile.hpp"
+
 bool
 top_keyword_sexp_p (env_t &env, shared_ptr <obj_t> sexp)
 {

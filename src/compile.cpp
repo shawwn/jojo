@@ -1,12 +1,19 @@
 #include "compile.hpp"
 
+#include "object/str.hpp"
+#include "object/list.hpp"
+#include "object/vect.hpp"
+#include "object/dict.hpp"
+
 #include "syntax/field_string_compile.hpp"
 #include "syntax/string_string_compile.hpp"
 #include "syntax/key_string_compile.hpp"
 #include "syntax/int_string_compile.hpp"
 #include "syntax/ref_compile.hpp"
 #include "syntax/vect_compile.hpp"
-#include "syntax/vect_compile.hpp"
+#include "syntax/dict_compile.hpp"
+#include "syntax/keyword_compile.hpp"
+#include "syntax/call_compile.hpp"
 
 shared_ptr <jojo_t>
 string_compile (env_t &env,
