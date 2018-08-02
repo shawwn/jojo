@@ -1,5 +1,28 @@
 #include "env.hpp"
 
+jojo_t::
+jojo_t (jo_vector_t jo_vector)
+{
+    this->jo_vector = jo_vector;
+}
+
+jojo_t::
+~jojo_t ()
+{
+    for (jo_t *jo_ptr: this->jo_vector)
+        delete jo_ptr;
+}
+
+shared_ptr <jojo_t>
+jojo_append (shared_ptr <jojo_t> ante,
+             shared_ptr <jojo_t> succ)
+{
+    auto jo_vector = jo_vector_t ();
+    for (auto x: ante->jo_vector) jo_vector.push_back (x->copy ());
+    for (auto x: succ->jo_vector) jo_vector.push_back (x->copy ());
+    return make_shared <jojo_t> (jo_vector);
+}
+
 frame_t::frame_t (shared_ptr <jojo_t> jojo,
                   local_scope_t local_scope)
 {
@@ -134,9 +157,9 @@ env_t::frame_stack_report ()
          << "frame_stack - " << "\n";
     frame_stack_t frame_stack = env.frame_stack;
     while (! frame_stack.empty ()) {
-        auto frame = frame_stack.top ();
-        frame_report (env, frame);
-        frame_stack.pop ();
+       auto frame = frame_stack.top ();
+       frame_report (env, frame);
+       frame_stack.pop ();
     }
 }
 

@@ -18,19 +18,19 @@ struct env_t
     void step_and_report ();
 };
 
+struct jojo_t
+{
+    jo_vector_t jo_vector;
+    jojo_t (jo_vector_t jo_vector);
+    ~jojo_t ();
+};
+
 struct frame_t
 {
     size_t index;
     shared_ptr <jojo_t> jojo;
     local_scope_t local_scope;
     frame_t (shared_ptr <jojo_t> jojo, local_scope_t local_scope);
-};
-
-struct jojo_t
-{
-    jo_vector_t jo_vector;
-    jojo_t (jo_vector_t jo_vector);
-    ~jojo_t ();
 };
 
 struct box_t
@@ -40,6 +40,10 @@ struct box_t
     box_t ();
     box_t (shared_ptr <obj_t> obj);
 };
+
+shared_ptr <jojo_t>
+jojo_append (shared_ptr <jojo_t> ante,
+             shared_ptr <jojo_t> succ);
 
 void
 jojo_print (env_t &env, shared_ptr <jojo_t> jojo);
@@ -51,7 +55,6 @@ jojo_print_with_index (env_t &env,
 
 void
 frame_report (env_t &env, shared_ptr <frame_t> frame);
-
 
 box_t *
 boxing (env_t &env, name_t name);
