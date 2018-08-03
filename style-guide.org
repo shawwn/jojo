@@ -3,7 +3,7 @@
 
 * org-mode
 
-  - [[./old/without-org-mode][reason to use org-mode]]
+  - [[https://github.com/xieyuheng/jojo/tree/master/old/without-org-mode][reason to not quit using org-mode]]
 
 * naming
 
