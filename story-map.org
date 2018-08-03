@@ -1,6 +1,6 @@
 #+html_head: <link rel="stylesheet" href="css/org-page.css"/>
 #+title: Story Map
-- style guide
+- style-guide.org
 - data_pred_o -- for `<data>-p`
 - tk_assign_data -- generate data_pred_o
 - handle nested-fields

@@ -1,7 +1,7 @@
 ### About do not use org-mode
 
 This `src/` tree contains an effort to quit using org-mode,
-- by separating one `.org` file to many `.hpp` and `.cpp` files.
+by separating one `.org` file to many `.hpp` and `.cpp` files.
 
 The experience are :
 - The overall build time went from 10s to 130s.
@@ -12,6 +12,6 @@ The experience are :
     becomes re-structuring the source-tree in file system.
 
 Thus, I decide to not quit org-mode,
-- to make the code easier to change,
-- easier to re-structuring
-- and easier to view.
+to make the code easier to change,
+easier to re-structuring
+and easier to view.
