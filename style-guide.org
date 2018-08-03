@@ -1,0 +1,20 @@
+#+html_head: <link rel="stylesheet" href="css/org-page.css"/>
+#+title: Style Guide
+
+* org-mode
+
+  - [[./old/without-org-mode][reason to use org-mode]]
+
+* naming
+
+*** in c++
+
+    - do not use `camelCase`, use `snake_case` instead.
+
+    - use `_t` for type, `_p` for predicate
+
+*** in jojo
+
+    - do not use `camelCase`, use `lisp-case` instead.
+
+    - use `-t` for type, `-p` for predicate
