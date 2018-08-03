@@ -55,7 +55,7 @@ build_all () {
     # cd syntax; build; cd ..
     # cd test; build; cd ..
     # cd object; build; cd ..
-    $C $F -o jojo jojo.o $(find | grep "\.o")
+    $C $F -o jojo $(find | grep "\.o")
 }
 
 main () {
