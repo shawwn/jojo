@@ -1,2 +1,2 @@
 (assert (equal 123 123))
-(assert (equal int-t (typeof 123)))
+(assert (equal int-t (type-of 123)))

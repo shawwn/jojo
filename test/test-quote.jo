@@ -15,11 +15,11 @@
                    (cons-c 'c
                      null-c)))))
 
-(assert (equal vect-t (typeof (quote [a b c]))))
-(assert (equal vect-t (typeof '[a b c])))
+(assert (equal vect-t (type-of (quote [a b c]))))
+(assert (equal vect-t (type-of '[a b c])))
 
-(assert (equal dict-t (typeof (quote {a b c d}))))
-(assert (equal dict-t (typeof '{a b c d})))
+(assert (equal dict-t (type-of (quote {a b c d}))))
+(assert (equal dict-t (type-of '{a b c d})))
 
 (= d '{a b c d})
 

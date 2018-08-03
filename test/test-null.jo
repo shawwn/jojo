@@ -1,6 +1,6 @@
 (= x (cons-c null-c null-c))
-(assert (equal data-cons-t (typeof cons-c)))
-(assert (equal null-t (typeof null-c)))
+(assert (equal data-cons-t (type-of cons-c)))
+(assert (equal null-t (type-of null-c)))
 (assert (equal x x))
 
 (= null null-c)
