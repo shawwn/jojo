@@ -3,7 +3,7 @@
 This `src/` tree contains an effort to quit using org-mode,
 by separating one `.org` file to many `.hpp` and `.cpp` files.
 
-I with to quit using org-mode,
+I wanted to quit using org-mode,
 because it will make the project more accessible to non org-mode users.
 
 The experience are :
