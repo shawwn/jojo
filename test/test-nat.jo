@@ -25,8 +25,14 @@
 (assert (equal (nat-add two two) four))
 (assert (equal (nat-mul two two) four))
 
-(= (succ.inc)
+(= (succ.add1)
+    (nat-add this one))
+
+(assert (equal (one.add1) two))
+(assert (equal (two.add1) three))
+
+(= succ.inc
    (nat-add this one))
 
-(assert (equal (one.inc) two))
-(assert (equal (two.inc) three))
+(assert (equal one.inc two))
+(assert (equal two.inc three))

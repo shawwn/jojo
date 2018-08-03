@@ -1915,17 +1915,21 @@
               auto it = obj->obj_map.find (this->name);
               if (it != obj->obj_map.end ()) {
                   env.obj_stack.push (it->second);
-                  return;
               }
               else {
                   auto type = type_of (env, obj);
                   auto it = type->obj_map.find (this->name);
                   if (it != type->obj_map.end ()) {
                       if (it->second->tag == "closure-t") {
+                          auto method = static_pointer_cast <closure_o>
+                              (it->second);
+                          assert (method->name_vector.size () == 1);
                           env.obj_stack.push (obj);
+                          method->apply (env, 1);
                       }
-                      env.obj_stack.push (it->second);
-                      return;
+                      else {
+                          env.obj_stack.push (it->second);
+                      }
                   }
                   else {
                       cout << "- fatal error : field_jo_t::exe" << "\n"
@@ -2361,14 +2365,16 @@
             auto head = car (env, sexp);
             auto body = cdr (env, sexp);
             auto jo_vector = jo_vector_t ();
-            if (field_head_p (env, head)) {
-                jo_vector.push_back
-                    (new apply_jo_t (list_length (env, body) + 1));
-            }
-            else {
-                jo_vector.push_back
-                    (new apply_jo_t (list_length (env, body)));
-            }
+            // if (field_head_p (env, head)) {
+            //     jo_vector.push_back
+            //         (new apply_jo_t (list_length (env, body) + 1));
+            // }
+            // else {
+            //     jo_vector.push_back
+            //         (new apply_jo_t (list_length (env, body)));
+            // }
+            jo_vector.push_back
+                (new apply_jo_t (list_length (env, body)));
             auto jojo = make_shared <jojo_t> (jo_vector);
             auto head_jojo = sexp_compile (env, local_ref_map, head);
             auto body_jojo = sexp_list_compile (env, local_ref_map, body);
@@ -2690,41 +2696,21 @@
                 return sexp;
         }
         shared_ptr <obj_t>
-        lambda_sexp_patch_this (env_t &env, shared_ptr <obj_t> lambda_sexp)
-        {
-            auto vect = static_pointer_cast <vect_o>
-                (car (env, (cdr (env, lambda_sexp))));
-            auto vector = vect->obj_vector;
-            reverse (vector.begin (),
-                     vector.end ());
-            vector.push_back (make_shared <str_o> (env, "this"));
-            reverse (vector.begin (),
-                     vector.end ());
-            return cons_c (env,
-                           car (env, lambda_sexp),
-                           cons_c (env,
-                                   make_shared <vect_o> (env, vector),
-                                   cdr (env, cdr (env, lambda_sexp))));
-        }
-        shared_ptr <obj_t>
         rest_patch_this (env_t &env, shared_ptr <obj_t> rest)
         {
-            if (null_p (env, rest))
-                return rest;
-            auto sexp = car (env, rest);
-            if (! cons_p (env, sexp))
-                return rest;
-            auto head = car (env, sexp);
-            if (! str_p (env, head))
-                return rest;
-            auto str = static_pointer_cast <str_o> (head);
-            if (str->str == "lambda") {
-                return cons_c
-                    (env,
-                     lambda_sexp_patch_this (env, sexp),
-                     cdr (env, rest));
-            }
-            else return rest;
+            auto this_str = make_shared <str_o> (env, "this");
+            obj_vector_t obj_vector = { this_str };
+            auto vect = make_shared <vect_o> (env, obj_vector);
+            auto lambda_body = cons_c (env, vect, rest);
+            lambda_body = cons_c
+                (env,
+                 make_shared <str_o> (env, "lambda"),
+                 lambda_body);
+            lambda_body = cons_c
+                (env,
+                 lambda_body,
+                 null_c (env));
+            return lambda_body;
         }
         void
         tk_assign_value (env_t &env, shared_ptr <obj_t> body)
