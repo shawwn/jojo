@@ -300,15 +300,6 @@ name_vector_and_obj_map_repr (env_t &env,
     return repr;
 }
 
-template <class T>
-T
-vector_rev_ref (vector <T> vect, size_t rev_index)
-{
-    size_t size = vect.size ();
-    size_t index = size - rev_index - 1;
-    return vect [index];
-}
-
 bind_vector_t
 bind_vector_from_name_vector (name_vector_t &name_vector)
 {

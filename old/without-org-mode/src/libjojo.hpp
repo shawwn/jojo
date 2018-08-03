@@ -214,10 +214,6 @@ name_vector_and_obj_map_repr (env_t &env,
                               name_vector_t &name_vector,
                               obj_map_t &obj_map);
 
-template <class T>
-T
-vector_rev_ref (vector <T> vect, size_t rev_index);
-
 bind_vector_t
 bind_vector_from_name_vector (name_vector_t &name_vector);
 

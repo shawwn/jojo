@@ -1,5 +1,6 @@
 #+html_head: <link rel="stylesheet" href="css/org-page.css"/>
 #+title: Story Map
+- style guide
 - data_pred_o -- for `<data>-p`
 - tk_assign_data -- generate data_pred_o
 - handle nested-fields
@@ -24,5 +25,3 @@
 *** [maybe] r7rs module system
 * with git based package manager
 * maintained by a community as a live system
-*** quit org-mode -- use header file -- no forward declarations
-*** style guide
