@@ -30,7 +30,7 @@ clean () {
 test () {
     for FILE in $(ls test | grep "\.jo" | grep "test-")
     do
-        echo "<test/$FILE>" && time ./jojo "test/$FILE" && echo "</test/$FILE>" && echo ""
+        ./jojo "test/$FILE"
     done
 }
 

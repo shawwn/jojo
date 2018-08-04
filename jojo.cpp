@@ -807,6 +807,118 @@
         repr += ")";
         return repr;
     }
+    struct type_o: obj_t
+    {
+        tag_t type_tag;
+        type_o (env_t &env,
+                tag_t type_tag,
+                obj_map_t obj_map);
+        bool equal (env_t &env, shared_ptr <obj_t> obj);
+        string repr (env_t &env);
+    };
+    type_o::type_o (env_t &env,
+                    tag_t type_tag,
+                    obj_map_t obj_map)
+    {
+        this->tag = "type-t";
+        this->type_tag = type_tag;
+        this->obj_map = obj_map;
+    }
+    string
+    type_o::repr (env_t &env)
+    {
+        return this->type_tag;
+    }
+    bool
+    type_o::equal (env_t &env, shared_ptr <obj_t> obj)
+    {
+        if (this->tag != obj->tag) return false;
+        auto that = static_pointer_cast <type_o> (obj);
+        if (this->type_tag != that->type_tag) return false;
+        return true;
+    }
+    shared_ptr <type_o>
+    find_type_from_prefix (env_t &env, name_t prefix)
+    {
+        auto string_vector = string_split (prefix, '.');
+        assert (string_vector.size () > 0);
+        auto top = string_vector [0];
+        auto it = env.box_map.find (top + "-t");
+        if (it != env.box_map.end ()) {
+            auto box = it->second;
+            if (box->empty_p) return nullptr;
+            auto obj = box->obj;
+            if (obj->tag != "type-t") return nullptr;
+            auto type = static_pointer_cast <type_o> (obj);
+            auto begin = string_vector.begin () + 1;
+            auto end = string_vector.end ();
+            for (auto it = begin; it != end; it++) {
+                auto field = *it;
+                field += "-t";
+                auto obj = type->obj_map [field];
+                if (obj->tag != "type-t") return nullptr;
+                type = static_pointer_cast <type_o> (obj);
+            }
+            return type;
+        }
+        return nullptr;
+    }
+    void
+    assign (env_t &env,
+            name_t prefix,
+            name_t name,
+            shared_ptr <obj_t> obj)
+    {
+        if (prefix == "") {
+            define (env, name, obj);
+            return;
+        }
+        auto type = find_type_from_prefix (env, prefix);
+        if (type) {
+            type->obj_map [name] = obj;
+        }
+        else {
+            cout << "- fatal error : assign fail" << "\n";
+            cout << "  unknown prefix : " << prefix << "\n";
+            exit (1);
+        }
+    }
+    void
+    assign_type (env_t &env,
+                 name_t prefix,
+                 name_t type_name,
+                 name_t type_tag)
+    {
+        auto type = make_shared <type_o>
+            (env, type_tag, obj_map_t ());
+        assign (env, prefix, type_name, type);
+    }
+    void
+    define_type (env_t &env, name_t name)
+    {
+        auto type_name = name;
+        auto type_tag = name;
+        assign_type (env, "", type_name, type_tag);
+    }
+    shared_ptr <type_o>
+    type_of (env_t &env, shared_ptr <obj_t> obj)
+    {
+        auto prefix = obj->tag;
+        prefix.pop_back ();
+        prefix.pop_back ();
+        auto type = find_type_from_prefix (env, prefix);
+        assert (type);
+        return type;
+    }
+    bool
+    tag_name_p (name_t name)
+    {
+        auto size = name.size ();
+        if (size < 3) return false;
+        if (name [size - 1] != 't') return false;
+        if (name [size - 2] != '-') return false;
+        return true;
+    }
     struct data_o: obj_t
     {
         data_o (env_t &env,
@@ -852,6 +964,117 @@
             repr += ")";
             return repr;
         }
+    }
+    void
+    assign_data (env_t &env,
+                 name_t prefix,
+                 name_t data_name,
+                 name_t type_tag)
+    {
+        auto data = make_shared <data_o>
+            (env, type_tag, obj_map_t ());
+        assign (env, prefix, data_name, data);
+    }
+    shared_ptr <obj_t>
+    true_c (env_t &env)
+    {
+       return make_shared <data_o>
+           (env, "true-t", obj_map_t ());
+    }
+    bool
+    true_p (env_t &env, shared_ptr <obj_t> a)
+    {
+        return a->tag == "true-t";
+    }
+    shared_ptr <obj_t>
+    false_c (env_t &env)
+    {
+       return make_shared <data_o>
+           (env, "false-t", obj_map_t ());
+    }
+    bool
+    false_p (env_t &env, shared_ptr <obj_t> a)
+    {
+        return a->tag == "false-t";
+    }
+    bool
+    bool_p (env_t &env, shared_ptr <obj_t> a)
+    {
+        return true_p (env, a)
+            || false_p (env, a);
+    }
+    void
+    test_bool ()
+    {
+    }
+    struct data_pred_o: obj_t
+    {
+        tag_t type_tag;
+        data_pred_o (env_t &env,
+                     tag_t type_tag);
+        void apply (env_t &env, size_t arity);
+        bool equal (env_t &env, shared_ptr <obj_t> obj);
+        string repr (env_t &env);
+    };
+    data_pred_o::
+    data_pred_o (env_t &env,
+                 tag_t type_tag)
+    {
+        this->tag = "data-pred-t";
+        this->type_tag = type_tag;
+    }
+    void
+    data_pred_o::apply (env_t &env, size_t arity)
+    {
+        if (arity == 1) {
+            auto obj = env.obj_stack.top ();
+            env.obj_stack.pop ();
+            if (obj->tag == this->type_tag)
+                env.obj_stack.push (true_c (env));
+            else
+                env.obj_stack.push (false_c (env));
+        }
+        else {
+            cout << "- fatal error : data_pred_o::apply" << "\n";
+            cout << "  arity of this kind of apply must be 1" << "\n";
+            cout << "  arity : " << arity << "\n";
+            exit (1);
+        }
+    }
+    bool
+    data_pred_o::equal (env_t &env, shared_ptr <obj_t> obj)
+    {
+        if (this->tag != obj->tag) return false;
+        auto that = static_pointer_cast <data_pred_o> (obj);
+        if (this->type_tag != that->type_tag) return false;
+        return true;
+    }
+    string
+    data_pred_o::repr (env_t &env)
+    {
+        string repr = "";
+        repr += this->type_tag;
+        repr.pop_back ();
+        repr.pop_back ();
+        repr += "-p";
+        return repr;
+    }
+    void
+    assign_data_pred (env_t &env,
+                      name_t prefix,
+                      name_t pred_name,
+                      name_t type_tag)
+    {
+        auto data_pred = make_shared <data_pred_o>
+            (env, type_tag);
+        assign (env, prefix, pred_name, data_pred);
+    }
+    void
+    define_data_pred (env_t &env,
+                      name_t pred_name,
+                      name_t type_tag)
+    {
+        assign_data_pred (env, "", pred_name, type_tag);
     }
     struct data_cons_o: obj_t
     {
@@ -939,6 +1162,17 @@
             repr += ")";
             return repr;
         }
+    }
+    void
+    assign_data_cons (env_t &env,
+                      name_t prefix,
+                      name_t data_name,
+                      name_t type_tag,
+                      name_vector_t name_vector)
+    {
+        auto data_cons = make_shared <data_cons_o>
+            (env, type_tag, name_vector, obj_map_t ());
+        assign (env, prefix, data_name, data_cons);
     }
     using prim_fn = function
         <void (env_t &, obj_map_t &)>;
@@ -1040,185 +1274,6 @@
         auto name_vector = name_vector_of_sig (sig);
         define (env, name, make_shared <prim_o>
                 (env, name_vector, fn, obj_map_t ()));
-    }
-    struct type_o: obj_t
-    {
-        tag_t type_tag;
-        type_o (env_t &env,
-                tag_t type_tag,
-                obj_map_t obj_map);
-        bool equal (env_t &env, shared_ptr <obj_t> obj);
-        string repr (env_t &env);
-    };
-    type_o::type_o (env_t &env,
-                    tag_t type_tag,
-                    obj_map_t obj_map)
-    {
-        this->tag = "type-t";
-        this->type_tag = type_tag;
-        this->obj_map = obj_map;
-    }
-    string
-    type_o::repr (env_t &env)
-    {
-        return this->type_tag;
-    }
-    bool
-    type_o::equal (env_t &env, shared_ptr <obj_t> obj)
-    {
-        if (this->tag != obj->tag) return false;
-        auto that = static_pointer_cast <type_o> (obj);
-        if (this->type_tag != that->type_tag) return false;
-        return true;
-    }
-    shared_ptr <type_o>
-    find_type_from_prefix (env_t &env, name_t prefix)
-    {
-        auto string_vector = string_split (prefix, '.');
-        assert (string_vector.size () > 0);
-        auto top = string_vector [0];
-        auto it = env.box_map.find (top + "-t");
-        if (it != env.box_map.end ()) {
-            auto box = it->second;
-            if (box->empty_p) return nullptr;
-            auto obj = box->obj;
-            if (obj->tag != "type-t") return nullptr;
-            auto type = static_pointer_cast <type_o> (obj);
-            auto begin = string_vector.begin () + 1;
-            auto end = string_vector.end ();
-            for (auto it = begin; it != end; it++) {
-                auto field = *it;
-                field += "-t";
-                auto obj = type->obj_map [field];
-                if (obj->tag != "type-t") return nullptr;
-                type = static_pointer_cast <type_o> (obj);
-            }
-            return type;
-        }
-        return nullptr;
-    }
-    void
-    assign (env_t &env,
-            name_t prefix,
-            name_t name,
-            shared_ptr <obj_t> obj)
-    {
-        if (prefix == "") {
-            define (env, name, obj);
-            return;
-        }
-        auto type = find_type_from_prefix (env, prefix);
-        if (type) {
-            type->obj_map [name] = obj;
-        }
-        else {
-            cout << "- fatal error : assign fail" << "\n";
-            cout << "  unknown prefix : " << prefix << "\n";
-            exit (1);
-        }
-    }
-    shared_ptr <type_o>
-    type_of (env_t &env, shared_ptr <obj_t> obj)
-    {
-        auto prefix = obj->tag;
-        prefix.pop_back ();
-        prefix.pop_back ();
-        auto type = find_type_from_prefix (env, prefix);
-        assert (type);
-        return type;
-    }
-    bool
-    tag_name_p (name_t name)
-    {
-        auto size = name.size ();
-        if (size < 3) return false;
-        if (name [size - 1] != 't') return false;
-        if (name [size - 2] != '-') return false;
-        return true;
-    }
-    void
-    define_type (env_t &env, name_t name)
-    {
-        define (env, name, make_shared <type_o>
-                (env, name, obj_map_t ()));
-    }
-    shared_ptr <obj_t>
-    true_c (env_t &env)
-    {
-       return make_shared <data_o>
-           (env, "true-t", obj_map_t ());
-    }
-    bool
-    true_p (env_t &env, shared_ptr <obj_t> a)
-    {
-        return a->tag == "true-t";
-    }
-    shared_ptr <obj_t>
-    false_c (env_t &env)
-    {
-       return make_shared <data_o>
-           (env, "false-t", obj_map_t ());
-    }
-    bool
-    false_p (env_t &env, shared_ptr <obj_t> a)
-    {
-        return a->tag == "false-t";
-    }
-    void
-    test_bool ()
-    {
-    }
-    struct data_pred_o: obj_t
-    {
-        tag_t type_tag;
-        data_pred_o (env_t &env,
-                     tag_t type_tag);
-        void apply (env_t &env, size_t arity);
-        bool equal (env_t &env, shared_ptr <obj_t> obj);
-        string repr (env_t &env);
-    };
-    data_pred_o::
-    data_pred_o (env_t &env,
-                 tag_t type_tag)
-    {
-        this->tag = "data-pred-t";
-        this->type_tag = type_tag;
-    }
-    void
-    data_pred_o::apply (env_t &env, size_t arity)
-    {
-        if (arity == 1) {
-            auto obj = env.obj_stack.top ();
-            env.obj_stack.pop ();
-            if (obj->tag == this->type_tag)
-                env.obj_stack.push (true_c (env));
-            else
-                env.obj_stack.push (false_c (env));
-        }
-        else {
-            cout << "- fatal error : data_pred_o::apply" << "\n";
-            cout << "  arity of this kind of apply must be 1" << "\n";
-            cout << "  arity : " << arity << "\n";
-            exit (1);
-        }
-    }
-    bool
-    data_pred_o::equal (env_t &env, shared_ptr <obj_t> obj)
-    {
-        if (this->tag != obj->tag) return false;
-        auto that = static_pointer_cast <data_pred_o> (obj);
-        if (this->type_tag != that->type_tag) return false;
-        return true;
-    }
-    string
-    data_pred_o::repr (env_t &env)
-    {
-        string repr = "";
-        repr += this->type_tag;
-        repr.pop_back ();
-        repr.pop_back ();
-        repr += "-p";
-        return repr;
     }
     struct int_o: obj_t
     {
@@ -2658,6 +2713,15 @@
             data_name += "-c";
             return data_name;
         }
+        name_t
+        type_name_to_pred_name (name_t type_name)
+        {
+            auto data_name = type_name;
+            data_name.pop_back ();
+            data_name.pop_back ();
+            data_name += "-p";
+            return data_name;
+        }
         void
         tk_assign_data (env_t &env, shared_ptr <obj_t> body)
         {
@@ -2665,16 +2729,17 @@
             auto prefix = prefix_of_string (head->str);
             auto type_name = name_of_string (head->str);
             auto data_name = type_name_to_data_name (type_name);
+            auto pred_name = type_name_to_pred_name (type_name);
             auto type_tag = head->str;
             auto rest = cdr (env, body);
             auto data_body = cdr (env, (car (env, rest)));
             if (null_p (env, data_body)) {
-                auto data = make_shared <data_o>
-                    (env, type_tag, obj_map_t ());
-                assign (env, prefix, data_name, data);
-                auto type = make_shared <type_o>
-                    (env, type_tag, obj_map_t ());
-                assign (env, prefix, type_name, type);
+                assign_type
+                    (env, prefix, type_name, type_tag);
+                assign_data_pred
+                    (env, prefix, pred_name, type_tag);
+                assign_data
+                    (env, prefix, data_name, type_tag);
             }
             else {
                 auto name_vect = list_to_vect (env, data_body);
@@ -2683,12 +2748,12 @@
                     auto str = static_pointer_cast <str_o> (obj);
                     name_vector.push_back (str->str);
                 }
-                auto data_cons = make_shared <data_cons_o>
-                    (env, type_tag, name_vector, obj_map_t ());
-                assign (env, prefix, data_name, data_cons);
-                auto type = make_shared <type_o>
-                    (env, type_tag, obj_map_t ());
-                assign (env, prefix, type_name, type);
+                assign_type
+                    (env, prefix, type_name, type_tag);
+                assign_data_pred
+                    (env, prefix, pred_name, type_tag);
+                assign_data_cons
+                    (env, prefix, data_name, type_tag, name_vector);
             }
         }
         bool
@@ -3153,6 +3218,7 @@
       import_type (env_t &env)
       {
           define_type (env, "type-t");
+          define_data_pred (env, "type-p", "type-t");
           define_prim (env,
                        jj_type_of_sig,
                        jj_type_of);
@@ -3173,18 +3239,35 @@
               "false-t",
               obj_map_t ());
       }
+      sig_t jj_not_sig = { "not", "bool" };
+      // -- bool-t -> bool-t
+      void jj_not (env_t &env, obj_map_t &obj_map)
+      {
+          auto obj = obj_map ["bool"];
+          assert (bool_p (env, obj));
+          if (true_p (env, obj))
+              env.obj_stack.push (false_c (env));
+          else
+              env.obj_stack.push (true_c (env));
+      }
       void
       import_bool (env_t &env)
       {
           define_type (env, "true-t");
+          define_data_pred (env, "true-p", "true-t");
           define_type (env, "false-t");
+          define_data_pred (env, "false-p", "false-t");
           define (env, "true-c", jj_true_c (env));
           define (env, "false-c", jj_false_c (env));
+          define_prim (env,
+                       jj_not_sig,
+                       jj_not);
       }
       void
       import_int (env_t &env)
       {
           define_type (env, "int-t");
+          define_data_pred (env, "int-p", "int-t");
       }
       sig_t jj_str_print_sig = { "str-print", "str" };
       // -- str-t ->
@@ -3199,6 +3282,7 @@
       import_str (env_t &env)
       {
           define_type (env, "str-t");
+          define_data_pred (env, "str-p", "str-t");
           define_prim (env,
                        jj_str_print_sig,
                        jj_str_print);
@@ -3224,7 +3308,9 @@
       import_list (env_t &env)
       {
           define_type (env, "null-t");
+          define_data_pred (env, "null-p", "null-t");
           define_type (env, "cons-t");
+          define_data_pred (env, "cons-p", "cons-t");
           define (env, "null-c", jj_null_c (env));
           define (env, "cons-c", jj_cons_c (env));
       }
@@ -3247,6 +3333,7 @@
       import_vect (env_t &env)
       {
           define_type (env, "vect-t");
+          define_data_pred (env, "vect-p", "vect-t");
           define_prim (env,
                        jj_list_to_vect_sig,
                        jj_list_to_vect);
@@ -3258,6 +3345,7 @@
       import_dict (env_t &env)
       {
           define_type (env, "dict-t");
+          define_data_pred (env, "dict-p", "dict-t");
       }
       sig_t jj_scan_word_list_sig = { "scan-word-list", "code" };
       // -- str-t -> (list-t str-t)
@@ -3317,11 +3405,13 @@
       import_top_keyword (env_t &env)
       {
           define_type (env, "top-keyword-t");
+          define_data_pred (env, "top-keyword-p", "top-keyword-t");
       }
       void
       import_keyword (env_t &env)
       {
           define_type (env, "keyword-t");
+          define_data_pred (env, "keyword-p", "keyword-t");
       }
       void
       import_syntax (env_t &env)
@@ -3394,8 +3484,13 @@
       import_misc (env_t &env)
       {
           define_type (env, "closure-t");
+          define_data_pred (env, "closure-p", "closure-t");
+          define_type (env, "data-pred-t");
+          define_data_pred (env, "data-pred-p", "data-pred-t");
           define_type (env, "data-cons-t");
+          define_data_pred (env, "data-cons-p", "data-cons-t");
           define_type (env, "prim-t");
+          define_data_pred (env, "prim-p", "prim-t");
           define_prim (env,
                        jj_repr_sig,
                        jj_repr);
