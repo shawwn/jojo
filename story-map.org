@@ -1,7 +1,7 @@
 #+html_head: <link rel="stylesheet" href="css/org-page.css"/>
 #+title: Story Map
 
-* [note]
+* [bug]
 *** can not handle big file -- due to the recursion in sexp parser
 * a interpreter uses dynamic threaded code
 * with lisp like macro system
@@ -16,6 +16,10 @@
 * with oop system
 * with simple ffi to c++
 * easy to use and debug
+* with a practical prelude
+*** prelude
 * with simple module system
+* with editing support
+*** jojo-mode
 * with git based package manager
 * maintained by a community as a live system

@@ -6,15 +6,6 @@
 
 *** one `.mo` file one module -- like r7rs module system
 
-*** about api
-
-    - x -
-      maybe not only the top level API of the interpreter should be exposed
-      the API of each obj in c++ should also be exposed (thus well designed)
-
-    - k -
-      can we also compile jojo.cpp to a lib ?
-
 * prolog
 
 *** include
