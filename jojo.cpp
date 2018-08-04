@@ -84,351 +84,372 @@
         box_t ();
         box_t (shared_ptr <obj_t> obj);
     };
-    template <typename Out>
-    void
-    string_split (const string &s, char delim, Out result)
-    {
-        stringstream ss (s);
-        string item;
-        while (getline (ss, item, delim)) {
-            *(result++) = item;
-        }
-    }
+      template <typename Out>
+      void
+      string_split (const string &s, char delim, Out result)
+      {
+          stringstream ss (s);
+          string item;
+          while (getline (ss, item, delim)) {
+              *(result++) = item;
+          }
+      }
 
-    vector <string>
-    string_split (const string &s, char delim)
-    {
-        vector <string> elems;
-        string_split (s, delim, back_inserter (elems));
-        return elems;
-    }
-    string
-    jojo_repr (env_t &env, shared_ptr <jojo_t> jojo)
-    {
-        assert (jojo->jo_vector.size () != 0);
-        string repr = "";
-        for (auto &jo: jojo->jo_vector) {
-            repr += jo->repr (env);
-            repr += " ";
-        }
-        repr.pop_back ();
-        return repr;
-    }
-    string
-    name_vector_repr (name_vector_t &name_vector)
-    {
-        if (name_vector.size () == 0) {
-            string repr = "[";
-            repr += "]";
-            return repr;
-        }
-        else {
-            string repr = "[";
-            for (auto name: name_vector) {
-                repr += name;
-                repr += " ";
-            }
-            if (! repr.empty ()) repr.pop_back ();
-            repr += "]";
-            return repr;
-        }
-    }
-    string
-    bind_vector_repr (env_t &env, bind_vector_t bind_vector)
-    {
-        string repr = "";
-        for (auto it = bind_vector.rbegin ();
-             it != bind_vector.rend ();
-             it++) {
-            repr += "(";
-            repr += to_string (distance (bind_vector.rbegin (), it));
-            repr += " ";
-            repr += it->first;
-            repr += " = ";
-            auto obj = it->second;
-            if (obj == nullptr)
-                repr += "_";
-            else
-                repr += obj->repr (env);
-            repr += ") ";
-        }
-        return repr;
-    }
-    string
-    local_scope_repr (env_t &env, local_scope_t local_scope)
-    {
-        string repr = "";
-        repr += "  - [";
-        repr += to_string (local_scope.size ());
-        repr += "] ";
-        repr += "local_scope - ";
-        repr += "\n";
-        for (auto it = local_scope.rbegin ();
-             it != local_scope.rend ();
-             it++) {
-            repr += "    ";
-            repr += to_string (distance (local_scope.rbegin (), it));
-            repr += " ";
-            repr += bind_vector_repr (env, *it);
-            repr += "\n";
-        }
-        return repr;
-    }
-    size_t
-    number_of_obj_in_bind_vector (bind_vector_t &bind_vector)
-    {
-        size_t sum = 0;
-        auto begin = bind_vector.begin ();
-        auto end = bind_vector.end ();
-        for (auto it = begin; it != end; it++)
-            if (it->second)
-                sum++;
-        return sum;
-    }
-    void
-    bind_vector_insert_obj (bind_vector_t &bind_vector,
-                            shared_ptr <obj_t> obj)
-    {
-        auto begin = bind_vector.rbegin ();
-        auto end = bind_vector.rend ();
-        for (auto it = begin; it != end; it++) {
-            if (it->second == nullptr) {
-                it->second = obj;
-                return;
-            }
-        }
-        cout << "- fatal error : bind_vector_insert_obj" << "\n";
-        cout << "  the bind_vector is filled" << "\n";
-        exit (1);
-    }
-    bind_vector_t
-    bind_vector_merge_obj_vector (bind_vector_t &old_bind_vector,
-                                  obj_vector_t &obj_vector)
-    {
-        auto bind_vector = old_bind_vector;
-        for (auto obj: obj_vector)
-            bind_vector_insert_obj (bind_vector, obj);
-        return bind_vector;
-    }
-    obj_vector_t
-    pick_up_obj_vector (env_t &env, size_t counter)
-    {
-        auto obj_vector = obj_vector_t ();
-        while (counter > 0) {
-            counter--;
-            auto obj = env.obj_stack.top ();
-            obj_vector.push_back (obj);
-            env.obj_stack.pop ();
-        }
-        reverse (obj_vector.begin (),
-                 obj_vector.end ());
-        return obj_vector;
-    }
-    local_scope_t
-    local_scope_extend (local_scope_t old_local_scope,
-                        bind_vector_t bind_vector)
-    {
-        auto local_scope = old_local_scope;
-        local_scope.push_back (bind_vector);
-        return local_scope;
-    }
-    bool
-    bind_equal (env_t &env,
-                bind_t &lhs,
-                bind_t &rhs)
-    {
-        if (lhs.first != rhs.first) return false;
-        return lhs.second->equal (env, rhs.second);
-    }
-    bool
-    bind_vector_equal (env_t &env,
-                       bind_vector_t &lhs,
-                       bind_vector_t &rhs)
-    {
-        if (lhs.size () != rhs.size ()) return false;
-        auto size = lhs.size ();
-        auto index = 0;
-        while (index < size) {
-            if (! bind_equal (env, lhs [index], rhs [index]))
-                return false;
-            index++;
-        }
-        return true;
-    }
-    bool
-    local_scope_equal (env_t &env,
-                       local_scope_t &lhs,
-                       local_scope_t &rhs)
-    {
-        if (lhs.size () != rhs.size ()) return false;
-        auto size = lhs.size ();
-        auto index = 0;
-        while (index < size) {
-            if (! bind_vector_equal (env, lhs [index], rhs [index]))
-                return false;
-            index++;
-        }
-        return true;
-    }
-    bool
-    obj_map_equal (env_t &env, obj_map_t &lhs, obj_map_t &rhs)
-    {
-        if (lhs.size () != rhs.size ()) return false;
-        for (auto &kv: lhs) {
-            auto name = kv.first;
-            auto it = rhs.find (name);
-            if (it == rhs.end ()) return false;
-            if (! kv.second->equal (env, it->second)) return false;
-        }
-        return true;
-    }
-    string
-    obj_map_repr (env_t &env, obj_map_t &obj_map)
-    {
-        string repr = "";
-        for (auto &kv: obj_map) {
-            auto name = kv.first;
-            repr += name;
-            repr += " = ";
-            auto obj = kv.second;
-            repr += obj->repr (env);
-            repr += " ";
-        }
-        if (! repr.empty ()) repr.pop_back ();
-        return repr;
-    }
-    name_vector_t
-    name_vector_obj_map_lack (name_vector_t &old_name_vector,
-                              obj_map_t &obj_map)
-    {
-        auto name_vector = name_vector_t ();
-        for (auto name: old_name_vector) {
-            auto it = obj_map.find (name);
-            // not found == lack
-            if (it == obj_map.end ())
-                name_vector.push_back (name);
-        }
-        return name_vector;
-    }
-    name_vector_t
-    name_vector_obj_map_arity_lack (name_vector_t &old_name_vector,
-                                    obj_map_t &obj_map,
-                                    size_t arity)
-    {
-        auto name_vector = name_vector_obj_map_lack
-            (old_name_vector, obj_map);
-        auto lack = name_vector.size ();
-        auto counter = lack - arity;
-        while (counter > 0) {
-            counter--;
-            name_vector.pop_back ();
-        }
-        return name_vector;
-    }
-    obj_map_t
-    pick_up_obj_map_and_merge (env_t &env,
-                               name_vector_t &lack_name_vector,
-                               obj_map_t &old_obj_map)
-    {
-        auto obj_map = old_obj_map;
-        auto begin = lack_name_vector.rbegin ();
-        auto end = lack_name_vector.rend ();
-        for (auto it = begin; it != end; it++) {
-            name_t name = *it;
-            auto obj = env.obj_stack.top ();
-            env.obj_stack.pop ();
-            obj_map [name] = obj;
-        }
-        return obj_map;
-    }
-    string
-    name_vector_and_obj_map_repr (env_t &env,
-                                  name_vector_t &name_vector,
-                                  obj_map_t &obj_map)
-    {
-        string repr = "";
-        for (auto &name: name_vector) {
-            auto it = obj_map.find (name);
-            if (it == obj_map.end ()) {
-                repr += name;
-                repr += " = _ ";
-            }
-        }
-        for (auto &kv: obj_map) {
-            auto name = kv.first;
-            repr += name;
-            repr += " = ";
-            auto obj = kv.second;
-            repr += obj->repr (env);
-            repr += " ";
-        }
-        if (! repr.empty ()) repr.pop_back ();
-        return repr;
-    }
-    template <class T>
-    T
-    vector_rev_ref (vector <T> vect, size_t rev_index)
-    {
-        size_t size = vect.size ();
-        size_t index = size - rev_index - 1;
-        return vect [index];
-    }
-    bind_vector_t
-    bind_vector_from_name_vector (name_vector_t &name_vector)
-    {
-        auto bind_vector = bind_vector_t ();
-        auto begin = name_vector.begin ();
-        auto end = name_vector.end ();
-        for (auto it = begin; it != end; it++)
-            bind_vector.push_back (make_pair (*it, nullptr));
-        return bind_vector;
-    }
-    shared_ptr <frame_t>
-    new_frame_from_jojo (shared_ptr <jojo_t> jojo)
-    {
-        return make_shared <frame_t>
-            (jojo, local_scope_t ());
-    }
-    shared_ptr <frame_t>
-    new_frame_from_jo_vector (jo_vector_t jo_vector)
-    {
-        auto jojo = make_shared <jojo_t> (jo_vector);
-        return make_shared <frame_t>
-            (jojo, local_scope_t ());
-    }
-    bool
-    obj_equal (env_t &env,
-               shared_ptr <obj_t> &lhs,
-               shared_ptr <obj_t> &rhs)
-    {
-        return lhs->equal (env, rhs);
-    }
-    local_ref_map_t
-    local_ref_map_extend (env_t &env,
-                          local_ref_map_t &old_local_ref_map,
-                          name_vector_t &name_vector)
-    {
-        auto local_ref_map = local_ref_map_t ();
-        for (auto &kv: old_local_ref_map) {
-            auto name = kv.first;
-            auto old_local_ref = kv.second;
-            auto local_ref = local_ref_t ();
-            local_ref.first = old_local_ref.first + 1;
-            local_ref.second = old_local_ref.second;
-            local_ref_map.insert (make_pair (name, local_ref));
-        }
-        auto index = 0;
-        auto size = name_vector.size ();
-        while (index < size) {
-            auto name = name_vector [index];
-            auto local_ref = local_ref_t ();
-            local_ref.first = 0;
-            local_ref.second = index;
-            local_ref_map.insert (make_pair (name, local_ref));
-            index++;
-        }
-        return local_ref_map;
-    }
+      vector <string>
+      string_split (const string &s, char delim)
+      {
+          vector <string> elems;
+          string_split (s, delim, back_inserter (elems));
+          return elems;
+      }
+      string
+      name_vector_repr (name_vector_t &name_vector)
+      {
+          if (name_vector.size () == 0) {
+              string repr = "[";
+              repr += "]";
+              return repr;
+          }
+          else {
+              string repr = "[";
+              for (auto name: name_vector) {
+                  repr += name;
+                  repr += " ";
+              }
+              if (! repr.empty ()) repr.pop_back ();
+              repr += "]";
+              return repr;
+          }
+      }
+      bool
+      bind_equal (env_t &env,
+                  bind_t &lhs,
+                  bind_t &rhs)
+      {
+          if (lhs.first != rhs.first) return false;
+          return lhs.second->equal (env, rhs.second);
+      }
+      string
+      bind_vector_repr (env_t &env, bind_vector_t bind_vector)
+      {
+          string repr = "";
+          for (auto it = bind_vector.rbegin ();
+               it != bind_vector.rend ();
+               it++) {
+              repr += "(";
+              repr += to_string (distance (bind_vector.rbegin (), it));
+              repr += " ";
+              repr += it->first;
+              repr += " = ";
+              auto obj = it->second;
+              if (obj == nullptr)
+                  repr += "_";
+              else
+                  repr += obj->repr (env);
+              repr += ") ";
+          }
+          return repr;
+      }
+      size_t
+      number_of_obj_in_bind_vector (bind_vector_t &bind_vector)
+      {
+          size_t sum = 0;
+          auto begin = bind_vector.begin ();
+          auto end = bind_vector.end ();
+          for (auto it = begin; it != end; it++)
+              if (it->second)
+                  sum++;
+          return sum;
+      }
+      void
+      bind_vector_insert_obj (bind_vector_t &bind_vector,
+                              shared_ptr <obj_t> obj)
+      {
+          auto begin = bind_vector.rbegin ();
+          auto end = bind_vector.rend ();
+          for (auto it = begin; it != end; it++) {
+              if (it->second == nullptr) {
+                  it->second = obj;
+                  return;
+              }
+          }
+          cout << "- fatal error : bind_vector_insert_obj" << "\n";
+          cout << "  the bind_vector is filled" << "\n";
+          exit (1);
+      }
+      bind_vector_t
+      bind_vector_merge_obj_vector (bind_vector_t &old_bind_vector,
+                                    obj_vector_t &obj_vector)
+      {
+          auto bind_vector = old_bind_vector;
+          for (auto obj: obj_vector)
+              bind_vector_insert_obj (bind_vector, obj);
+          return bind_vector;
+      }
+      bind_vector_t
+      bind_vector_from_name_vector (name_vector_t &name_vector)
+      {
+          auto bind_vector = bind_vector_t ();
+          auto begin = name_vector.begin ();
+          auto end = name_vector.end ();
+          for (auto it = begin; it != end; it++)
+              bind_vector.push_back (make_pair (*it, nullptr));
+          return bind_vector;
+      }
+      bool
+      bind_vector_equal (env_t &env,
+                         bind_vector_t &lhs,
+                         bind_vector_t &rhs)
+      {
+          if (lhs.size () != rhs.size ()) return false;
+          auto size = lhs.size ();
+          auto index = 0;
+          while (index < size) {
+              if (! bind_equal (env, lhs [index], rhs [index]))
+                  return false;
+              index++;
+          }
+          return true;
+      }
+      obj_vector_t
+      pick_up_obj_vector (env_t &env, size_t counter)
+      {
+          auto obj_vector = obj_vector_t ();
+          while (counter > 0) {
+              counter--;
+              auto obj = env.obj_stack.top ();
+              obj_vector.push_back (obj);
+              env.obj_stack.pop ();
+          }
+          reverse (obj_vector.begin (),
+                   obj_vector.end ());
+          return obj_vector;
+      }
+      bool
+      local_scope_equal (env_t &env,
+                         local_scope_t &lhs,
+                         local_scope_t &rhs)
+      {
+          if (lhs.size () != rhs.size ()) return false;
+          auto size = lhs.size ();
+          auto index = 0;
+          while (index < size) {
+              if (! bind_vector_equal (env, lhs [index], rhs [index]))
+                  return false;
+              index++;
+          }
+          return true;
+      }
+      local_scope_t
+      local_scope_extend (local_scope_t old_local_scope,
+                          bind_vector_t bind_vector)
+      {
+          auto local_scope = old_local_scope;
+          local_scope.push_back (bind_vector);
+          return local_scope;
+      }
+      string
+      local_scope_repr (env_t &env, local_scope_t local_scope)
+      {
+          string repr = "";
+          repr += "  - [";
+          repr += to_string (local_scope.size ());
+          repr += "] ";
+          repr += "local_scope - ";
+          repr += "\n";
+          for (auto it = local_scope.rbegin ();
+               it != local_scope.rend ();
+               it++) {
+              repr += "    ";
+              repr += to_string (distance (local_scope.rbegin (), it));
+              repr += " ";
+              repr += bind_vector_repr (env, *it);
+              repr += "\n";
+          }
+          return repr;
+      }
+      bool
+      obj_map_equal (env_t &env, obj_map_t &lhs, obj_map_t &rhs)
+      {
+          if (lhs.size () != rhs.size ()) return false;
+          for (auto &kv: lhs) {
+              auto name = kv.first;
+              auto it = rhs.find (name);
+              if (it == rhs.end ()) return false;
+              if (! kv.second->equal (env, it->second)) return false;
+          }
+          return true;
+      }
+      string
+      obj_map_repr (env_t &env, obj_map_t &obj_map)
+      {
+          string repr = "";
+          for (auto &kv: obj_map) {
+              auto name = kv.first;
+              repr += name;
+              repr += " = ";
+              auto obj = kv.second;
+              repr += obj->repr (env);
+              repr += " ";
+          }
+          if (! repr.empty ()) repr.pop_back ();
+          return repr;
+      }
+      name_vector_t
+      name_vector_obj_map_lack (name_vector_t &old_name_vector,
+                                obj_map_t &obj_map)
+      {
+          auto name_vector = name_vector_t ();
+          for (auto name: old_name_vector) {
+              auto it = obj_map.find (name);
+              // not found == lack
+              if (it == obj_map.end ())
+                  name_vector.push_back (name);
+          }
+          return name_vector;
+      }
+      name_vector_t
+      name_vector_obj_map_arity_lack (name_vector_t &old_name_vector,
+                                      obj_map_t &obj_map,
+                                      size_t arity)
+      {
+          auto name_vector = name_vector_obj_map_lack
+              (old_name_vector, obj_map);
+          auto lack = name_vector.size ();
+          auto counter = lack - arity;
+          while (counter > 0) {
+              counter--;
+              name_vector.pop_back ();
+          }
+          return name_vector;
+      }
+      obj_map_t
+      pick_up_obj_map_and_merge (env_t &env,
+                                 name_vector_t &lack_name_vector,
+                                 obj_map_t &old_obj_map)
+      {
+          auto obj_map = old_obj_map;
+          auto begin = lack_name_vector.rbegin ();
+          auto end = lack_name_vector.rend ();
+          for (auto it = begin; it != end; it++) {
+              name_t name = *it;
+              auto obj = env.obj_stack.top ();
+              env.obj_stack.pop ();
+              obj_map [name] = obj;
+          }
+          return obj_map;
+      }
+      string
+      name_vector_and_obj_map_repr (env_t &env,
+                                    name_vector_t &name_vector,
+                                    obj_map_t &obj_map)
+      {
+          string repr = "";
+          for (auto &name: name_vector) {
+              auto it = obj_map.find (name);
+              if (it == obj_map.end ()) {
+                  repr += name;
+                  repr += " = _ ";
+              }
+          }
+          for (auto &kv: obj_map) {
+              auto name = kv.first;
+              repr += name;
+              repr += " = ";
+              auto obj = kv.second;
+              repr += obj->repr (env);
+              repr += " ";
+          }
+          if (! repr.empty ()) repr.pop_back ();
+          return repr;
+      }
+      name_t
+      name_t2c (name_t type_name)
+      {
+          auto name = type_name;
+          auto size = name.size ();
+          assert (size > 2);
+          assert (name [size - 1] == 't');
+          assert (name [size - 2] == '-');
+          name.pop_back ();
+          name += 'c';
+          return name;
+      }
+      name_t
+      name_t2p (name_t type_name)
+      {
+          auto name = type_name;
+          auto size = name.size ();
+          assert (size > 2);
+          assert (name [size - 1] == 't');
+          assert (name [size - 2] == '-');
+          name.pop_back ();
+          name += 'p';
+          return name;
+      }
+      name_t
+      name_c2t (name_t data_name)
+      {
+          auto name = data_name;
+          auto size = name.size ();
+          assert (size > 2);
+          assert (name [size - 1] == 'c');
+          assert (name [size - 2] == '-');
+          name.pop_back ();
+          name += 't';
+          return name;
+      }
+      name_t
+      name_p2t (name_t pred_name)
+      {
+          auto name = pred_name;
+          auto size = name.size ();
+          assert (size > 2);
+          assert (name [size - 1] == 'p');
+          assert (name [size - 2] == '-');
+          name.pop_back ();
+          name += 't';
+          return name;
+      }
+      shared_ptr <frame_t>
+      new_frame_from_jojo (shared_ptr <jojo_t> jojo)
+      {
+          return make_shared <frame_t>
+              (jojo, local_scope_t ());
+      }
+      shared_ptr <frame_t>
+      new_frame_from_jo_vector (jo_vector_t jo_vector)
+      {
+          auto jojo = make_shared <jojo_t> (jo_vector);
+          return make_shared <frame_t>
+              (jojo, local_scope_t ());
+      }
+      local_ref_map_t
+      local_ref_map_extend (env_t &env,
+                            local_ref_map_t &old_local_ref_map,
+                            name_vector_t &name_vector)
+      {
+          auto local_ref_map = local_ref_map_t ();
+          for (auto &kv: old_local_ref_map) {
+              auto name = kv.first;
+              auto old_local_ref = kv.second;
+              auto local_ref = local_ref_t ();
+              local_ref.first = old_local_ref.first + 1;
+              local_ref.second = old_local_ref.second;
+              local_ref_map.insert (make_pair (name, local_ref));
+          }
+          auto index = 0;
+          auto size = name_vector.size ();
+          while (index < size) {
+              auto name = name_vector [index];
+              auto local_ref = local_ref_t ();
+              local_ref.first = 0;
+              local_ref.second = index;
+              local_ref_map.insert (make_pair (name, local_ref));
+              index++;
+          }
+          return local_ref_map;
+      }
       void
       assert_pop_eq (env_t &env, shared_ptr <obj_t> obj)
       {
@@ -491,6 +512,13 @@
         else {
             env.box_map [name] = new box_t (obj);
         }
+    }
+    bool
+    obj_equal (env_t &env,
+               shared_ptr <obj_t> &lhs,
+               shared_ptr <obj_t> &rhs)
+    {
+        return lhs->equal (env, rhs);
     }
     jo_t *
     jo_t::copy ()
@@ -706,6 +734,18 @@
         this->step ();
         this->report ();
     }
+      string
+      jojo_repr (env_t &env, shared_ptr <jojo_t> jojo)
+      {
+          assert (jojo->jo_vector.size () != 0);
+          string repr = "";
+          for (auto &jo: jojo->jo_vector) {
+              repr += jo->repr (env);
+              repr += " ";
+          }
+          repr.pop_back ();
+          return repr;
+      }
     struct closure_o: obj_t
     {
         name_vector_t name_vector;
@@ -2139,9 +2179,9 @@
               // this is the only place where
               //   the local_scope in the arg of exe is uesd.
               auto bind_vector =
-                  vector_rev_ref (local_scope, this->level);
+                  local_scope [local_scope.size () - this->level - 1];
               auto bind =
-                  vector_rev_ref (bind_vector, this->index);
+                  bind_vector [bind_vector.size () - this->index - 1];
               auto obj = bind.second;
               env.obj_stack.push (obj);
           }
@@ -2704,32 +2744,14 @@
                 (car (env, car (env, cdr (env, body))));
             return str->str == "data";
         }
-        name_t
-        type_name_to_data_name (name_t type_name)
-        {
-            auto data_name = type_name;
-            data_name.pop_back ();
-            data_name.pop_back ();
-            data_name += "-c";
-            return data_name;
-        }
-        name_t
-        type_name_to_pred_name (name_t type_name)
-        {
-            auto data_name = type_name;
-            data_name.pop_back ();
-            data_name.pop_back ();
-            data_name += "-p";
-            return data_name;
-        }
         void
         tk_assign_data (env_t &env, shared_ptr <obj_t> body)
         {
             auto head = static_pointer_cast <str_o> (car (env, body));
             auto prefix = prefix_of_string (head->str);
             auto type_name = name_of_string (head->str);
-            auto data_name = type_name_to_data_name (type_name);
-            auto pred_name = type_name_to_pred_name (type_name);
+            auto data_name = name_t2c (type_name);
+            auto pred_name = name_t2p (type_name);
             auto type_tag = head->str;
             auto rest = cdr (env, body);
             auto data_body = cdr (env, (car (env, rest)));
@@ -3208,6 +3230,12 @@
           };
           return make_shared <jojo_t> (jo_vector);
       }
+      void
+      def_type (env_t &env, name_t name)
+      {
+          define_type (env, name);
+          define_data_pred (env, name_t2p (name), name);
+      }
       sig_t jj_type_of_sig = { "type-of", "obj" };
       void jj_type_of (env_t &env, obj_map_t &obj_map)
       {
@@ -3217,8 +3245,7 @@
       void
       expose_type (env_t &env)
       {
-          define_type (env, "type-t");
-          define_data_pred (env, "type-p", "type-t");
+          def_type (env, "type-t");
           define_prim (env,
                        jj_type_of_sig,
                        jj_type_of);
@@ -3253,10 +3280,8 @@
       void
       expose_bool (env_t &env)
       {
-          define_type (env, "true-t");
-          define_data_pred (env, "true-p", "true-t");
-          define_type (env, "false-t");
-          define_data_pred (env, "false-p", "false-t");
+          def_type (env, "true-t");
+          def_type (env, "false-t");
           define (env, "true-c", jj_true_c (env));
           define (env, "false-c", jj_false_c (env));
           define_prim (env,
@@ -3266,8 +3291,7 @@
       void
       expose_int (env_t &env)
       {
-          define_type (env, "int-t");
-          define_data_pred (env, "int-p", "int-t");
+          def_type (env, "int-t");
       }
       sig_t jj_str_print_sig = { "str-print", "str" };
       // -- str-t ->
@@ -3281,8 +3305,7 @@
       void
       expose_str (env_t &env)
       {
-          define_type (env, "str-t");
-          define_data_pred (env, "str-p", "str-t");
+          def_type (env, "str-t");
           define_prim (env,
                        jj_str_print_sig,
                        jj_str_print);
@@ -3307,10 +3330,8 @@
       void
       expose_list (env_t &env)
       {
-          define_type (env, "null-t");
-          define_data_pred (env, "null-p", "null-t");
-          define_type (env, "cons-t");
-          define_data_pred (env, "cons-p", "cons-t");
+          def_type (env, "null-t");
+          def_type (env, "cons-t");
           define (env, "null-c", jj_null_c (env));
           define (env, "cons-c", jj_cons_c (env));
       }
@@ -3332,8 +3353,7 @@
       void
       expose_vect (env_t &env)
       {
-          define_type (env, "vect-t");
-          define_data_pred (env, "vect-p", "vect-t");
+          def_type (env, "vect-t");
           define_prim (env,
                        jj_list_to_vect_sig,
                        jj_list_to_vect);
@@ -3344,8 +3364,7 @@
       void
       expose_dict (env_t &env)
       {
-          define_type (env, "dict-t");
-          define_data_pred (env, "dict-p", "dict-t");
+          def_type (env, "dict-t");
       }
       sig_t jj_scan_word_list_sig = { "scan-word-list", "code" };
       // -- str-t -> (list-t str-t)
@@ -3404,14 +3423,12 @@
       void
       expose_top_keyword (env_t &env)
       {
-          define_type (env, "top-keyword-t");
-          define_data_pred (env, "top-keyword-p", "top-keyword-t");
+          def_type (env, "top-keyword-t");
       }
       void
       expose_keyword (env_t &env)
       {
-          define_type (env, "keyword-t");
-          define_data_pred (env, "keyword-p", "keyword-t");
+          def_type (env, "keyword-t");
       }
       void
       expose_syntax (env_t &env)
@@ -3483,14 +3500,10 @@
       void
       expose_misc (env_t &env)
       {
-          define_type (env, "closure-t");
-          define_data_pred (env, "closure-p", "closure-t");
-          define_type (env, "data-pred-t");
-          define_data_pred (env, "data-pred-p", "data-pred-t");
-          define_type (env, "data-cons-t");
-          define_data_pred (env, "data-cons-p", "data-cons-t");
-          define_type (env, "prim-t");
-          define_data_pred (env, "prim-p", "prim-t");
+          def_type (env, "closure-t");
+          def_type (env, "data-pred-t");
+          def_type (env, "data-cons-t");
+          def_type (env, "prim-t");
           define_prim (env,
                        jj_repr_sig,
                        jj_repr);
