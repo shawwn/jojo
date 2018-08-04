@@ -197,8 +197,8 @@
                 return;
             }
         }
-        cout << "- fatal error : bind_vector_insert_obj" << "\n"
-             << "  the bind_vector is filled" << "\n";
+        cout << "- fatal error : bind_vector_insert_obj" << "\n";
+        cout << "  the bind_vector is filled" << "\n";
         exit (1);
     }
     bind_vector_t
@@ -465,9 +465,9 @@
         if (this->tag != obj->tag)
             return false;
         else {
-            cout << "- fatal error : obj_t::equal" << "\n"
-                 << "  equal is not implemented for  : "
-                 << obj->tag << "\n";
+            cout << "- fatal error : obj_t::equal" << "\n";
+            cout << "  equal is not implemented for  : ";
+            cout << obj->tag << "\n";
             exit (1);
         }
     }
@@ -547,8 +547,7 @@
       jojo_print (env_t &env, shared_ptr <jojo_t> jojo)
       {
           for (auto &jo: jojo->jo_vector) {
-              cout << jo->repr (env)
-                   << " ";
+              cout << jo->repr (env) << " ";
           }
       }
       void
@@ -766,11 +765,11 @@
             env.obj_stack.push (closure);
         }
         else {
-            cout << "- fatal error : closure_o::apply" << "\n"
-                 << "  over-arity apply" << "\n"
-                 << "  arity > lack" << "\n"
-                 << "  arity : " << arity << "\n"
-                 << "  lack : " << lack << "\n";
+            cout << "- fatal error : closure_o::apply" << "\n";
+            cout << "  over-arity apply" << "\n";
+            cout << "  arity > lack" << "\n";
+            cout << "  arity : " << arity << "\n";
+            cout << "  lack : " << lack << "\n";
             exit (1);
         }
     }
@@ -902,11 +901,11 @@
             env.obj_stack.push (data_cons);
         }
         else {
-            cout << "- fatal error : data_cons_o::apply" << "\n"
-                 << "  over-arity apply" << "\n"
-                 << "  arity > lack" << "\n"
-                 << "  arity : " << arity << "\n"
-                 << "  lack : " << lack << "\n";
+            cout << "- fatal error : data_cons_o::apply" << "\n";
+            cout << "  over-arity apply" << "\n";
+            cout << "  arity > lack" << "\n";
+            cout << "  arity : " << arity << "\n";
+            cout << "  lack : " << lack << "\n";
             exit (1);
         }
     }
@@ -1009,11 +1008,11 @@
             env.obj_stack.push (prim);
         }
         else {
-            cout << "- fatal error : prim_o::apply" << "\n"
-                 << "  over-arity apply" << "\n"
-                 << "  arity > lack" << "\n"
-                 << "  arity : " << arity << "\n"
-                 << "  lack : " << lack << "\n";
+            cout << "- fatal error : prim_o::apply" << "\n";
+            cout << "  over-arity apply" << "\n";
+            cout << "  arity > lack" << "\n";
+            cout << "  arity : " << arity << "\n";
+            cout << "  lack : " << lack << "\n";
             exit (1);
         }
     }
@@ -1197,9 +1196,9 @@
                 env.obj_stack.push (false_c (env));
         }
         else {
-            cout << "- fatal error : data_pred_o::apply" << "\n"
-                 << "  arity of this kind of apply must be 1" << "\n"
-                 << "  arity : " << arity << "\n";
+            cout << "- fatal error : data_pred_o::apply" << "\n";
+            cout << "  arity of this kind of apply must be 1" << "\n";
+            cout << "  arity : " << arity << "\n";
             exit (1);
         }
     }
@@ -1984,9 +1983,9 @@
                       }
                   }
                   else {
-                      cout << "- fatal error : field_jo_t::exe" << "\n"
-                           << "  unknown field : " << this->name << "\n"
-                           << "  fail to find it in both object and type" << "\n";
+                      cout << "- fatal error : field_jo_t::exe" << "\n";
+                      cout << "  unknown field : " << this->name << "\n";
+                      cout << "  fail to find it in both object and type" << "\n";
                       exit (1);
                   }
               }
