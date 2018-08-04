@@ -11,14 +11,16 @@
     #include <set>
     #include <stack>
     using namespace std;
-    struct env_t;
-    struct jojo_t;
-    struct box_t;
-    struct frame_t;
     struct obj_t;
     struct jo_t;
+    struct env_t;
+    struct box_t;
+    struct jojo_t;
+    struct frame_t;
+    struct module_t;
     using name_t = string;
     using name_vector_t = vector <name_t>;
+    using name_stack_t = stack <name_t>;
     using bind_t = pair <name_t, shared_ptr <obj_t>>;
     using bind_vector_t = vector <bind_t>; // index from end
     using local_scope_t = vector <bind_vector_t>; // index from end
@@ -33,6 +35,7 @@
     using string_vector_t = vector <string> ;
     using local_ref_t = pair <size_t, size_t>;
     using local_ref_map_t = map <name_t, local_ref_t>;
+    using module_map_t = map <name_t, shared_ptr <module_t>>;
     struct obj_t
     {
         tag_t tag;
@@ -54,6 +57,8 @@
         box_map_t box_map;
         obj_stack_t obj_stack;
         frame_stack_t frame_stack;
+        name_stack_t module_name_stack;
+        module_map_t module_map;
         void step ();
         void run ();
         void box_map_report ();
@@ -64,12 +69,12 @@
         void double_report ();
         void step_and_report ();
     };
-    struct frame_t
+    struct box_t
     {
-        size_t index;
-        shared_ptr <jojo_t> jojo;
-        local_scope_t local_scope;
-        frame_t (shared_ptr <jojo_t> jojo, local_scope_t local_scope);
+        shared_ptr <obj_t> obj;
+        bool empty_p;
+        box_t ();
+        box_t (shared_ptr <obj_t> obj);
     };
     struct jojo_t
     {
@@ -77,12 +82,21 @@
         jojo_t (jo_vector_t jo_vector);
         ~jojo_t ();
     };
-    struct box_t
+    struct frame_t
     {
-        shared_ptr <obj_t> obj;
-        bool empty_p;
-        box_t ();
-        box_t (shared_ptr <obj_t> obj);
+        size_t index;
+        shared_ptr <jojo_t> jojo;
+        local_scope_t local_scope;
+        frame_t (shared_ptr <jojo_t> jojo, local_scope_t local_scope);
+    };
+    struct module_t
+    {
+        name_t module_name;
+        box_map_t box_map;
+        name_vector_t export_name_vector;
+        module_t (name_t module_name,
+                  box_map_t box_map,
+                  name_vector_t export_name_vector);
     };
       template <typename Out>
       void
@@ -544,6 +558,41 @@
     {
         return "#<unknown-jo>";
     }
+      box_t::box_t ()
+      {
+          this->empty_p = true;
+      }
+
+      box_t::box_t (shared_ptr <obj_t> obj)
+      {
+          this->empty_p = false;
+          this->obj = obj;
+      }
+      box_t *
+      boxing (env_t &env, name_t name)
+      {
+          auto it = env.box_map.find (name);
+          if (it != env.box_map.end ()) {
+              auto box = it->second;
+              return box;
+          }
+          else {
+              auto box = new box_t ();
+              env.box_map [name] = box;
+              return box;
+          }
+      }
+      name_t
+      name_of_box (env_t &env, box_t *box)
+      {
+          for (auto &kv: env.box_map) {
+              auto name = kv.first;
+              if (kv.second == box) {
+                  return name;
+              }
+          }
+          return "#non-name";
+      }
       jojo_t::
       jojo_t (jo_vector_t jo_vector)
       {
@@ -564,8 +613,21 @@
           for (auto x: succ->jo_vector) jo_vector.push_back (x->copy ());
           return make_shared <jojo_t> (jo_vector);
       }
-      frame_t::frame_t (shared_ptr <jojo_t> jojo,
-                        local_scope_t local_scope)
+      string
+      jojo_repr (env_t &env, shared_ptr <jojo_t> jojo)
+      {
+          assert (jojo->jo_vector.size () != 0);
+          string repr = "";
+          for (auto &jo: jojo->jo_vector) {
+              repr += jo->repr (env);
+              repr += " ";
+          }
+          repr.pop_back ();
+          return repr;
+      }
+      frame_t::
+      frame_t (shared_ptr <jojo_t> jojo,
+               local_scope_t local_scope)
       {
           this->index = 0;
           this->jojo = jojo;
@@ -606,40 +668,14 @@
           cout << "\n";
           cout << local_scope_repr (env, frame->local_scope);
       }
-      box_t::box_t ()
+      module_t::
+      module_t (name_t module_name,
+                box_map_t box_map,
+                name_vector_t export_name_vector)
       {
-          this->empty_p = true;
-      }
-
-      box_t::box_t (shared_ptr <obj_t> obj)
-      {
-          this->empty_p = false;
-          this->obj = obj;
-      }
-      box_t *
-      boxing (env_t &env, name_t name)
-      {
-          auto it = env.box_map.find (name);
-          if (it != env.box_map.end ()) {
-              auto box = it->second;
-              return box;
-          }
-          else {
-              auto box = new box_t ();
-              env.box_map [name] = box;
-              return box;
-          }
-      }
-      name_t
-      name_of_box (env_t &env, box_t *box)
-      {
-          for (auto &kv: env.box_map) {
-              auto name = kv.first;
-              if (kv.second == box) {
-                  return name;
-              }
-          }
-          return "#non-name";
+          this->module_name = module_name;
+          this->box_map = box_map;
+          this->export_name_vector = export_name_vector;
       }
     void
     env_t::step ()
@@ -734,18 +770,6 @@
         this->step ();
         this->report ();
     }
-      string
-      jojo_repr (env_t &env, shared_ptr <jojo_t> jojo)
-      {
-          assert (jojo->jo_vector.size () != 0);
-          string repr = "";
-          for (auto &jo: jojo->jo_vector) {
-              repr += jo->repr (env);
-              repr += " ";
-          }
-          repr.pop_back ();
-          return repr;
-      }
     struct closure_o: obj_t
     {
         name_vector_t name_vector;
@@ -1959,69 +1983,82 @@
                 sexp_list_repr (env, cdr (env, sexp_list));
         }
     }
-    using top_keyword_fn = function
-        <void (env_t &, shared_ptr <obj_t>)>;
-    struct top_keyword_o: obj_t
-    {
-        top_keyword_fn fn;
-        top_keyword_o (env_t &env, top_keyword_fn fn);
-        bool equal (env_t &env, shared_ptr <obj_t> obj);
-    };
-    top_keyword_o::
-    top_keyword_o (env_t &env, top_keyword_fn fn)
-    {
-        this->tag = "top-keyword-t";
-        this->fn = fn;
-    }
-    bool
-    top_keyword_o::equal (env_t &env, shared_ptr <obj_t> obj)
-    {
-        if (this->tag != obj->tag) return false;
-        return this != obj.get ();
-    }
-    bool
-    top_keyword_p (env_t &env, shared_ptr <obj_t> a)
-    {
-        return a->tag == "top-keyword-t";
-    }
-    void
-    define_top_keyword (env_t &env, name_t name, top_keyword_fn fn)
-    {
-        define (env, name, make_shared <top_keyword_o> (env, fn));
-    }
-    using keyword_fn = function
-        <shared_ptr <jojo_t>
-         (env_t &,
-          local_ref_map_t &,
-          shared_ptr <obj_t>)>;
-    struct keyword_o: obj_t
-    {
-        keyword_fn fn;
-        keyword_o (env_t &env, keyword_fn fn);
-        bool equal (env_t &env, shared_ptr <obj_t> obj);
-    };
-    keyword_o::
-    keyword_o (env_t &env, keyword_fn fn)
-    {
-        this->tag = "keyword-t";
-        this->fn = fn;
-    }
-    bool
-    keyword_o::equal (env_t &env, shared_ptr <obj_t> obj)
-    {
-        if (this->tag != obj->tag) return false;
-        return this != obj.get ();
-    }
-    bool
-    keyword_p (env_t &env, shared_ptr <obj_t> a)
-    {
-        return a->tag == "keyword-t";
-    }
-    void
-    define_keyword (env_t &env, name_t name, keyword_fn fn)
-    {
-        define (env, name, make_shared <keyword_o> (env, fn));
-    }
+      using keyword_fn = function
+          <shared_ptr <jojo_t>
+           (env_t &,
+            local_ref_map_t &,
+            shared_ptr <obj_t>)>;
+      struct keyword_o: obj_t
+      {
+          keyword_fn fn;
+          keyword_o (env_t &env, keyword_fn fn);
+          bool equal (env_t &env, shared_ptr <obj_t> obj);
+      };
+      keyword_o::
+      keyword_o (env_t &env, keyword_fn fn)
+      {
+          this->tag = "keyword-t";
+          this->fn = fn;
+      }
+      bool
+      keyword_o::equal (env_t &env, shared_ptr <obj_t> obj)
+      {
+          if (this->tag != obj->tag) return false;
+          return this != obj.get ();
+      }
+      bool
+      keyword_p (env_t &env, shared_ptr <obj_t> a)
+      {
+          return a->tag == "keyword-t";
+      }
+      void
+      define_keyword (env_t &env, name_t name, keyword_fn fn)
+      {
+          define (env, name, make_shared <keyword_o> (env, fn));
+      }
+      bool
+      keyword_sexp_p (env_t &env, shared_ptr <obj_t> sexp)
+      {
+          if (! cons_p (env, sexp)) return false;
+          if (! str_p (env, (car (env, sexp)))) return false;
+          auto head = static_pointer_cast <str_o> (car (env, sexp));
+          auto name = head->str;
+          auto it = env.box_map.find (name);
+          if (it != env.box_map.end ()) {
+              box_t *box = it->second;
+              if (box->empty_p) return false;
+              if (keyword_p (env, box->obj)) return true;
+              else return false;
+          }
+          else {
+              return false;
+          }
+      }
+      keyword_fn
+      get_keyword_fn (env_t &env, name_t name)
+      {
+          auto it = env.box_map.find (name);
+          if (it != env.box_map.end ()) {
+              box_t *box = it->second;
+              if (box->empty_p) {
+                  cout << "- fatal error: get_keyword_fn fail\n";
+                  exit (1);
+              }
+              if (keyword_p (env, box->obj)) {
+                  auto keyword = static_pointer_cast <keyword_o>
+                      (box->obj);
+                  return keyword->fn;
+              }
+              else {
+                  cout << "- fatal error: get_keyword_fn fail\n";
+                  exit (1);
+              };
+          }
+          else {
+              cout << "- fatal error: get_keyword_fn fail\n";
+              exit (1);
+          }
+      }
     shared_ptr <jojo_t>
     string_compile (env_t &env,
                     local_ref_map_t &local_ref_map,
@@ -2337,13 +2374,18 @@
             if (str [size-1] != '"') return false;
             return true;
         }
+        string
+        string_string_to_string (string str)
+        {
+            auto size = str.size () - 2;
+            return str.substr (1, size);
+        }
         shared_ptr <jojo_t>
         string_string_compile (env_t &env,
                                local_ref_map_t &local_ref_map,
                                string str)
         {
-            auto size = str.size () - 2;
-            str = str.substr (1, size);
+            str = string_string_to_string (str);
             jo_vector_t jo_vector = {
                 new lit_jo_t (make_shared <str_o> (env, str)),
             };
@@ -2442,60 +2484,17 @@
           auto ending_jojo = make_shared <jojo_t> (jo_vector);
           return jojo_append (jojo, ending_jojo);
       }
-        bool
-        keyword_sexp_p (env_t &env, shared_ptr <obj_t> sexp)
-        {
-            if (! cons_p (env, sexp)) return false;
-            if (! str_p (env, (car (env, sexp)))) return false;
-            auto head = static_pointer_cast <str_o> (car (env, sexp));
-            auto name = head->str;
-            auto it = env.box_map.find (name);
-            if (it != env.box_map.end ()) {
-                box_t *box = it->second;
-                if (box->empty_p) return false;
-                if (keyword_p (env, box->obj)) return true;
-                else return false;
-            }
-            else {
-                return false;
-            }
-        }
-        keyword_fn
-        get_keyword_fn (env_t &env, name_t name)
-        {
-            auto it = env.box_map.find (name);
-            if (it != env.box_map.end ()) {
-                box_t *box = it->second;
-                if (box->empty_p) {
-                    cout << "- fatal error: get_keyword_fn fail\n";
-                    exit (1);
-                }
-                if (keyword_p (env, box->obj)) {
-                    auto keyword = static_pointer_cast <keyword_o>
-                        (box->obj);
-                    return keyword->fn;
-                }
-                else {
-                    cout << "- fatal error: get_keyword_fn fail\n";
-                    exit (1);
-                };
-            }
-            else {
-                cout << "- fatal error: get_keyword_fn fail\n";
-                exit (1);
-            }
-        }
-        shared_ptr <jojo_t>
-        keyword_compile (env_t &env,
-                         local_ref_map_t &local_ref_map,
-                         shared_ptr <obj_t> sexp)
-        {
-            auto head = static_pointer_cast <str_o> (car (env, sexp));
-            auto body = cdr (env, sexp);
-            auto name = head->str;
-            auto fn = get_keyword_fn (env, name);
-            return fn (env, local_ref_map, body);
-        }
+      shared_ptr <jojo_t>
+      keyword_compile (env_t &env,
+                       local_ref_map_t &local_ref_map,
+                       shared_ptr <obj_t> sexp)
+      {
+          auto head = static_pointer_cast <str_o> (car (env, sexp));
+          auto body = cdr (env, sexp);
+          auto name = head->str;
+          auto fn = get_keyword_fn (env, name);
+          return fn (env, local_ref_map, body);
+      }
         bool
         field_head_p (env_t &env, shared_ptr <obj_t> head)
         {
@@ -2586,49 +2585,79 @@
             return jojo_append (head_jojo, body_jojo);
         }
     }
-    bool
-    top_keyword_sexp_p (env_t &env, shared_ptr <obj_t> sexp)
-    {
-        if (! cons_p (env, sexp)) return false;
-        if (! str_p (env, (car (env, sexp)))) return false;
-        auto head = static_pointer_cast <str_o> (car (env, sexp));
-        auto name = head->str;
-        auto it = env.box_map.find (name);
-        if (it != env.box_map.end ()) {
-            box_t *box = it->second;
-            if (box->empty_p) return false;
-            if (top_keyword_p (env, box->obj)) return true;
-            else return false;
-        }
-        else {
-            return false;
-        }
-    }
-    top_keyword_fn
-    get_top_keyword_fn (env_t &env, name_t name)
-    {
-        auto it = env.box_map.find (name);
-        if (it != env.box_map.end ()) {
-            box_t *box = it->second;
-            if (box->empty_p) {
-                cout << "- fatal error: get_top_keyword_fn fail\n";
-                exit (1);
-            }
-            if (top_keyword_p (env, box->obj)) {
-                auto top_keyword = static_pointer_cast <top_keyword_o>
-                    (box->obj);
-                return top_keyword->fn;
-            }
-            else {
-                cout << "- fatal error: get_top_keyword_fn fail\n";
-                exit (1);
-            };
-        }
-        else {
-            cout << "- fatal error: get_top_keyword_fn fail\n";
-            exit (1);
-        }
-    }
+      using top_keyword_fn = function
+          <void (env_t &, shared_ptr <obj_t>)>;
+      struct top_keyword_o: obj_t
+      {
+          top_keyword_fn fn;
+          top_keyword_o (env_t &env, top_keyword_fn fn);
+          bool equal (env_t &env, shared_ptr <obj_t> obj);
+      };
+      top_keyword_o::
+      top_keyword_o (env_t &env, top_keyword_fn fn)
+      {
+          this->tag = "top-keyword-t";
+          this->fn = fn;
+      }
+      bool
+      top_keyword_o::equal (env_t &env, shared_ptr <obj_t> obj)
+      {
+          if (this->tag != obj->tag) return false;
+          return this != obj.get ();
+      }
+      bool
+      top_keyword_p (env_t &env, shared_ptr <obj_t> a)
+      {
+          return a->tag == "top-keyword-t";
+      }
+      void
+      define_top_keyword (env_t &env, name_t name, top_keyword_fn fn)
+      {
+          define (env, name, make_shared <top_keyword_o> (env, fn));
+      }
+      bool
+      top_keyword_sexp_p (env_t &env, shared_ptr <obj_t> sexp)
+      {
+          if (! cons_p (env, sexp)) return false;
+          if (! str_p (env, (car (env, sexp)))) return false;
+          auto head = static_pointer_cast <str_o> (car (env, sexp));
+          auto name = head->str;
+          auto it = env.box_map.find (name);
+          if (it != env.box_map.end ()) {
+              box_t *box = it->second;
+              if (box->empty_p) return false;
+              if (top_keyword_p (env, box->obj)) return true;
+              else return false;
+          }
+          else {
+              return false;
+          }
+      }
+      top_keyword_fn
+      get_top_keyword_fn (env_t &env, name_t name)
+      {
+          auto it = env.box_map.find (name);
+          if (it != env.box_map.end ()) {
+              box_t *box = it->second;
+              if (box->empty_p) {
+                  cout << "- fatal error: get_top_keyword_fn fail\n";
+                  exit (1);
+              }
+              if (top_keyword_p (env, box->obj)) {
+                  auto top_keyword = static_pointer_cast <top_keyword_o>
+                      (box->obj);
+                  return top_keyword->fn;
+              }
+              else {
+                  cout << "- fatal error: get_top_keyword_fn fail\n";
+                  exit (1);
+              };
+          }
+          else {
+              cout << "- fatal error: get_top_keyword_fn fail\n";
+              exit (1);
+          }
+      }
     void
     jojo_run (env_t &env, shared_ptr <jojo_t> jojo)
     {
@@ -2696,6 +2725,125 @@
         auto word_list = scan_word_list (env, code);
         auto sexp_list = parse_sexp_list (env, word_list);
         top_sexp_list_eval (env, sexp_list);
+    }
+    shared_ptr <str_o>
+    code_of_file (env_t &env, string file_name)
+    {
+        auto input_file = ifstream (file_name);
+        auto buffer = stringstream ();
+        buffer << input_file.rdbuf ();
+        auto code = make_shared <str_o> (env, buffer.str ());
+        return code;
+    }
+    void
+    eval_file (env_t &env, string file_name)
+    {
+        auto code = code_of_file (env, file_name);
+        code_eval (env, code);
+    }
+      string
+      file_name_to_module_name (string file_name);
+
+      void
+      eval_module_file (env_t &env, string file_name);
+      void
+      mk_import (env_t &env, shared_ptr <obj_t> body)
+      {
+          assert (cons_p (env, body));
+          auto head = car (env, body);
+          assert (str_p (env, head));
+          auto str = static_pointer_cast <str_o> (head);
+          auto file_string = str->str;
+          auto file_name = string_string_to_string (file_string);
+          auto module_name = file_name_to_module_name (file_name);
+          auto it = env.module_map.find (module_name);
+          if (it != env.module_map.end ()) {
+              // do not reload module;
+          }
+          else {
+              auto box_map_back_up = env.box_map;
+              eval_module_file (env, file_name);
+              env.box_map = box_map_back_up;
+          }
+          auto it_mod = env.module_map.find (module_name);
+          assert (it_mod != env.module_map.end ());
+          auto mod = it_mod->second;
+          for (auto name: mod->export_name_vector) {
+              auto it_obj = mod->box_map.find (name);
+              assert (it_obj != mod->box_map.end ());
+              auto obj = it_obj->second;
+              env.box_map [name] = obj;
+          }
+      }
+      void
+      mk_include (env_t &env, shared_ptr <obj_t> body)
+      {
+          auto vect = list_to_vect (env, body);
+          auto file_string_vector = name_vector_t ();
+          for (auto sexp: vect->obj_vector) {
+              assert (str_p (env, sexp));
+              auto str = static_pointer_cast <str_o> (sexp);
+              file_string_vector.push_back (str->str);
+          }
+          for (auto file_string: file_string_vector) {
+              assert (string_string_p (file_string));
+              auto file_name = string_string_to_string (file_string);
+              eval_file (env, file_name);
+          }
+      }
+      void
+      mk_export (env_t &env, shared_ptr <obj_t> body)
+      {
+          auto vect = list_to_vect (env, body);
+          auto export_name_vector = name_vector_t ();
+          for (auto sexp: vect->obj_vector) {
+              assert (str_p (env, sexp));
+              auto str = static_pointer_cast <str_o> (sexp);
+              export_name_vector.push_back (str->str);
+          }
+          auto module_name = env.module_name_stack.top ();
+          auto box_map = env.box_map;
+          auto mod = make_shared <module_t>
+              (module_name,
+               box_map,
+               export_name_vector);
+          // ownership of `box_map` in `env` is transformed to `mod`
+          env.box_map = box_map_t ();
+          env.module_map [module_name] = mod;
+      }
+    void
+    module_sexp_eval (env_t &env, shared_ptr <obj_t> sexp)
+    {
+        if (! cons_p (env, sexp)) return;
+        auto head = car (env, sexp);
+        if (! str_p (env, head)) return;
+        auto body = cdr (env, sexp);
+        auto str = static_pointer_cast <str_o> (head);
+        auto name = str->str;
+        if (name == "import")
+            mk_import (env, body);
+        else if (name == "export")
+            mk_export (env, body);
+        else if (name == "include")
+            mk_include (env, body);
+        else return;
+    }
+    void
+    module_sexp_list_eval (env_t &env, shared_ptr <obj_t> sexp_list)
+    {
+        if (null_p (env, sexp_list))
+            return;
+        else {
+            module_sexp_eval (env, car (env, sexp_list));
+            module_sexp_list_eval (env, cdr (env, sexp_list));
+        }
+    }
+    void
+    module_code_eval (env_t &env, shared_ptr <str_o> code)
+    {
+        auto word_list = scan_word_list (env, code);
+        auto sexp_list = parse_sexp_list (env, word_list);
+        module_sexp_list_eval (env, sexp_list);
     }
       string
       string_vector_join (string_vector_t string_vector, char c)
@@ -3136,8 +3284,7 @@
                 return make_shared <int_o> (env, i);
             }
             if (string_string_p (str)) {
-                auto size = str.size () - 2;
-                str = str.substr (1, size);
+                str = string_string_to_string (str);
                 return make_shared <str_o> (env, str);
             }
             if (key_string_p (str)) {
@@ -3805,22 +3952,49 @@
         expose_stack (env);
         expose_misc (env);
     }
-    void
-    eval_file (env_t &env, string file_name)
+    bool
+    mo_file_name_p (string file_name)
     {
-        auto input_file = ifstream (file_name);
-        auto buffer = stringstream ();
-        buffer << input_file.rdbuf ();
-        auto code = make_shared <str_o> (env, buffer.str ());
-        code_eval (env, code);
+        auto size = file_name.size ();
+        if (size <= 3) return false;
+        if (file_name [size - 1] != 'o') return false;
+        if (file_name [size - 2] != 'm') return false;
+        if (file_name [size - 3] != '.') return false;
+        return true;
+    }
+    string
+    file_name_to_module_name (string file_name)
+    {
+        auto module_name = file_name;
+        module_name.pop_back ();
+        module_name.pop_back ();
+        module_name.pop_back ();
+        return module_name;
     }
     void
-    the_story_begin (string_vector_t arg_vector)
+    eval_module_file (env_t &env, string file_name)
+    {
+        assert (mo_file_name_p (file_name));
+        auto code = code_of_file (env, file_name);
+        auto module_name = file_name_to_module_name (file_name);
+        env.module_name_stack.push (module_name);
+        expose_all (env);
+        module_code_eval (env, code);
+        auto the_same_module_name = env.module_name_stack.top ();
+        assert (module_name == the_same_module_name);
+        env.module_name_stack.pop ();
+    }
+    void
+    the_story_begins (string_vector_t arg_vector)
     {
         auto env = env_t ();
         expose_all (env);
-        for (auto file_name: arg_vector)
-            eval_file (env, file_name);
+        for (auto file_name: arg_vector) {
+            if (mo_file_name_p (file_name))
+                eval_module_file (env, file_name);
+            else
+                eval_file (env, file_name);
+        }
     }
     int
     main (int argc, char **argv)
@@ -3830,6 +4004,6 @@
         for (auto i = 1; i < argc; i++) {
             arg_vector.push_back (string (argv[i]));
         }
-        the_story_begin (arg_vector);
+        the_story_begins (arg_vector);
         return 0;
     }
