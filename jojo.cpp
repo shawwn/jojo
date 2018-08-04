@@ -3215,7 +3215,7 @@
           env.obj_stack.push (type_of (env, obj));
       }
       void
-      import_type (env_t &env)
+      expose_type (env_t &env)
       {
           define_type (env, "type-t");
           define_data_pred (env, "type-p", "type-t");
@@ -3251,7 +3251,7 @@
               env.obj_stack.push (true_c (env));
       }
       void
-      import_bool (env_t &env)
+      expose_bool (env_t &env)
       {
           define_type (env, "true-t");
           define_data_pred (env, "true-p", "true-t");
@@ -3264,7 +3264,7 @@
                        jj_not);
       }
       void
-      import_int (env_t &env)
+      expose_int (env_t &env)
       {
           define_type (env, "int-t");
           define_data_pred (env, "int-p", "int-t");
@@ -3279,7 +3279,7 @@
           cout << str->str;
       }
       void
-      import_str (env_t &env)
+      expose_str (env_t &env)
       {
           define_type (env, "str-t");
           define_data_pred (env, "str-p", "str-t");
@@ -3305,7 +3305,7 @@
                obj_map_t ());
       }
       void
-      import_list (env_t &env)
+      expose_list (env_t &env)
       {
           define_type (env, "null-t");
           define_data_pred (env, "null-p", "null-t");
@@ -3330,7 +3330,7 @@
           env.obj_stack.push (vect_to_list (env, vect));
       }
       void
-      import_vect (env_t &env)
+      expose_vect (env_t &env)
       {
           define_type (env, "vect-t");
           define_data_pred (env, "vect-p", "vect-t");
@@ -3342,7 +3342,7 @@
                        jj_vect_to_list);
       }
       void
-      import_dict (env_t &env)
+      expose_dict (env_t &env)
       {
           define_type (env, "dict-t");
           define_data_pred (env, "dict-p", "dict-t");
@@ -3383,7 +3383,7 @@
           env.obj_stack.push (make_shared <str_o> (env, str));
       }
       void
-      import_sexp (env_t &env)
+      expose_sexp (env_t &env)
       {
           define_prim (env,
                        jj_scan_word_list_sig,
@@ -3402,19 +3402,19 @@
                        jj_sexp_list_repr);
       }
       void
-      import_top_keyword (env_t &env)
+      expose_top_keyword (env_t &env)
       {
           define_type (env, "top-keyword-t");
           define_data_pred (env, "top-keyword-p", "top-keyword-t");
       }
       void
-      import_keyword (env_t &env)
+      expose_keyword (env_t &env)
       {
           define_type (env, "keyword-t");
           define_data_pred (env, "keyword-p", "keyword-t");
       }
       void
-      import_syntax (env_t &env)
+      expose_syntax (env_t &env)
       {
           define_top_keyword (env, "=", tk_assign);
           define_keyword (env, "lambda", k_lambda);
@@ -3429,7 +3429,7 @@
           env.obj_stack.pop ();
       }
       void
-      import_stack (env_t &env)
+      expose_stack (env_t &env)
       {
           define_prim (env,
                        jj_drop_sig,
@@ -3481,7 +3481,7 @@
           env.obj_stack.push (true_c (env));
       }
       void
-      import_misc (env_t &env)
+      expose_misc (env_t &env)
       {
           define_type (env, "closure-t");
           define_data_pred (env, "closure-p", "closure-t");
@@ -3776,21 +3776,21 @@
         test_scan ();
     }
     void
-    import_all (env_t &env)
+    expose_all (env_t &env)
     {
-        import_bool (env);
-        import_int (env);
-        import_str (env);
-        import_list (env);
-        import_vect (env);
-        import_dict (env);
-        import_sexp (env);
-        import_top_keyword (env);
-        import_keyword (env);
-        import_syntax (env);
-        import_type (env);
-        import_stack (env);
-        import_misc (env);
+        expose_bool (env);
+        expose_int (env);
+        expose_str (env);
+        expose_list (env);
+        expose_vect (env);
+        expose_dict (env);
+        expose_sexp (env);
+        expose_top_keyword (env);
+        expose_keyword (env);
+        expose_syntax (env);
+        expose_type (env);
+        expose_stack (env);
+        expose_misc (env);
     }
     void
     eval_file (env_t &env, string file_name)
@@ -3805,7 +3805,7 @@
     the_story_begin (string_vector_t arg_vector)
     {
         auto env = env_t ();
-        import_all (env);
+        expose_all (env);
         for (auto file_name: arg_vector)
             eval_file (env, file_name);
     }

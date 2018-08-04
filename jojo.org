@@ -1,8 +1,12 @@
 #+html_head: <link rel="stylesheet" href="css/org-page.css"/>
 #+property: tangle jojo.cpp
 #+title: jojo
-- clear define & assign interface
+
 * [todo-stack]
+
+*** one `.mo` file one module -- like r7rs module system
+
+*** higher interface `def` over define & assign -- to be used in expose
 
 *** about api
 
@@ -12,8 +16,6 @@
 
     - k -
       can we also compile jojo.cpp to a lib ?
-
-*** one `.mo` file one module -- like r7rs module system
 
 * prolog
 
@@ -4812,9 +4814,9 @@
       }
       #+end_src
 
-* import
+* expose
 
-*** import_type
+*** expose_type
 
 ***** jj_type_of
 
@@ -4827,11 +4829,11 @@
       }
       #+end_src
 
-***** import_type
+***** expose_type
 
       #+begin_src cpp
       void
-      import_type (env_t &env)
+      expose_type (env_t &env)
       {
           define_type (env, "type-t");
           define_data_pred (env, "type-p", "type-t");
@@ -4841,7 +4843,7 @@
       }
       #+end_src
 
-*** import_bool
+*** expose_bool
 
 ***** jj_true_c
 
@@ -4885,11 +4887,11 @@
       }
       #+end_src
 
-***** import_bool
+***** expose_bool
 
       #+begin_src cpp
       void
-      import_bool (env_t &env)
+      expose_bool (env_t &env)
       {
           define_type (env, "true-t");
           define_data_pred (env, "true-p", "true-t");
@@ -4903,20 +4905,20 @@
       }
       #+end_src
 
-*** import_int
+*** expose_int
 
-***** import_int
+***** expose_int
 
       #+begin_src cpp
       void
-      import_int (env_t &env)
+      expose_int (env_t &env)
       {
           define_type (env, "int-t");
           define_data_pred (env, "int-p", "int-t");
       }
       #+end_src
 
-*** import_str
+*** expose_str
 
 ***** jj_str_print
 
@@ -4932,11 +4934,11 @@
       }
       #+end_src
 
-***** import_str
+***** expose_str
 
       #+begin_src cpp
       void
-      import_str (env_t &env)
+      expose_str (env_t &env)
       {
           define_type (env, "str-t");
           define_data_pred (env, "str-p", "str-t");
@@ -4946,7 +4948,7 @@
       }
       #+end_src
 
-*** import_list
+*** expose_list
 
 ***** jj_null_c
 
@@ -4975,11 +4977,11 @@
       }
       #+end_src
 
-***** import_list
+***** expose_list
 
       #+begin_src cpp
       void
-      import_list (env_t &env)
+      expose_list (env_t &env)
       {
           define_type (env, "null-t");
           define_data_pred (env, "null-p", "null-t");
@@ -4990,7 +4992,7 @@
       }
       #+end_src
 
-*** import_vect
+*** expose_vect
 
 ***** jj_list_to_vect
 
@@ -5017,11 +5019,11 @@
       }
       #+end_src
 
-***** import_vect
+***** expose_vect
 
       #+begin_src cpp
       void
-      import_vect (env_t &env)
+      expose_vect (env_t &env)
       {
           define_type (env, "vect-t");
           define_data_pred (env, "vect-p", "vect-t");
@@ -5034,20 +5036,20 @@
       }
       #+end_src
 
-*** import_dict
+*** expose_dict
 
-***** import_dict
+***** expose_dict
 
       #+begin_src cpp
       void
-      import_dict (env_t &env)
+      expose_dict (env_t &env)
       {
           define_type (env, "dict-t");
           define_data_pred (env, "dict-p", "dict-t");
       }
       #+end_src
 
-*** import_sexp
+*** expose_sexp
 
 ***** jj_scan_word_list
 
@@ -5109,11 +5111,11 @@
       }
       #+end_src
 
-***** import_sexp
+***** expose_sexp
 
       #+begin_src cpp
       void
-      import_sexp (env_t &env)
+      expose_sexp (env_t &env)
       {
           define_prim (env,
                        jj_scan_word_list_sig,
@@ -5133,39 +5135,39 @@
       }
       #+end_src
 
-*** import_top_keyword
+*** expose_top_keyword
 
-***** import_top_keyword
+***** expose_top_keyword
 
       #+begin_src cpp
       void
-      import_top_keyword (env_t &env)
+      expose_top_keyword (env_t &env)
       {
           define_type (env, "top-keyword-t");
           define_data_pred (env, "top-keyword-p", "top-keyword-t");
       }
       #+end_src
 
-*** import_keyword
+*** expose_keyword
 
-***** import_keyword
+***** expose_keyword
 
       #+begin_src cpp
       void
-      import_keyword (env_t &env)
+      expose_keyword (env_t &env)
       {
           define_type (env, "keyword-t");
           define_data_pred (env, "keyword-p", "keyword-t");
       }
       #+end_src
 
-*** import_syntax
+*** expose_syntax
 
-***** import_syntax
+***** expose_syntax
 
       #+begin_src cpp
       void
-      import_syntax (env_t &env)
+      expose_syntax (env_t &env)
       {
           define_top_keyword (env, "=", tk_assign);
           define_keyword (env, "lambda", k_lambda);
@@ -5176,7 +5178,7 @@
       }
       #+end_src
 
-*** import_stack
+*** expose_stack
 
 ***** jj_drop
 
@@ -5188,11 +5190,11 @@
       }
       #+end_src
 
-***** import_stack
+***** expose_stack
 
       #+begin_src cpp
       void
-      import_stack (env_t &env)
+      expose_stack (env_t &env)
       {
           define_prim (env,
                        jj_drop_sig,
@@ -5200,7 +5202,7 @@
       }
       #+end_src
 
-*** import_misc
+*** expose_misc
 
 ***** jj_repr
 
@@ -5277,11 +5279,11 @@
       }
       #+end_src
 
-***** import_misc
+***** expose_misc
 
       #+begin_src cpp
       void
-      import_misc (env_t &env)
+      expose_misc (env_t &env)
       {
           define_type (env, "closure-t");
           define_data_pred (env, "closure-p", "closure-t");
@@ -5621,25 +5623,25 @@
     }
     #+end_src
 
-*** import_all
+*** expose_all
 
     #+begin_src cpp
     void
-    import_all (env_t &env)
+    expose_all (env_t &env)
     {
-        import_bool (env);
-        import_int (env);
-        import_str (env);
-        import_list (env);
-        import_vect (env);
-        import_dict (env);
-        import_sexp (env);
-        import_top_keyword (env);
-        import_keyword (env);
-        import_syntax (env);
-        import_type (env);
-        import_stack (env);
-        import_misc (env);
+        expose_bool (env);
+        expose_int (env);
+        expose_str (env);
+        expose_list (env);
+        expose_vect (env);
+        expose_dict (env);
+        expose_sexp (env);
+        expose_top_keyword (env);
+        expose_keyword (env);
+        expose_syntax (env);
+        expose_type (env);
+        expose_stack (env);
+        expose_misc (env);
     }
     #+end_src
 
@@ -5664,7 +5666,7 @@
     the_story_begin (string_vector_t arg_vector)
     {
         auto env = env_t ();
-        import_all (env);
+        expose_all (env);
         for (auto file_name: arg_vector)
             eval_file (env, file_name);
     }
