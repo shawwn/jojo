@@ -1,8 +1,24 @@
 #+html_head: <link rel="stylesheet" href="css/org-page.css"/>
 #+property: tangle jojo.cpp
 #+title: jojo
-- data_pred_o -- for `<data>-p`
-- tk_assign_data -- generate data_pred_o
+
+* [todo-stack]
+
+  - normalize the use of `cout`
+
+  - tk_assign_data -- generate data_pred_o
+
+*** about api
+
+    - x -
+      maybe not only the top level API of the interpreter should be exposed
+      the API of each obj in c++ should also be exposed (thus well designed)
+
+    - k -
+      can we also compile jojo.cpp to a lib ?
+
+*** one `.mo` file one module -- like r7rs module system
+
 * prolog
 
 *** include
@@ -1723,6 +1739,85 @@
     void
     test_bool ()
     {
+    }
+    #+end_src
+
+* data_pred
+
+*** data_pred_o
+
+    #+begin_src cpp
+    struct data_pred_o: obj_t
+    {
+        tag_t type_tag;
+        data_pred_o (env_t &env,
+                     tag_t type_tag);
+        void apply (env_t &env, size_t arity);
+        bool equal (env_t &env, shared_ptr <obj_t> obj);
+        string repr (env_t &env);
+    };
+    #+end_src
+
+*** data_pred_o::data_pred_o
+
+    #+begin_src cpp
+    data_pred_o::
+    data_pred_o (env_t &env,
+                 tag_t type_tag)
+    {
+        this->tag = "data-pred-t";
+        this->type_tag = type_tag;
+    }
+    #+end_src
+
+*** data_pred_o::apply
+
+    #+begin_src cpp
+    void
+    data_pred_o::apply (env_t &env, size_t arity)
+    {
+        if (arity == 1) {
+            auto obj = env.obj_stack.top ();
+            env.obj_stack.pop ();
+            if (obj->tag == this->type_tag)
+                env.obj_stack.push (true_c (env));
+            else
+                env.obj_stack.push (false_c (env));
+        }
+        else {
+            cout << "- fatal error : data_pred_o::apply" << "\n"
+                 << "  arity of this kind of apply must be 1" << "\n"
+                 << "  arity : " << arity << "\n";
+            exit (1);
+        }
+    }
+    #+end_src
+
+*** data_pred_o::equal
+
+    #+begin_src cpp
+    bool
+    data_pred_o::equal (env_t &env, shared_ptr <obj_t> obj)
+    {
+        if (this->tag != obj->tag) return false;
+        auto that = static_pointer_cast <data_pred_o> (obj);
+        if (this->type_tag != that->type_tag) return false;
+        return true;
+    }
+    #+end_src
+
+*** data_pred_o::repr
+
+    #+begin_src cpp
+    string
+    data_pred_o::repr (env_t &env)
+    {
+        string repr = "";
+        repr += this->type_tag;
+        repr.pop_back ();
+        repr.pop_back ();
+        repr += "-p";
+        return repr;
     }
     #+end_src
 

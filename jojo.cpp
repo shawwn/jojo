@@ -1169,6 +1169,58 @@
     test_bool ()
     {
     }
+    struct data_pred_o: obj_t
+    {
+        tag_t type_tag;
+        data_pred_o (env_t &env,
+                     tag_t type_tag);
+        void apply (env_t &env, size_t arity);
+        bool equal (env_t &env, shared_ptr <obj_t> obj);
+        string repr (env_t &env);
+    };
+    data_pred_o::
+    data_pred_o (env_t &env,
+                 tag_t type_tag)
+    {
+        this->tag = "data-pred-t";
+        this->type_tag = type_tag;
+    }
+    void
+    data_pred_o::apply (env_t &env, size_t arity)
+    {
+        if (arity == 1) {
+            auto obj = env.obj_stack.top ();
+            env.obj_stack.pop ();
+            if (obj->tag == this->type_tag)
+                env.obj_stack.push (true_c (env));
+            else
+                env.obj_stack.push (false_c (env));
+        }
+        else {
+            cout << "- fatal error : data_pred_o::apply" << "\n"
+                 << "  arity of this kind of apply must be 1" << "\n"
+                 << "  arity : " << arity << "\n";
+            exit (1);
+        }
+    }
+    bool
+    data_pred_o::equal (env_t &env, shared_ptr <obj_t> obj)
+    {
+        if (this->tag != obj->tag) return false;
+        auto that = static_pointer_cast <data_pred_o> (obj);
+        if (this->type_tag != that->type_tag) return false;
+        return true;
+    }
+    string
+    data_pred_o::repr (env_t &env)
+    {
+        string repr = "";
+        repr += this->type_tag;
+        repr.pop_back ();
+        repr.pop_back ();
+        repr += "-p";
+        return repr;
+    }
     struct int_o: obj_t
     {
         int i;

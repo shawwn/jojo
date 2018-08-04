@@ -27,22 +27,19 @@ clean () {
     rm -f jojo
 }
 
-run () {
-    time ./jojo
-}
-
 test () {
-    time ./jojo
     for FILE in $(ls test | grep "\.jo" | grep "test-")
     do
-        ./jojo "test/$FILE"
+        echo "<test/$FILE>" && time ./jojo "test/$FILE" && echo "</test/$FILE>" && echo ""
     done
 }
 
 debug () {
-    build
-    time valgrind ./jojo
     # time valgrind --leak-check=full ./jojo
+    for FILE in $(ls test | grep "\.jo" | grep "test-")
+    do
+        echo "<test/$FILE>" && valgrind ./jojo "test/$FILE" && echo "</test/$FILE>" && echo ""
+    done
 }
 
 install () {

@@ -17,6 +17,5 @@
 * with simple ffi to c++
 * easy to use and debug
 * with simple module system
-*** one `.mo` file one module -- like r7rs module system
 * with git based package manager
 * maintained by a community as a live system
