@@ -15,10 +15,15 @@
 *** (= <name> (macro))
 * with oop system
 * with simple ffi to c++
+*** handle ffi by dynamic library
 * easy to use and debug
 * with a practical prelude
 *** prelude
 * with simple module system
+*** `equal_env_p` -- for module_o::equal
+*** do not reload module -- need to use module cache
+* secure
+*** fix -Wsign-compare reported by gcc++
 * with editing support
 *** jojo-mode
 * with git based package manager

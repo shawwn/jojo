@@ -3,7 +3,7 @@
 "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd">
 <html xmlns="http://www.w3.org/1999/xhtml" lang="en" xml:lang="en">
 <head>
-<!-- 2018-08-04 Sat 22:40 -->
+<!-- 2018-08-05 Sun 22:08 -->
 <meta http-equiv="Content-Type" content="text/html;charset=utf-8" />
 <meta name="viewport" content="width=device-width, initial-scale=1" />
 <title>Story Map</title>
@@ -63,117 +63,149 @@ for the JavaScript code in this tag.
 <h2>overview</h2>
 <div id="text-table-of-contents">
 <ul>
-<li><a href="#orgb2c7a41"><span class="done _bug_">[bug]</span> </a>
+<li><a href="#orga124b2f"><span class="todo _bug_">[bug]</span> </a>
 <ul>
-<li><a href="#org25a50a4">can not handle big file &#x2013; due to the recursion in sexp parser</a></li>
+<li><a href="#org983dae3">can not handle big file &#x2013; due to the recursion in sexp parser</a></li>
 </ul>
 </li>
-<li><a href="#orgcb595c0">a interpreter uses dynamic threaded code</a></li>
-<li><a href="#org2e5162a">with lisp like macro system</a>
+<li><a href="#orgf156aa4">a interpreter uses dynamic threaded code</a></li>
+<li><a href="#org540e70d">with lisp like macro system</a>
 <ul>
-<li><a href="#orga4c849d">(~&gt;)</a></li>
-<li><a href="#org388c4e3">(vect~&gt;)</a></li>
-<li><a href="#orgaf7cd52">(list~&gt;)</a></li>
-<li><a href="#org7aa27c0">(cond)</a></li>
-<li><a href="#org6e9d4f1">(match)</a></li>
-<li><a href="#orgc6665f4">(if)</a></li>
-<li><a href="#org85eb96a">(partquote)</a></li>
-<li><a href="#org74b39b3">(= &lt;name&gt; (macro))</a></li>
+<li><a href="#org67023a">(~&gt;)</a></li>
+<li><a href="#org98eecca">(vect~&gt;)</a></li>
+<li><a href="#orgf40d019">(list~&gt;)</a></li>
+<li><a href="#org5880393">(cond)</a></li>
+<li><a href="#orgad04fa9">(match)</a></li>
+<li><a href="#org8648893">(if)</a></li>
+<li><a href="#orgc69ac89">(partquote)</a></li>
+<li><a href="#orgf209003">(= &lt;name&gt; (macro))</a></li>
 </ul>
 </li>
-<li><a href="#org1095ad9">with oop system</a></li>
-<li><a href="#org5e56437">with simple ffi to c++</a></li>
-<li><a href="#org9bbb1c">easy to use and debug</a></li>
-<li><a href="#org5f46fa2">with a practical prelude</a>
+<li><a href="#org241a8eb">with oop system</a></li>
+<li><a href="#orgc605cbc">with simple ffi to c++</a>
 <ul>
-<li><a href="#org3df36a9">prelude</a></li>
+<li><a href="#orgad4decb">handle ffi by dynamic library</a></li>
 </ul>
 </li>
-<li><a href="#org9435ba">with simple module system</a></li>
-<li><a href="#org7f0e7b4">with editing support</a>
+<li><a href="#org9cd8d3c">easy to use and debug</a></li>
+<li><a href="#orgfc84aff">with a practical prelude</a>
 <ul>
-<li><a href="#orgab28e33">jojo-mode</a></li>
+<li><a href="#orgbab11f1">prelude</a></li>
 </ul>
 </li>
-<li><a href="#org8f78f7b">with git based package manager</a></li>
-<li><a href="#orgc001d32">maintained by a community as a live system</a></li>
+<li><a href="#orgc0bbc02">with simple module system</a>
+<ul>
+<li><a href="#org161b643">`equal_env_p` &#x2013; for module_o::equal</a></li>
+<li><a href="#orga535c58">do not reload module &#x2013; need to use module cache</a></li>
+</ul>
+</li>
+<li><a href="#orgfa2f238">secure</a>
+<ul>
+<li><a href="#org90a4a5e">fix -Wsign-compare reported by gcc++</a></li>
+</ul>
+</li>
+<li><a href="#org588ec7d">with editing support</a>
+<ul>
+<li><a href="#orgb4f6988">jojo-mode</a></li>
+</ul>
+</li>
+<li><a href="#org337afde">with git based package manager</a></li>
+<li><a href="#org45a6e78">maintained by a community as a live system</a></li>
 </ul>
 </div>
 </div>
 
-<div id="outline-container-orgb2c7a41" class="outline-2">
-<h2 id="orgb2c7a41"><span class="done _bug_">[bug]</span> </h2>
-<div class="outline-text-2" id="text-orgb2c7a41">
-</div><div id="outline-container-org25a50a4" class="outline-3">
-<h3 id="org25a50a4">can not handle big file &#x2013; due to the recursion in sexp parser</h3>
+<div id="outline-container-orga124b2f" class="outline-2">
+<h2 id="orga124b2f"><span class="todo _bug_">[bug]</span> </h2>
+<div class="outline-text-2" id="text-orga124b2f">
+</div><div id="outline-container-org983dae3" class="outline-3">
+<h3 id="org983dae3">can not handle big file &#x2013; due to the recursion in sexp parser</h3>
 </div>
 </div>
-<div id="outline-container-orgcb595c0" class="outline-2">
-<h2 id="orgcb595c0">a interpreter uses dynamic threaded code</h2>
+<div id="outline-container-orgf156aa4" class="outline-2">
+<h2 id="orgf156aa4">a interpreter uses dynamic threaded code</h2>
 </div>
-<div id="outline-container-org2e5162a" class="outline-2">
-<h2 id="org2e5162a">with lisp like macro system</h2>
-<div class="outline-text-2" id="text-org2e5162a">
-</div><div id="outline-container-orga4c849d" class="outline-3">
-<h3 id="orga4c849d">(~&gt;)</h3>
+<div id="outline-container-org540e70d" class="outline-2">
+<h2 id="org540e70d">with lisp like macro system</h2>
+<div class="outline-text-2" id="text-org540e70d">
+</div><div id="outline-container-org67023a" class="outline-3">
+<h3 id="org67023a">(~&gt;)</h3>
 </div>
-<div id="outline-container-org388c4e3" class="outline-3">
-<h3 id="org388c4e3">(vect~&gt;)</h3>
+<div id="outline-container-org98eecca" class="outline-3">
+<h3 id="org98eecca">(vect~&gt;)</h3>
 </div>
-<div id="outline-container-orgaf7cd52" class="outline-3">
-<h3 id="orgaf7cd52">(list~&gt;)</h3>
+<div id="outline-container-orgf40d019" class="outline-3">
+<h3 id="orgf40d019">(list~&gt;)</h3>
 </div>
-<div id="outline-container-org7aa27c0" class="outline-3">
-<h3 id="org7aa27c0">(cond)</h3>
+<div id="outline-container-org5880393" class="outline-3">
+<h3 id="org5880393">(cond)</h3>
 </div>
-<div id="outline-container-org6e9d4f1" class="outline-3">
-<h3 id="org6e9d4f1">(match)</h3>
+<div id="outline-container-orgad04fa9" class="outline-3">
+<h3 id="orgad04fa9">(match)</h3>
 </div>
-<div id="outline-container-orgc6665f4" class="outline-3">
-<h3 id="orgc6665f4">(if)</h3>
+<div id="outline-container-org8648893" class="outline-3">
+<h3 id="org8648893">(if)</h3>
 </div>
-<div id="outline-container-org85eb96a" class="outline-3">
-<h3 id="org85eb96a">(partquote)</h3>
+<div id="outline-container-orgc69ac89" class="outline-3">
+<h3 id="orgc69ac89">(partquote)</h3>
 </div>
-<div id="outline-container-org74b39b3" class="outline-3">
-<h3 id="org74b39b3">(= &lt;name&gt; (macro))</h3>
-</div>
-</div>
-<div id="outline-container-org1095ad9" class="outline-2">
-<h2 id="org1095ad9">with oop system</h2>
-</div>
-<div id="outline-container-org5e56437" class="outline-2">
-<h2 id="org5e56437">with simple ffi to c++</h2>
-</div>
-<div id="outline-container-org9bbb1c" class="outline-2">
-<h2 id="org9bbb1c">easy to use and debug</h2>
-</div>
-<div id="outline-container-org5f46fa2" class="outline-2">
-<h2 id="org5f46fa2">with a practical prelude</h2>
-<div class="outline-text-2" id="text-org5f46fa2">
-</div><div id="outline-container-org3df36a9" class="outline-3">
-<h3 id="org3df36a9">prelude</h3>
+<div id="outline-container-orgf209003" class="outline-3">
+<h3 id="orgf209003">(= &lt;name&gt; (macro))</h3>
 </div>
 </div>
-<div id="outline-container-org9435ba" class="outline-2">
-<h2 id="org9435ba">with simple module system</h2>
+<div id="outline-container-org241a8eb" class="outline-2">
+<h2 id="org241a8eb">with oop system</h2>
 </div>
-<div id="outline-container-org7f0e7b4" class="outline-2">
-<h2 id="org7f0e7b4">with editing support</h2>
-<div class="outline-text-2" id="text-org7f0e7b4">
-</div><div id="outline-container-orgab28e33" class="outline-3">
-<h3 id="orgab28e33">jojo-mode</h3>
+<div id="outline-container-orgc605cbc" class="outline-2">
+<h2 id="orgc605cbc">with simple ffi to c++</h2>
+<div class="outline-text-2" id="text-orgc605cbc">
+</div><div id="outline-container-orgad4decb" class="outline-3">
+<h3 id="orgad4decb">handle ffi by dynamic library</h3>
 </div>
 </div>
-<div id="outline-container-org8f78f7b" class="outline-2">
-<h2 id="org8f78f7b">with git based package manager</h2>
+<div id="outline-container-org9cd8d3c" class="outline-2">
+<h2 id="org9cd8d3c">easy to use and debug</h2>
 </div>
-<div id="outline-container-orgc001d32" class="outline-2">
-<h2 id="orgc001d32">maintained by a community as a live system</h2>
+<div id="outline-container-orgfc84aff" class="outline-2">
+<h2 id="orgfc84aff">with a practical prelude</h2>
+<div class="outline-text-2" id="text-orgfc84aff">
+</div><div id="outline-container-orgbab11f1" class="outline-3">
+<h3 id="orgbab11f1">prelude</h3>
+</div>
+</div>
+<div id="outline-container-orgc0bbc02" class="outline-2">
+<h2 id="orgc0bbc02">with simple module system</h2>
+<div class="outline-text-2" id="text-orgc0bbc02">
+</div><div id="outline-container-org161b643" class="outline-3">
+<h3 id="org161b643">`equal_env_p` &#x2013; for module_o::equal</h3>
+</div>
+<div id="outline-container-orga535c58" class="outline-3">
+<h3 id="orga535c58">do not reload module &#x2013; need to use module cache</h3>
+</div>
+</div>
+<div id="outline-container-orgfa2f238" class="outline-2">
+<h2 id="orgfa2f238">secure</h2>
+<div class="outline-text-2" id="text-orgfa2f238">
+</div><div id="outline-container-org90a4a5e" class="outline-3">
+<h3 id="org90a4a5e">fix -Wsign-compare reported by gcc++</h3>
+</div>
+</div>
+<div id="outline-container-org588ec7d" class="outline-2">
+<h2 id="org588ec7d">with editing support</h2>
+<div class="outline-text-2" id="text-org588ec7d">
+</div><div id="outline-container-orgb4f6988" class="outline-3">
+<h3 id="orgb4f6988">jojo-mode</h3>
+</div>
+</div>
+<div id="outline-container-org337afde" class="outline-2">
+<h2 id="org337afde">with git based package manager</h2>
+</div>
+<div id="outline-container-org45a6e78" class="outline-2">
+<h2 id="org45a6e78">maintained by a community as a live system</h2>
 </div>
 </div>
 <div id="postamble" class="status">
-<p class="date">Created: 2018-08-04 Sat 22:40</p>
+<p class="date">Created: 2018-08-05 Sun 22:08</p>
 <p class="validation"><a href="http://validator.w3.org/check?uri=referer">Validate</a></p>
 </div>
 </body>

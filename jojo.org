@@ -1,10 +1,7 @@
 #+html_head: <link rel="stylesheet" href="css/org-page.css"/>
 #+property: tangle jojo.cpp
 #+title: jojo
-- `equal_env_p` -- for module_o::equal
-- do not reload module -- need to use module cache
-- fix -Wsign-compare reported by gcc++
-- handle ffi by dynamic library
+
 * prolog
 
 *** include
