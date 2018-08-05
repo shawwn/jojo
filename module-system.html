@@ -1,0 +1,235 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN"
+"http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml" lang="en" xml:lang="en">
+<head>
+<!-- 2018-08-05 Sun 20:51 -->
+<meta http-equiv="Content-Type" content="text/html;charset=utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>module system</title>
+<meta name="generator" content="Org-mode" />
+<link rel="stylesheet" href="css/org-page.css"/>
+<script type="text/javascript">
+/*
+@licstart  The following is the entire license notice for the
+JavaScript code in this tag.
+
+Copyright (C) 2012-2013 Free Software Foundation, Inc.
+
+The JavaScript code in this tag is free software: you can
+redistribute it and/or modify it under the terms of the GNU
+General Public License (GNU GPL) as published by the Free Software
+Foundation, either version 3 of the License, or (at your option)
+any later version.  The code is distributed WITHOUT ANY WARRANTY;
+without even the implied warranty of MERCHANTABILITY or FITNESS
+FOR A PARTICULAR PURPOSE.  See the GNU GPL for more details.
+
+As additional permission under GNU GPL version 3 section 7, you
+may distribute non-source (e.g., minimized or compacted) forms of
+that code without the copy of the GNU GPL normally required by
+section 4, provided you include this license notice and a URL
+through which recipients can access the Corresponding Source.
+
+
+@licend  The above is the entire license notice
+for the JavaScript code in this tag.
+*/
+<!--/*--><![CDATA[/*><!--*/
+ function CodeHighlightOn(elem, id)
+ {
+   var target = document.getElementById(id);
+   if(null != target) {
+     elem.cacheClassElem = elem.className;
+     elem.cacheClassTarget = target.className;
+     target.className = "code-highlighted";
+     elem.className   = "code-highlighted";
+   }
+ }
+ function CodeHighlightOff(elem, id)
+ {
+   var target = document.getElementById(id);
+   if(elem.cacheClassElem)
+     elem.className = elem.cacheClassElem;
+   if(elem.cacheClassTarget)
+     target.className = elem.cacheClassTarget;
+ }
+/*]]>*///-->
+</script>
+</head>
+<body>
+<div id="content">
+<h1 class="title">module system</h1>
+<div id="table-of-contents">
+<h2>overview</h2>
+<div id="text-table-of-contents">
+<ul>
+<li><a href="#org6605428"><span class="done _note_">[note]</span> </a></li>
+<li><a href="#orgda2e5b2">module provide export specification</a>
+<ul>
+<li><a href="#org452b5f">like</a></li>
+<li><a href="#org15187a">one file one module</a></li>
+<li><a href="#orgb050d53">one project one directory</a></li>
+<li><a href="#org12222e2">non-first-class-ness</a></li>
+<li><a href="#org57b40d2">non-extendable</a></li>
+<li><a href="#orgf347931">syntax</a></li>
+</ul>
+</li>
+<li><a href="#org279cf6f">objective module system &#x2013; named by file-name</a>
+<ul>
+<li><a href="#orgd3d5e7d">like</a></li>
+<li><a href="#orgf5fc5da">one file one module</a></li>
+<li><a href="#orgdb3109d">first-class-ness</a></li>
+<li><a href="#orga3cbf4b">extendable</a></li>
+<li><a href="#orgf5bfb42">syntax</a></li>
+</ul>
+</li>
+<li><a href="#org2c3b7ca">objective module system &#x2013; named by user</a>
+<ul>
+<li><a href="#org44683e2">like</a></li>
+<li><a href="#orga9254da">syntax</a></li>
+</ul>
+</li>
+</ul>
+</div>
+</div>
+
+<div id="outline-container-org6605428" class="outline-2">
+<h2 id="org6605428"><span class="done _note_">[note]</span> </h2>
+<div class="outline-text-2" id="text-org6605428">
+<ul class="org-ul">
+<li><p>I document three styles of module system for dynamic language here.</p></li>
+
+<li><p>I use the last one for jojo.</p></li></ul>
+</div>
+</div>
+
+<div id="outline-container-orgda2e5b2" class="outline-2">
+<h2 id="orgda2e5b2">module provide export specification</h2>
+<div class="outline-text-2" id="text-orgda2e5b2">
+</div><div id="outline-container-org452b5f" class="outline-3">
+<h3 id="org452b5f">like</h3>
+<div class="outline-text-3" id="text-org452b5f">
+<ul class="org-ul">
+<li><p>r7rs scheme</p></li></ul>
+</div>
+</div>
+
+<div id="outline-container-org15187a" class="outline-3">
+<h3 id="org15187a">one file one module</h3>
+<div class="outline-text-3" id="text-org15187a">
+<ul class="org-ul">
+<li><p>one `.mo` file one module</p></li></ul>
+</div>
+</div>
+
+<div id="outline-container-orgb050d53" class="outline-3">
+<h3 id="orgb050d53">one project one directory</h3>
+<div class="outline-text-3" id="text-orgb050d53">
+<ul class="org-ul">
+<li><p>there shell be not sub-directory</p></li></ul>
+</div>
+</div>
+
+<div id="outline-container-org12222e2" class="outline-3">
+<h3 id="org12222e2">non-first-class-ness</h3>
+<div class="outline-text-3" id="text-org12222e2">
+<ul class="org-ul">
+<li><p>a module is not first-class object.</p></li>
+
+<li><p>`.jo` file do not know about existence of `.mo` file.</p></li></ul>
+</div>
+</div>
+
+<div id="outline-container-org57b40d2" class="outline-3">
+<h3 id="org57b40d2">non-extendable</h3>
+<div class="outline-text-3" id="text-org57b40d2">
+<ul class="org-ul">
+<li><p>module syntax is strict and non-extendable</p></li>
+
+<li><p>one or non (import)</p><p>one (include)</p><p>one (export)</p><p>and the order matters</p></li></ul>
+</div>
+</div>
+
+<div id="outline-container-orgf347931" class="outline-3">
+<h3 id="orgf347931">syntax</h3>
+<div class="outline-text-3" id="text-orgf347931">
+<ul class="org-ul">
+<li><p>(import &lt;import-spec&gt; &#x2026;)</p><p><ul class="org-ul"></p><p><li><p>&lt;import-spec&gt; = (&lt;module-name&gt;) | (&lt;module-name&gt; &lt;name-patch&gt; &#x2026;)</p></li></p><p><li><p>&lt;module-name&gt; = &lt;local-module-name&gt; | &lt;global-module-name&gt;</p></li></p><p><li><p>&lt;name-patch&gt; = [todo]</p></li></ul></p></li>
+<li><p>(include &lt;path&gt; &#x2026;)</p></li>
+<li><p>(export &lt;name&gt; &#x2026;)</p></li></ul>
+</div>
+</div>
+</div>
+
+<div id="outline-container-org279cf6f" class="outline-2">
+<h2 id="org279cf6f">objective module system &#x2013; named by file-name</h2>
+<div class="outline-text-2" id="text-org279cf6f">
+</div><div id="outline-container-orgd3d5e7d" class="outline-3">
+<h3 id="orgd3d5e7d">like</h3>
+<div class="outline-text-3" id="text-orgd3d5e7d">
+<ul class="org-ul">
+<li><p>python</p></li></ul>
+</div>
+</div>
+
+<div id="outline-container-orgf5fc5da" class="outline-3">
+<h3 id="orgf5fc5da">one file one module</h3>
+<div class="outline-text-3" id="text-orgf5fc5da">
+<ul class="org-ul">
+<li><p>one `.jo` file is one module</p></li></ul>
+</div>
+</div>
+
+<div id="outline-container-orgdb3109d" class="outline-3">
+<h3 id="orgdb3109d">first-class-ness</h3>
+<div class="outline-text-3" id="text-orgdb3109d">
+<ul class="org-ul">
+<li><p>a module is just an object.</p></li></ul>
+</div>
+</div>
+
+<div id="outline-container-orga3cbf4b" class="outline-3">
+<h3 id="orga3cbf4b">extendable</h3>
+<div class="outline-text-3" id="text-orga3cbf4b">
+<ul class="org-ul">
+<li><p>module syntax is extendable</p></li></ul>
+</div>
+</div>
+
+<div id="outline-container-orgf5bfb42" class="outline-3">
+<h3 id="orgf5bfb42">syntax</h3>
+<div class="outline-text-3" id="text-orgf5bfb42">
+<ul class="org-ul">
+<li><p>(import &lt;module-name&gt;)</p></li>
+<li><p>(import-as &lt;module-name&gt; &lt;as-name&gt;)</p></li>
+<li><p>(import-from &lt;module-name&gt; &lt;name&gt; &#x2026;)</p></li></ul>
+</div>
+</div>
+</div>
+
+<div id="outline-container-org2c3b7ca" class="outline-2">
+<h2 id="org2c3b7ca">objective module system &#x2013; named by user</h2>
+<div class="outline-text-2" id="text-org2c3b7ca">
+</div><div id="outline-container-org44683e2" class="outline-3">
+<h3 id="org44683e2">like</h3>
+<div class="outline-text-3" id="text-org44683e2">
+<ul class="org-ul">
+<li><p>nodejs</p></li></ul>
+</div>
+</div>
+
+<div id="outline-container-orga9254da" class="outline-3">
+<h3 id="orga9254da">syntax</h3>
+<div class="outline-text-3" id="text-orga9254da">
+<ul class="org-ul">
+<li><p>(= &lt;name&gt; (module &lt;module-name&gt;))</p></li></ul>
+</div>
+</div>
+</div>
+</div>
+<div id="postamble" class="status">
+<p class="date">Created: 2018-08-05 Sun 20:51</p>
+<p class="validation"><a href="http://validator.w3.org/check?uri=referer">Validate</a></p>
+</div>
+</body>
+</html>

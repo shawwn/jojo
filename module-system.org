@@ -1,8 +1,17 @@
+#+html_head: <link rel="stylesheet" href="css/org-page.css"/>
 #+title: module system
+
+* [note]
+
+  - I document three styles of module system for dynamic language here.
+
+  - I use the last one for jojo.
 
 * module provide export specification
 
-  - r7rs scheme
+*** like
+
+    - r7rs scheme
 
 *** one file one module
 
@@ -38,7 +47,9 @@
 
 * objective module system -- named by file-name
 
-  - python
+*** like
+
+    - python
 
 *** one file one module
 
@@ -60,7 +71,9 @@
 
 * objective module system -- named by user
 
-  - javascript
+*** like
+
+    - nodejs
 
 *** syntax
 

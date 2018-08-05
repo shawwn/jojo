@@ -2791,7 +2791,6 @@
         else
             env.file_path = env.current_dir / file_path;
         expose_core (env);
-        cout << "env.file_path : " << env.file_path << "\n";
         auto code = code_of_file (env, env.file_path);
         code_eval (env, code);
         return env;
