@@ -2,6 +2,10 @@
 
 # C="g++"
 C="clang++"
+W="-Wall -Wno-infinite-recursion"
+# W="-Wall -Wno-infinite-recursion -Wextra"
+O="-foptimize-sibling-calls -O2"
+L="-lstdc++fs"
 PREFIX=$HOME
 
 tangle () {
@@ -12,15 +16,12 @@ build ()
 {
     clean
     tangle
-    F="-Wall -Wno-infinite-recursion"
-    time $C $F jojo.cpp -o jojo
+    time $C -o jojo jojo.cpp $W $L
 }
 
 release () {
     clean
-    tangle
-    F="-Wall -Wno-infinite-recursion -foptimize-sibling-calls -O2"
-    time $C $F jojo.cpp -o jojo
+    time $C -o jojo jojo.cpp $W $O $L
 }
 
 clean () {

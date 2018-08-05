@@ -1,6 +1,8 @@
 #+title: module system
 
-* r7rs like module system
+* module provide export specification
+
+  - r7rs scheme
 
 *** one file one module
 
@@ -25,16 +27,18 @@
       one (export)
       and the order matters
 
-    - syntax :
+*** syntax
 
-      - (import <import-spec> ...)
-        - <import-spec> = (<module-name>) | (<module-name> <name-patch> ...)
-        - <module-name> = <local-module-name> | <global-module-name>
-        - <name-patch> = [todo]
-      - (include <path> ...)
-      - (export <name> ...)
+    - (import <import-spec> ...)
+      - <import-spec> = (<module-name>) | (<module-name> <name-patch> ...)
+      - <module-name> = <local-module-name> | <global-module-name>
+      - <name-patch> = [todo]
+    - (include <path> ...)
+    - (export <name> ...)
 
-* objective module system
+* objective module system -- named by file-name
+
+  - python
 
 *** one file one module
 
@@ -48,10 +52,16 @@
 
     - module syntax is extendable
 
-    - basic are :
+*** syntax
 
-      - (import <module-name>)
-      - (import-as <module-name> <as-name>)
-      - (import-from <module-name> <name> ...)
-      - (import-from-all <module-name>)
-      - <module-name> = <local-module-name> | <global-module-name>
+    - (import <module-name>)
+    - (import-as <module-name> <as-name>)
+    - (import-from <module-name> <name> ...)
+
+* objective module system -- named by user
+
+  - javascript
+
+*** syntax
+
+    - (= <name> (module <module-name>))

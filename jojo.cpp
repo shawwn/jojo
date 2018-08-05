@@ -10,14 +10,16 @@
     #include <map>
     #include <set>
     #include <stack>
+
+    #include <experimental/filesystem>
     using namespace std;
+    namespace fs = experimental::filesystem;
     struct obj_t;
     struct jo_t;
     struct env_t;
     struct box_t;
     struct jojo_t;
     struct frame_t;
-    struct module_t;
     using name_t = string;
     using name_vector_t = vector <name_t>;
     using name_stack_t = stack <name_t>;
@@ -35,7 +37,7 @@
     using string_vector_t = vector <string> ;
     using local_ref_t = pair <size_t, size_t>;
     using local_ref_map_t = map <name_t, local_ref_t>;
-    using module_map_t = map <name_t, shared_ptr <module_t>>;
+    using path_t = fs::path;
     struct obj_t
     {
         tag_t tag;
@@ -57,8 +59,9 @@
         box_map_t box_map;
         obj_stack_t obj_stack;
         frame_stack_t frame_stack;
-        name_stack_t module_name_stack;
-        module_map_t module_map;
+        path_t current_dir;
+        path_t file_path;
+        env_t ();
         void step ();
         void run ();
         void box_map_report ();
@@ -88,15 +91,6 @@
         shared_ptr <jojo_t> jojo;
         local_scope_t local_scope;
         frame_t (shared_ptr <jojo_t> jojo, local_scope_t local_scope);
-    };
-    struct module_t
-    {
-        name_t module_name;
-        box_map_t box_map;
-        name_vector_t export_name_vector;
-        module_t (name_t module_name,
-                  box_map_t box_map,
-                  name_vector_t export_name_vector);
     };
       template <typename Out>
       void
@@ -668,15 +662,10 @@
           cout << "\n";
           cout << local_scope_repr (env, frame->local_scope);
       }
-      module_t::
-      module_t (name_t module_name,
-                box_map_t box_map,
-                name_vector_t export_name_vector)
-      {
-          this->module_name = module_name;
-          this->box_map = box_map;
-          this->export_name_vector = export_name_vector;
-      }
+    env_t::env_t ()
+    {
+       this->current_dir = fs::current_path ();
+    }
     void
     env_t::step ()
     {
@@ -1983,6 +1972,42 @@
                 sexp_list_repr (env, cdr (env, sexp_list));
         }
     }
+    struct module_o: obj_t
+    {
+        env_t module_env;
+        module_o (env_t &env, env_t module_env);
+        bool equal (env_t &env, shared_ptr <obj_t> obj);
+        string repr (env_t &env);
+    };
+    module_o::module_o (env_t &env, env_t module_env)
+    {
+        this->tag = "module-t";
+        this->module_env = module_env;
+        for (auto &kv: module_env.box_map) {
+            auto name = kv.first;
+            auto box = kv.second;
+            if (! box->empty_p) {
+                this->obj_map [name] = box->obj;
+            }
+        }
+    }
+    bool
+    equal_env_p (env_t &lhs, env_t &rhs)
+    {
+        return false;
+    }
+    bool
+    module_o::equal (env_t &env, shared_ptr <obj_t> obj)
+    {
+        if (this->tag != obj->tag) return false;
+        auto that = static_pointer_cast <module_o> (obj);
+        return equal_env_p (this->module_env, that->module_env);
+    }
+    string
+    module_o::repr (env_t &env)
+    {
+        return "(module)";
+    }
       using keyword_fn = function
           <shared_ptr <jojo_t>
            (env_t &,
@@ -2341,8 +2366,12 @@
                   to_string (this->arity) + ")";
           }
         bool
+        string_string_p (string str);
+
+        bool
         field_string_p (string str)
         {
+            if (string_string_p (str)) return false;
             auto pos = str.find (".");
             return (pos != string::npos);
         }
@@ -2727,302 +2756,224 @@
         top_sexp_list_eval (env, sexp_list);
     }
     shared_ptr <str_o>
-    code_of_file (env_t &env, string file_name)
+    code_of_file (env_t &env, path_t file_path)
     {
-        auto input_file = ifstream (file_name);
+        auto input_file = ifstream (file_path);
         auto buffer = stringstream ();
         buffer << input_file.rdbuf ();
         auto code = make_shared <str_o> (env, buffer.str ());
         return code;
     }
-    void
-    eval_file (env_t &env, string file_name)
+    bool
+    absolute_path_p (path_t p)
     {
-        auto code = code_of_file (env, file_name);
-        code_eval (env, code);
+        return p.root_path () != path_t ();
     }
-      string
-      file_name_to_module_name (string file_name);
+    void
+    expose_core (env_t &env);
 
-      void
-      eval_module_file (env_t &env, string file_name);
-      void
-      mk_import (env_t &env, shared_ptr <obj_t> body)
-      {
-          assert (cons_p (env, body));
-          auto head = car (env, body);
-          assert (str_p (env, head));
-          auto str = static_pointer_cast <str_o> (head);
-          auto file_string = str->str;
-          auto file_name = string_string_to_string (file_string);
-          auto module_name = file_name_to_module_name (file_name);
-          auto it = env.module_map.find (module_name);
-          if (it != env.module_map.end ()) {
-              // do not reload module;
-          }
-          else {
-              auto box_map_back_up = env.box_map;
-              eval_module_file (env, file_name);
-              env.box_map = box_map_back_up;
-          }
-          auto it_mod = env.module_map.find (module_name);
-          assert (it_mod != env.module_map.end ());
-          auto mod = it_mod->second;
-          for (auto name: mod->export_name_vector) {
-              auto it_obj = mod->box_map.find (name);
-              assert (it_obj != mod->box_map.end ());
-              auto obj = it_obj->second;
-              env.box_map [name] = obj;
-          }
-      }
-      void
-      mk_include (env_t &env, shared_ptr <obj_t> body)
-      {
-          auto vect = list_to_vect (env, body);
-          auto file_string_vector = name_vector_t ();
-          for (auto sexp: vect->obj_vector) {
-              assert (str_p (env, sexp));
-              auto str = static_pointer_cast <str_o> (sexp);
-              file_string_vector.push_back (str->str);
-          }
-          for (auto file_string: file_string_vector) {
-              assert (string_string_p (file_string));
-              auto file_name = string_string_to_string (file_string);
-              eval_file (env, file_name);
-          }
-      }
-      void
-      mk_export (env_t &env, shared_ptr <obj_t> body)
-      {
-          auto vect = list_to_vect (env, body);
-          auto export_name_vector = name_vector_t ();
-          for (auto sexp: vect->obj_vector) {
-              assert (str_p (env, sexp));
-              auto str = static_pointer_cast <str_o> (sexp);
-              export_name_vector.push_back (str->str);
-          }
-          auto module_name = env.module_name_stack.top ();
-          auto box_map = env.box_map;
-          auto mod = make_shared <module_t>
-              (module_name,
-               box_map,
-               export_name_vector);
-          // ownership of `box_map` in `env` is transformed to `mod`
-          env.box_map = box_map_t ();
-          env.module_map [module_name] = mod;
-      }
-    void
-    module_sexp_eval (env_t &env, shared_ptr <obj_t> sexp)
+    env_t
+    eval_file_to_env (path_t file_path)
     {
-        if (! cons_p (env, sexp)) return;
-        auto head = car (env, sexp);
-        if (! str_p (env, head)) return;
-        auto body = cdr (env, sexp);
-        auto str = static_pointer_cast <str_o> (head);
-        auto name = str->str;
-        if (name == "import")
-            mk_import (env, body);
-        else if (name == "export")
-            mk_export (env, body);
-        else if (name == "include")
-            mk_include (env, body);
-        else return;
+        if (! fs::exists (file_path)) {
+            cout << "- fatal error : eval_file_to_env" << "\n";
+            cout << "  file does not exists : " << file_path << "\n";
+            exit (1);
+        }
+        if (! fs::is_regular_file (file_path)) {
+            cout << "- fatal error : eval_file_to_env" << "\n";
+            cout << "  not regular file : " << file_path << "\n";
+            exit (1);
+        }
+        auto env = env_t ();
+        if (absolute_path_p (file_path))
+            env.file_path = file_path;
+        else
+            env.file_path = env.current_dir / file_path;
+        expose_core (env);
+        cout << "env.file_path : " << env.file_path << "\n";
+        auto code = code_of_file (env, env.file_path);
+        code_eval (env, code);
+        return env;
     }
-    void
-    module_sexp_list_eval (env_t &env, shared_ptr <obj_t> sexp_list)
+    string
+    string_vector_join (string_vector_t string_vector, char c)
     {
-        if (null_p (env, sexp_list))
-            return;
+        string str = "";
+        for (auto s: string_vector) {
+            str += s;
+            str += c;
+        }
+        if (! str.empty ()) str.pop_back ();
+        return str;
+    }
+    name_t
+    prefix_of_string (string str)
+    {
+        auto string_vector = string_split (str, '.');
+        assert (string_vector.size () > 0);
+        if (string_vector.size () == 1)
+            return "";
         else {
-            module_sexp_eval (env, car (env, sexp_list));
-            module_sexp_list_eval (env, cdr (env, sexp_list));
+            string_vector.pop_back ();
+            return string_vector_join (string_vector, '.');
         }
     }
-    void
-    module_code_eval (env_t &env, shared_ptr <str_o> code)
+    name_t
+    name_of_string (string str)
     {
-        auto word_list = scan_word_list (env, code);
-        auto sexp_list = parse_sexp_list (env, word_list);
-        module_sexp_list_eval (env, sexp_list);
+        auto string_vector = string_split (str, '.');
+        assert (string_vector.size () > 0);
+        return string_vector [string_vector.size () - 1];
     }
-      string
-      string_vector_join (string_vector_t string_vector, char c)
+      bool
+      assign_data_p (env_t &env, shared_ptr <obj_t> body)
       {
-          string str = "";
-          for (auto s: string_vector) {
-              str += s;
-              str += c;
-          }
-          if (! str.empty ()) str.pop_back ();
-          return str;
+          if (! cons_p (env, body))
+              return false;
+          if (! str_p (env, car (env, body)))
+              return false;
+          if (! cons_p (env, cdr (env, body)))
+              return false;
+          if (! cons_p (env, car (env, cdr (env, body))))
+              return false;
+          if (! str_p (env, car (env, car (env, cdr (env, body)))))
+              return false;
+          auto str = static_pointer_cast <str_o>
+              (car (env, car (env, cdr (env, body))));
+          return str->str == "data";
       }
-      name_t
-      prefix_of_string (string str)
-      {
-          auto string_vector = string_split (str, '.');
-          assert (string_vector.size () > 0);
-          if (string_vector.size () == 1)
-              return "";
-          else {
-              string_vector.pop_back ();
-              return string_vector_join (string_vector, '.');
-          }
-      }
-      name_t
-      name_of_string (string str)
-      {
-          auto string_vector = string_split (str, '.');
-          assert (string_vector.size () > 0);
-          return string_vector [string_vector.size () - 1];
-      }
-        bool
-        assign_data_p (env_t &env, shared_ptr <obj_t> body)
-        {
-            if (! cons_p (env, body))
-                return false;
-            if (! str_p (env, car (env, body)))
-                return false;
-            if (! cons_p (env, cdr (env, body)))
-                return false;
-            if (! cons_p (env, car (env, cdr (env, body))))
-                return false;
-            if (! str_p (env, car (env, car (env, cdr (env, body)))))
-                return false;
-            auto str = static_pointer_cast <str_o>
-                (car (env, car (env, cdr (env, body))));
-            return str->str == "data";
-        }
-        void
-        tk_assign_data (env_t &env, shared_ptr <obj_t> body)
-        {
-            auto head = static_pointer_cast <str_o> (car (env, body));
-            auto prefix = prefix_of_string (head->str);
-            auto type_name = name_of_string (head->str);
-            auto data_name = name_t2c (type_name);
-            auto pred_name = name_t2p (type_name);
-            auto type_tag = head->str;
-            auto rest = cdr (env, body);
-            auto data_body = cdr (env, (car (env, rest)));
-            if (null_p (env, data_body)) {
-                assign_type
-                    (env, prefix, type_name, type_tag);
-                assign_data_pred
-                    (env, prefix, pred_name, type_tag);
-                assign_data
-                    (env, prefix, data_name, type_tag);
-            }
-            else {
-                auto name_vect = list_to_vect (env, data_body);
-                auto name_vector = name_vector_t ();
-                for (auto obj: name_vect->obj_vector) {
-                    auto str = static_pointer_cast <str_o> (obj);
-                    name_vector.push_back (str->str);
-                }
-                assign_type
-                    (env, prefix, type_name, type_tag);
-                assign_data_pred
-                    (env, prefix, pred_name, type_tag);
-                assign_data_cons
-                    (env, prefix, data_name, type_tag, name_vector);
-            }
-        }
-        bool
-        assign_lambda_sugar_p (env_t &env, shared_ptr <obj_t> body)
-        {
-            if (! cons_p (env, body))
-                return false;
-            if (! cons_p (env, car (env, body)))
-                return false;
-            return true;
-        }
-        shared_ptr <obj_t>
-        assign_lambda_desugar (env_t &env, shared_ptr <obj_t> body)
-        {
-            auto head = car (env, body);
-            auto name = car (env, head);
-            auto lambda_body = cdr (env, body);
-            lambda_body = cons_c
-                (env,
-                 list_to_vect (env, cdr (env, head)),
-                 lambda_body);
-            lambda_body = cons_c
-                (env,
-                 make_shared <str_o> (env, "lambda"),
-                 lambda_body);
-            lambda_body = cons_c
-                (env,
-                 lambda_body,
-                 null_c (env));
-            return cons_c (env, name, lambda_body);
-        }
-        shared_ptr <obj_t>
-        sexp_substitute_recur (env_t &env,
-                               shared_ptr <obj_t> sub,
-                               shared_ptr <obj_t> sexp)
-        {
-            if (str_p (env, sexp)) {
-                auto str = static_pointer_cast <str_o> (sexp);
-                if (str->str == "recur")
-                    return sub;
-                else
-                    return sexp;
-            }
-            if (cons_p (env, sexp))
-                return cons_c
-                    (env,
-                     sexp_substitute_recur (env, sub, car (env, sexp)),
-                     sexp_substitute_recur (env, sub, cdr (env, sexp)));
-            if (vect_p (env, sexp)) {
-                auto vect_sexp = static_pointer_cast <vect_o> (sexp);
-                auto list_sexp = vect_to_list (env, vect_sexp);
-                auto new_list_sexp = sexp_substitute_recur (env, sub, list_sexp);
-                return list_to_vect (env, new_list_sexp);
-            }
-            else
-                return sexp;
-        }
-        shared_ptr <obj_t>
-        rest_patch_this (env_t &env, shared_ptr <obj_t> rest)
-        {
-            auto this_str = make_shared <str_o> (env, "this");
-            obj_vector_t obj_vector = { this_str };
-            auto vect = make_shared <vect_o> (env, obj_vector);
-            auto lambda_body = cons_c (env, vect, rest);
-            lambda_body = cons_c
-                (env,
-                 make_shared <str_o> (env, "lambda"),
-                 lambda_body);
-            lambda_body = cons_c
-                (env,
-                 lambda_body,
-                 null_c (env));
-            return lambda_body;
-        }
-        void
-        tk_assign_value (env_t &env, shared_ptr <obj_t> body)
-        {
-            auto head = static_pointer_cast <str_o> (car (env, body));
-            auto rest = cdr (env, body);
-            auto name = name_of_string (head->str);
-            auto prefix = prefix_of_string (head->str);
-            if (prefix != "")
-                rest = rest_patch_this (env, rest);
-            rest = sexp_substitute_recur (env, head, rest);
-            sexp_list_eval (env, rest);
-            auto obj = env.obj_stack.top ();
-            env.obj_stack.pop ();
-            assign (env, prefix, name, obj);
-        }
       void
-      tk_assign (env_t &env, shared_ptr <obj_t> body)
+      tk_assign_data (env_t &env, shared_ptr <obj_t> body)
       {
-          if (assign_data_p (env, body))
-              tk_assign_data (env, body);
-          else if (assign_lambda_sugar_p (env, body))
-              tk_assign_value (env, assign_lambda_desugar (env, body));
-          else
-              tk_assign_value (env, body);
+          auto head = static_pointer_cast <str_o> (car (env, body));
+          auto prefix = prefix_of_string (head->str);
+          auto type_name = name_of_string (head->str);
+          auto data_name = name_t2c (type_name);
+          auto pred_name = name_t2p (type_name);
+          auto type_tag = head->str;
+          auto rest = cdr (env, body);
+          auto data_body = cdr (env, (car (env, rest)));
+          if (null_p (env, data_body)) {
+              assign_type
+                  (env, prefix, type_name, type_tag);
+              assign_data_pred
+                  (env, prefix, pred_name, type_tag);
+              assign_data
+                  (env, prefix, data_name, type_tag);
+          }
+          else {
+              auto name_vect = list_to_vect (env, data_body);
+              auto name_vector = name_vector_t ();
+              for (auto obj: name_vect->obj_vector) {
+                  auto str = static_pointer_cast <str_o> (obj);
+                  name_vector.push_back (str->str);
+              }
+              assign_type
+                  (env, prefix, type_name, type_tag);
+              assign_data_pred
+                  (env, prefix, pred_name, type_tag);
+              assign_data_cons
+                  (env, prefix, data_name, type_tag, name_vector);
+          }
       }
+      bool
+      assign_lambda_sugar_p (env_t &env, shared_ptr <obj_t> body)
+      {
+          if (! cons_p (env, body))
+              return false;
+          if (! cons_p (env, car (env, body)))
+              return false;
+          return true;
+      }
+      shared_ptr <obj_t>
+      assign_lambda_desugar (env_t &env, shared_ptr <obj_t> body)
+      {
+          auto head = car (env, body);
+          auto name = car (env, head);
+          auto lambda_body = cdr (env, body);
+          lambda_body = cons_c
+              (env,
+               list_to_vect (env, cdr (env, head)),
+               lambda_body);
+          lambda_body = cons_c
+              (env,
+               make_shared <str_o> (env, "lambda"),
+               lambda_body);
+          lambda_body = cons_c
+              (env,
+               lambda_body,
+               null_c (env));
+          return cons_c (env, name, lambda_body);
+      }
+      shared_ptr <obj_t>
+      sexp_substitute_recur (env_t &env,
+                             shared_ptr <obj_t> sub,
+                             shared_ptr <obj_t> sexp)
+      {
+          if (str_p (env, sexp)) {
+              auto str = static_pointer_cast <str_o> (sexp);
+              if (str->str == "recur")
+                  return sub;
+              else
+                  return sexp;
+          }
+          if (cons_p (env, sexp))
+              return cons_c
+                  (env,
+                   sexp_substitute_recur (env, sub, car (env, sexp)),
+                   sexp_substitute_recur (env, sub, cdr (env, sexp)));
+          if (vect_p (env, sexp)) {
+              auto vect_sexp = static_pointer_cast <vect_o> (sexp);
+              auto list_sexp = vect_to_list (env, vect_sexp);
+              auto new_list_sexp = sexp_substitute_recur (env, sub, list_sexp);
+              return list_to_vect (env, new_list_sexp);
+          }
+          else
+              return sexp;
+      }
+      shared_ptr <obj_t>
+      rest_patch_this (env_t &env, shared_ptr <obj_t> rest)
+      {
+          auto this_str = make_shared <str_o> (env, "this");
+          obj_vector_t obj_vector = { this_str };
+          auto vect = make_shared <vect_o> (env, obj_vector);
+          auto lambda_body = cons_c (env, vect, rest);
+          lambda_body = cons_c
+              (env,
+               make_shared <str_o> (env, "lambda"),
+               lambda_body);
+          lambda_body = cons_c
+              (env,
+               lambda_body,
+               null_c (env));
+          return lambda_body;
+      }
+      void
+      tk_assign_value (env_t &env, shared_ptr <obj_t> body)
+      {
+          auto head = static_pointer_cast <str_o> (car (env, body));
+          auto rest = cdr (env, body);
+          auto name = name_of_string (head->str);
+          auto prefix = prefix_of_string (head->str);
+          if (prefix != "")
+              rest = rest_patch_this (env, rest);
+          rest = sexp_substitute_recur (env, head, rest);
+          sexp_list_eval (env, rest);
+          auto obj = env.obj_stack.top ();
+          env.obj_stack.pop ();
+          assign (env, prefix, name, obj);
+      }
+    void
+    tk_assign (env_t &env, shared_ptr <obj_t> body)
+    {
+        if (assign_data_p (env, body))
+            tk_assign_data (env, body);
+        else if (assign_lambda_sugar_p (env, body))
+            tk_assign_value (env, assign_lambda_desugar (env, body));
+        else
+            tk_assign_value (env, body);
+    }
         struct lambda_jo_t: jo_t
         {
             name_vector_t name_vector;
@@ -3577,6 +3528,29 @@
       {
           def_type (env, "keyword-t");
       }
+      sig_t jj_module_sig = { "module", "module-path" };
+      // -- str-t -> module-t
+      void jj_module (env_t &env, obj_map_t &obj_map)
+      {
+          auto obj = obj_map ["module-path"];
+          assert (str_p (env, obj));
+          auto str = static_pointer_cast <str_o> (obj);
+          auto module_path = path_t (str->str);
+          if (! absolute_path_p (module_path)) {
+              module_path = env.file_path.parent_path () / module_path;
+          }
+          auto module_env = eval_file_to_env (module_path);
+          auto mod = make_shared <module_o> (env, module_env);
+          env.obj_stack.push (mod);
+      }
+      void
+      expose_module (env_t &env)
+      {
+          def_type (env, "module-t");
+          define_prim (env,
+                       jj_module_sig,
+                       jj_module);
+      }
       void
       expose_syntax (env_t &env)
       {
@@ -3670,6 +3644,24 @@
                        jj_env_report_sig,
                        jj_env_report);
       }
+    void
+    expose_core (env_t &env)
+    {
+        expose_bool (env);
+        expose_int (env);
+        expose_str (env);
+        expose_list (env);
+        expose_vect (env);
+        expose_dict (env);
+        expose_sexp (env);
+        expose_top_keyword (env);
+        expose_keyword (env);
+        expose_module (env);
+        expose_syntax (env);
+        expose_type (env);
+        expose_stack (env);
+        expose_misc (env);
+    }
       void
       test_step ()
       {
@@ -3936,64 +3928,11 @@
         test_scan ();
     }
     void
-    expose_all (env_t &env)
-    {
-        expose_bool (env);
-        expose_int (env);
-        expose_str (env);
-        expose_list (env);
-        expose_vect (env);
-        expose_dict (env);
-        expose_sexp (env);
-        expose_top_keyword (env);
-        expose_keyword (env);
-        expose_syntax (env);
-        expose_type (env);
-        expose_stack (env);
-        expose_misc (env);
-    }
-    bool
-    mo_file_name_p (string file_name)
-    {
-        auto size = file_name.size ();
-        if (size <= 3) return false;
-        if (file_name [size - 1] != 'o') return false;
-        if (file_name [size - 2] != 'm') return false;
-        if (file_name [size - 3] != '.') return false;
-        return true;
-    }
-    string
-    file_name_to_module_name (string file_name)
-    {
-        auto module_name = file_name;
-        module_name.pop_back ();
-        module_name.pop_back ();
-        module_name.pop_back ();
-        return module_name;
-    }
-    void
-    eval_module_file (env_t &env, string file_name)
-    {
-        assert (mo_file_name_p (file_name));
-        auto code = code_of_file (env, file_name);
-        auto module_name = file_name_to_module_name (file_name);
-        env.module_name_stack.push (module_name);
-        expose_all (env);
-        module_code_eval (env, code);
-        auto the_same_module_name = env.module_name_stack.top ();
-        assert (module_name == the_same_module_name);
-        env.module_name_stack.pop ();
-    }
-    void
     the_story_begins (string_vector_t arg_vector)
     {
-        auto env = env_t ();
-        expose_all (env);
         for (auto file_name: arg_vector) {
-            if (mo_file_name_p (file_name))
-                eval_module_file (env, file_name);
-            else
-                eval_file (env, file_name);
+            auto file_path = path_t (file_name);
+            eval_file_to_env (file_path);
         }
     }
     int
