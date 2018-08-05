@@ -4163,42 +4163,6 @@
 
 * module
 
-*** [note] the design
-
-***** one file one module
-
-      - one `.mo` file one module
-
-***** one project one directory
-
-      - there shell be not sub-directory
-
-***** non-first-class-ness
-
-      - a module is not first-class object.
-
-      - `.jo` file do not know about existence of `.mo` file.
-
-***** non-extendable
-
-      - module syntax is strict and non-extendable
-        one or non (import)
-        one (include)
-        one (export)
-        and the order matters
-
-      - (import <import-spec> ...)
-
-        - <import-spec> = (<module-name>) | (<module-name> <name-patch> ...)
-
-        - <module-name> = <local-module-name> | <global-module-name>
-
-        - <name-patch> = [todo]
-
-      - (include <path> ...)
-
-      - (export <name> ...)
-
 *** module syntax
 
 ***** forward declaration
