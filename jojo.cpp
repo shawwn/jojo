@@ -11,9 +11,9 @@
     #include <set>
     #include <stack>
 
-    #include <experimental/filesystem>
+    #include <filesystem>
     using namespace std;
-    namespace fs = experimental::filesystem;
+    namespace fs = filesystem;
     struct obj_t;
     struct jo_t;
     struct env_t;
@@ -211,7 +211,7 @@
       {
           if (lhs.size () != rhs.size ()) return false;
           auto size = lhs.size ();
-          auto index = 0;
+          size_t index = 0;
           while (index < size) {
               if (! bind_equal (env, lhs [index], rhs [index]))
                   return false;
@@ -240,7 +240,7 @@
       {
           if (lhs.size () != rhs.size ()) return false;
           auto size = lhs.size ();
-          auto index = 0;
+          size_t index = 0;
           while (index < size) {
               if (! bind_vector_equal (env, lhs [index], rhs [index]))
                   return false;
@@ -446,7 +446,7 @@
               local_ref.second = old_local_ref.second;
               local_ref_map.insert (make_pair (name, local_ref));
           }
-          auto index = 0;
+          size_t index = 0;
           auto size = name_vector.size ();
           while (index < size) {
               auto name = name_vector [index];
@@ -1501,7 +1501,7 @@
     {
         if (lhs.size () != rhs.size ()) return false;
         auto size = lhs.size ();
-        auto index = 0;
+        size_t index = 0;
         while (index < size) {
             if (! obj_equal (env, lhs [index], rhs [index]))
                 return false;
@@ -2275,7 +2275,7 @@
           void
           collect_vect_jo_t::exe (env_t &env, local_scope_t &local_scope)
           {
-              auto index = 0;
+              size_t index = 0;
               auto obj_vector = obj_vector_t ();
               while (index < this->counter) {
                   auto obj = env.obj_stack.top ();
@@ -2314,7 +2314,7 @@
           void
           collect_dict_jo_t::exe (env_t &env, local_scope_t &local_scope)
           {
-              auto index = 0;
+              size_t index = 0;
               auto obj_map = obj_map_t ();
               while (index < this->counter) {
                   auto obj = env.obj_stack.top ();

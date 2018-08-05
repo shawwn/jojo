@@ -2,10 +2,9 @@
 
 # C="g++"
 C="clang++"
-W="-Wall -Wno-infinite-recursion"
-# W="-Wall -Wno-infinite-recursion -Wextra"
+W="-Wall -Wextra -Wno-infinite-recursion -Wno-unused-parameter"
 O="-foptimize-sibling-calls -O2"
-L="-lstdc++fs"
+L="-std=c++17 -lstdc++fs"
 PREFIX=$HOME
 
 tangle () {
