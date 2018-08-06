@@ -10,16 +10,20 @@
     #include <iostream>
     #include <fstream>
     #include <sstream>
+
     #include <algorithm>
     #include <functional>
+
     #include <cassert>
     #include <memory>
+
     #include <vector>
     #include <array>
     #include <map>
     #include <set>
     #include <stack>
 
+    #include <cmath>
     #include <filesystem>
     #+end_src
 
@@ -64,6 +68,7 @@
     using local_ref_t = pair <size_t, size_t>;
     using local_ref_map_t = map <name_t, local_ref_t>;
     using path_t = fs::path;
+    using number_t = double;
     #+end_src
 
 *** obj_t
@@ -704,6 +709,17 @@
       assert_stack_size (env_t &env, size_t size)
       {
           assert (env.obj_stack.size () == size);
+      }
+      #+end_src
+
+*** number
+
+***** s2n
+
+      #+begin_src cpp
+      number_t s2n (string s)
+      {
+          return stod (s);
       }
       #+end_src
 
@@ -1985,68 +2001,59 @@
     }
     #+end_src
 
-* int
+* number
 
-*** int_o
+*** number_o
 
     #+begin_src cpp
-    struct int_o: obj_t
+    struct number_o: obj_t
     {
-        int i;
-        int_o (env_t &env, int i);
+        number_t num;
+        number_o (env_t &env, number_t num);
         bool equal (env_t &env, shared_ptr <obj_t> obj);
         string repr (env_t &env);
     };
     #+end_src
 
-*** int_o::int_o
+*** number_o::number_o
 
     #+begin_src cpp
-    int_o::int_o (env_t &env, int i)
+    number_o::number_o (env_t &env, number_t num)
     {
-        this->tag = "int-t";
-        this->i = i;
+        this->tag = "number-t";
+        this->num = num;
     }
     #+end_src
 
-*** int_o::repr
+*** number_o::repr
 
     #+begin_src cpp
     string
-    int_o::repr (env_t &env)
+    number_o::repr (env_t &env)
     {
-        return to_string (this->i);
+        return to_string (this->num);
     }
     #+end_src
 
-*** int_o::equal
+*** number_o::equal
 
     #+begin_src cpp
     bool
-    int_o::equal (env_t &env, shared_ptr <obj_t> obj)
+    number_o::equal (env_t &env, shared_ptr <obj_t> obj)
     {
         if (this->tag != obj->tag) return false;
-        auto that = static_pointer_cast <int_o> (obj);
-        return (this->i == that->i);
+        auto that = static_pointer_cast <number_o> (obj);
+        return (this->num == that->num);
     }
     #+end_src
 
-*** int_p
+*** number_p
 
     #+begin_src cpp
     bool
-    int_p (env_t &env, shared_ptr <obj_t> a)
+    number_p (env_t &env, shared_ptr <obj_t> a)
     {
-        return a->tag == "int-t";
-    }
-    #+end_src
-
-*** test_int
-
-    #+begin_src cpp
-    void
-    test_int ()
-    {
+        return a->tag == "number-t";
     }
     #+end_src
 
@@ -3734,34 +3741,34 @@
         }
         #+end_src
 
-***** int_string_compile
+***** number_string_compile
 
-******* int_string_p
+******* number_string_p
 
         #+begin_src cpp
         bool
-        int_string_p (string str)
+        number_string_p (string str)
         {
             auto size = str.size ();
             if (size < 1) return false;
             if (str [0] == '-')
-                return int_string_p (str.substr (1, size - 1));
-            auto pos = str.find_first_not_of ("0123456789");
+                return number_string_p (str.substr (1, size - 1));
+            auto pos = str.find_first_not_of ("0123456789.");
             return pos == string::npos;
         }
         #+end_src
 
-******* int_string_compile
+******* number_string_compile
 
         #+begin_src cpp
         shared_ptr <jojo_t>
-        int_string_compile (env_t &env,
-                            local_ref_map_t &local_ref_map,
-                            string str)
+        number_string_compile (env_t &env,
+                               local_ref_map_t &local_ref_map,
+                               string str)
         {
-            auto i = stoi (str);
+            auto num = s2n (str);
             jo_vector_t jo_vector = {
-                new lit_jo_t (make_shared <int_o> (env, i)),
+                new lit_jo_t (make_shared <number_o> (env, num)),
             };
             auto jojo = make_shared <jojo_t> (jo_vector);
             return jojo;
@@ -3900,14 +3907,15 @@
                     local_ref_map_t &local_ref_map,
                     string str)
     {
-        if (field_string_p (str))
-            return field_string_compile (env, local_ref_map, str);
-        else if (string_string_p (str))
+
+        if (string_string_p (str))
             return string_string_compile (env, local_ref_map, str);
         else if (key_string_p (str))
             return key_string_compile (env, local_ref_map, str);
-        else if (int_string_p (str))
-            return int_string_compile (env, local_ref_map, str);
+        else if (number_string_p (str))
+            return number_string_compile (env, local_ref_map, str);
+        else if (field_string_p (str))
+            return field_string_compile (env, local_ref_map, str);
         else
             return ref_compile (env, local_ref_map, str);
     }
@@ -4863,9 +4871,9 @@
         str_sexp_literalize (env_t &env, shared_ptr <str_o> sexp)
         {
             auto str = sexp->str;
-            if (int_string_p (str)) {
-                auto i = stoi (str);
-                return make_shared <int_o> (env, i);
+            if (number_string_p (str)) {
+                auto num = s2n (str);
+                return make_shared <number_o> (env, num);
             }
             if (string_string_p (str)) {
                 str = string_string_to_string (str);
@@ -5098,15 +5106,71 @@
       }
       #+end_src
 
-*** expose_int
+*** expose_number
 
-***** expose_int
+***** jj_add
+
+      #+begin_src cpp
+      sig_t jj_add_sig = { "add", "x", "y" };
+      void jj_add (env_t &env, obj_map_t &obj_map)
+      {
+          auto a = obj_map ["x"]; assert (number_p (env, a));
+          auto b = obj_map ["y"]; assert (number_p (env, b));
+          auto x = static_pointer_cast <number_o> (a);
+          auto y = static_pointer_cast <number_o> (b);
+          auto z = make_shared <number_o> (env, x->num + y->num);
+          env.obj_stack.push (z);
+      }
+      #+end_src
+
+***** jj_sub
+
+***** jj_mul
+
+***** jj_div
+
+***** jj_mod
+
+***** jj_neg
+
+***** jj_abs
+
+***** jj_max
+
+***** jj_min
+
+***** jj_expe
+
+***** jj_exp2
+
+***** jj_expm1
+
+***** jj_loge
+
+***** jj_log10
+
+***** jj_log2
+
+***** jj_log1p
+
+***** jj_pow
+
+***** jj_sqrt
+
+***** jj_cbrt
+
+***** jj_hypot
+
+***** expose_number
 
       #+begin_src cpp
       void
-      expose_int (env_t &env)
+      expose_number (env_t &env)
       {
-          def_type (env, "int-t");
+          def_type (env, "number-t");
+          define_prim (env,
+                       jj_add_sig,
+                       jj_add);
       }
       #+end_src
 
@@ -5537,7 +5601,7 @@
     expose_core (env_t &env)
     {
         expose_bool (env);
-        expose_int (env);
+        expose_number (env);
         expose_str (env);
         expose_list (env);
         expose_vect (env);
@@ -5853,7 +5917,6 @@
         test_data_cons_curry ();
         test_prim ();
         test_bool ();
-        test_int ();
         test_str ();
         test_list ();
         test_vect ();

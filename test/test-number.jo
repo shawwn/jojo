@@ -1,0 +1,7 @@
+(assert (equal 123 123))
+(assert (equal number-t (type-of 123)))
+
+(assert (equal 3.14 3.14))
+(assert (equal number-t (type-of 3.14)))
+
+(assert (equal (add 1 1) 2))

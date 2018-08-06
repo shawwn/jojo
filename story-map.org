@@ -1,8 +1,11 @@
 #+html_head: <link rel="stylesheet" href="css/org-page.css"/>
 #+title: Story Map
-
-* [bug]
-*** can not handle big file -- due to the recursion in sexp parser
+- learn more about float encoding
+- do not count `.field` in function application syntax
+  and handle stack functions specially
+- simplify Story Map headline before the story begin
+  review the video about Story Map
+- dive deep into c++ standard lib
 * a interpreter uses dynamic threaded code
 * with lisp like macro system
 *** (~>)
@@ -13,18 +16,34 @@
 *** (if)
 *** (partquote)
 *** (= <name> (macro))
-* with oop system
+* with object system
 * with simple ffi to c++
 *** handle ffi by dynamic library
 * easy to use and debug
 * with a practical prelude
-*** prelude
+*** learn from nodejs and python
+*** load module from system -- by $PATH
+*** number lib
+*** str lib
+*** container lib
 * with simple module system
 *** `equal_env_p` -- for module_o::equal
 *** do not reload module -- need to use module cache
 * secure
-*** fix -Wsign-compare reported by gcc++
+*** can not handle big file -- due to the recursion in sexp parser
+*** make syntax frontend more secure
 * with editing support
 *** jojo-mode
 * with git based package manager
+*** git lib
+*** fs lib
+*** network lib
+* well documented
+*** renew old notes
+*** renew ideas form jojo-history
+* with some good tools written in it
+*** org-mode parser
+*** git-dir parser
+*** xml/html generator
+*** org-mode for neovim
 * maintained by a community as a live system
