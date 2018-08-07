@@ -1,14 +1,16 @@
 #+html_head: <link rel="stylesheet" href="css/org-page.css"/>
 #+title: Story Map
-- repl
-- learn more about float encoding
+
+* [note]
 - do not count `.field` in function application syntax
   and handle stack functions specially
-- simplify Story Map headline before the story begin
-  review the video about Story Map
+- learn more about float encoding
 - dive deep into c++ standard lib
-* a interpreter uses dynamic threaded code
-* with lisp like macro system
+- learn from nodejs and python about prelude
+* core
+  - an interpreter implemented by dynamic threaded code
+* macro system
+  - with lisp like macro system
 *** (~>)
 *** (vect~>)
 *** (list~>)
@@ -17,33 +19,48 @@
 *** (if)
 *** (partquote)
 *** (= <name> (macro))
-* with object system
-* with simple ffi to c++
+* object system
+  - with object system
+*** inheriting types
+*** summing types
+* ffi
+  - with simple ffi to c++
 *** handle ffi by dynamic library
-* easy to use and debug
-* with a practical prelude
-*** learn from nodejs and python
+* prelude
+  - with a practical prelude
 *** load module from system -- by $PATH
+*** first set of prelude functions are about list processing
 *** str lib
 *** container lib
-* with simple module system
+*** stream lib
+*** fs lib
+*** network lib
+*** git lib
+* module system
+  - with simple module system
 *** `env_eq` -- for module_o::eq
 *** do not reload module -- need to use module cache
 * secure
 *** can not handle big file -- due to the recursion in sexp parser
 *** make syntax frontend more secure
-* with editing support
-*** jojo-mode
-* with git based package manager
-*** git lib
-*** fs lib
-*** network lib
-* well documented
+* toolchain
+*** debug
+*** profile
+*** repl
+*** package manager
+*** editing support
+***** jojo-mode
+***** org-mode for neovim
+* documentation
+  - well documented
 *** renew old notes
 *** renew ideas form jojo-history
-* with some good tools written in it
+* apps
+  - with some good applications written in it
+*** jojo-bch
+    - compile a subset of jojo to bch opcode
 *** org-mode parser
 *** git-dir parser
 *** xml/html generator
-*** org-mode for neovim
-* maintained by a community as a live system
+* community
+  - maintained by a community as a live system

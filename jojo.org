@@ -27,10 +27,11 @@
     #include <filesystem>
     #+end_src
 
-*** using
+*** about namespace
 
     #+begin_src cpp
     using namespace std;
+
     namespace fs = filesystem;
     #+end_src
 
