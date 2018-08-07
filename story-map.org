@@ -43,6 +43,10 @@
 * secure
 *** can not handle big file -- due to the recursion in sexp parser
 *** make syntax frontend more secure
+* documentation
+  - well documented
+*** renew old notes
+*** renew ideas form jojo-history
 * toolchain
 *** debug
 *** profile
@@ -51,10 +55,6 @@
 *** editing support
 ***** jojo-mode
 ***** org-mode for neovim
-* documentation
-  - well documented
-*** renew old notes
-*** renew ideas form jojo-history
 * apps
   - with some good applications written in it
 *** jojo-bch
