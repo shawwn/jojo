@@ -7,8 +7,8 @@
 (= three (succ-c two))
 (= four (succ-c three))
 
-(assert (equal data-pred-t (type-of zero-p)))
-(assert (equal data-pred-t (type-of succ-p)))
+(assert (eq data-pred-t (type-of zero-p)))
+(assert (eq data-pred-t (type-of succ-p)))
 
 (assert (zero-p zero))
 (assert (succ-p one))

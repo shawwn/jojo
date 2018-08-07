@@ -93,10 +93,10 @@ for the JavaScript code in this tag.
 <li><a href="#org19ebab4">bind_vector_merge_obj_vector</a></li>
 <li><a href="#orgc0d5539">pick_up_obj_vector</a></li>
 <li><a href="#org7107572">local_scope_extend</a></li>
-<li><a href="#orgbe9a5ce">bind_equal</a></li>
-<li><a href="#org1f0ef22">bind_vector_equal</a></li>
-<li><a href="#orgf79d3bd">local_scope_equal</a></li>
-<li><a href="#orgf6ce7ee">obj_map_equal</a></li>
+<li><a href="#orgbe9a5ce">bind_eq</a></li>
+<li><a href="#org1f0ef22">bind_vector_eq</a></li>
+<li><a href="#orgf79d3bd">local_scope_eq</a></li>
+<li><a href="#orgf6ce7ee">obj_map_eq</a></li>
 <li><a href="#org26937a6">obj_map_repr</a></li>
 <li><a href="#org622791a">name_vector_obj_map_lack</a></li>
 <li><a href="#orgf812fbd">name_vector_obj_map_arity_lack</a></li>
@@ -106,7 +106,7 @@ for the JavaScript code in this tag.
 <li><a href="#orgba9f388">bind_vector_from_name_vector</a></li>
 <li><a href="#org77e2575">new_frame_from_jojo</a></li>
 <li><a href="#orga008a80">new_frame_from_jo_vector</a></li>
-<li><a href="#orgb0376e8">obj_equal</a></li>
+<li><a href="#orgb0376e8">obj_eq</a></li>
 <li><a href="#org223fec9">local_ref_map_extend</a></li>
 <li><a href="#org844724f">about assert</a>
 <ul>
@@ -121,7 +121,7 @@ for the JavaScript code in this tag.
 <ul>
 <li><a href="#org654d4d8">obj_t::~obj_t</a></li>
 <li><a href="#org7aae1c5">obj_t::repr</a></li>
-<li><a href="#org1e7ce7e">obj_t::equal</a></li>
+<li><a href="#org1e7ce7e">obj_t::eq</a></li>
 <li><a href="#org116d4ce">obj_t::apply</a></li>
 <li><a href="#orgbfe76a6">sig_t</a></li>
 <li><a href="#orgfedffe5">define</a></li>
@@ -177,7 +177,7 @@ for the JavaScript code in this tag.
 <li><a href="#org84391b8">closure_o</a></li>
 <li><a href="#org29ae7b9">closure_o::apply</a></li>
 <li><a href="#orgb7ac6af">closure_o::closure_o</a></li>
-<li><a href="#org7430d6">closure_o::equal</a></li>
+<li><a href="#org7430d6">closure_o::eq</a></li>
 <li><a href="#org9835cf6">closure_o::repr</a></li>
 </ul>
 </li>
@@ -185,7 +185,7 @@ for the JavaScript code in this tag.
 <ul>
 <li><a href="#orgd128fb0">data_o</a></li>
 <li><a href="#orgda50686">data_o::data_o</a></li>
-<li><a href="#orgb30684d">data_o::equal</a></li>
+<li><a href="#orgb30684d">data_o::eq</a></li>
 <li><a href="#orga9874f9">data_o::repr</a></li>
 </ul>
 </li>
@@ -194,7 +194,7 @@ for the JavaScript code in this tag.
 <li><a href="#orgddc9524">data_cons_o</a></li>
 <li><a href="#org6c223a5">data_cons_o::data_cons_o</a></li>
 <li><a href="#orgac13c2b">data_cons_o::apply</a></li>
-<li><a href="#orgdd266e4">data_cons_o::equal</a></li>
+<li><a href="#orgdd266e4">data_cons_o::eq</a></li>
 <li><a href="#org1c1f4d4">data_cons_o::repr</a></li>
 </ul>
 </li>
@@ -204,7 +204,7 @@ for the JavaScript code in this tag.
 <li><a href="#orga92bc8d">prim_o</a></li>
 <li><a href="#org639b5ce">prim_o::prim_o</a></li>
 <li><a href="#org5c5c2c1">prim_o::repr</a></li>
-<li><a href="#org9b0677f">prim_o::equal</a></li>
+<li><a href="#org9b0677f">prim_o::eq</a></li>
 <li><a href="#org60398d7">prim_o::apply</a></li>
 <li><a href="#org87331dc">define_prim</a></li>
 </ul>
@@ -214,7 +214,7 @@ for the JavaScript code in this tag.
 <li><a href="#org7783e6e">type_o</a></li>
 <li><a href="#org12ed441">type_o::type_o</a></li>
 <li><a href="#org595665b">type_o::repr</a></li>
-<li><a href="#org6b3ab77">type_o::equal</a></li>
+<li><a href="#org6b3ab77">type_o::eq</a></li>
 <li><a href="#org656e8a8">assign</a></li>
 <li><a href="#org3ac0168">tag_name_p</a></li>
 <li><a href="#orgdf4da07">define_type</a></li>
@@ -234,7 +234,7 @@ for the JavaScript code in this tag.
 <li><a href="#org2ae2cb0">int_o</a></li>
 <li><a href="#orga6e884c">int_o::int_o</a></li>
 <li><a href="#org9c6326e">int_o::repr</a></li>
-<li><a href="#orgdde3bd6">int_o::equal</a></li>
+<li><a href="#orgdde3bd6">int_o::eq</a></li>
 <li><a href="#org128422f">int_p</a></li>
 <li><a href="#orgaacaa02">test_int</a></li>
 </ul>
@@ -244,7 +244,7 @@ for the JavaScript code in this tag.
 <li><a href="#orgc4e0b0d">str_o</a></li>
 <li><a href="#orgf3939ff">str_o::str_o</a></li>
 <li><a href="#org58a8d36">str_o::repr</a></li>
-<li><a href="#org5af58e">str_o::equal</a></li>
+<li><a href="#org5af58e">str_o::eq</a></li>
 <li><a href="#org17007a3">str_p</a></li>
 <li><a href="#org414d2b1">test_str</a></li>
 </ul>
@@ -266,9 +266,9 @@ for the JavaScript code in this tag.
 <ul>
 <li><a href="#org8e37449">vect_o</a></li>
 <li><a href="#org975dc2a">vect_o::vect_o</a></li>
-<li><a href="#org911f83b">vect_o::equal</a></li>
+<li><a href="#org911f83b">vect_o::eq</a></li>
 <li><a href="#org30063b4">vect_o::repr</a></li>
-<li><a href="#orgd273dee">vect_equal</a></li>
+<li><a href="#orgd273dee">vect_eq</a></li>
 <li><a href="#org66bcf3e">vect_p</a></li>
 <li><a href="#org140e0df">list_to_vect</a></li>
 <li><a href="#org175b81b">vect_to_list</a></li>
@@ -279,7 +279,7 @@ for the JavaScript code in this tag.
 <ul>
 <li><a href="#orgfbe75ae">dict_o</a></li>
 <li><a href="#orgd34a460">dict_o::dict_o</a></li>
-<li><a href="#org7e145cc">dict_o::equal</a></li>
+<li><a href="#org7e145cc">dict_o::eq</a></li>
 <li><a href="#orgdaffc79">dict_o::repr</a></li>
 <li><a href="#org48ddbfd">dict_p</a></li>
 <li><a href="#orga7f2119">list_to_dict</a></li>
@@ -324,7 +324,7 @@ for the JavaScript code in this tag.
 <li><a href="#orgecfa15b">top_keyword_fn</a></li>
 <li><a href="#org809c837">top_keyword_o</a></li>
 <li><a href="#org32e683c">top_keyword_o::top_keyword_o</a></li>
-<li><a href="#org396d78c">top_keyword_o::equal</a></li>
+<li><a href="#org396d78c">top_keyword_o::eq</a></li>
 <li><a href="#org2c64131">top_keyword_p</a></li>
 <li><a href="#orge17584e">define_top_keyword</a></li>
 </ul>
@@ -334,7 +334,7 @@ for the JavaScript code in this tag.
 <li><a href="#org984e26d">keyword_fn</a></li>
 <li><a href="#org852eb53">keyword_o</a></li>
 <li><a href="#org1ccc7b">keyword_o::keyword_o</a></li>
-<li><a href="#org2568916">keyword_o::equal</a></li>
+<li><a href="#org2568916">keyword_o::eq</a></li>
 <li><a href="#org7dc6d58">keyword_p</a></li>
 <li><a href="#org691480c">define_keyword</a></li>
 </ul>
@@ -652,7 +652,7 @@ for the JavaScript code in this tag.
 <li><a href="#org19e09ec">jj_print</a></li>
 <li><a href="#org5db0339">jj_println</a></li>
 <li><a href="#orgc2930fd">jj_nl</a></li>
-<li><a href="#org943c6e9">jj_equal</a></li>
+<li><a href="#org943c6e9">jj_eq</a></li>
 <li><a href="#orge915693">jj_env_report</a></li>
 <li><a href="#orgd2d3dc9">import_misc</a></li>
 </ul>
@@ -776,7 +776,7 @@ for the JavaScript code in this tag.
     <span style="color: #7CB8BB;">obj_map_t</span> <span style="color: #DFAF8F;">obj_map</span>;
     <span style="color: #F0DFAF; font-weight: bold;">virtual</span> ~<span style="color: #93E0E3;">obj_t</span> ();
     <span style="color: #F0DFAF; font-weight: bold;">virtual</span> <span style="color: #7CB8BB;">string</span> <span style="color: #93E0E3;">repr</span> (<span style="color: #7CB8BB;">env_t</span> &amp;<span style="color: #DFAF8F;">env</span>);
-    <span style="color: #F0DFAF; font-weight: bold;">virtual</span> <span style="color: #7CB8BB;">bool</span> <span style="color: #93E0E3;">equal</span> (<span style="color: #7CB8BB;">env_t</span> &amp;<span style="color: #DFAF8F;">env</span>, <span style="color: #7CB8BB;">shared_ptr</span> &lt;<span style="color: #7CB8BB;">obj_t</span>&gt; <span style="color: #DFAF8F;">obj</span>);
+    <span style="color: #F0DFAF; font-weight: bold;">virtual</span> <span style="color: #7CB8BB;">bool</span> <span style="color: #93E0E3;">eq</span> (<span style="color: #7CB8BB;">env_t</span> &amp;<span style="color: #DFAF8F;">env</span>, <span style="color: #7CB8BB;">shared_ptr</span> &lt;<span style="color: #7CB8BB;">obj_t</span>&gt; <span style="color: #DFAF8F;">obj</span>);
     <span style="color: #F0DFAF; font-weight: bold;">virtual</span> <span style="color: #7CB8BB;">void</span> <span style="color: #93E0E3;">apply</span> (<span style="color: #7CB8BB;">env_t</span> &amp;<span style="color: #DFAF8F;">env</span>, <span style="color: #7CB8BB;">size_t</span> <span style="color: #DFAF8F;">arity</span>);
 };
 </pre>
@@ -1129,17 +1129,17 @@ for the JavaScript code in this tag.
 </div>
 
 <div id="outline-container-orgbe9a5ce" class="outline-3">
-<h3 id="orgbe9a5ce">bind_equal</h3>
+<h3 id="orgbe9a5ce">bind_eq</h3>
 <div class="outline-text-3" id="text-orgbe9a5ce">
 <div class="org-src-container">
 
 <pre class="src src-cpp"><span style="color: #7CB8BB;">bool</span>
-<span style="color: #93E0E3;">bind_equal</span> (<span style="color: #7CB8BB;">env_t</span> &amp;<span style="color: #DFAF8F;">env</span>,
+<span style="color: #93E0E3;">bind_eq</span> (<span style="color: #7CB8BB;">env_t</span> &amp;<span style="color: #DFAF8F;">env</span>,
             <span style="color: #7CB8BB;">bind_t</span> &amp;<span style="color: #DFAF8F;">lhs</span>,
             <span style="color: #7CB8BB;">bind_t</span> &amp;<span style="color: #DFAF8F;">rhs</span>)
 {
     <span style="color: #F0DFAF; font-weight: bold;">if</span> (lhs.first != rhs.first) <span style="color: #F0DFAF; font-weight: bold;">return</span> <span style="color: #BFEBBF;">false</span>;
-    <span style="color: #F0DFAF; font-weight: bold;">return</span> lhs.second-&gt;equal (env, rhs.second);
+    <span style="color: #F0DFAF; font-weight: bold;">return</span> lhs.second-&gt;eq (env, rhs.second);
 }
 </pre>
 </div>
@@ -1147,12 +1147,12 @@ for the JavaScript code in this tag.
 </div>
 
 <div id="outline-container-org1f0ef22" class="outline-3">
-<h3 id="org1f0ef22">bind_vector_equal</h3>
+<h3 id="org1f0ef22">bind_vector_eq</h3>
 <div class="outline-text-3" id="text-org1f0ef22">
 <div class="org-src-container">
 
 <pre class="src src-cpp"><span style="color: #7CB8BB;">bool</span>
-<span style="color: #93E0E3;">bind_vector_equal</span> (<span style="color: #7CB8BB;">env_t</span> &amp;<span style="color: #DFAF8F;">env</span>,
+<span style="color: #93E0E3;">bind_vector_eq</span> (<span style="color: #7CB8BB;">env_t</span> &amp;<span style="color: #DFAF8F;">env</span>,
                    <span style="color: #7CB8BB;">bind_vector_t</span> &amp;<span style="color: #DFAF8F;">lhs</span>,
                    <span style="color: #7CB8BB;">bind_vector_t</span> &amp;<span style="color: #DFAF8F;">rhs</span>)
 {
@@ -1160,7 +1160,7 @@ for the JavaScript code in this tag.
     <span style="color: #F0DFAF; font-weight: bold;">auto</span> <span style="color: #DFAF8F;">size</span> = lhs.size ();
     <span style="color: #F0DFAF; font-weight: bold;">auto</span> <span style="color: #DFAF8F;">index</span> = 0;
     <span style="color: #F0DFAF; font-weight: bold;">while</span> (index &lt; size) {
-        <span style="color: #F0DFAF; font-weight: bold;">if</span> (<span style="color: #F0DFAF; font-weight: bold;">!</span> bind_equal (env, lhs [index], rhs [index]))
+        <span style="color: #F0DFAF; font-weight: bold;">if</span> (<span style="color: #F0DFAF; font-weight: bold;">!</span> bind_eq (env, lhs [index], rhs [index]))
             <span style="color: #F0DFAF; font-weight: bold;">return</span> <span style="color: #BFEBBF;">false</span>;
         index++;
     }
@@ -1172,12 +1172,12 @@ for the JavaScript code in this tag.
 </div>
 
 <div id="outline-container-orgf79d3bd" class="outline-3">
-<h3 id="orgf79d3bd">local_scope_equal</h3>
+<h3 id="orgf79d3bd">local_scope_eq</h3>
 <div class="outline-text-3" id="text-orgf79d3bd">
 <div class="org-src-container">
 
 <pre class="src src-cpp"><span style="color: #7CB8BB;">bool</span>
-<span style="color: #93E0E3;">local_scope_equal</span> (<span style="color: #7CB8BB;">env_t</span> &amp;<span style="color: #DFAF8F;">env</span>,
+<span style="color: #93E0E3;">local_scope_eq</span> (<span style="color: #7CB8BB;">env_t</span> &amp;<span style="color: #DFAF8F;">env</span>,
                    <span style="color: #7CB8BB;">local_scope_t</span> &amp;<span style="color: #DFAF8F;">lhs</span>,
                    <span style="color: #7CB8BB;">local_scope_t</span> &amp;<span style="color: #DFAF8F;">rhs</span>)
 {
@@ -1185,7 +1185,7 @@ for the JavaScript code in this tag.
     <span style="color: #F0DFAF; font-weight: bold;">auto</span> <span style="color: #DFAF8F;">size</span> = lhs.size ();
     <span style="color: #F0DFAF; font-weight: bold;">auto</span> <span style="color: #DFAF8F;">index</span> = 0;
     <span style="color: #F0DFAF; font-weight: bold;">while</span> (index &lt; size) {
-        <span style="color: #F0DFAF; font-weight: bold;">if</span> (<span style="color: #F0DFAF; font-weight: bold;">!</span> bind_vector_equal (env, lhs [index], rhs [index]))
+        <span style="color: #F0DFAF; font-weight: bold;">if</span> (<span style="color: #F0DFAF; font-weight: bold;">!</span> bind_vector_eq (env, lhs [index], rhs [index]))
             <span style="color: #F0DFAF; font-weight: bold;">return</span> <span style="color: #BFEBBF;">false</span>;
         index++;
     }
@@ -1197,19 +1197,19 @@ for the JavaScript code in this tag.
 </div>
 
 <div id="outline-container-orgf6ce7ee" class="outline-3">
-<h3 id="orgf6ce7ee">obj_map_equal</h3>
+<h3 id="orgf6ce7ee">obj_map_eq</h3>
 <div class="outline-text-3" id="text-orgf6ce7ee">
 <div class="org-src-container">
 
 <pre class="src src-cpp"><span style="color: #7CB8BB;">bool</span>
-<span style="color: #93E0E3;">obj_map_equal</span> (<span style="color: #7CB8BB;">env_t</span> &amp;<span style="color: #DFAF8F;">env</span>, <span style="color: #7CB8BB;">obj_map_t</span> &amp;<span style="color: #DFAF8F;">lhs</span>, <span style="color: #7CB8BB;">obj_map_t</span> &amp;<span style="color: #DFAF8F;">rhs</span>)
+<span style="color: #93E0E3;">obj_map_eq</span> (<span style="color: #7CB8BB;">env_t</span> &amp;<span style="color: #DFAF8F;">env</span>, <span style="color: #7CB8BB;">obj_map_t</span> &amp;<span style="color: #DFAF8F;">lhs</span>, <span style="color: #7CB8BB;">obj_map_t</span> &amp;<span style="color: #DFAF8F;">rhs</span>)
 {
     <span style="color: #F0DFAF; font-weight: bold;">if</span> (lhs.size () != rhs.size ()) <span style="color: #F0DFAF; font-weight: bold;">return</span> <span style="color: #BFEBBF;">false</span>;
     <span style="color: #F0DFAF; font-weight: bold;">for</span> (<span style="color: #F0DFAF; font-weight: bold;">auto</span> &amp;<span style="color: #DFAF8F;">kv</span>: lhs) {
         <span style="color: #F0DFAF; font-weight: bold;">auto</span> <span style="color: #DFAF8F;">name</span> = kv.first;
         <span style="color: #F0DFAF; font-weight: bold;">auto</span> <span style="color: #DFAF8F;">it</span> = rhs.find (name);
         <span style="color: #F0DFAF; font-weight: bold;">if</span> (it == rhs.end ()) <span style="color: #F0DFAF; font-weight: bold;">return</span> <span style="color: #BFEBBF;">false</span>;
-        <span style="color: #F0DFAF; font-weight: bold;">if</span> (<span style="color: #F0DFAF; font-weight: bold;">!</span> kv.second-&gt;equal (env, it-&gt;second)) <span style="color: #F0DFAF; font-weight: bold;">return</span> <span style="color: #BFEBBF;">false</span>;
+        <span style="color: #F0DFAF; font-weight: bold;">if</span> (<span style="color: #F0DFAF; font-weight: bold;">!</span> kv.second-&gt;eq (env, it-&gt;second)) <span style="color: #F0DFAF; font-weight: bold;">return</span> <span style="color: #BFEBBF;">false</span>;
     }
     <span style="color: #F0DFAF; font-weight: bold;">return</span> <span style="color: #BFEBBF;">true</span>;
 }
@@ -1423,16 +1423,16 @@ for the JavaScript code in this tag.
 </div>
 
 <div id="outline-container-orgb0376e8" class="outline-3">
-<h3 id="orgb0376e8">obj_equal</h3>
+<h3 id="orgb0376e8">obj_eq</h3>
 <div class="outline-text-3" id="text-orgb0376e8">
 <div class="org-src-container">
 
 <pre class="src src-cpp"><span style="color: #7CB8BB;">bool</span>
-<span style="color: #93E0E3;">obj_equal</span> (<span style="color: #7CB8BB;">env_t</span> &amp;<span style="color: #DFAF8F;">env</span>,
+<span style="color: #93E0E3;">obj_eq</span> (<span style="color: #7CB8BB;">env_t</span> &amp;<span style="color: #DFAF8F;">env</span>,
            <span style="color: #7CB8BB;">shared_ptr</span> &lt;<span style="color: #7CB8BB;">obj_t</span>&gt; &amp;<span style="color: #DFAF8F;">lhs</span>,
            <span style="color: #7CB8BB;">shared_ptr</span> &lt;<span style="color: #7CB8BB;">obj_t</span>&gt; &amp;<span style="color: #DFAF8F;">rhs</span>)
 {
-    <span style="color: #F0DFAF; font-weight: bold;">return</span> lhs-&gt;equal (env, rhs);
+    <span style="color: #F0DFAF; font-weight: bold;">return</span> lhs-&gt;eq (env, rhs);
 }
 </pre>
 </div>
@@ -1487,7 +1487,7 @@ for the JavaScript code in this tag.
 <span style="color: #93E0E3;">assert_pop_eq</span> (<span style="color: #7CB8BB;">env_t</span> &amp;<span style="color: #DFAF8F;">env</span>, <span style="color: #7CB8BB;">shared_ptr</span> &lt;<span style="color: #7CB8BB;">obj_t</span>&gt; <span style="color: #DFAF8F;">obj</span>)
 {
     <span style="color: #F0DFAF; font-weight: bold;">auto</span> <span style="color: #DFAF8F;">that</span> = env.obj_stack.top ();
-    assert (obj-&gt;equal (env, that));
+    assert (obj-&gt;eq (env, that));
     env.obj_stack.pop ();
 }
 </pre>
@@ -1504,7 +1504,7 @@ for the JavaScript code in this tag.
 <span style="color: #93E0E3;">assert_tos_eq</span> (<span style="color: #7CB8BB;">env_t</span> &amp;<span style="color: #DFAF8F;">env</span>, <span style="color: #7CB8BB;">shared_ptr</span> &lt;<span style="color: #7CB8BB;">obj_t</span>&gt; <span style="color: #DFAF8F;">obj</span>)
 {
     <span style="color: #F0DFAF; font-weight: bold;">auto</span> <span style="color: #DFAF8F;">that</span> = env.obj_stack.top ();
-    assert (obj-&gt;equal (env, that));
+    assert (obj-&gt;eq (env, that));
 }
 </pre>
 </div>
@@ -1564,18 +1564,18 @@ for the JavaScript code in this tag.
 </div>
 
 <div id="outline-container-org1e7ce7e" class="outline-3">
-<h3 id="org1e7ce7e">obj_t::equal</h3>
+<h3 id="org1e7ce7e">obj_t::eq</h3>
 <div class="outline-text-3" id="text-org1e7ce7e">
 <div class="org-src-container">
 
 <pre class="src src-cpp"><span style="color: #7CB8BB;">bool</span>
-<span style="color: #BFEBBF;">obj_t</span>::<span style="color: #93E0E3;">equal</span> (<span style="color: #7CB8BB;">env_t</span> &amp;<span style="color: #DFAF8F;">env</span>, <span style="color: #7CB8BB;">shared_ptr</span> &lt;<span style="color: #7CB8BB;">obj_t</span>&gt; <span style="color: #DFAF8F;">obj</span>)
+<span style="color: #BFEBBF;">obj_t</span>::<span style="color: #93E0E3;">eq</span> (<span style="color: #7CB8BB;">env_t</span> &amp;<span style="color: #DFAF8F;">env</span>, <span style="color: #7CB8BB;">shared_ptr</span> &lt;<span style="color: #7CB8BB;">obj_t</span>&gt; <span style="color: #DFAF8F;">obj</span>)
 {
     <span style="color: #F0DFAF; font-weight: bold;">if</span> (<span style="color: #F0DFAF; font-weight: bold;">this</span>-&gt;tag != obj-&gt;tag)
         <span style="color: #F0DFAF; font-weight: bold;">return</span> <span style="color: #BFEBBF;">false</span>;
     <span style="color: #F0DFAF; font-weight: bold;">else</span> {
-        cout &lt;&lt; <span style="color: #CC9393;">"- fatal error : obj_t::equal"</span> &lt;&lt; <span style="color: #CC9393;">"\n"</span>
-             &lt;&lt; <span style="color: #CC9393;">"  equal is not implemented for  : "</span>
+        cout &lt;&lt; <span style="color: #CC9393;">"- fatal error : obj_t::eq"</span> &lt;&lt; <span style="color: #CC9393;">"\n"</span>
+             &lt;&lt; <span style="color: #CC9393;">"  eq is not implemented for  : "</span>
              &lt;&lt; obj-&gt;tag &lt;&lt; <span style="color: #CC9393;">"\n"</span>;
         exit (1);
     }
@@ -2158,7 +2158,7 @@ for the JavaScript code in this tag.
                <span style="color: #7CB8BB;">shared_ptr</span> &lt;<span style="color: #7CB8BB;">jojo_t</span>&gt; <span style="color: #DFAF8F;">jojo</span>,
                <span style="color: #7CB8BB;">bind_vector_t</span> <span style="color: #DFAF8F;">bind_vector</span>,
                <span style="color: #7CB8BB;">local_scope_t</span> <span style="color: #DFAF8F;">local_scope</span>);
-    <span style="color: #7CB8BB;">bool</span> <span style="color: #93E0E3;">equal</span> (<span style="color: #7CB8BB;">env_t</span> &amp;<span style="color: #DFAF8F;">env</span>, <span style="color: #7CB8BB;">shared_ptr</span> &lt;<span style="color: #7CB8BB;">obj_t</span>&gt; <span style="color: #DFAF8F;">obj</span>);
+    <span style="color: #7CB8BB;">bool</span> <span style="color: #93E0E3;">eq</span> (<span style="color: #7CB8BB;">env_t</span> &amp;<span style="color: #DFAF8F;">env</span>, <span style="color: #7CB8BB;">shared_ptr</span> &lt;<span style="color: #7CB8BB;">obj_t</span>&gt; <span style="color: #DFAF8F;">obj</span>);
     <span style="color: #7CB8BB;">void</span> <span style="color: #93E0E3;">apply</span> (<span style="color: #7CB8BB;">env_t</span> &amp;<span style="color: #DFAF8F;">env</span>, <span style="color: #7CB8BB;">size_t</span> <span style="color: #DFAF8F;">arity</span>);
     <span style="color: #7CB8BB;">string</span> <span style="color: #93E0E3;">repr</span> (<span style="color: #7CB8BB;">env_t</span> &amp;<span style="color: #DFAF8F;">env</span>);
 };
@@ -2240,23 +2240,23 @@ for the JavaScript code in this tag.
 </div>
 
 <div id="outline-container-org7430d6" class="outline-3">
-<h3 id="org7430d6">closure_o::equal</h3>
+<h3 id="org7430d6">closure_o::eq</h3>
 <div class="outline-text-3" id="text-org7430d6">
 <div class="org-src-container">
 
 <pre class="src src-cpp"><span style="color: #7CB8BB;">bool</span>
-<span style="color: #BFEBBF;">closure_o</span>::<span style="color: #93E0E3;">equal</span> (<span style="color: #7CB8BB;">env_t</span> &amp;<span style="color: #DFAF8F;">env</span>, <span style="color: #7CB8BB;">shared_ptr</span> &lt;<span style="color: #7CB8BB;">obj_t</span>&gt; <span style="color: #DFAF8F;">obj</span>)
+<span style="color: #BFEBBF;">closure_o</span>::<span style="color: #93E0E3;">eq</span> (<span style="color: #7CB8BB;">env_t</span> &amp;<span style="color: #DFAF8F;">env</span>, <span style="color: #7CB8BB;">shared_ptr</span> &lt;<span style="color: #7CB8BB;">obj_t</span>&gt; <span style="color: #DFAF8F;">obj</span>)
 {
-    <span style="color: #5F7F5F;">// </span><span style="color: #7F9F7F;">raw pointers must be equal first</span>
+    <span style="color: #5F7F5F;">// </span><span style="color: #7F9F7F;">raw pointers must be eq first</span>
     <span style="color: #F0DFAF; font-weight: bold;">if</span> (<span style="color: #F0DFAF; font-weight: bold;">this</span> != obj.get ()) <span style="color: #F0DFAF; font-weight: bold;">return</span> <span style="color: #BFEBBF;">false</span>;
     <span style="color: #F0DFAF; font-weight: bold;">auto</span> <span style="color: #DFAF8F;">that</span> = static_pointer_cast &lt;closure_o&gt; (obj);
     <span style="color: #5F7F5F;">// </span><span style="color: #7F9F7F;">then scopes</span>
-    <span style="color: #F0DFAF; font-weight: bold;">if</span> (local_scope_equal
+    <span style="color: #F0DFAF; font-weight: bold;">if</span> (local_scope_eq
         (env,
          <span style="color: #F0DFAF; font-weight: bold;">this</span>-&gt;local_scope,
          that-&gt;local_scope)) <span style="color: #F0DFAF; font-weight: bold;">return</span> <span style="color: #BFEBBF;">false</span>;
     <span style="color: #5F7F5F;">// </span><span style="color: #7F9F7F;">then bindings</span>
-    <span style="color: #F0DFAF; font-weight: bold;">if</span> (bind_vector_equal
+    <span style="color: #F0DFAF; font-weight: bold;">if</span> (bind_vector_eq
         (env,
          <span style="color: #F0DFAF; font-weight: bold;">this</span>-&gt;bind_vector,
          that-&gt;bind_vector)) <span style="color: #F0DFAF; font-weight: bold;">return</span> <span style="color: #BFEBBF;">false</span>;
@@ -2307,7 +2307,7 @@ for the JavaScript code in this tag.
     <span style="color: #93E0E3;">data_o</span> (<span style="color: #7CB8BB;">env_t</span> &amp;<span style="color: #DFAF8F;">env</span>,
             <span style="color: #7CB8BB;">tag_t</span> <span style="color: #DFAF8F;">tag</span>,
             <span style="color: #7CB8BB;">obj_map_t</span> <span style="color: #DFAF8F;">obj_map</span>);
-    <span style="color: #7CB8BB;">bool</span> <span style="color: #93E0E3;">equal</span> (<span style="color: #7CB8BB;">env_t</span> &amp;<span style="color: #DFAF8F;">env</span>, <span style="color: #7CB8BB;">shared_ptr</span> &lt;<span style="color: #7CB8BB;">obj_t</span>&gt; <span style="color: #DFAF8F;">obj</span>);
+    <span style="color: #7CB8BB;">bool</span> <span style="color: #93E0E3;">eq</span> (<span style="color: #7CB8BB;">env_t</span> &amp;<span style="color: #DFAF8F;">env</span>, <span style="color: #7CB8BB;">shared_ptr</span> &lt;<span style="color: #7CB8BB;">obj_t</span>&gt; <span style="color: #DFAF8F;">obj</span>);
     <span style="color: #7CB8BB;">string</span> <span style="color: #93E0E3;">repr</span> (<span style="color: #7CB8BB;">env_t</span> &amp;<span style="color: #DFAF8F;">env</span>);
 };
 </pre>
@@ -2334,16 +2334,16 @@ for the JavaScript code in this tag.
 </div>
 
 <div id="outline-container-orgb30684d" class="outline-3">
-<h3 id="orgb30684d">data_o::equal</h3>
+<h3 id="orgb30684d">data_o::eq</h3>
 <div class="outline-text-3" id="text-orgb30684d">
 <div class="org-src-container">
 
 <pre class="src src-cpp"><span style="color: #7CB8BB;">bool</span>
-<span style="color: #BFEBBF;">data_o</span>::<span style="color: #93E0E3;">equal</span> (<span style="color: #7CB8BB;">env_t</span> &amp;<span style="color: #DFAF8F;">env</span>, <span style="color: #7CB8BB;">shared_ptr</span> &lt;<span style="color: #7CB8BB;">obj_t</span>&gt; <span style="color: #DFAF8F;">obj</span>)
+<span style="color: #BFEBBF;">data_o</span>::<span style="color: #93E0E3;">eq</span> (<span style="color: #7CB8BB;">env_t</span> &amp;<span style="color: #DFAF8F;">env</span>, <span style="color: #7CB8BB;">shared_ptr</span> &lt;<span style="color: #7CB8BB;">obj_t</span>&gt; <span style="color: #DFAF8F;">obj</span>)
 {
     <span style="color: #F0DFAF; font-weight: bold;">if</span> (<span style="color: #F0DFAF; font-weight: bold;">this</span>-&gt;tag != obj-&gt;tag) <span style="color: #F0DFAF; font-weight: bold;">return</span> <span style="color: #BFEBBF;">false</span>;
     <span style="color: #F0DFAF; font-weight: bold;">auto</span> <span style="color: #DFAF8F;">that</span> = static_pointer_cast &lt;data_o&gt; (obj);
-    <span style="color: #F0DFAF; font-weight: bold;">return</span> obj_map_equal (env, <span style="color: #F0DFAF; font-weight: bold;">this</span>-&gt;obj_map, that-&gt;obj_map);
+    <span style="color: #F0DFAF; font-weight: bold;">return</span> obj_map_eq (env, <span style="color: #F0DFAF; font-weight: bold;">this</span>-&gt;obj_map, that-&gt;obj_map);
 
 }
 </pre>
@@ -2401,7 +2401,7 @@ for the JavaScript code in this tag.
                  <span style="color: #7CB8BB;">name_vector_t</span> <span style="color: #DFAF8F;">name_vector</span>,
                  <span style="color: #7CB8BB;">obj_map_t</span> <span style="color: #DFAF8F;">obj_map</span>);
     <span style="color: #7CB8BB;">void</span> <span style="color: #93E0E3;">apply</span> (<span style="color: #7CB8BB;">env_t</span> &amp;<span style="color: #DFAF8F;">env</span>, <span style="color: #7CB8BB;">size_t</span> <span style="color: #DFAF8F;">arity</span>);
-    <span style="color: #7CB8BB;">bool</span> <span style="color: #93E0E3;">equal</span> (<span style="color: #7CB8BB;">env_t</span> &amp;<span style="color: #DFAF8F;">env</span>, <span style="color: #7CB8BB;">shared_ptr</span> &lt;<span style="color: #7CB8BB;">obj_t</span>&gt; <span style="color: #DFAF8F;">obj</span>);
+    <span style="color: #7CB8BB;">bool</span> <span style="color: #93E0E3;">eq</span> (<span style="color: #7CB8BB;">env_t</span> &amp;<span style="color: #DFAF8F;">env</span>, <span style="color: #7CB8BB;">shared_ptr</span> &lt;<span style="color: #7CB8BB;">obj_t</span>&gt; <span style="color: #DFAF8F;">obj</span>);
     <span style="color: #7CB8BB;">string</span> <span style="color: #93E0E3;">repr</span> (<span style="color: #7CB8BB;">env_t</span> &amp;<span style="color: #DFAF8F;">env</span>);
 };
 </pre>
@@ -2474,17 +2474,17 @@ for the JavaScript code in this tag.
 </div>
 
 <div id="outline-container-orgdd266e4" class="outline-3">
-<h3 id="orgdd266e4">data_cons_o::equal</h3>
+<h3 id="orgdd266e4">data_cons_o::eq</h3>
 <div class="outline-text-3" id="text-orgdd266e4">
 <div class="org-src-container">
 
 <pre class="src src-cpp"><span style="color: #7CB8BB;">bool</span>
-<span style="color: #BFEBBF;">data_cons_o</span>::<span style="color: #93E0E3;">equal</span> (<span style="color: #7CB8BB;">env_t</span> &amp;<span style="color: #DFAF8F;">env</span>, <span style="color: #7CB8BB;">shared_ptr</span> &lt;<span style="color: #7CB8BB;">obj_t</span>&gt; <span style="color: #DFAF8F;">obj</span>)
+<span style="color: #BFEBBF;">data_cons_o</span>::<span style="color: #93E0E3;">eq</span> (<span style="color: #7CB8BB;">env_t</span> &amp;<span style="color: #DFAF8F;">env</span>, <span style="color: #7CB8BB;">shared_ptr</span> &lt;<span style="color: #7CB8BB;">obj_t</span>&gt; <span style="color: #DFAF8F;">obj</span>)
 {
     <span style="color: #F0DFAF; font-weight: bold;">if</span> (<span style="color: #F0DFAF; font-weight: bold;">this</span>-&gt;tag != obj-&gt;tag) <span style="color: #F0DFAF; font-weight: bold;">return</span> <span style="color: #BFEBBF;">false</span>;
     <span style="color: #F0DFAF; font-weight: bold;">auto</span> <span style="color: #DFAF8F;">that</span> = static_pointer_cast &lt;data_cons_o&gt; (obj);
     <span style="color: #F0DFAF; font-weight: bold;">if</span> (<span style="color: #F0DFAF; font-weight: bold;">this</span>-&gt;type_tag != that-&gt;type_tag) <span style="color: #F0DFAF; font-weight: bold;">return</span> <span style="color: #BFEBBF;">false</span>;
-    <span style="color: #F0DFAF; font-weight: bold;">return</span> obj_map_equal (env, <span style="color: #F0DFAF; font-weight: bold;">this</span>-&gt;obj_map, that-&gt;obj_map);
+    <span style="color: #F0DFAF; font-weight: bold;">return</span> obj_map_eq (env, <span style="color: #F0DFAF; font-weight: bold;">this</span>-&gt;obj_map, that-&gt;obj_map);
 }
 </pre>
 </div>
@@ -2553,7 +2553,7 @@ for the JavaScript code in this tag.
             <span style="color: #7CB8BB;">name_vector_t</span> <span style="color: #DFAF8F;">name_vector</span>,
             <span style="color: #7CB8BB;">prim_fn</span> <span style="color: #DFAF8F;">fn</span>,
             <span style="color: #7CB8BB;">obj_map_t</span> <span style="color: #DFAF8F;">obj_map</span>);
-    <span style="color: #7CB8BB;">bool</span> <span style="color: #93E0E3;">equal</span> (<span style="color: #7CB8BB;">env_t</span> &amp;<span style="color: #DFAF8F;">env</span>, <span style="color: #7CB8BB;">shared_ptr</span> &lt;<span style="color: #7CB8BB;">obj_t</span>&gt; <span style="color: #DFAF8F;">obj</span>);
+    <span style="color: #7CB8BB;">bool</span> <span style="color: #93E0E3;">eq</span> (<span style="color: #7CB8BB;">env_t</span> &amp;<span style="color: #DFAF8F;">env</span>, <span style="color: #7CB8BB;">shared_ptr</span> &lt;<span style="color: #7CB8BB;">obj_t</span>&gt; <span style="color: #DFAF8F;">obj</span>);
     <span style="color: #7CB8BB;">void</span> <span style="color: #93E0E3;">apply</span> (<span style="color: #7CB8BB;">env_t</span> &amp;<span style="color: #DFAF8F;">env</span>, <span style="color: #7CB8BB;">size_t</span> <span style="color: #DFAF8F;">arity</span>);
     <span style="color: #7CB8BB;">string</span> <span style="color: #93E0E3;">repr</span> (<span style="color: #7CB8BB;">env_t</span> &amp;<span style="color: #DFAF8F;">env</span>);
 };
@@ -2608,16 +2608,16 @@ for the JavaScript code in this tag.
 </div>
 
 <div id="outline-container-org9b0677f" class="outline-3">
-<h3 id="org9b0677f">prim_o::equal</h3>
+<h3 id="org9b0677f">prim_o::eq</h3>
 <div class="outline-text-3" id="text-org9b0677f">
 <div class="org-src-container">
 
-<pre class="src src-cpp"><span style="color: #7CB8BB;">bool</span> <span style="color: #BFEBBF;">prim_o</span>::<span style="color: #93E0E3;">equal</span> (<span style="color: #7CB8BB;">env_t</span> &amp;<span style="color: #DFAF8F;">env</span>, <span style="color: #7CB8BB;">shared_ptr</span> &lt;<span style="color: #7CB8BB;">obj_t</span>&gt; <span style="color: #DFAF8F;">obj</span>)
+<pre class="src src-cpp"><span style="color: #7CB8BB;">bool</span> <span style="color: #BFEBBF;">prim_o</span>::<span style="color: #93E0E3;">eq</span> (<span style="color: #7CB8BB;">env_t</span> &amp;<span style="color: #DFAF8F;">env</span>, <span style="color: #7CB8BB;">shared_ptr</span> &lt;<span style="color: #7CB8BB;">obj_t</span>&gt; <span style="color: #DFAF8F;">obj</span>)
 {
     <span style="color: #F0DFAF; font-weight: bold;">if</span> (<span style="color: #F0DFAF; font-weight: bold;">this</span>-&gt;tag != obj-&gt;tag) <span style="color: #F0DFAF; font-weight: bold;">return</span> <span style="color: #BFEBBF;">false</span>;
     <span style="color: #F0DFAF; font-weight: bold;">auto</span> <span style="color: #DFAF8F;">that</span> = static_pointer_cast &lt;prim_o&gt; (obj);
     <span style="color: #F0DFAF; font-weight: bold;">if</span> (<span style="color: #F0DFAF; font-weight: bold;">this</span> != obj.get ()) <span style="color: #F0DFAF; font-weight: bold;">return</span> <span style="color: #BFEBBF;">false</span>;
-    <span style="color: #F0DFAF; font-weight: bold;">return</span> obj_map_equal (env, <span style="color: #F0DFAF; font-weight: bold;">this</span>-&gt;obj_map, that-&gt;obj_map);
+    <span style="color: #F0DFAF; font-weight: bold;">return</span> obj_map_eq (env, <span style="color: #F0DFAF; font-weight: bold;">this</span>-&gt;obj_map, that-&gt;obj_map);
 }
 </pre>
 </div>
@@ -2697,7 +2697,7 @@ for the JavaScript code in this tag.
     <span style="color: #93E0E3;">type_o</span> (<span style="color: #7CB8BB;">env_t</span> &amp;<span style="color: #DFAF8F;">env</span>,
             <span style="color: #7CB8BB;">tag_t</span> <span style="color: #DFAF8F;">type_tag</span>,
             <span style="color: #7CB8BB;">obj_map_t</span> <span style="color: #DFAF8F;">obj_map</span>);
-    <span style="color: #7CB8BB;">bool</span> <span style="color: #93E0E3;">equal</span> (<span style="color: #7CB8BB;">env_t</span> &amp;<span style="color: #DFAF8F;">env</span>, <span style="color: #7CB8BB;">shared_ptr</span> &lt;<span style="color: #7CB8BB;">obj_t</span>&gt; <span style="color: #DFAF8F;">obj</span>);
+    <span style="color: #7CB8BB;">bool</span> <span style="color: #93E0E3;">eq</span> (<span style="color: #7CB8BB;">env_t</span> &amp;<span style="color: #DFAF8F;">env</span>, <span style="color: #7CB8BB;">shared_ptr</span> &lt;<span style="color: #7CB8BB;">obj_t</span>&gt; <span style="color: #DFAF8F;">obj</span>);
     <span style="color: #7CB8BB;">string</span> <span style="color: #93E0E3;">repr</span> (<span style="color: #7CB8BB;">env_t</span> &amp;<span style="color: #DFAF8F;">env</span>);
 };
 </pre>
@@ -2739,12 +2739,12 @@ for the JavaScript code in this tag.
 </div>
 
 <div id="outline-container-org6b3ab77" class="outline-3">
-<h3 id="org6b3ab77">type_o::equal</h3>
+<h3 id="org6b3ab77">type_o::eq</h3>
 <div class="outline-text-3" id="text-org6b3ab77">
 <div class="org-src-container">
 
 <pre class="src src-cpp"><span style="color: #7CB8BB;">bool</span>
-<span style="color: #BFEBBF;">type_o</span>::<span style="color: #93E0E3;">equal</span> (<span style="color: #7CB8BB;">env_t</span> &amp;<span style="color: #DFAF8F;">env</span>, <span style="color: #7CB8BB;">shared_ptr</span> &lt;<span style="color: #7CB8BB;">obj_t</span>&gt; <span style="color: #DFAF8F;">obj</span>)
+<span style="color: #BFEBBF;">type_o</span>::<span style="color: #93E0E3;">eq</span> (<span style="color: #7CB8BB;">env_t</span> &amp;<span style="color: #DFAF8F;">env</span>, <span style="color: #7CB8BB;">shared_ptr</span> &lt;<span style="color: #7CB8BB;">obj_t</span>&gt; <span style="color: #DFAF8F;">obj</span>)
 {
     <span style="color: #F0DFAF; font-weight: bold;">if</span> (<span style="color: #F0DFAF; font-weight: bold;">this</span>-&gt;tag != obj-&gt;tag) <span style="color: #F0DFAF; font-weight: bold;">return</span> <span style="color: #BFEBBF;">false</span>;
     <span style="color: #F0DFAF; font-weight: bold;">auto</span> <span style="color: #DFAF8F;">that</span> = static_pointer_cast &lt;type_o&gt; (obj);
@@ -2918,7 +2918,7 @@ for the JavaScript code in this tag.
 {
     <span style="color: #7CB8BB;">int</span> <span style="color: #DFAF8F;">i</span>;
     <span style="color: #93E0E3;">int_o</span> (<span style="color: #7CB8BB;">env_t</span> &amp;<span style="color: #DFAF8F;">env</span>, <span style="color: #7CB8BB;">int</span> <span style="color: #DFAF8F;">i</span>);
-    <span style="color: #7CB8BB;">bool</span> <span style="color: #93E0E3;">equal</span> (<span style="color: #7CB8BB;">env_t</span> &amp;<span style="color: #DFAF8F;">env</span>, <span style="color: #7CB8BB;">shared_ptr</span> &lt;<span style="color: #7CB8BB;">obj_t</span>&gt; <span style="color: #DFAF8F;">obj</span>);
+    <span style="color: #7CB8BB;">bool</span> <span style="color: #93E0E3;">eq</span> (<span style="color: #7CB8BB;">env_t</span> &amp;<span style="color: #DFAF8F;">env</span>, <span style="color: #7CB8BB;">shared_ptr</span> &lt;<span style="color: #7CB8BB;">obj_t</span>&gt; <span style="color: #DFAF8F;">obj</span>);
     <span style="color: #7CB8BB;">string</span> <span style="color: #93E0E3;">repr</span> (<span style="color: #7CB8BB;">env_t</span> &amp;<span style="color: #DFAF8F;">env</span>);
 };
 </pre>
@@ -2957,12 +2957,12 @@ for the JavaScript code in this tag.
 </div>
 
 <div id="outline-container-orgdde3bd6" class="outline-3">
-<h3 id="orgdde3bd6">int_o::equal</h3>
+<h3 id="orgdde3bd6">int_o::eq</h3>
 <div class="outline-text-3" id="text-orgdde3bd6">
 <div class="org-src-container">
 
 <pre class="src src-cpp"><span style="color: #7CB8BB;">bool</span>
-<span style="color: #BFEBBF;">int_o</span>::<span style="color: #93E0E3;">equal</span> (<span style="color: #7CB8BB;">env_t</span> &amp;<span style="color: #DFAF8F;">env</span>, <span style="color: #7CB8BB;">shared_ptr</span> &lt;<span style="color: #7CB8BB;">obj_t</span>&gt; <span style="color: #DFAF8F;">obj</span>)
+<span style="color: #BFEBBF;">int_o</span>::<span style="color: #93E0E3;">eq</span> (<span style="color: #7CB8BB;">env_t</span> &amp;<span style="color: #DFAF8F;">env</span>, <span style="color: #7CB8BB;">shared_ptr</span> &lt;<span style="color: #7CB8BB;">obj_t</span>&gt; <span style="color: #DFAF8F;">obj</span>)
 {
     <span style="color: #F0DFAF; font-weight: bold;">if</span> (<span style="color: #F0DFAF; font-weight: bold;">this</span>-&gt;tag != obj-&gt;tag) <span style="color: #F0DFAF; font-weight: bold;">return</span> <span style="color: #BFEBBF;">false</span>;
     <span style="color: #F0DFAF; font-weight: bold;">auto</span> <span style="color: #DFAF8F;">that</span> = static_pointer_cast &lt;int_o&gt; (obj);
@@ -3015,7 +3015,7 @@ for the JavaScript code in this tag.
 {
     <span style="color: #7CB8BB;">string</span> <span style="color: #DFAF8F;">str</span>;
     <span style="color: #93E0E3;">str_o</span> (<span style="color: #7CB8BB;">env_t</span> &amp;<span style="color: #DFAF8F;">env</span>, <span style="color: #7CB8BB;">string</span> <span style="color: #DFAF8F;">str</span>);
-    <span style="color: #7CB8BB;">bool</span> <span style="color: #93E0E3;">equal</span> (<span style="color: #7CB8BB;">env_t</span> &amp;<span style="color: #DFAF8F;">env</span>, <span style="color: #7CB8BB;">shared_ptr</span> &lt;<span style="color: #7CB8BB;">obj_t</span>&gt; <span style="color: #DFAF8F;">obj</span>);
+    <span style="color: #7CB8BB;">bool</span> <span style="color: #93E0E3;">eq</span> (<span style="color: #7CB8BB;">env_t</span> &amp;<span style="color: #DFAF8F;">env</span>, <span style="color: #7CB8BB;">shared_ptr</span> &lt;<span style="color: #7CB8BB;">obj_t</span>&gt; <span style="color: #DFAF8F;">obj</span>);
     <span style="color: #7CB8BB;">string</span> <span style="color: #93E0E3;">repr</span> (<span style="color: #7CB8BB;">env_t</span> &amp;<span style="color: #DFAF8F;">env</span>);
 };
 </pre>
@@ -3054,12 +3054,12 @@ for the JavaScript code in this tag.
 </div>
 
 <div id="outline-container-org5af58e" class="outline-3">
-<h3 id="org5af58e">str_o::equal</h3>
+<h3 id="org5af58e">str_o::eq</h3>
 <div class="outline-text-3" id="text-org5af58e">
 <div class="org-src-container">
 
 <pre class="src src-cpp"><span style="color: #7CB8BB;">bool</span>
-<span style="color: #BFEBBF;">str_o</span>::<span style="color: #93E0E3;">equal</span> (<span style="color: #7CB8BB;">env_t</span> &amp;<span style="color: #DFAF8F;">env</span>, <span style="color: #7CB8BB;">shared_ptr</span> &lt;<span style="color: #7CB8BB;">obj_t</span>&gt; <span style="color: #DFAF8F;">obj</span>)
+<span style="color: #BFEBBF;">str_o</span>::<span style="color: #93E0E3;">eq</span> (<span style="color: #7CB8BB;">env_t</span> &amp;<span style="color: #DFAF8F;">env</span>, <span style="color: #7CB8BB;">shared_ptr</span> &lt;<span style="color: #7CB8BB;">obj_t</span>&gt; <span style="color: #DFAF8F;">obj</span>)
 {
     <span style="color: #F0DFAF; font-weight: bold;">if</span> (<span style="color: #F0DFAF; font-weight: bold;">this</span>-&gt;tag != obj-&gt;tag) <span style="color: #F0DFAF; font-weight: bold;">return</span> <span style="color: #BFEBBF;">false</span>;
     <span style="color: #F0DFAF; font-weight: bold;">auto</span> <span style="color: #DFAF8F;">that</span> = static_pointer_cast &lt;str_o&gt; (obj);
@@ -3270,7 +3270,7 @@ for the JavaScript code in this tag.
 {
     <span style="color: #7CB8BB;">obj_vector_t</span> <span style="color: #DFAF8F;">obj_vector</span>;
     <span style="color: #93E0E3;">vect_o</span> (<span style="color: #7CB8BB;">env_t</span> &amp;<span style="color: #DFAF8F;">env</span>, <span style="color: #7CB8BB;">obj_vector_t</span> <span style="color: #DFAF8F;">obj_vector</span>);
-    <span style="color: #7CB8BB;">bool</span> <span style="color: #93E0E3;">equal</span> (<span style="color: #7CB8BB;">env_t</span> &amp;<span style="color: #DFAF8F;">env</span>, <span style="color: #7CB8BB;">shared_ptr</span> &lt;<span style="color: #7CB8BB;">obj_t</span>&gt; <span style="color: #DFAF8F;">obj</span>);
+    <span style="color: #7CB8BB;">bool</span> <span style="color: #93E0E3;">eq</span> (<span style="color: #7CB8BB;">env_t</span> &amp;<span style="color: #DFAF8F;">env</span>, <span style="color: #7CB8BB;">shared_ptr</span> &lt;<span style="color: #7CB8BB;">obj_t</span>&gt; <span style="color: #DFAF8F;">obj</span>);
     <span style="color: #7CB8BB;">string</span> <span style="color: #93E0E3;">repr</span> (<span style="color: #7CB8BB;">env_t</span> &amp;<span style="color: #DFAF8F;">env</span>);
 };
 </pre>
@@ -3294,21 +3294,21 @@ for the JavaScript code in this tag.
 </div>
 
 <div id="outline-container-org911f83b" class="outline-3">
-<h3 id="org911f83b">vect_o::equal</h3>
+<h3 id="org911f83b">vect_o::eq</h3>
 <div class="outline-text-3" id="text-org911f83b">
 <div class="org-src-container">
 
 <pre class="src src-cpp"><span style="color: #7CB8BB;">bool</span>
-<span style="color: #93E0E3;">vect_equal</span> (<span style="color: #7CB8BB;">env_t</span> &amp;<span style="color: #DFAF8F;">env</span>,
+<span style="color: #93E0E3;">vect_eq</span> (<span style="color: #7CB8BB;">env_t</span> &amp;<span style="color: #DFAF8F;">env</span>,
             <span style="color: #7CB8BB;">obj_vector_t</span> &amp;<span style="color: #DFAF8F;">lhs</span>,
             <span style="color: #7CB8BB;">obj_vector_t</span> &amp;<span style="color: #DFAF8F;">rhs</span>);
 
 <span style="color: #7CB8BB;">bool</span>
-<span style="color: #BFEBBF;">vect_o</span>::<span style="color: #93E0E3;">equal</span> (<span style="color: #7CB8BB;">env_t</span> &amp;<span style="color: #DFAF8F;">env</span>, <span style="color: #7CB8BB;">shared_ptr</span> &lt;<span style="color: #7CB8BB;">obj_t</span>&gt; <span style="color: #DFAF8F;">obj</span>)
+<span style="color: #BFEBBF;">vect_o</span>::<span style="color: #93E0E3;">eq</span> (<span style="color: #7CB8BB;">env_t</span> &amp;<span style="color: #DFAF8F;">env</span>, <span style="color: #7CB8BB;">shared_ptr</span> &lt;<span style="color: #7CB8BB;">obj_t</span>&gt; <span style="color: #DFAF8F;">obj</span>)
 {
     <span style="color: #F0DFAF; font-weight: bold;">if</span> (<span style="color: #F0DFAF; font-weight: bold;">this</span>-&gt;tag != obj-&gt;tag) <span style="color: #F0DFAF; font-weight: bold;">return</span> <span style="color: #BFEBBF;">false</span>;
     <span style="color: #F0DFAF; font-weight: bold;">auto</span> <span style="color: #DFAF8F;">that</span> = static_pointer_cast &lt;vect_o&gt; (obj);
-    <span style="color: #F0DFAF; font-weight: bold;">return</span> vect_equal (env, <span style="color: #F0DFAF; font-weight: bold;">this</span>-&gt;obj_vector, that-&gt;obj_vector);
+    <span style="color: #F0DFAF; font-weight: bold;">return</span> vect_eq (env, <span style="color: #F0DFAF; font-weight: bold;">this</span>-&gt;obj_vector, that-&gt;obj_vector);
 }
 </pre>
 </div>
@@ -3338,12 +3338,12 @@ for the JavaScript code in this tag.
 </div>
 
 <div id="outline-container-orgd273dee" class="outline-3">
-<h3 id="orgd273dee">vect_equal</h3>
+<h3 id="orgd273dee">vect_eq</h3>
 <div class="outline-text-3" id="text-orgd273dee">
 <div class="org-src-container">
 
 <pre class="src src-cpp"><span style="color: #7CB8BB;">bool</span>
-<span style="color: #93E0E3;">vect_equal</span> (<span style="color: #7CB8BB;">env_t</span> &amp;<span style="color: #DFAF8F;">env</span>,
+<span style="color: #93E0E3;">vect_eq</span> (<span style="color: #7CB8BB;">env_t</span> &amp;<span style="color: #DFAF8F;">env</span>,
             <span style="color: #7CB8BB;">obj_vector_t</span> &amp;<span style="color: #DFAF8F;">lhs</span>,
             <span style="color: #7CB8BB;">obj_vector_t</span> &amp;<span style="color: #DFAF8F;">rhs</span>)
 {
@@ -3351,7 +3351,7 @@ for the JavaScript code in this tag.
     <span style="color: #F0DFAF; font-weight: bold;">auto</span> <span style="color: #DFAF8F;">size</span> = lhs.size ();
     <span style="color: #F0DFAF; font-weight: bold;">auto</span> <span style="color: #DFAF8F;">index</span> = 0;
     <span style="color: #F0DFAF; font-weight: bold;">while</span> (index &lt; size) {
-        <span style="color: #F0DFAF; font-weight: bold;">if</span> (<span style="color: #F0DFAF; font-weight: bold;">!</span> obj_equal (env, lhs [index], rhs [index]))
+        <span style="color: #F0DFAF; font-weight: bold;">if</span> (<span style="color: #F0DFAF; font-weight: bold;">!</span> obj_eq (env, lhs [index], rhs [index]))
             <span style="color: #F0DFAF; font-weight: bold;">return</span> <span style="color: #BFEBBF;">false</span>;
         index++;
     }
@@ -3444,7 +3444,7 @@ for the JavaScript code in this tag.
 <pre class="src src-cpp"><span style="color: #F0DFAF; font-weight: bold;">struct</span> <span style="color: #7CB8BB;">dict_o</span>: <span style="color: #7CB8BB;">obj_t</span>
 {
     <span style="color: #93E0E3;">dict_o</span> (<span style="color: #7CB8BB;">env_t</span> &amp;<span style="color: #DFAF8F;">env</span>, <span style="color: #7CB8BB;">obj_map_t</span> <span style="color: #DFAF8F;">obj_map</span>);
-    <span style="color: #7CB8BB;">bool</span> <span style="color: #93E0E3;">equal</span> (<span style="color: #7CB8BB;">env_t</span> &amp;<span style="color: #DFAF8F;">env</span>, <span style="color: #7CB8BB;">shared_ptr</span> &lt;<span style="color: #7CB8BB;">obj_t</span>&gt; <span style="color: #DFAF8F;">obj</span>);
+    <span style="color: #7CB8BB;">bool</span> <span style="color: #93E0E3;">eq</span> (<span style="color: #7CB8BB;">env_t</span> &amp;<span style="color: #DFAF8F;">env</span>, <span style="color: #7CB8BB;">shared_ptr</span> &lt;<span style="color: #7CB8BB;">obj_t</span>&gt; <span style="color: #DFAF8F;">obj</span>);
     <span style="color: #7CB8BB;">string</span> <span style="color: #93E0E3;">repr</span> (<span style="color: #7CB8BB;">env_t</span> &amp;<span style="color: #DFAF8F;">env</span>);
 };
 </pre>
@@ -3468,16 +3468,16 @@ for the JavaScript code in this tag.
 </div>
 
 <div id="outline-container-org7e145cc" class="outline-3">
-<h3 id="org7e145cc">dict_o::equal</h3>
+<h3 id="org7e145cc">dict_o::eq</h3>
 <div class="outline-text-3" id="text-org7e145cc">
 <div class="org-src-container">
 
 <pre class="src src-cpp"><span style="color: #7CB8BB;">bool</span>
-<span style="color: #BFEBBF;">dict_o</span>::<span style="color: #93E0E3;">equal</span> (<span style="color: #7CB8BB;">env_t</span> &amp;<span style="color: #DFAF8F;">env</span>, <span style="color: #7CB8BB;">shared_ptr</span> &lt;<span style="color: #7CB8BB;">obj_t</span>&gt; <span style="color: #DFAF8F;">obj</span>)
+<span style="color: #BFEBBF;">dict_o</span>::<span style="color: #93E0E3;">eq</span> (<span style="color: #7CB8BB;">env_t</span> &amp;<span style="color: #DFAF8F;">env</span>, <span style="color: #7CB8BB;">shared_ptr</span> &lt;<span style="color: #7CB8BB;">obj_t</span>&gt; <span style="color: #DFAF8F;">obj</span>)
 {
     <span style="color: #F0DFAF; font-weight: bold;">if</span> (<span style="color: #F0DFAF; font-weight: bold;">this</span>-&gt;tag != obj-&gt;tag) <span style="color: #F0DFAF; font-weight: bold;">return</span> <span style="color: #BFEBBF;">false</span>;
     <span style="color: #F0DFAF; font-weight: bold;">auto</span> <span style="color: #DFAF8F;">that</span> = static_pointer_cast &lt;dict_o&gt; (obj);
-    <span style="color: #F0DFAF; font-weight: bold;">return</span> obj_map_equal (env, <span style="color: #F0DFAF; font-weight: bold;">this</span>-&gt;obj_map, that-&gt;obj_map);
+    <span style="color: #F0DFAF; font-weight: bold;">return</span> obj_map_eq (env, <span style="color: #F0DFAF; font-weight: bold;">this</span>-&gt;obj_map, that-&gt;obj_map);
 }
 </pre>
 </div>
@@ -4243,7 +4243,7 @@ for the JavaScript code in this tag.
 {
     <span style="color: #7CB8BB;">top_keyword_fn</span> <span style="color: #DFAF8F;">fn</span>;
     <span style="color: #93E0E3;">top_keyword_o</span> (<span style="color: #7CB8BB;">env_t</span> &amp;<span style="color: #DFAF8F;">env</span>, <span style="color: #7CB8BB;">top_keyword_fn</span> <span style="color: #DFAF8F;">fn</span>);
-    <span style="color: #7CB8BB;">bool</span> <span style="color: #93E0E3;">equal</span> (<span style="color: #7CB8BB;">env_t</span> &amp;<span style="color: #DFAF8F;">env</span>, <span style="color: #7CB8BB;">shared_ptr</span> &lt;<span style="color: #7CB8BB;">obj_t</span>&gt; <span style="color: #DFAF8F;">obj</span>);
+    <span style="color: #7CB8BB;">bool</span> <span style="color: #93E0E3;">eq</span> (<span style="color: #7CB8BB;">env_t</span> &amp;<span style="color: #DFAF8F;">env</span>, <span style="color: #7CB8BB;">shared_ptr</span> &lt;<span style="color: #7CB8BB;">obj_t</span>&gt; <span style="color: #DFAF8F;">obj</span>);
 };
 </pre>
 </div>
@@ -4267,12 +4267,12 @@ for the JavaScript code in this tag.
 </div>
 
 <div id="outline-container-org396d78c" class="outline-3">
-<h3 id="org396d78c">top_keyword_o::equal</h3>
+<h3 id="org396d78c">top_keyword_o::eq</h3>
 <div class="outline-text-3" id="text-org396d78c">
 <div class="org-src-container">
 
 <pre class="src src-cpp"><span style="color: #7CB8BB;">bool</span>
-<span style="color: #BFEBBF;">top_keyword_o</span>::<span style="color: #93E0E3;">equal</span> (<span style="color: #7CB8BB;">env_t</span> &amp;<span style="color: #DFAF8F;">env</span>, <span style="color: #7CB8BB;">shared_ptr</span> &lt;<span style="color: #7CB8BB;">obj_t</span>&gt; <span style="color: #DFAF8F;">obj</span>)
+<span style="color: #BFEBBF;">top_keyword_o</span>::<span style="color: #93E0E3;">eq</span> (<span style="color: #7CB8BB;">env_t</span> &amp;<span style="color: #DFAF8F;">env</span>, <span style="color: #7CB8BB;">shared_ptr</span> &lt;<span style="color: #7CB8BB;">obj_t</span>&gt; <span style="color: #DFAF8F;">obj</span>)
 {
     <span style="color: #F0DFAF; font-weight: bold;">if</span> (<span style="color: #F0DFAF; font-weight: bold;">this</span>-&gt;tag != obj-&gt;tag) <span style="color: #F0DFAF; font-weight: bold;">return</span> <span style="color: #BFEBBF;">false</span>;
     <span style="color: #F0DFAF; font-weight: bold;">return</span> <span style="color: #F0DFAF; font-weight: bold;">this</span> != obj.get ();
@@ -4340,7 +4340,7 @@ for the JavaScript code in this tag.
 {
     <span style="color: #7CB8BB;">keyword_fn</span> <span style="color: #DFAF8F;">fn</span>;
     <span style="color: #93E0E3;">keyword_o</span> (<span style="color: #7CB8BB;">env_t</span> &amp;<span style="color: #DFAF8F;">env</span>, <span style="color: #7CB8BB;">keyword_fn</span> <span style="color: #DFAF8F;">fn</span>);
-    <span style="color: #7CB8BB;">bool</span> <span style="color: #93E0E3;">equal</span> (<span style="color: #7CB8BB;">env_t</span> &amp;<span style="color: #DFAF8F;">env</span>, <span style="color: #7CB8BB;">shared_ptr</span> &lt;<span style="color: #7CB8BB;">obj_t</span>&gt; <span style="color: #DFAF8F;">obj</span>);
+    <span style="color: #7CB8BB;">bool</span> <span style="color: #93E0E3;">eq</span> (<span style="color: #7CB8BB;">env_t</span> &amp;<span style="color: #DFAF8F;">env</span>, <span style="color: #7CB8BB;">shared_ptr</span> &lt;<span style="color: #7CB8BB;">obj_t</span>&gt; <span style="color: #DFAF8F;">obj</span>);
 };
 </pre>
 </div>
@@ -4364,12 +4364,12 @@ for the JavaScript code in this tag.
 </div>
 
 <div id="outline-container-org2568916" class="outline-3">
-<h3 id="org2568916">keyword_o::equal</h3>
+<h3 id="org2568916">keyword_o::eq</h3>
 <div class="outline-text-3" id="text-org2568916">
 <div class="org-src-container">
 
 <pre class="src src-cpp"><span style="color: #7CB8BB;">bool</span>
-<span style="color: #BFEBBF;">keyword_o</span>::<span style="color: #93E0E3;">equal</span> (<span style="color: #7CB8BB;">env_t</span> &amp;<span style="color: #DFAF8F;">env</span>, <span style="color: #7CB8BB;">shared_ptr</span> &lt;<span style="color: #7CB8BB;">obj_t</span>&gt; <span style="color: #DFAF8F;">obj</span>)
+<span style="color: #BFEBBF;">keyword_o</span>::<span style="color: #93E0E3;">eq</span> (<span style="color: #7CB8BB;">env_t</span> &amp;<span style="color: #DFAF8F;">env</span>, <span style="color: #7CB8BB;">shared_ptr</span> &lt;<span style="color: #7CB8BB;">obj_t</span>&gt; <span style="color: #DFAF8F;">obj</span>)
 {
     <span style="color: #F0DFAF; font-weight: bold;">if</span> (<span style="color: #F0DFAF; font-weight: bold;">this</span>-&gt;tag != obj-&gt;tag) <span style="color: #F0DFAF; font-weight: bold;">return</span> <span style="color: #BFEBBF;">false</span>;
     <span style="color: #F0DFAF; font-weight: bold;">return</span> <span style="color: #F0DFAF; font-weight: bold;">this</span> != obj.get ();
@@ -7361,16 +7361,16 @@ for the JavaScript code in this tag.
 </div>
 
 <div id="outline-container-org943c6e9" class="outline-4">
-<h4 id="org943c6e9">jj_equal</h4>
+<h4 id="org943c6e9">jj_eq</h4>
 <div class="outline-text-4" id="text-org943c6e9">
 <div class="org-src-container">
 
-<pre class="src src-cpp"><span style="color: #7CB8BB;">sig_t</span> <span style="color: #DFAF8F;">jj_equal_sig</span> = { <span style="color: #CC9393;">"equal"</span>, <span style="color: #CC9393;">"lhs"</span>, <span style="color: #CC9393;">"rhs"</span> };
-<span style="color: #7CB8BB;">void</span> <span style="color: #93E0E3;">jj_equal</span> (<span style="color: #7CB8BB;">env_t</span> &amp;<span style="color: #DFAF8F;">env</span>, <span style="color: #7CB8BB;">obj_map_t</span> &amp;<span style="color: #DFAF8F;">obj_map</span>)
+<pre class="src src-cpp"><span style="color: #7CB8BB;">sig_t</span> <span style="color: #DFAF8F;">jj_eq_sig</span> = { <span style="color: #CC9393;">"eq"</span>, <span style="color: #CC9393;">"lhs"</span>, <span style="color: #CC9393;">"rhs"</span> };
+<span style="color: #7CB8BB;">void</span> <span style="color: #93E0E3;">jj_eq</span> (<span style="color: #7CB8BB;">env_t</span> &amp;<span style="color: #DFAF8F;">env</span>, <span style="color: #7CB8BB;">obj_map_t</span> &amp;<span style="color: #DFAF8F;">obj_map</span>)
 {
     <span style="color: #F0DFAF; font-weight: bold;">auto</span> <span style="color: #DFAF8F;">lhs</span> = obj_map [<span style="color: #CC9393;">"lhs"</span>];
     <span style="color: #F0DFAF; font-weight: bold;">auto</span> <span style="color: #DFAF8F;">rhs</span> = obj_map [<span style="color: #CC9393;">"rhs"</span>];
-    <span style="color: #F0DFAF; font-weight: bold;">if</span> (obj_equal (env, lhs, rhs))
+    <span style="color: #F0DFAF; font-weight: bold;">if</span> (obj_eq (env, lhs, rhs))
         env.obj_stack.push (true_c (env));
     <span style="color: #F0DFAF; font-weight: bold;">else</span>
         env.obj_stack.push (false_c (env));
@@ -7420,8 +7420,8 @@ for the JavaScript code in this tag.
                  jj_nl_sig,
                  jj_nl);
     define_prim (env,
-                 jj_equal_sig,
-                 jj_equal);
+                 jj_eq_sig,
+                 jj_eq);
     define_prim (env,
                  jj_env_report_sig,
                  jj_env_report);

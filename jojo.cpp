@@ -42,14 +42,14 @@
     using local_ref_t = pair <size_t, size_t>;
     using local_ref_map_t = map <name_t, local_ref_t>;
     using path_t = fs::path;
-    using number_t = double;
+    using num_t = double;
     struct obj_t
     {
         tag_t tag;
         obj_map_t obj_map;
         virtual ~obj_t ();
         virtual string repr (env_t &env);
-        virtual bool equal (env_t &env, shared_ptr <obj_t> obj);
+        virtual bool eq (env_t &env, shared_ptr <obj_t> obj);
         virtual void apply (env_t &env, size_t arity);
     };
     struct jo_t
@@ -135,12 +135,12 @@
           }
       }
       bool
-      bind_equal (env_t &env,
-                  bind_t &lhs,
-                  bind_t &rhs)
+      bind_eq (env_t &env,
+               bind_t &lhs,
+               bind_t &rhs)
       {
           if (lhs.first != rhs.first) return false;
-          return lhs.second->equal (env, rhs.second);
+          return lhs.second->eq (env, rhs.second);
       }
       string
       bind_vector_repr (env_t &env, bind_vector_t bind_vector)
@@ -210,15 +210,15 @@
           return bind_vector;
       }
       bool
-      bind_vector_equal (env_t &env,
-                         bind_vector_t &lhs,
-                         bind_vector_t &rhs)
+      bind_vector_eq (env_t &env,
+                      bind_vector_t &lhs,
+                      bind_vector_t &rhs)
       {
           if (lhs.size () != rhs.size ()) return false;
           auto size = lhs.size ();
           size_t index = 0;
           while (index < size) {
-              if (! bind_equal (env, lhs [index], rhs [index]))
+              if (! bind_eq (env, lhs [index], rhs [index]))
                   return false;
               index++;
           }
@@ -239,15 +239,15 @@
           return obj_vector;
       }
       bool
-      local_scope_equal (env_t &env,
-                         local_scope_t &lhs,
-                         local_scope_t &rhs)
+      local_scope_eq (env_t &env,
+                      local_scope_t &lhs,
+                      local_scope_t &rhs)
       {
           if (lhs.size () != rhs.size ()) return false;
           auto size = lhs.size ();
           size_t index = 0;
           while (index < size) {
-              if (! bind_vector_equal (env, lhs [index], rhs [index]))
+              if (! bind_vector_eq (env, lhs [index], rhs [index]))
                   return false;
               index++;
           }
@@ -282,14 +282,14 @@
           return repr;
       }
       bool
-      obj_map_equal (env_t &env, obj_map_t &lhs, obj_map_t &rhs)
+      obj_map_eq (env_t &env, obj_map_t &lhs, obj_map_t &rhs)
       {
           if (lhs.size () != rhs.size ()) return false;
           for (auto &kv: lhs) {
               auto name = kv.first;
               auto it = rhs.find (name);
               if (it == rhs.end ()) return false;
-              if (! kv.second->equal (env, it->second)) return false;
+              if (! kv.second->eq (env, it->second)) return false;
           }
           return true;
       }
@@ -467,21 +467,21 @@
       assert_pop_eq (env_t &env, shared_ptr <obj_t> obj)
       {
           auto that = env.obj_stack.top ();
-          assert (obj->equal (env, that));
+          assert (obj->eq (env, that));
           env.obj_stack.pop ();
       }
       void
       assert_tos_eq (env_t &env, shared_ptr <obj_t> obj)
       {
           auto that = env.obj_stack.top ();
-          assert (obj->equal (env, that));
+          assert (obj->eq (env, that));
       }
       void
       assert_stack_size (env_t &env, size_t size)
       {
           assert (env.obj_stack.size () == size);
       }
-      number_t s2n (string s)
+      num_t s2n (string s)
       {
           return stod (s);
       }
@@ -498,13 +498,13 @@
         return "#<" + this->tag + ">";
     }
     bool
-    obj_t::equal (env_t &env, shared_ptr <obj_t> obj)
+    obj_t::eq (env_t &env, shared_ptr <obj_t> obj)
     {
         if (this->tag != obj->tag)
             return false;
         else {
-            cout << "- fatal error : obj_t::equal" << "\n";
-            cout << "  equal is not implemented for  : ";
+            cout << "- fatal error : obj_t::eq" << "\n";
+            cout << "  eq is not implemented for  : ";
             cout << obj->tag << "\n";
             exit (1);
         }
@@ -531,11 +531,11 @@
         }
     }
     bool
-    obj_equal (env_t &env,
-               shared_ptr <obj_t> &lhs,
-               shared_ptr <obj_t> &rhs)
+    obj_eq (env_t &env,
+            shared_ptr <obj_t> &lhs,
+            shared_ptr <obj_t> &rhs)
     {
-        return lhs->equal (env, rhs);
+        return lhs->eq (env, rhs);
     }
     jo_t *
     jo_t::copy ()
@@ -779,7 +779,7 @@
                    shared_ptr <jojo_t> jojo,
                    bind_vector_t bind_vector,
                    local_scope_t local_scope);
-        bool equal (env_t &env, shared_ptr <obj_t> obj);
+        bool eq (env_t &env, shared_ptr <obj_t> obj);
         void apply (env_t &env, size_t arity);
         string repr (env_t &env);
     };
@@ -836,18 +836,18 @@
         }
     }
     bool
-    closure_o::equal (env_t &env, shared_ptr <obj_t> obj)
+    closure_o::eq (env_t &env, shared_ptr <obj_t> obj)
     {
-        // raw pointers must be equal first
+        // raw pointers must be eq first
         if (this != obj.get ()) return false;
         auto that = static_pointer_cast <closure_o> (obj);
         // then scopes
-        if (local_scope_equal
+        if (local_scope_eq
             (env,
              this->local_scope,
              that->local_scope)) return false;
         // then bindings
-        if (bind_vector_equal
+        if (bind_vector_eq
             (env,
              this->bind_vector,
              that->bind_vector)) return false;
@@ -875,7 +875,7 @@
         type_o (env_t &env,
                 tag_t type_tag,
                 obj_map_t obj_map);
-        bool equal (env_t &env, shared_ptr <obj_t> obj);
+        bool eq (env_t &env, shared_ptr <obj_t> obj);
         string repr (env_t &env);
     };
     type_o::type_o (env_t &env,
@@ -892,7 +892,7 @@
         return this->type_tag;
     }
     bool
-    type_o::equal (env_t &env, shared_ptr <obj_t> obj)
+    type_o::eq (env_t &env, shared_ptr <obj_t> obj)
     {
         if (this->tag != obj->tag) return false;
         auto that = static_pointer_cast <type_o> (obj);
@@ -986,7 +986,7 @@
         data_o (env_t &env,
                 tag_t tag,
                 obj_map_t obj_map);
-        bool equal (env_t &env, shared_ptr <obj_t> obj);
+        bool eq (env_t &env, shared_ptr <obj_t> obj);
         string repr (env_t &env);
     };
     data_o::
@@ -998,11 +998,11 @@
         this->obj_map = obj_map;
     }
     bool
-    data_o::equal (env_t &env, shared_ptr <obj_t> obj)
+    data_o::eq (env_t &env, shared_ptr <obj_t> obj)
     {
         if (this->tag != obj->tag) return false;
         auto that = static_pointer_cast <data_o> (obj);
-        return obj_map_equal (env, this->obj_map, that->obj_map);
+        return obj_map_eq (env, this->obj_map, that->obj_map);
 
     }
     string
@@ -1075,7 +1075,7 @@
         data_pred_o (env_t &env,
                      tag_t type_tag);
         void apply (env_t &env, size_t arity);
-        bool equal (env_t &env, shared_ptr <obj_t> obj);
+        bool eq (env_t &env, shared_ptr <obj_t> obj);
         string repr (env_t &env);
     };
     data_pred_o::
@@ -1104,7 +1104,7 @@
         }
     }
     bool
-    data_pred_o::equal (env_t &env, shared_ptr <obj_t> obj)
+    data_pred_o::eq (env_t &env, shared_ptr <obj_t> obj)
     {
         if (this->tag != obj->tag) return false;
         auto that = static_pointer_cast <data_pred_o> (obj);
@@ -1147,7 +1147,7 @@
                      name_vector_t name_vector,
                      obj_map_t obj_map);
         void apply (env_t &env, size_t arity);
-        bool equal (env_t &env, shared_ptr <obj_t> obj);
+        bool eq (env_t &env, shared_ptr <obj_t> obj);
         string repr (env_t &env);
     };
     data_cons_o::
@@ -1195,12 +1195,12 @@
         }
     }
     bool
-    data_cons_o::equal (env_t &env, shared_ptr <obj_t> obj)
+    data_cons_o::eq (env_t &env, shared_ptr <obj_t> obj)
     {
         if (this->tag != obj->tag) return false;
         auto that = static_pointer_cast <data_cons_o> (obj);
         if (this->type_tag != that->type_tag) return false;
-        return obj_map_equal (env, this->obj_map, that->obj_map);
+        return obj_map_eq (env, this->obj_map, that->obj_map);
     }
     string
     data_cons_o::repr (env_t &env)
@@ -1246,7 +1246,7 @@
                 name_vector_t name_vector,
                 prim_fn fn,
                 obj_map_t obj_map);
-        bool equal (env_t &env, shared_ptr <obj_t> obj);
+        bool eq (env_t &env, shared_ptr <obj_t> obj);
         void apply (env_t &env, size_t arity);
         string repr (env_t &env);
     };
@@ -1275,12 +1275,12 @@
             return repr;
         }
     }
-    bool prim_o::equal (env_t &env, shared_ptr <obj_t> obj)
+    bool prim_o::eq (env_t &env, shared_ptr <obj_t> obj)
     {
         if (this->tag != obj->tag) return false;
         auto that = static_pointer_cast <prim_o> (obj);
         if (this != obj.get ()) return false;
-        return obj_map_equal (env, this->obj_map, that->obj_map);
+        return obj_map_eq (env, this->obj_map, that->obj_map);
     }
     void prim_o::apply (env_t &env, size_t arity)
     {
@@ -1337,40 +1337,46 @@
         define (env, name, make_shared <prim_o>
                 (env, name_vector, fn, obj_map_t ()));
     }
-    struct number_o: obj_t
+    struct num_o: obj_t
     {
-        number_t num;
-        number_o (env_t &env, number_t num);
-        bool equal (env_t &env, shared_ptr <obj_t> obj);
+        num_t num;
+        num_o (env_t &env, num_t num);
+        bool eq (env_t &env, shared_ptr <obj_t> obj);
         string repr (env_t &env);
     };
-    number_o::number_o (env_t &env, number_t num)
+    num_o::num_o (env_t &env, num_t num)
     {
-        this->tag = "number-t";
+        this->tag = "num-t";
         this->num = num;
     }
     string
-    number_o::repr (env_t &env)
+    num_o::repr (env_t &env)
     {
         return to_string (this->num);
     }
     bool
-    number_o::equal (env_t &env, shared_ptr <obj_t> obj)
+    num_o::eq (env_t &env, shared_ptr <obj_t> obj)
     {
         if (this->tag != obj->tag) return false;
-        auto that = static_pointer_cast <number_o> (obj);
+        auto that = static_pointer_cast <num_o> (obj);
         return (this->num == that->num);
     }
     bool
-    number_p (env_t &env, shared_ptr <obj_t> a)
+    num_p (env_t &env, shared_ptr <obj_t> a)
     {
-        return a->tag == "number-t";
+        return a->tag == "num-t";
+    }
+    shared_ptr <num_o>
+    as_num (shared_ptr <obj_t> obj)
+    {
+        assert (obj->tag == "num-t");
+        return static_pointer_cast <num_o> (obj);
     }
     struct str_o: obj_t
     {
         string str;
         str_o (env_t &env, string str);
-        bool equal (env_t &env, shared_ptr <obj_t> obj);
+        bool eq (env_t &env, shared_ptr <obj_t> obj);
         string repr (env_t &env);
     };
     str_o::str_o (env_t &env, string str)
@@ -1384,7 +1390,7 @@
         return "\"" + this->str + "\"";
     }
     bool
-    str_o::equal (env_t &env, shared_ptr <obj_t> obj)
+    str_o::eq (env_t &env, shared_ptr <obj_t> obj)
     {
         if (this->tag != obj->tag) return false;
         auto that = static_pointer_cast <str_o> (obj);
@@ -1394,6 +1400,12 @@
     str_p (env_t &env, shared_ptr <obj_t> a)
     {
         return a->tag == "str-t";
+    }
+    shared_ptr <str_o>
+    as_str (shared_ptr <obj_t> obj)
+    {
+        assert (obj->tag == "str-t");
+        return static_pointer_cast <str_o> (obj);
     }
     void
     test_str ()
@@ -1467,7 +1479,7 @@
     {
         obj_vector_t obj_vector;
         vect_o (env_t &env, obj_vector_t obj_vector);
-        bool equal (env_t &env, shared_ptr <obj_t> obj);
+        bool eq (env_t &env, shared_ptr <obj_t> obj);
         string repr (env_t &env);
     };
     vect_o::vect_o (env_t &env, obj_vector_t obj_vector)
@@ -1476,16 +1488,16 @@
         this->obj_vector = obj_vector;
     }
     bool
-    vect_equal (env_t &env,
-                obj_vector_t &lhs,
-                obj_vector_t &rhs);
+    vect_eq (env_t &env,
+             obj_vector_t &lhs,
+             obj_vector_t &rhs);
 
     bool
-    vect_o::equal (env_t &env, shared_ptr <obj_t> obj)
+    vect_o::eq (env_t &env, shared_ptr <obj_t> obj)
     {
         if (this->tag != obj->tag) return false;
         auto that = static_pointer_cast <vect_o> (obj);
-        return vect_equal (env, this->obj_vector, that->obj_vector);
+        return vect_eq (env, this->obj_vector, that->obj_vector);
     }
     string
     vect_o::repr (env_t &env)
@@ -1500,7 +1512,7 @@
         return repr;
     }
     bool
-    vect_equal (env_t &env,
+    vect_eq (env_t &env,
                 obj_vector_t &lhs,
                 obj_vector_t &rhs)
     {
@@ -1508,7 +1520,7 @@
         auto size = lhs.size ();
         size_t index = 0;
         while (index < size) {
-            if (! obj_equal (env, lhs [index], rhs [index]))
+            if (! obj_eq (env, lhs [index], rhs [index]))
                 return false;
             index++;
         }
@@ -1518,6 +1530,12 @@
     vect_p (env_t &env, shared_ptr <obj_t> a)
     {
         return a->tag == "vect-t";
+    }
+    shared_ptr <vect_o>
+    as_vect (shared_ptr <obj_t> obj)
+    {
+        assert (obj->tag == "vect-t");
+        return static_pointer_cast <vect_o> (obj);
     }
     shared_ptr <vect_o>
     list_to_vect (env_t &env, shared_ptr <obj_t> l)
@@ -1547,7 +1565,7 @@
     struct dict_o: obj_t
     {
         dict_o (env_t &env, obj_map_t obj_map);
-        bool equal (env_t &env, shared_ptr <obj_t> obj);
+        bool eq (env_t &env, shared_ptr <obj_t> obj);
         string repr (env_t &env);
     };
     dict_o::dict_o (env_t &env, obj_map_t obj_map)
@@ -1556,11 +1574,11 @@
         this->obj_map = obj_map;
     }
     bool
-    dict_o::equal (env_t &env, shared_ptr <obj_t> obj)
+    dict_o::eq (env_t &env, shared_ptr <obj_t> obj)
     {
         if (this->tag != obj->tag) return false;
         auto that = static_pointer_cast <dict_o> (obj);
-        return obj_map_equal (env, this->obj_map, that->obj_map);
+        return obj_map_eq (env, this->obj_map, that->obj_map);
     }
     string
     dict_o::repr (env_t &env)
@@ -1576,13 +1594,18 @@
         return a->tag == "dict-t";
     }
     shared_ptr <dict_o>
+    as_dict (shared_ptr <obj_t> obj)
+    {
+        assert (obj->tag == "dict-t");
+        return static_pointer_cast <dict_o> (obj);
+    }
+    shared_ptr <dict_o>
     list_to_dict (env_t &env, shared_ptr <obj_t> l)
     {
         auto obj_map = obj_map_t ();
         while (cons_p (env, l)) {
             auto head = car (env, l);
-            assert (str_p (env, head));
-            auto key = static_pointer_cast <str_o> (head);
+            auto key = as_str (head);
             assert (cons_p (env, cdr (env, l)));
             auto obj = car (env, cdr (env, l));
             obj_map [key->str] = obj;
@@ -1778,8 +1801,7 @@
     {
         if (counter == 0)
             return null_c (env);
-        auto head = static_pointer_cast <str_o>
-            (car (env, word_list));
+        auto head = as_str (car (env, word_list));
         auto word = head->str;
         if (word == bar)
             return cons_c
@@ -1804,8 +1826,7 @@
     word_list_head (env_t &env, shared_ptr <obj_t> word_list)
     {
         assert (cons_p (env, word_list));
-        auto head = static_pointer_cast <str_o>
-            (car (env, word_list));
+        auto head = as_str (car (env, word_list));
         auto word = head->str;
         if (bar_word_p (word)) {
             auto bar = word;
@@ -1832,8 +1853,7 @@
     {
         if (counter == 0)
             return word_list;
-        auto head = static_pointer_cast <str_o>
-            (car (env, word_list));
+        auto head = as_str (car (env, word_list));
         auto word = head->str;
         if (word == bar)
             return word_list_rest_with_bar_ket_counter
@@ -1855,8 +1875,7 @@
     word_list_rest (env_t &env, shared_ptr <obj_t> word_list)
     {
         assert (cons_p (env, word_list));
-        auto head = static_pointer_cast <str_o>
-            (car (env, word_list));
+        auto head = as_str (car (env, word_list));
         auto word = head->str;
         if (bar_word_p (word)) {
             auto bar = word;
@@ -1882,7 +1901,7 @@
         if (null_p (env, rest))
             return null_c (env);
         auto cdr_rest = cdr (env, rest);
-        auto car_rest = static_pointer_cast <str_o> (car (env, rest));
+        auto car_rest = as_str (car (env, rest));
         auto word = car_rest->str;
         if (null_p (env, cdr_rest)) {
             assert (word == ket);
@@ -1899,8 +1918,7 @@
     shared_ptr <obj_t>
     parse_sexp (env_t &env, shared_ptr <obj_t> word_list)
     {
-        auto head = static_pointer_cast <str_o>
-            (car (env, word_list));
+        auto head = as_str (car (env, word_list));
         auto word = head->str;
         auto rest = cdr (env, word_list);
         if (word == "(")
@@ -1949,18 +1967,17 @@
             return "(" + sexp_list_repr (env, a) + ")";
         }
         else if (vect_p (env, a)) {
-            auto v = static_pointer_cast <vect_o> (a);
+            auto v = as_vect (a);
             auto l = vect_to_list (env, v);
             return "[" + sexp_list_repr (env, l) + "]";
         }
         else if (dict_p (env, a)) {
-            auto d = static_pointer_cast <dict_o> (a);
+            auto d = as_dict (a);
             auto l = dict_to_list (env, d);
             return "{" + sexp_list_repr (env, l) + "}";
         }
         else {
-            assert (str_p (env, a));
-            auto str = static_pointer_cast <str_o> (a);
+            auto str = as_str (a);
             return str->str;
         }
     }
@@ -1981,7 +1998,7 @@
     {
         env_t module_env;
         module_o (env_t &env, env_t module_env);
-        bool equal (env_t &env, shared_ptr <obj_t> obj);
+        bool eq (env_t &env, shared_ptr <obj_t> obj);
         string repr (env_t &env);
     };
     module_o::module_o (env_t &env, env_t module_env)
@@ -1997,16 +2014,16 @@
         }
     }
     bool
-    equal_env_p (env_t &lhs, env_t &rhs)
+    eq_env_p (env_t &lhs, env_t &rhs)
     {
         return false;
     }
     bool
-    module_o::equal (env_t &env, shared_ptr <obj_t> obj)
+    module_o::eq (env_t &env, shared_ptr <obj_t> obj)
     {
         if (this->tag != obj->tag) return false;
         auto that = static_pointer_cast <module_o> (obj);
-        return equal_env_p (this->module_env, that->module_env);
+        return eq_env_p (this->module_env, that->module_env);
     }
     string
     module_o::repr (env_t &env)
@@ -2022,7 +2039,7 @@
       {
           keyword_fn fn;
           keyword_o (env_t &env, keyword_fn fn);
-          bool equal (env_t &env, shared_ptr <obj_t> obj);
+          bool eq (env_t &env, shared_ptr <obj_t> obj);
       };
       keyword_o::
       keyword_o (env_t &env, keyword_fn fn)
@@ -2031,7 +2048,7 @@
           this->fn = fn;
       }
       bool
-      keyword_o::equal (env_t &env, shared_ptr <obj_t> obj)
+      keyword_o::eq (env_t &env, shared_ptr <obj_t> obj)
       {
           if (this->tag != obj->tag) return false;
           return this != obj.get ();
@@ -2051,7 +2068,7 @@
       {
           if (! cons_p (env, sexp)) return false;
           if (! str_p (env, (car (env, sexp)))) return false;
-          auto head = static_pointer_cast <str_o> (car (env, sexp));
+          auto head = as_str (car (env, sexp));
           auto name = head->str;
           auto it = env.box_map.find (name);
           if (it != env.box_map.end ()) {
@@ -2326,8 +2343,7 @@
                   env.obj_stack.pop ();
                   auto str = env.obj_stack.top ();
                   env.obj_stack.pop ();
-                  assert (str_p (env, str));
-                  auto key = static_pointer_cast <str_o> (str);
+                  auto key = as_str (str);
                   obj_map [key->str] = obj;
                   index++;
               }
@@ -2448,23 +2464,23 @@
             return jojo;
         }
         bool
-        number_string_p (string str)
+        num_string_p (string str)
         {
             auto size = str.size ();
             if (size < 1) return false;
             if (str [0] == '-')
-                return number_string_p (str.substr (1, size - 1));
+                return num_string_p (str.substr (1, size - 1));
             auto pos = str.find_first_not_of ("0123456789.");
             return pos == string::npos;
         }
         shared_ptr <jojo_t>
-        number_string_compile (env_t &env,
+        num_string_compile (env_t &env,
                                local_ref_map_t &local_ref_map,
                                string str)
         {
             auto num = s2n (str);
             jo_vector_t jo_vector = {
-                new lit_jo_t (make_shared <number_o> (env, num)),
+                new lit_jo_t (make_shared <num_o> (env, num)),
             };
             auto jojo = make_shared <jojo_t> (jo_vector);
             return jojo;
@@ -2523,7 +2539,7 @@
                        local_ref_map_t &local_ref_map,
                        shared_ptr <obj_t> sexp)
       {
-          auto head = static_pointer_cast <str_o> (car (env, sexp));
+          auto head = as_str (car (env, sexp));
           auto body = cdr (env, sexp);
           auto name = head->str;
           auto fn = get_keyword_fn (env, name);
@@ -2533,7 +2549,7 @@
         field_head_p (env_t &env, shared_ptr <obj_t> head)
         {
             if (! str_p (env, head)) return false;
-            auto str = static_pointer_cast <str_o> (head);
+            auto str = as_str (head);
             return field_string_p (str->str);
         }
         shared_ptr <jojo_t>
@@ -2571,8 +2587,8 @@
             return string_string_compile (env, local_ref_map, str);
         else if (key_string_p (str))
             return key_string_compile (env, local_ref_map, str);
-        else if (number_string_p (str))
-            return number_string_compile (env, local_ref_map, str);
+        else if (num_string_p (str))
+            return num_string_compile (env, local_ref_map, str);
         else if (field_string_p (str))
             return field_string_compile (env, local_ref_map, str);
         else
@@ -2584,15 +2600,15 @@
                   shared_ptr <obj_t> sexp)
     {
         if (str_p (env, sexp)) {
-            auto str = static_pointer_cast <str_o> (sexp);
+            auto str = as_str (sexp);
             return string_compile (env, local_ref_map, str->str);
         }
         if (vect_p (env, sexp)) {
-            auto vect = static_pointer_cast <vect_o> (sexp);
+            auto vect = as_vect (sexp);
             return vect_compile (env, local_ref_map, vect);
         }
         if (dict_p (env, sexp)) {
-            auto dict = static_pointer_cast <dict_o> (sexp);
+            auto dict = as_dict (sexp);
             return dict_compile (env, local_ref_map, dict);
         }
         if (keyword_sexp_p (env, sexp)) {
@@ -2626,7 +2642,7 @@
       {
           top_keyword_fn fn;
           top_keyword_o (env_t &env, top_keyword_fn fn);
-          bool equal (env_t &env, shared_ptr <obj_t> obj);
+          bool eq (env_t &env, shared_ptr <obj_t> obj);
       };
       top_keyword_o::
       top_keyword_o (env_t &env, top_keyword_fn fn)
@@ -2635,7 +2651,7 @@
           this->fn = fn;
       }
       bool
-      top_keyword_o::equal (env_t &env, shared_ptr <obj_t> obj)
+      top_keyword_o::eq (env_t &env, shared_ptr <obj_t> obj)
       {
           if (this->tag != obj->tag) return false;
           return this != obj.get ();
@@ -2655,7 +2671,7 @@
       {
           if (! cons_p (env, sexp)) return false;
           if (! str_p (env, (car (env, sexp)))) return false;
-          auto head = static_pointer_cast <str_o> (car (env, sexp));
+          auto head = as_str (car (env, sexp));
           auto name = head->str;
           auto it = env.box_map.find (name);
           if (it != env.box_map.end ()) {
@@ -2704,7 +2720,7 @@
     sexp_eval (env_t &env, shared_ptr <obj_t> sexp)
     {
         if (top_keyword_sexp_p (env, sexp)) {
-            auto head = static_pointer_cast <str_o> (car (env, sexp));
+            auto head = as_str (car (env, sexp));
             auto body = cdr (env, sexp);
             auto name = head->str;
             auto fn = get_top_keyword_fn (env, name);
@@ -2730,7 +2746,7 @@
     top_sexp_eval (env_t &env, shared_ptr <obj_t> sexp)
     {
         if (top_keyword_sexp_p (env, sexp)) {
-            auto head = static_pointer_cast <str_o> (car (env, sexp));
+            auto head = as_str (car (env, sexp));
             auto body = cdr (env, sexp);
             auto name = head->str;
             auto fn = get_top_keyword_fn (env, name);
@@ -2844,14 +2860,14 @@
               return false;
           if (! str_p (env, car (env, car (env, cdr (env, body)))))
               return false;
-          auto str = static_pointer_cast <str_o>
+          auto str = as_str
               (car (env, car (env, cdr (env, body))));
           return str->str == "data";
       }
       void
       tk_assign_data (env_t &env, shared_ptr <obj_t> body)
       {
-          auto head = static_pointer_cast <str_o> (car (env, body));
+          auto head = as_str (car (env, body));
           auto prefix = prefix_of_string (head->str);
           auto type_name = name_of_string (head->str);
           auto data_name = name_t2c (type_name);
@@ -2871,7 +2887,7 @@
               auto name_vect = list_to_vect (env, data_body);
               auto name_vector = name_vector_t ();
               for (auto obj: name_vect->obj_vector) {
-                  auto str = static_pointer_cast <str_o> (obj);
+                  auto str = as_str (obj);
                   name_vector.push_back (str->str);
               }
               assign_type
@@ -2917,7 +2933,7 @@
                              shared_ptr <obj_t> sexp)
       {
           if (str_p (env, sexp)) {
-              auto str = static_pointer_cast <str_o> (sexp);
+              auto str = as_str (sexp);
               if (str->str == "recur")
                   return sub;
               else
@@ -2929,7 +2945,7 @@
                    sexp_substitute_recur (env, sub, car (env, sexp)),
                    sexp_substitute_recur (env, sub, cdr (env, sexp)));
           if (vect_p (env, sexp)) {
-              auto vect_sexp = static_pointer_cast <vect_o> (sexp);
+              auto vect_sexp = as_vect (sexp);
               auto list_sexp = vect_to_list (env, vect_sexp);
               auto new_list_sexp = sexp_substitute_recur (env, sub, list_sexp);
               return list_to_vect (env, new_list_sexp);
@@ -2957,7 +2973,7 @@
       void
       tk_assign_value (env_t &env, shared_ptr <obj_t> body)
       {
-          auto head = static_pointer_cast <str_o> (car (env, body));
+          auto head = as_str (car (env, body));
           auto rest = cdr (env, body);
           auto name = name_of_string (head->str);
           auto prefix = prefix_of_string (head->str);
@@ -3164,8 +3180,7 @@
       {
           auto name_vector = name_vector_t ();
           for (auto &obj: obj_vect) {
-              assert (str_p (env, obj));
-              auto str = static_pointer_cast <str_o> (obj);
+              auto str = as_str (obj);
               name_vector.push_back (str->str);
           }
           return name_vector;
@@ -3175,7 +3190,7 @@
                 local_ref_map_t &old_local_ref_map,
                 shared_ptr <obj_t> body)
       {
-          auto name_vect = static_pointer_cast <vect_o> (car (env, body));
+          auto name_vect = as_vect (car (env, body));
           auto rest = cdr (env, body);
           auto name_vector = obj_vector_to_name_vector
               (env, name_vect->obj_vector);
@@ -3198,7 +3213,7 @@
           shared_ptr <jojo_t> default_jojo = nullptr;
           while (! null_p (env, body)) {
               auto one = car (env, body);
-              auto head = static_pointer_cast <str_o> (car (env, one));
+              auto head = as_str (car (env, one));
               auto rest = cdr (env, one);
               auto name = head->str;
               if (name == "_") {
@@ -3235,9 +3250,9 @@
         str_sexp_literalize (env_t &env, shared_ptr <str_o> sexp)
         {
             auto str = sexp->str;
-            if (number_string_p (str)) {
+            if (num_string_p (str)) {
                 auto num = s2n (str);
-                return make_shared <number_o> (env, num);
+                return make_shared <num_o> (env, num);
             }
             if (string_string_p (str)) {
                 str = string_string_to_string (str);
@@ -3277,14 +3292,11 @@
         sexp_literalize (env_t &env, shared_ptr <obj_t> sexp)
         {
             if (str_p (env, sexp))
-                return str_sexp_literalize
-                    (env, static_pointer_cast <str_o> (sexp));
+                return str_sexp_literalize (env, as_str (sexp));
             if (vect_p (env, sexp))
-                return vect_sexp_literalize
-                    (env, static_pointer_cast <vect_o> (sexp));
+                return vect_sexp_literalize (env, as_vect (sexp));
             if (dict_p (env, sexp))
-                return dict_sexp_literalize
-                    (env, static_pointer_cast <dict_o> (sexp));
+                return dict_sexp_literalize (env, as_dict (sexp));
             if (null_p (env, sexp))
                 return sexp;
             else {
@@ -3391,23 +3403,394 @@
                        jj_not_sig,
                        jj_not);
       }
-      sig_t jj_add_sig = { "add", "x", "y" };
-      void jj_add (env_t &env, obj_map_t &obj_map)
+      void
+      expose_num_predicate (env_t &env)
       {
-          auto a = obj_map ["x"]; assert (number_p (env, a));
-          auto b = obj_map ["y"]; assert (number_p (env, b));
-          auto x = static_pointer_cast <number_o> (a);
-          auto y = static_pointer_cast <number_o> (b);
-          auto z = make_shared <number_o> (env, x->num + y->num);
-          env.obj_stack.push (z);
+          define_prim (
+              env, { "lt", "x", "y" },
+              [] (env_t &env, obj_map_t &obj_map)
+              {
+                  auto x = as_num (obj_map ["x"]);
+                  auto y = as_num (obj_map ["y"]);
+                  if (x->num < y->num) {
+                      env.obj_stack.push (true_c (env));
+                  }
+                  else {
+                      env.obj_stack.push (false_c (env));
+                  }
+              });
+          define_prim (
+              env, { "gt", "x", "y" },
+              [] (env_t &env, obj_map_t &obj_map)
+              {
+                  auto x = as_num (obj_map ["x"]);
+                  auto y = as_num (obj_map ["y"]);
+                  if (x->num > y->num) {
+                      env.obj_stack.push (true_c (env));
+                  }
+                  else {
+                      env.obj_stack.push (false_c (env));
+                  }
+              });
+          define_prim (
+              env, { "lteq", "x", "y" },
+              [] (env_t &env, obj_map_t &obj_map)
+              {
+                  auto x = as_num (obj_map ["x"]);
+                  auto y = as_num (obj_map ["y"]);
+                  if (x->num <= y->num) {
+                      env.obj_stack.push (true_c (env));
+                  }
+                  else {
+                      env.obj_stack.push (false_c (env));
+                  }
+              });
+          define_prim (
+              env, { "gteq", "x", "y" },
+              [] (env_t &env, obj_map_t &obj_map)
+              {
+                  auto x = as_num (obj_map ["x"]);
+                  auto y = as_num (obj_map ["y"]);
+                  if (x->num >= y->num) {
+                      env.obj_stack.push (true_c (env));
+                  }
+                  else {
+                      env.obj_stack.push (false_c (env));
+                  }
+              });
       }
       void
-      expose_number (env_t &env)
+      expose_num_1 (env_t &env)
       {
-          def_type (env, "number-t");
-          define_prim (env,
-                       jj_add_sig,
-                       jj_add);
+          define_prim (
+              env, { "add", "x", "y" },
+              [] (env_t &env, obj_map_t &obj_map)
+              {
+                  auto x = as_num (obj_map ["x"]);
+                  auto y = as_num (obj_map ["y"]);
+                  env.obj_stack.push
+                      (make_shared <num_o>
+                       (env, x->num + y->num));
+              });
+          define_prim (
+              env, { "sub", "x", "y" },
+              [] (env_t &env, obj_map_t &obj_map)
+              {
+                  auto x = as_num (obj_map ["x"]);
+                  auto y = as_num (obj_map ["y"]);
+                  env.obj_stack.push
+                      (make_shared <num_o>
+                       (env, x->num - y->num));
+              });
+          define_prim (
+              env, { "max", "x", "y" },
+              [] (env_t &env, obj_map_t &obj_map)
+              {
+                  auto x = as_num (obj_map ["x"]);
+                  auto y = as_num (obj_map ["y"]);
+                  env.obj_stack.push
+                      (make_shared <num_o>
+                       (env, fmax (x->num, y->num)));
+              });
+          define_prim (
+              env, { "min", "x", "y" },
+              [] (env_t &env, obj_map_t &obj_map)
+              {
+                  auto x = as_num (obj_map ["x"]);
+                  auto y = as_num (obj_map ["y"]);
+                  env.obj_stack.push
+                      (make_shared <num_o>
+                       (env, fmin (x->num, y->num)));
+              });
+          define_prim (
+              env, { "neg", "x" },
+              [] (env_t &env, obj_map_t &obj_map)
+              {
+                  auto x = as_num (obj_map ["x"]);
+                  env.obj_stack.push
+                      (make_shared <num_o>
+                       (env, - x->num));
+              });
+          define_prim (
+              env, { "abs", "x" },
+              [] (env_t &env, obj_map_t &obj_map)
+              {
+                  auto x = as_num (obj_map ["x"]);
+                  env.obj_stack.push
+                      (make_shared <num_o>
+                       (env, fabs (x->num)));
+              });
+      }
+      void
+      expose_num_2 (env_t &env)
+      {
+          define_prim (
+              env, { "mul", "x", "y" },
+              [] (env_t &env, obj_map_t &obj_map)
+              {
+                  auto x = as_num (obj_map ["x"]);
+                  auto y = as_num (obj_map ["y"]);
+                  env.obj_stack.push
+                      (make_shared <num_o>
+                       (env, x->num * y->num));
+              });
+          define_prim (
+              env, { "div", "x", "y" },
+              [] (env_t &env, obj_map_t &obj_map)
+              {
+                  auto x = as_num (obj_map ["x"]);
+                  auto y = as_num (obj_map ["y"]);
+                  env.obj_stack.push
+                      (make_shared <num_o>
+                       (env, x->num / y->num));
+              });
+          define_prim (
+              env, { "mod", "x", "y" },
+              [] (env_t &env, obj_map_t &obj_map)
+              {
+                  auto x = as_num (obj_map ["x"]);
+                  auto y = as_num (obj_map ["y"]);
+                  env.obj_stack.push
+                      (make_shared <num_o>
+                       (env, fmod (x->num, y->num)));
+              });
+          define_prim (
+              env, { "hypot", "x", "y" },
+              [] (env_t &env, obj_map_t &obj_map)
+              {
+                  auto x = as_num (obj_map ["x"]);
+                  auto y = as_num (obj_map ["y"]);
+                  env.obj_stack.push
+                      (make_shared <num_o>
+                       (env, hypot (x->num, y->num)));
+              });
+          define_prim (
+              env, { "sqrt", "x" },
+              [] (env_t &env, obj_map_t &obj_map)
+              {
+                  auto x = as_num (obj_map ["x"]);
+                  env.obj_stack.push
+                      (make_shared <num_o>
+                       (env, sqrt (x->num)));
+              });
+          define_prim (
+              env, { "cbrt", "x" },
+              [] (env_t &env, obj_map_t &obj_map)
+              {
+                  auto x = as_num (obj_map ["x"]);
+                  env.obj_stack.push
+                      (make_shared <num_o>
+                       (env, cbrt (x->num)));
+              });
+      }
+      void
+      expose_num_3 (env_t &env)
+      {
+          define_prim (
+              env, { "pow", "x", "y" },
+              [] (env_t &env, obj_map_t &obj_map)
+              {
+                  auto x = as_num (obj_map ["x"]);
+                  auto y = as_num (obj_map ["y"]);
+                  env.obj_stack.push
+                      (make_shared <num_o>
+                       (env, pow (x->num, y->num)));
+              });
+          define_prim (
+              env, { "expe", "x" },
+              [] (env_t &env, obj_map_t &obj_map)
+              {
+                  auto x = as_num (obj_map ["x"]);
+                  env.obj_stack.push
+                      (make_shared <num_o>
+                       (env, exp (x->num)));
+              });
+          define_prim (
+              env, { "exp2", "x" },
+              [] (env_t &env, obj_map_t &obj_map)
+              {
+                  auto x = as_num (obj_map ["x"]);
+                  env.obj_stack.push
+                      (make_shared <num_o>
+                       (env, exp2 (x->num)));
+              });
+          define_prim (
+              env, { "expm1", "x" },
+              [] (env_t &env, obj_map_t &obj_map)
+              {
+                  auto x = as_num (obj_map ["x"]);
+                  env.obj_stack.push
+                      (make_shared <num_o>
+                       (env, expm1 (x->num)));
+              });
+          define_prim (
+              env, { "loge", "x" },
+              [] (env_t &env, obj_map_t &obj_map)
+              {
+                  auto x = as_num (obj_map ["x"]);
+                  env.obj_stack.push
+                      (make_shared <num_o>
+                       (env, log (x->num)));
+              });
+          define_prim (
+              env, { "log10", "x" },
+              [] (env_t &env, obj_map_t &obj_map)
+              {
+                  auto x = as_num (obj_map ["x"]);
+                  env.obj_stack.push
+                      (make_shared <num_o>
+                       (env, log10 (x->num)));
+              });
+          define_prim (
+              env, { "log2", "x" },
+              [] (env_t &env, obj_map_t &obj_map)
+              {
+                  auto x = as_num (obj_map ["x"]);
+                  env.obj_stack.push
+                      (make_shared <num_o>
+                       (env, log2 (x->num)));
+              });
+          define_prim (
+              env, { "log1p", "x" },
+              [] (env_t &env, obj_map_t &obj_map)
+              {
+                  auto x = as_num (obj_map ["x"]);
+                  env.obj_stack.push
+                      (make_shared <num_o>
+                       (env, log1p (x->num)));
+              });
+      }
+      void
+      expose_num_trigonometry (env_t &env)
+      {
+          define_prim (
+              env, { "sin", "x" },
+              [] (env_t &env, obj_map_t &obj_map)
+              {
+                  auto x = as_num (obj_map ["x"]);
+                  env.obj_stack.push
+                      (make_shared <num_o>
+                       (env, sin (x->num)));
+              });
+          define_prim (
+              env, { "cos", "x" },
+              [] (env_t &env, obj_map_t &obj_map)
+              {
+                  auto x = as_num (obj_map ["x"]);
+                  env.obj_stack.push
+                      (make_shared <num_o>
+                       (env, cos (x->num)));
+              });
+          define_prim (
+              env, { "tan", "x" },
+              [] (env_t &env, obj_map_t &obj_map)
+              {
+                  auto x = as_num (obj_map ["x"]);
+                  env.obj_stack.push
+                      (make_shared <num_o>
+                       (env, tan (x->num)));
+              });
+          define_prim (
+              env, { "asin", "x" },
+              [] (env_t &env, obj_map_t &obj_map)
+              {
+                  auto x = as_num (obj_map ["x"]);
+                  env.obj_stack.push
+                      (make_shared <num_o>
+                       (env, asin (x->num)));
+              });
+          define_prim (
+              env, { "acos", "x" },
+              [] (env_t &env, obj_map_t &obj_map)
+              {
+                  auto x = as_num (obj_map ["x"]);
+                  env.obj_stack.push
+                      (make_shared <num_o>
+                       (env, acos (x->num)));
+              });
+          define_prim (
+              env, { "atan", "x" },
+              [] (env_t &env, obj_map_t &obj_map)
+              {
+                  auto x = as_num (obj_map ["x"]);
+                  env.obj_stack.push
+                      (make_shared <num_o>
+                       (env, atan (x->num)));
+              });
+          define_prim (
+              env, { "atan2", "x", "y" },
+              [] (env_t &env, obj_map_t &obj_map)
+              {
+                  auto x = as_num (obj_map ["x"]);
+                  auto y = as_num (obj_map ["y"]);
+                  env.obj_stack.push
+                      (make_shared <num_o>
+                       (env, atan2 (x->num, y->num)));
+              });
+          define_prim (
+              env, { "sinh", "x" },
+              [] (env_t &env, obj_map_t &obj_map)
+              {
+                  auto x = as_num (obj_map ["x"]);
+                  env.obj_stack.push
+                      (make_shared <num_o>
+                       (env, sinh (x->num)));
+              });
+          define_prim (
+              env, { "cosh", "x" },
+              [] (env_t &env, obj_map_t &obj_map)
+              {
+                  auto x = as_num (obj_map ["x"]);
+                  env.obj_stack.push
+                      (make_shared <num_o>
+                       (env, cosh (x->num)));
+              });
+          define_prim (
+              env, { "tanh", "x" },
+              [] (env_t &env, obj_map_t &obj_map)
+              {
+                  auto x = as_num (obj_map ["x"]);
+                  env.obj_stack.push
+                      (make_shared <num_o>
+                       (env, tanh (x->num)));
+              });
+          define_prim (
+              env, { "asinh", "x" },
+              [] (env_t &env, obj_map_t &obj_map)
+              {
+                  auto x = as_num (obj_map ["x"]);
+                  env.obj_stack.push
+                      (make_shared <num_o>
+                       (env, asinh (x->num)));
+              });
+          define_prim (
+              env, { "acosh", "x" },
+              [] (env_t &env, obj_map_t &obj_map)
+              {
+                  auto x = as_num (obj_map ["x"]);
+                  env.obj_stack.push
+                      (make_shared <num_o>
+                       (env, acosh (x->num)));
+              });
+          define_prim (
+              env, { "atanh", "x" },
+              [] (env_t &env, obj_map_t &obj_map)
+              {
+                  auto x = as_num (obj_map ["x"]);
+                  env.obj_stack.push
+                      (make_shared <num_o>
+                       (env, atanh (x->num)));
+              });
+      }
+      void
+      expose_num (env_t &env)
+      {
+          def_type (env, "num-t");
+          expose_num_predicate (env);
+          expose_num_1 (env);
+          expose_num_2 (env);
+          expose_num_3 (env);
+          expose_num_trigonometry (env);
       }
       sig_t jj_str_print_sig = { "str-print", "str" };
       // -- str-t ->
@@ -3415,7 +3798,7 @@
       {
           auto obj = obj_map ["str"];
           assert (str_p (env, obj));
-          auto str = static_pointer_cast <str_o> (obj);
+          auto str = as_str (obj);
           cout << str->str;
       }
       void
@@ -3462,8 +3845,7 @@
       void jj_vect_to_list (env_t &env, obj_map_t &obj_map)
       {
           auto obj = obj_map ["vect"];
-          assert (vect_p (env, obj));
-          auto vect = static_pointer_cast <vect_o> (obj);
+          auto vect = as_vect (obj);
           env.obj_stack.push (vect_to_list (env, vect));
       }
       void
@@ -3488,7 +3870,7 @@
       {
           auto obj = obj_map ["code"];
           assert (str_p (env, obj));
-          auto code = static_pointer_cast <str_o> (obj);
+          auto code = as_str (obj);
           env.obj_stack.push (scan_word_list (env, code));
       }
       sig_t jj_parse_sexp_sig = { "parse-sexp", "word-list" };
@@ -3552,7 +3934,7 @@
       {
           auto obj = obj_map ["module-path"];
           assert (str_p (env, obj));
-          auto str = static_pointer_cast <str_o> (obj);
+          auto str = as_str (obj);
           auto module_path = path_t (str->str);
           if (! absolute_path_p (module_path)) {
               module_path = env.file_path.parent_path () / module_path;
@@ -3620,12 +4002,12 @@
           auto nl = make_shared <str_o> (env, "\n");
           env.obj_stack.push (nl);
       }
-      sig_t jj_equal_sig = { "equal", "lhs", "rhs" };
-      void jj_equal (env_t &env, obj_map_t &obj_map)
+      sig_t jj_eq_sig = { "eq", "lhs", "rhs" };
+      void jj_eq (env_t &env, obj_map_t &obj_map)
       {
           auto lhs = obj_map ["lhs"];
           auto rhs = obj_map ["rhs"];
-          if (obj_equal (env, lhs, rhs))
+          if (obj_eq (env, lhs, rhs))
               env.obj_stack.push (true_c (env));
           else
               env.obj_stack.push (false_c (env));
@@ -3656,8 +4038,8 @@
                        jj_nl_sig,
                        jj_nl);
           define_prim (env,
-                       jj_equal_sig,
-                       jj_equal);
+                       jj_eq_sig,
+                       jj_eq);
           define_prim (env,
                        jj_env_report_sig,
                        jj_env_report);
@@ -3666,7 +4048,7 @@
     expose_core (env_t &env)
     {
         expose_bool (env);
-        expose_number (env);
+        expose_num (env);
         expose_str (env);
         expose_list (env);
         expose_vect (env);

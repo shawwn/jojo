@@ -1,5 +1,6 @@
 #+html_head: <link rel="stylesheet" href="css/org-page.css"/>
 #+title: Story Map
+- repl
 - learn more about float encoding
 - do not count `.field` in function application syntax
   and handle stack functions specially
@@ -23,11 +24,10 @@
 * with a practical prelude
 *** learn from nodejs and python
 *** load module from system -- by $PATH
-*** number lib
 *** str lib
 *** container lib
 * with simple module system
-*** `equal_env_p` -- for module_o::equal
+*** `env_eq` -- for module_o::eq
 *** do not reload module -- need to use module cache
 * secure
 *** can not handle big file -- due to the recursion in sexp parser

@@ -1,8 +1,8 @@
 (= f (lambda [x y] (cons-c x y)))
 
-(assert (equal closure-t (type-of f)))
-(assert (equal closure-t (type-of (f null-c))))
-(assert (equal (f null-c (cons-c null-c null-c))
+(assert (eq closure-t (type-of f)))
+(assert (eq closure-t (type-of (f null-c))))
+(assert (eq (f null-c (cons-c null-c null-c))
          (cons-c null-c (cons-c null-c null-c))))
 
 (note
@@ -12,9 +12,9 @@
 
 (= g (lambda [x] (lambda [y] (cons-c x y))))
 
-(assert (equal closure-t (type-of g)))
-(assert (equal closure-t (type-of (g null-c))))
-(assert (equal ((g null-c) (cons-c null-c null-c))
+(assert (eq closure-t (type-of g)))
+(assert (eq closure-t (type-of (g null-c))))
+(assert (eq ((g null-c) (cons-c null-c null-c))
                (cons-c null-c (cons-c null-c null-c))))
 
 (note

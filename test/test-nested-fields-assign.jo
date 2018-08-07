@@ -10,7 +10,7 @@
 (= three two.three-c)
 (= four three.four-c)
 
-(assert (equal zero.one-t (type-of one)))
-(assert (equal one.two-t (type-of two)))
-(assert (equal two.three-t (type-of three)))
-(assert (equal three.four-t (type-of four)))
+(assert (eq zero.one-t (type-of one)))
+(assert (eq one.two-t (type-of two)))
+(assert (eq two.three-t (type-of three)))
+(assert (eq three.four-t (type-of four)))

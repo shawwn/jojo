@@ -1,13 +1,13 @@
 (= d {a: (cons-c 1 null-c)
       b: (cons-c 1 (cons-c 2 null-c))})
 
-(assert (equal (type-of d) dict-t))
-(assert (equal d.a.car 1))
-(assert (equal d.b.cdr.car 2))
+(assert (eq (type-of d) dict-t))
+(assert (eq d.a.car 1))
+(assert (eq d.b.cdr.car 2))
 
 (= d {a: '(1)
       b: '(1 2)})
 
-(assert (equal (type-of d) dict-t))
-(assert (equal d.a.car 1))
-(assert (equal d.b.cdr.car 2))
+(assert (eq (type-of d) dict-t))
+(assert (eq d.a.car 1))
+(assert (eq d.b.cdr.car 2))

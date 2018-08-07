@@ -1,4 +1,4 @@
 (= (three)
    1 2 3)
 
-(assert (equal 3 (three)))
+(assert (eq 3 (three)))

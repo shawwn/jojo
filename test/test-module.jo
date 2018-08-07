@@ -7,5 +7,5 @@
 (= nat-add test-nat.nat-add)
 (= nat-mul test-nat.nat-mul)
 
-(assert (equal (nat-add two two) four))
-(assert (equal (nat-mul two two) four))
+(assert (eq (nat-add two two) four))
+(assert (eq (nat-mul two two) four))

@@ -22,17 +22,17 @@
      (zero-t (succ-c zero-c))
      (succ-t (nat-mul x (recur x.prev)))))
 
-(assert (equal (nat-add two two) four))
-(assert (equal (nat-mul two two) four))
+(assert (eq (nat-add two two) four))
+(assert (eq (nat-mul two two) four))
 
 (= (succ.add1)
     (nat-add this one))
 
-(assert (equal (one.add1) two))
-(assert (equal (two.add1) three))
+(assert (eq (one.add1) two))
+(assert (eq (two.add1) three))
 
 (= succ.inc
    (nat-add this one))
 
-(assert (equal one.inc two))
-(assert (equal two.inc three))
+(assert (eq one.inc two))
+(assert (eq two.inc three))
