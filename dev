@@ -18,26 +18,26 @@ b () # build
 {
     clean
     tangle
-    time $C -o bin/jojo jojo.cpp $W $L
+    time $C -o jojo jojo.cpp $W $L
 }
 
 bo () # build with optimization
 {
     clean
     tangle
-    time $C -o bin/jojo jojo.cpp $W $L $O
+    time $C -o jojo jojo.cpp $W $L $O
 }
 
 clean ()
 {
-    rm -f bin/jojo
+    rm -f jojo
 }
 
 t ()
 {
     for FILE in $(ls test | grep "\.jo" | grep "test-")
     do
-        ./bin/jojo "test/$FILE"
+        ./jojo "test/$FILE"
     done
 }
 
@@ -51,7 +51,7 @@ t ()
 
 i () # install
 {
-    install -Dsm755 bin/jojo $JOJO/bin/jojo
+    install -Dsm755 jojo $JOJO/bin/jojo
     for FILE in $(ls lib)
     do
         install -Dm644 lib/$FILE $JOJO/lib/$FILE
