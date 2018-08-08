@@ -35,7 +35,7 @@
     using tag_t = string;
     using obj_map_t = map <name_t, shared_ptr <obj_t>>;
     using obj_vector_t = vector <shared_ptr <obj_t>>;
-    using box_map_t = map <name_t, box_t *>;
+    using box_map_t = map <name_t, shared_ptr <box_t>>;
     using obj_stack_t = stack <shared_ptr <obj_t>>;
     using frame_stack_t = stack <shared_ptr <frame_t>>;
     using jojo_map_t = map <tag_t, shared_ptr <jojo_t>>;
@@ -553,7 +553,7 @@
             box->obj = obj;
         }
         else {
-            env.box_map [name] = new box_t (obj);
+            env.box_map [name] = make_shared <box_t> (obj);
         }
     }
     bool
@@ -598,7 +598,7 @@
           this->empty_p = false;
           this->obj = obj;
       }
-      box_t *
+      shared_ptr <box_t>
       boxing (env_t &env, name_t name)
       {
           auto it = env.box_map.find (name);
@@ -607,13 +607,13 @@
               return box;
           }
           else {
-              auto box = new box_t ();
+              auto box = make_shared <box_t> ();
               env.box_map [name] = box;
               return box;
           }
       }
       name_t
-      name_of_box (env_t &env, box_t *box)
+      name_of_box (env_t &env, shared_ptr <box_t> box)
       {
           for (auto &kv: env.box_map) {
               auto name = kv.first;
@@ -1489,6 +1489,7 @@
     {
         return a->tag == "str-t";
     }
+
     void
     test_str ()
     {
@@ -2224,7 +2225,7 @@
           auto name = head->str;
           auto it = env.box_map.find (name);
           if (it != env.box_map.end ()) {
-              box_t *box = it->second;
+              auto box = it->second;
               if (box->empty_p) return false;
               if (keyword_p (env, box->obj)) return true;
               else return false;
@@ -2238,7 +2239,7 @@
       {
           auto it = env.box_map.find (name);
           if (it != env.box_map.end ()) {
-              box_t *box = it->second;
+              auto box = it->second;
               if (box->empty_p) {
                   cout << "- fatal error: keyword_fn_from_name fail\n";
                   exit (1);
@@ -2359,13 +2360,13 @@
           }
           struct ref_jo_t: jo_t
           {
-              box_t *box;
-              ref_jo_t (box_t *box);
+              shared_ptr <box_t> box;
+              ref_jo_t (shared_ptr <box_t>);
               jo_t * copy ();
               void exe (env_t &env, local_scope_t &local_scope);
               string repr (env_t &env);
           };
-          ref_jo_t::ref_jo_t (box_t *box)
+          ref_jo_t::ref_jo_t (shared_ptr <box_t> box)
           {
               this->box = box;
           }
@@ -2379,8 +2380,8 @@
           {
               if (this->box->empty_p) {
                   cout << "- fatal error : ref_jo_t::exe fail" << "\n";
-                  cout << "  undefined name : "
-                       << name_of_box (env, box) << "\n";
+          //         cout << "  undefined name : "
+          //              << name_of_box (env, box) << "\n";
                   exit (1);
               }
               else {
@@ -2895,7 +2896,7 @@
           auto name = head->str;
           auto it = env.box_map.find (name);
           if (it != env.box_map.end ()) {
-              box_t *box = it->second;
+              auto box = it->second;
               if (box->empty_p) return false;
               if (top_keyword_p (env, box->obj)) return true;
               else return false;
@@ -2909,7 +2910,7 @@
       {
           auto it = env.box_map.find (name);
           if (it != env.box_map.end ()) {
-              box_t *box = it->second;
+              auto box = it->second;
               if (box->empty_p) {
                   cout << "- fatal error: top_keyword_fn_from_name fail\n";
                   exit (1);

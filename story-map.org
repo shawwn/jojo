@@ -6,8 +6,6 @@
 - dive deep into c++ standard lib
 * core
   - an interpreter implemented by dynamic threaded code
-*** use shared_ptr for box_t instead of raw_ptr
-    - to support dynamic module reload
 * macro system
   - with lisp like macro system
 *** (~>) -- k_threading
@@ -29,7 +27,8 @@
   - with a practical prelude
 *** basic str
 *** basic list
-*** basic container
+*** basic vect
+*** basic dict
 *** basic stream
 *** basic fs
 *** basic network
