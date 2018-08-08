@@ -27,8 +27,8 @@
 *** handle ffi by dynamic library
 * prelude
   - with a practical prelude
-*** basic lisp -- in prelude
 *** basic str
+*** basic list
 *** basic container
 *** basic stream
 *** basic fs

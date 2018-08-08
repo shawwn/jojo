@@ -47,4 +47,3 @@ function line_array_to_string (line_array) {
 }
 
 tangle("jojo.org", "jojo.cpp");
-tangle("prelude.org", "prelude.jo");

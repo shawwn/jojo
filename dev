@@ -5,55 +5,52 @@ C="clang++"
 W="-Wall -Wextra -Wno-infinite-recursion -Wno-unused-parameter"
 O="-foptimize-sibling-calls -O2"
 L="-std=c++17 -lstdc++fs"
-PREFIX=$HOME
+
+export JOJO=$HOME/.jojo
+export PATH=$JOJO/bin:$PATH
 
 tangle () {
     ./tangle.js
-}
-
-setup_env () {
-    export JOJO=$HOME/.jojo
 }
 
 build ()
 {
     clean
     tangle
-    time $C -o jojo jojo.cpp $W $L
+    time $C -o bin/jojo jojo.cpp $W $L
 }
 
 release () {
     clean
-    time $C -o jojo jojo.cpp $W $O $L
+    tangle
+    time $C -o bin/jojo jojo.cpp $W $O $L
 }
 
 clean () {
-    rm -f jojo
+    rm -f bin/jojo
 }
 
 test () {
     for FILE in $(ls test | grep "\.jo" | grep "test-")
     do
-        setup_env
-        ./jojo "test/$FILE"
+        jojo "test/$FILE"
     done
 }
 
-debug () {
-    # time valgrind --leak-check=full ./jojo
-    for FILE in $(ls test | grep "\.jo" | grep "test-")
+# debug () {
+#     # time valgrind --leak-check=full jojo
+#     for FILE in $(ls test | grep "\.jo" | grep "test-")
+#     do
+#         echo "<test/$FILE>" && valgrind jojo "test/$FILE" && echo "</test/$FILE>" && echo ""
+#     done
+# }
+
+install_jojo () {
+    install -Dsm755 bin/jojo $JOJO/bin/jojo
+    for FILE in $(ls lib)
     do
-        setup_env
-        echo "<test/$FILE>" && valgrind ./jojo "test/$FILE" && echo "</test/$FILE>" && echo ""
+        install -Dm644 lib/$FILE $JOJO/lib/$FILE
     done
-}
-
-install () {
-    cp jojo $PREFIX/bin/
-}
-
-uninstall () {
-    rm $PREFIX/bin/jojo
 }
 
 main () {
