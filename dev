@@ -23,7 +23,7 @@ build ()
 release () {
     clean
     tangle
-    time $C -o bin/jojo jojo.cpp $W $O $L
+    time $C -o bin/jojo jojo.cpp $W $L $O
 }
 
 clean () {
