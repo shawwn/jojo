@@ -46,7 +46,6 @@ install () {
     cp jojo $PREFIX/bin/
 }
 
-
 uninstall () {
     rm $PREFIX/bin/jojo
 }
