@@ -4,20 +4,19 @@
 * [note]
 - learn more about float encoding
 - dive deep into c++ standard lib
-- learn from nodejs and python about prelude
 * core
   - an interpreter implemented by dynamic threaded code
 *** use shared_ptr for box_t instead of raw_ptr
     - to support dynamic module reload
 * macro system
   - with lisp like macro system
-*** (~>)
-*** (vect~>)
-*** (list~>)
-*** (cond)
-*** (match)
-*** (if)
-*** (partquote)
+*** (~>) -- k_threading
+*** (~>vect) -- k_threading_to_vect
+*** (~>list) -- k_threading_to_list
+*** (cond) -- k_cond
+*** (match) -- k_match
+*** (if) -- k_if
+*** (partquote) -- k_partquote
 *** (= <name> (macro))
 * object system
   - with object system
@@ -29,7 +28,7 @@
 * prelude
   - with a practical prelude
 *** load module from system -- by $PATH
-*** first set of prelude functions are about list processing
+*** basic lisp lib -- in prelude
 *** basic str lib
 *** basic container lib
 *** basic stream lib
@@ -40,7 +39,7 @@
   - with simple module system
 *** `env_eq` -- for module_o::eq
 *** do not reload module -- need to use module cache
-*** use (module) for non file module, use (import) for file module
+*** use (module) for non file module
 * secure
 *** can not handle big file -- due to the recursion in sexp parser
 *** make syntax frontend more secure

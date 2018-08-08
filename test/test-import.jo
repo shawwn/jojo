@@ -1,4 +1,4 @@
-(= test-nat (module "test-nat.jo"))
+(= test-nat (import "test-nat.jo"))
 (= zero test-nat.zero)
 (= one test-nat.one)
 (= two test-nat.two)

@@ -4069,11 +4069,11 @@
       {
           def_type (env, "keyword-t");
       }
-      sig_t jj_module_sig = { "module", "module-path" };
+      sig_t jj_import_sig = { "import", "import-path" };
       // -- str-t -> module-t
-      void jj_module (env_t &env, obj_map_t &obj_map)
+      void jj_import (env_t &env, obj_map_t &obj_map)
       {
-          auto obj = obj_map ["module-path"];
+          auto obj = obj_map ["import-path"];
           assert (str_p (env, obj));
           auto str = as_str (obj);
           auto module_path = path_t (str->str);
@@ -4089,8 +4089,8 @@
       {
           def_type (env, "module-t");
           define_prim (env,
-                       jj_module_sig,
-                       jj_module);
+                       jj_import_sig,
+                       jj_import);
       }
       void
       expose_syntax (env_t &env)
