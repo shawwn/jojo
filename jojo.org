@@ -107,7 +107,7 @@
         obj_stack_t obj_stack;
         frame_stack_t frame_stack;
         path_t current_dir;
-        path_t file_path;
+        path_t module_path;
         env_t ();
         void step ();
         void run ();
@@ -184,6 +184,22 @@
           vector <string> elems;
           string_split (s, delim, back_inserter (elems));
           return elems;
+      }
+      #+end_src
+
+***** string_vector_join
+
+      #+begin_src cpp
+      string
+      string_vector_join (string_vector_t string_vector, char c)
+      {
+          string str = "";
+          for (auto s: string_vector) {
+              str += s;
+              str += c;
+          }
+          if (! str.empty ()) str.pop_back ();
+          return str;
       }
       #+end_src
 
@@ -3112,6 +3128,85 @@
     }
     #+end_src
 
+* system
+
+*** system_env_find
+
+    #+begin_src cpp
+    string
+    system_env_find (string name)
+    {
+        auto env_var = name.c_str ();
+        const char* env_p = getenv (env_var);
+        if (env_p) {
+            return string (env_p);
+        }
+        else {
+            return string ();
+        }
+    }
+    #+end_src
+
+*** dollar_string_p
+
+    #+begin_src cpp
+    bool
+    dollar_string_p (string s)
+    {
+        auto size = s.size ();
+        if (size < 2) return false;
+        return s [0] == '$';
+    }
+    #+end_src
+
+*** dollar_string_to_name
+
+    #+begin_src cpp
+    name_t
+    dollar_string_to_name (string dollar_string)
+    {
+        assert (dollar_string_p (dollar_string));
+        auto size = dollar_string.size ();
+        return dollar_string.substr (1, size -1);
+    }
+    #+end_src
+
+*** expend_path
+
+    #+begin_src cpp
+    path_t
+    expend_path (path_t p)
+    {
+        auto string_vector = string_split (p.string (), '/');
+        auto result_vector = string_vector_t ();
+        for (auto str: string_vector) {
+            if (dollar_string_p (str)) {
+                auto name = dollar_string_to_name (str);
+                auto result = system_env_find (name);
+                if (result == "") {
+                    cout << "- fatal error : expend_path" << "\n";
+                    cout << "  a var is unbound" << "\n";
+                    cout << "  var : " << str << "\n";
+                    exit (1);
+                }
+                auto pos = result.find (":");
+                if (pos != string::npos) {
+                    cout << "- fatal error : expend_path" << "\n";
+                    cout << "  a var must be bound to one string" << "\n";
+                    cout << "  var : " << str << "\n";
+                    cout << "  string list : " << result << "\n";
+                    exit (1);
+                }
+                result_vector.push_back (result);
+            }
+            else {
+                result_vector.push_back (str);
+            }
+        }
+        return path_t (string_vector_join (result_vector, '/'));
+    }
+    #+end_src
+
 * module
 
 *** module_o
@@ -4429,13 +4524,13 @@
     }
     #+end_src
 
-*** code_of_file
+*** code_from_module_path
 
     #+begin_src cpp
     shared_ptr <str_o>
-    code_of_file (env_t &env, path_t file_path)
+    code_from_module_path (env_t &env, path_t module_path)
     {
-        auto input_file = ifstream (file_path);
+        auto input_file = ifstream (module_path);
         auto buffer = stringstream ();
         buffer << input_file.rdbuf ();
         auto code = make_str (env, buffer.str ());
@@ -4443,13 +4538,43 @@
     }
     #+end_src
 
-*** absolute_path_p
+*** respect_current_dir
 
     #+begin_src cpp
-    bool
-    absolute_path_p (path_t p)
+    path_t
+    respect_current_dir (env_t &env, path_t p)
     {
-        return p.root_path () != path_t ();
+        p = expend_path (p);
+        auto normal_path = path_t ();
+        if (p.is_absolute ()) {
+            normal_path = p;
+        }
+        else {
+            assert (p.is_relative ());
+            normal_path = env.current_dir / p;
+        }
+        normal_path = fs::canonical (normal_path);
+        return normal_path;
+    }
+    #+end_src
+
+*** respect_module_path
+
+    #+begin_src cpp
+    path_t
+    respect_module_path (env_t &env, path_t p)
+    {
+        p = expend_path (p);
+        auto normal_path = path_t ();
+        if (p.is_absolute ()) {
+            normal_path = p;
+        }
+        else {
+            assert (p.is_relative ());
+            normal_path = env.module_path.parent_path () / p;
+        }
+        normal_path = fs::canonical (normal_path);
+        return normal_path;
     }
     #+end_src
 
@@ -4460,47 +4585,29 @@
     expose_core (env_t &env);
 
     env_t
-    eval_file_to_env (path_t file_path)
+    eval_file_to_env (path_t module_path)
     {
-        if (! fs::exists (file_path)) {
-            cout << "- fatal error : eval_file_to_env" << "\n";
-            cout << "  file does not exists : " << file_path << "\n";
-            exit (1);
-        }
-        if (! fs::is_regular_file (file_path)) {
-            cout << "- fatal error : eval_file_to_env" << "\n";
-            cout << "  not regular file : " << file_path << "\n";
-            exit (1);
-        }
         auto env = env_t ();
-        if (absolute_path_p (file_path))
-            env.file_path = file_path;
-        else
-            env.file_path = env.current_dir / file_path;
+        module_path = respect_current_dir (env, module_path);
+        if (! fs::exists (module_path)) {
+            cout << "- fatal error : eval_file_to_env" << "\n";
+            cout << "  file does not exists : " << module_path << "\n";
+            exit (1);
+        }
+        if (! fs::is_regular_file (module_path)) {
+            cout << "- fatal error : eval_file_to_env" << "\n";
+            cout << "  not regular file : " << module_path << "\n";
+            exit (1);
+        }
+        env.module_path = module_path;
         expose_core (env);
-        auto code = code_of_file (env, env.file_path);
+        auto code = code_from_module_path (env, env.module_path);
         code_eval (env, code);
         return env;
     }
     #+end_src
 
 * (=)
-
-*** string_vector_join
-
-    #+begin_src cpp
-    string
-    string_vector_join (string_vector_t string_vector, char c)
-    {
-        string str = "";
-        for (auto s: string_vector) {
-            str += s;
-            str += c;
-        }
-        if (! str.empty ()) str.pop_back ();
-        return str;
-    }
-    #+end_src
 
 *** prefix_of_string
 
@@ -5988,22 +6095,48 @@
       }
       #+end_src
 
+*** expose_system
+
+***** jj_system_env_find
+
+      #+begin_src cpp
+      sig_t jj_system_env_find_sig = { "system-env-find", "name" };
+      // -- str-t -> str-t
+      void jj_system_env_find (env_t &env, obj_map_t &obj_map)
+      {
+          auto str = as_str (obj_map ["name"]);
+          auto name = str->str;
+          env.obj_stack.push (make_str (env, system_env_find (name)));
+      }
+      #+end_src
+
+***** expose_system
+
+      #+begin_src cpp
+      void
+      expose_system (env_t &env)
+      {
+          define_prim (env,
+                       jj_system_env_find_sig,
+                       jj_system_env_find);
+      }
+      #+end_src
+
 *** expose_module
 
 ***** jj_import
 
       #+begin_src cpp
-      sig_t jj_import_sig = { "import", "import-path" };
+      sig_t jj_import_sig = { "import", "module-path" };
       // -- str-t -> module-t
       void jj_import (env_t &env, obj_map_t &obj_map)
       {
-          auto obj = obj_map ["import-path"];
+          auto obj = obj_map ["module-path"];
           assert (str_p (env, obj));
           auto str = as_str (obj);
           auto module_path = path_t (str->str);
-          if (! absolute_path_p (module_path)) {
-              module_path = env.file_path.parent_path () / module_path;
-          }
+          module_path = respect_module_path
+              (env, module_path);
           auto module_env = eval_file_to_env (module_path);
           auto mod = make_shared <module_o> (env, module_env);
           env.obj_stack.push (mod);
@@ -6219,6 +6352,7 @@
         expose_sexp (env);
         expose_top_keyword (env);
         expose_keyword (env);
+        expose_system (env);
         expose_module (env);
         expose_syntax (env);
         expose_type (env);
@@ -6541,9 +6675,9 @@
     void
     the_story_begins (string_vector_t arg_vector)
     {
-        for (auto file_name: arg_vector) {
-            auto file_path = path_t (file_name);
-            eval_file_to_env (file_path);
+        for (auto module_path_string: arg_vector) {
+            auto module_path = path_t (module_path_string);
+            eval_file_to_env (module_path);
         }
     }
     #+end_src

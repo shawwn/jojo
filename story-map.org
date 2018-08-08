@@ -27,7 +27,6 @@
 *** handle ffi by dynamic library
 * prelude
   - with a practical prelude
-*** load module from system -- by $PATH
 *** basic lisp lib -- in prelude
 *** basic str lib
 *** basic container lib

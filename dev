@@ -11,6 +11,10 @@ tangle () {
     ./tangle.js
 }
 
+setup_env () {
+    export JOJO=$HOME/.jojo
+}
+
 build ()
 {
     clean
@@ -30,6 +34,7 @@ clean () {
 test () {
     for FILE in $(ls test | grep "\.jo" | grep "test-")
     do
+        setup_env
         ./jojo "test/$FILE"
     done
 }
@@ -38,6 +43,7 @@ debug () {
     # time valgrind --leak-check=full ./jojo
     for FILE in $(ls test | grep "\.jo" | grep "test-")
     do
+        setup_env
         echo "<test/$FILE>" && valgrind ./jojo "test/$FILE" && echo "</test/$FILE>" && echo ""
     done
 }
