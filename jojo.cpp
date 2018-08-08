@@ -3018,7 +3018,7 @@
             assert (p.is_relative ());
             normal_path = env.current_dir / p;
         }
-        normal_path = fs::canonical (normal_path);
+        // normal_path = fs::canonical (normal_path);
         return normal_path;
     }
     path_t
@@ -3033,7 +3033,7 @@
             assert (p.is_relative ());
             normal_path = env.module_path.parent_path () / p;
         }
-        normal_path = fs::canonical (normal_path);
+        // normal_path = fs::canonical (normal_path);
         return normal_path;
     }
     void

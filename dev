@@ -3,37 +3,41 @@
 # C="g++"
 C="clang++"
 W="-Wall -Wextra -Wno-infinite-recursion -Wno-unused-parameter"
-O="-foptimize-sibling-calls -O2"
 L="-std=c++17 -lstdc++fs"
+O="-foptimize-sibling-calls -O2"
 
 export JOJO=$HOME/.jojo
 export PATH=$JOJO/bin:$PATH
 
-tangle () {
+tangle ()
+{
     ./tangle.js
 }
 
-build ()
+b () # build
 {
     clean
     tangle
     time $C -o bin/jojo jojo.cpp $W $L
 }
 
-release () {
+bo () # build with optimization
+{
     clean
     tangle
     time $C -o bin/jojo jojo.cpp $W $L $O
 }
 
-clean () {
+clean ()
+{
     rm -f bin/jojo
 }
 
-test () {
+t ()
+{
     for FILE in $(ls test | grep "\.jo" | grep "test-")
     do
-        jojo "test/$FILE"
+        ./bin/jojo "test/$FILE"
     done
 }
 
@@ -45,7 +49,8 @@ test () {
 #     done
 # }
 
-install_jojo () {
+i () # install
+{
     install -Dsm755 bin/jojo $JOJO/bin/jojo
     for FILE in $(ls lib)
     do
@@ -53,7 +58,8 @@ install_jojo () {
     done
 }
 
-main () {
+main ()
+{
     for TASK in $@
     do
         $TASK
