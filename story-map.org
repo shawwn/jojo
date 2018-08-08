@@ -27,13 +27,13 @@
 *** handle ffi by dynamic library
 * prelude
   - with a practical prelude
-*** basic lisp lib -- in prelude
-*** basic str lib
-*** basic container lib
-*** basic stream lib
-*** basic fs lib
-*** basic network lib
-*** basic git lib
+*** basic lisp -- in prelude
+*** basic str
+*** basic container
+*** basic stream
+*** basic fs
+*** basic network
+*** basic git
 * module system
   - with simple module system
 *** `env_eq` -- for module_o::eq
