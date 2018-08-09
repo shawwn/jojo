@@ -77,4 +77,4 @@
 
 *** syntax
 
-    - (= <name> (module <module-name>))
+    - (= <name> (import <module-name>))

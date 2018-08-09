@@ -5,6 +5,7 @@ C="clang++"
 W="-Wall -Wextra -Wno-infinite-recursion -Wno-unused-parameter"
 L="-std=c++17 -lstdc++fs"
 O="-foptimize-sibling-calls -O2"
+D="-g"
 
 export JOJO=$HOME/.jojo
 export PATH=$JOJO/bin:$PATH
@@ -26,6 +27,13 @@ bo () # build with optimization
     clean
     tangle
     time $C -o jojo jojo.cpp $W $L $O
+}
+
+bd () # build with debug info
+{
+    clean
+    tangle
+    time $C -o jojo jojo.cpp $W $L $D
 }
 
 clean ()
@@ -51,7 +59,9 @@ t () # test
 
 i () # install
 {
-    install -Dsm755 jojo $JOJO/bin/jojo
+    rm -rf $JOJO
+    # install -Dsm755 jojo $JOJO/bin/jojo
+    install -Dm755 jojo $JOJO/bin/jojo
     for FILE in $(ls lib)
     do
         install -Dm644 lib/$FILE $JOJO/lib/$FILE
