@@ -25,7 +25,6 @@
 *** handle ffi by dynamic library
 * prelude
   - with a practical prelude
-*** basic str
 *** basic list
 *** basic vect
 *** basic dict

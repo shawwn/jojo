@@ -1604,7 +1604,67 @@
     {
         return a->tag == str_tag;
     }
-
+    shared_ptr <num_o>
+    str_length (
+        env_t &env,
+        shared_ptr <str_o> str)
+    {
+        auto size = str->str.size ();
+        return make_num (env, static_cast <num_t> (size));
+    }
+    shared_ptr <str_o>
+    str_append (
+        env_t &env,
+        shared_ptr <str_o> ante,
+        shared_ptr <str_o> succ)
+    {
+        return make_str (env, ante->str + succ->str);
+    }
+    shared_ptr <str_o>
+    str_slice (
+        env_t &env,
+        shared_ptr <str_o> str,
+        shared_ptr <num_o> begin,
+        shared_ptr <num_o> end)
+    {
+        auto size = str->str.size ();
+        assert (begin->num >= 0);
+        assert (end->num < size);
+        auto length = end->num - begin->num;
+        return make_str (env, str->str.substr (begin->num, length));
+    }
+    shared_ptr <str_o>
+    str_ref (
+        env_t &env,
+        shared_ptr <str_o> str,
+        shared_ptr <num_o> index)
+    {
+        auto size = str->str.size ();
+        assert (index->num >= 0);
+        assert (index->num < size);
+        auto c = str->str [index->num];
+        auto s = string ();
+        s += c;
+        return make_str (env, s);
+    }
+    shared_ptr <str_o>
+    str_head (
+        env_t &env,
+        shared_ptr <str_o> str)
+    {
+        auto c = str->str [0];
+        auto s = string ();
+        s += c;
+        return make_str (env, s);
+    }
+    shared_ptr <str_o>
+    str_rest (
+        env_t &env,
+        shared_ptr <str_o> str)
+    {
+        auto size = str->str.size ();
+        return make_str (env, str->str.substr (1, size -1));
+    }
     void
     test_str ()
     {
@@ -4120,22 +4180,78 @@
           expose_num_3 (env);
           expose_num_trigonometry (env);
       }
-      sig_t jj_str_print_sig = { "str-print", "str" };
-      // -- str-t ->
-      void jj_str_print (env_t &env, obj_map_t &obj_map)
-      {
-          auto obj = obj_map ["str"];
-          assert (str_p (env, obj));
-          auto str = as_str (obj);
-          cout << str->str;
-      }
       void
       expose_str (env_t &env)
       {
           // def_type (env, "str-t");
-          define_prim (env,
-                       jj_str_print_sig,
-                       jj_str_print);
+          define_prim (
+              env, { "str-print", "str" },
+              [] (env_t &env, obj_map_t &obj_map)
+              {
+                  auto obj = obj_map ["str"];
+                  assert (str_p (env, obj));
+                  auto str = as_str (obj);
+                  cout << str->str;
+                  env.obj_stack.push (str);
+              });
+          define_prim (
+              env, { "str-length", "str" },
+              [] (env_t &env, obj_map_t &obj_map)
+              {
+              env.obj_stack.push (
+                  str_length (
+                      env,
+                      as_str (obj_map ["str"])));
+              });
+          define_prim (
+              env, { "str-append", "ante", "succ" },
+              [] (env_t &env, obj_map_t &obj_map)
+              {
+                  env.obj_stack.push (
+                      str_append (
+                          env,
+                          as_str (obj_map ["ante"]),
+                          as_str (obj_map ["succ"])));
+              });
+          define_prim (
+              env, { "str-slice", "str", "begin", "end" },
+              [] (env_t &env, obj_map_t &obj_map)
+              {
+                  env.obj_stack.push (
+                      str_slice (
+                          env,
+                          as_str (obj_map ["str"]),
+                          as_num (obj_map ["begin"]),
+                          as_num (obj_map ["end"])));
+              });
+          define_prim (
+              env, { "str-ref", "str", "index" },
+              [] (env_t &env, obj_map_t &obj_map)
+              {
+                  env.obj_stack.push (
+                      str_ref (
+                          env,
+                          as_str (obj_map ["str"]),
+                          as_num (obj_map ["index"])));
+              });
+          define_prim (
+              env, { "str-head", "str" },
+              [] (env_t &env, obj_map_t &obj_map)
+              {
+                  env.obj_stack.push (
+                      str_head (
+                          env,
+                          as_str (obj_map ["str"])));
+              });
+          define_prim (
+              env, { "str-rest", "str" },
+              [] (env_t &env, obj_map_t &obj_map)
+              {
+                  env.obj_stack.push (
+                      str_rest (
+                          env,
+                          as_str (obj_map ["str"])));
+              });
       }
       shared_ptr <obj_t>
       jj_null_c (env_t &env)
