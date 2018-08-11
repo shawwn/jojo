@@ -3543,6 +3543,54 @@
                 jojo_repr (env, this->jojo) +
                 ")";
         }
+      shared_ptr <obj_t>
+      lambda_patch_drop (env_t &env, shared_ptr <obj_t> sexp_list)
+      {
+          assert (cons_p (env, sexp_list));
+          auto head = car (env, sexp_list);
+          auto rest = cdr (env, sexp_list);
+          if (null_p (env, rest))
+              return sexp_list;
+          else {
+              auto drop = cons_c
+                  (env, make_str (env, "drop"),
+                   null_c (env));
+              sexp_list = lambda_patch_drop (env, rest);
+              sexp_list = cons_c (env, drop, sexp_list);
+              sexp_list = cons_c (env, head, sexp_list);
+              return sexp_list;
+          }
+      }
+      name_vector_t
+      obj_vector_to_name_vector (env_t &env, obj_vector_t &obj_vect)
+      {
+          auto name_vector = name_vector_t ();
+          for (auto &obj: obj_vect) {
+              auto str = as_str (obj);
+              name_vector.push_back (str->str);
+          }
+          return name_vector;
+      }
+      shared_ptr <jojo_t>
+      k_lambda (
+          env_t &env,
+          local_ref_map_t &old_local_ref_map,
+          shared_ptr <obj_t> body)
+      {
+          auto name_vect = as_vect (car (env, body));
+          auto rest = cdr (env, body);
+          auto name_vector = obj_vector_to_name_vector
+              (env, name_vect->obj_vector);
+          auto local_ref_map = local_ref_map_extend
+              (env, old_local_ref_map, name_vector);
+          rest = lambda_patch_drop (env, rest);
+          auto rest_jojo = sexp_list_compile
+              (env, local_ref_map, rest);
+          jo_vector_t jo_vector = {
+              new lambda_jo_t (name_vector, rest_jojo),
+          };
+          return make_shared <jojo_t> (jo_vector);
+      }
         struct case_jo_t: jo_t
         {
             jojo_map_t jojo_map;
@@ -3609,111 +3657,6 @@
         {
             return "(case)";
         }
-        struct assert_jo_t: jo_t
-        {
-            shared_ptr <obj_t> body;
-            shared_ptr <jojo_t> jojo;
-            assert_jo_t (
-                shared_ptr <obj_t> body,
-                shared_ptr <jojo_t> jojo);
-            jo_t * copy ();
-            void exe (env_t &env, local_scope_t &local_scope);
-            string repr (env_t &env);
-        };
-        assert_jo_t::
-        assert_jo_t (
-            shared_ptr <obj_t> body,
-            shared_ptr <jojo_t> jojo)
-        {
-            this->body = body;
-            this->jojo = jojo;
-        }
-        jo_t *
-        assert_jo_t::copy ()
-        {
-            return new assert_jo_t
-                (this->body,
-                 this->jojo);
-        }
-        bool
-        true_p (env_t &env, shared_ptr <obj_t> a);
-
-        string
-        sexp_list_repr (env_t &env, shared_ptr <obj_t> a);
-
-        void
-        assert_jo_t::exe (env_t &env, local_scope_t &local_scope)
-        {
-            auto base = env.frame_stack.size ();
-            auto jojo = this->jojo;
-            auto frame = make_shared <frame_t> (jojo, local_scope);
-            env.frame_stack.push (frame);
-            env.run_with_base (base);
-            auto result = env.obj_stack.top ();
-            if (true_p (env, result)) {
-                return;
-            }
-            else {
-                env.frame_stack_report ();
-                env.obj_stack_report ();
-                cout << "- assert fail : " << "\n";
-                cout << "  " << sexp_list_repr (env, this->body) << "\n";
-                exit (1);
-            }
-        }
-        string
-        assert_jo_t::repr (env_t &env)
-        {
-            return "(assert)";
-        }
-      shared_ptr <obj_t>
-      lambda_patch_drop (env_t &env, shared_ptr <obj_t> sexp_list)
-      {
-          assert (cons_p (env, sexp_list));
-          auto head = car (env, sexp_list);
-          auto rest = cdr (env, sexp_list);
-          if (null_p (env, rest))
-              return sexp_list;
-          else {
-              auto drop = cons_c
-                  (env, make_str (env, "drop"),
-                   null_c (env));
-              sexp_list = lambda_patch_drop (env, rest);
-              sexp_list = cons_c (env, drop, sexp_list);
-              sexp_list = cons_c (env, head, sexp_list);
-              return sexp_list;
-          }
-      }
-      name_vector_t
-      obj_vector_to_name_vector (env_t &env, obj_vector_t &obj_vect)
-      {
-          auto name_vector = name_vector_t ();
-          for (auto &obj: obj_vect) {
-              auto str = as_str (obj);
-              name_vector.push_back (str->str);
-          }
-          return name_vector;
-      }
-      shared_ptr <jojo_t>
-      k_lambda (
-          env_t &env,
-          local_ref_map_t &old_local_ref_map,
-          shared_ptr <obj_t> body)
-      {
-          auto name_vect = as_vect (car (env, body));
-          auto rest = cdr (env, body);
-          auto name_vector = obj_vector_to_name_vector
-              (env, name_vect->obj_vector);
-          auto local_ref_map = local_ref_map_extend
-              (env, old_local_ref_map, name_vector);
-          rest = lambda_patch_drop (env, rest);
-          auto rest_jojo = sexp_list_compile
-              (env, local_ref_map, rest);
-          jo_vector_t jo_vector = {
-              new lambda_jo_t (name_vector, rest_jojo),
-          };
-          return make_shared <jojo_t> (jo_vector);
-      }
       shared_ptr <jojo_t>
       case_compile (
           env_t &env,
@@ -3848,6 +3791,58 @@
           auto jojo = make_shared <jojo_t> (jo_vector);
           return jojo;
       }
+        struct assert_jo_t: jo_t
+        {
+            shared_ptr <obj_t> body;
+            shared_ptr <jojo_t> jojo;
+            assert_jo_t (
+                shared_ptr <obj_t> body,
+                shared_ptr <jojo_t> jojo);
+            jo_t * copy ();
+            void exe (env_t &env, local_scope_t &local_scope);
+            string repr (env_t &env);
+        };
+        assert_jo_t::
+        assert_jo_t (
+            shared_ptr <obj_t> body,
+            shared_ptr <jojo_t> jojo)
+        {
+            this->body = body;
+            this->jojo = jojo;
+        }
+        jo_t *
+        assert_jo_t::copy ()
+        {
+            return new assert_jo_t
+                (this->body,
+                 this->jojo);
+        }
+        void
+        assert_jo_t::exe (env_t &env, local_scope_t &local_scope)
+        {
+            auto base = env.frame_stack.size ();
+            env.frame_stack.push (
+                make_shared <frame_t> (
+                    this->jojo,
+                    local_scope));
+            env.run_with_base (base);
+            auto result = env.obj_stack.top ();
+            if (true_p (env, result)) {
+                return;
+            }
+            else {
+                env.frame_stack_report ();
+                env.obj_stack_report ();
+                cout << "- assert fail : " << "\n";
+                cout << "  " << sexp_list_repr (env, this->body) << "\n";
+                exit (1);
+            }
+        }
+        string
+        assert_jo_t::repr (env_t &env)
+        {
+            return "(assert)";
+        }
       shared_ptr <jojo_t>
       k_assert (
           env_t &env,
@@ -3857,6 +3852,162 @@
           auto jojo = sexp_list_compile (env, local_ref_map, body);
           jo_vector_t jo_vector = {
               new assert_jo_t (body, jojo),
+          };
+          return make_shared <jojo_t> (jo_vector);
+      }
+        struct if_jo_t: jo_t
+        {
+            shared_ptr <jojo_t> pred_jojo;
+            shared_ptr <jojo_t> then_jojo;
+            shared_ptr <jojo_t> else_jojo;
+            if_jo_t (
+                shared_ptr <jojo_t> pred_jojo,
+                shared_ptr <jojo_t> then_jojo,
+                shared_ptr <jojo_t> else_jojo);
+            jo_t * copy ();
+            void exe (env_t &env, local_scope_t &local_scope);
+            string repr (env_t &env);
+        };
+        if_jo_t::
+        if_jo_t (
+            shared_ptr <jojo_t> pred_jojo,
+            shared_ptr <jojo_t> then_jojo,
+            shared_ptr <jojo_t> else_jojo)
+        {
+            this->pred_jojo = pred_jojo;
+            this->then_jojo = then_jojo;
+            this->else_jojo = else_jojo;
+        }
+        jo_t *
+        if_jo_t::copy ()
+        {
+            return new if_jo_t
+                (this->pred_jojo,
+                 this->then_jojo,
+                 this->else_jojo);
+        }
+        void
+        if_jo_t::exe (env_t &env, local_scope_t &local_scope)
+        {
+            auto base = env.frame_stack.size ();
+            env.frame_stack.push (
+                make_shared <frame_t> (
+                    this->pred_jojo,
+                    local_scope));
+            env.run_with_base (base);
+            auto result = env.obj_stack.top ();
+            if (true_p (env, result)) {
+                env.frame_stack.push (
+                    make_shared <frame_t> (
+                        this->then_jojo,
+                        local_scope));
+            }
+            else if (false_p (env, result)) {
+                env.frame_stack.push (
+                    make_shared <frame_t> (
+                        this->else_jojo,
+                        local_scope));
+            }
+            else {
+                cout << "- fatal error : if_jo_t::exe" << "\n";
+                cout << "  pred_jojo eval to non bool value" << "\n";
+                exit (1);
+            }
+        }
+        string
+        if_jo_t::repr (env_t &env)
+        {
+            return "(if)";
+        }
+      shared_ptr <jojo_t>
+      k_if (
+          env_t &env,
+          local_ref_map_t &local_ref_map,
+          shared_ptr <obj_t> body)
+      {
+          auto length = list_length (env, body);
+          assert (length == 3);
+          auto pred_sexp = car (env, body);
+          auto then_sexp = car (env, cdr (env, body));
+          auto else_sexp = car (env, cdr (env, cdr (env, body)));
+          auto pred_jojo = sexp_compile (env, local_ref_map, pred_sexp);
+          auto then_jojo = sexp_compile (env, local_ref_map, then_sexp);
+          auto else_jojo = sexp_compile (env, local_ref_map, else_sexp);
+          jo_vector_t jo_vector = {
+              new if_jo_t (pred_jojo, then_jojo, else_jojo),
+          };
+          return make_shared <jojo_t> (jo_vector);
+      }
+        struct when_jo_t: jo_t
+        {
+            shared_ptr <jojo_t> pred_jojo;
+            shared_ptr <jojo_t> then_jojo;
+            when_jo_t (
+                shared_ptr <jojo_t> pred_jojo,
+                shared_ptr <jojo_t> then_jojo);
+            jo_t * copy ();
+            void exe (env_t &env, local_scope_t &local_scope);
+            string repr (env_t &env);
+        };
+        when_jo_t::
+        when_jo_t (
+            shared_ptr <jojo_t> pred_jojo,
+            shared_ptr <jojo_t> then_jojo)
+        {
+            this->pred_jojo = pred_jojo;
+            this->then_jojo = then_jojo;
+        }
+        jo_t *
+        when_jo_t::copy ()
+        {
+            return new when_jo_t
+                (this->pred_jojo,
+                 this->then_jojo);
+        }
+        void
+        when_jo_t::exe (env_t &env, local_scope_t &local_scope)
+        {
+            auto base = env.frame_stack.size ();
+            env.frame_stack.push (
+                make_shared <frame_t> (
+                    this->pred_jojo,
+                    local_scope));
+            env.run_with_base (base);
+            auto result = env.obj_stack.top ();
+            if (true_p (env, result)) {
+                env.frame_stack.push (
+                    make_shared <frame_t> (
+                        this->then_jojo,
+                        local_scope));
+            }
+            else if (false_p (env, result)) {
+                env.obj_stack.push (result);
+            }
+            else {
+                cout << "- fatal error : when_jo_t::exe" << "\n";
+                cout << "  pred_jojo eval to non bool value" << "\n";
+                exit (1);
+            }
+        }
+        string
+        when_jo_t::repr (env_t &env)
+        {
+            return "(when)";
+        }
+      shared_ptr <jojo_t>
+      k_when (
+          env_t &env,
+          local_ref_map_t &local_ref_map,
+          shared_ptr <obj_t> body)
+      {
+          auto length = list_length (env, body);
+          assert (length == 2);
+          auto pred_sexp = car (env, body);
+          auto then_sexp = car (env, cdr (env, body));
+          auto pred_jojo = sexp_compile (env, local_ref_map, pred_sexp);
+          auto then_jojo = sexp_compile (env, local_ref_map, then_sexp);
+          jo_vector_t jo_vector = {
+              new when_jo_t (pred_jojo, then_jojo),
           };
           return make_shared <jojo_t> (jo_vector);
       }
@@ -4656,6 +4807,8 @@
         define_keyword (env, "quote", k_quote);
         define_keyword (env, "note", k_note);
         define_keyword (env, "assert", k_assert);
+        define_keyword (env, "if", k_if);
+        define_keyword (env, "when", k_when);
     }
     void
     expose_misc (env_t &env)

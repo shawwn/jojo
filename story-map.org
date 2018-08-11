@@ -8,14 +8,16 @@
   - an interpreter implemented by dynamic threaded code
 * macro system
   - with lisp like macro system
+*** (partquote) -- k_partquote
+*** (= <name> (macro))
+*** (let) -- as macro
+*** (and) -- as macro
+*** (or) -- as macro
 *** (~>) -- k_threading
 *** (~>vect) -- k_threading_to_vect
 *** (~>list) -- k_threading_to_list
 *** (cond) -- k_cond
 *** (match) -- k_match
-*** (if) -- k_if
-*** (partquote) -- k_partquote
-*** (= <name> (macro))
 * object system
   - with object system
 *** inheriting types
@@ -25,7 +27,7 @@
 *** handle ffi by dynamic library
 * prelude
   - with a practical prelude
-*** basic dict
+*** basic dict -- with maybe-t
 *** basic list
 *** basic stream
 *** basic fs

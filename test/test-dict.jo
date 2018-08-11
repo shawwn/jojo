@@ -20,3 +20,14 @@
             {a: "b" c: "d"}))
 
 (assert (eq (dict-length {a: "b" c: "d"}) 2))
+
+(note
+  (match (dict-find dict key)
+    (nothing-t ...)
+    ((just-c value) ...)))
+
+(note
+  (let [(found (dict-find dict key))]
+    (case found
+      (nothing-t ...)
+      (just-t found.value ))))
