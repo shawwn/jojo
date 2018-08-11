@@ -1241,7 +1241,7 @@
     bool_p (env_t &env, shared_ptr <obj_t> a)
     {
         return true_p (env, a)
-            || false_p (env, a);
+            or false_p (env, a);
     }
     void
     test_bool ()
@@ -1715,7 +1715,7 @@
     list_p (env_t &env, shared_ptr <obj_t> a)
     {
         return null_p (env, a)
-            || cons_p (env, a);
+            or cons_p (env, a);
     }
     size_t
     list_length (env_t &env, shared_ptr <obj_t> l)
@@ -1986,24 +1986,35 @@
     test_dict ()
     {
     }
-    bool space_char_p (char c)
+    bool
+    space_char_p (char c)
     {
-        return (c == ' '  ||
-                c == '\n' ||
-                c == '\t');
+        return c == ' '
+            or c == '\n'
+            or c == '\t';
     }
-    bool delimiter_char_p (char c)
+    bool
+    delimiter_char_p (char c)
     {
-        return (c == '(' ||
-                c == ')' ||
-                c == '[' ||
-                c == ']' ||
-                c == '{' ||
-                c == '}' ||
-                c == ',' ||
-                c == ';' ||
-                c == '`' ||
-                c == '\'');
+        return c == '('
+            or c == ')'
+            or c == '['
+            or c == ']'
+            or c == '{'
+            or c == '}'
+            or c == ','
+            or c == '`'
+            or c == '\'';
+    }
+    bool
+    semicolon_char_p (char c)
+    {
+        return (c == ';');
+    }
+    bool
+    newline_char_p (char c)
+    {
+        return (c == '\n');
     }
     string
     string_from_char (char c)
@@ -2012,11 +2023,13 @@
         str.push_back (c);
         return str;
     }
-    bool doublequote_char_p (char c)
+    bool
+    doublequote_char_p (char c)
     {
         return c == '"';
     }
-    size_t find_word_length (string code, size_t begin)
+    size_t
+    find_word_length (string code, size_t begin)
     {
         size_t length = code.length ();
         size_t index = begin;
@@ -2026,12 +2039,14 @@
             char c = code [index];
             if (space_char_p (c) or
                 doublequote_char_p (c) or
+                semicolon_char_p (c) or
                 delimiter_char_p (c))
                 return index - begin;
             index++;
         }
     }
-    size_t find_string_length (string code, size_t begin)
+    size_t
+    find_string_length (string code, size_t begin)
     {
         size_t length = code.length ();
         size_t index = begin + 1;
@@ -2047,30 +2062,50 @@
             index++;
         }
     }
+    size_t
+    find_comment_length (string code, size_t begin)
+    {
+        size_t length = code.length ();
+        size_t index = begin;
+        while (true) {
+            if (index == length) {
+                cout << "- fatal error : find_string_length" << "\n";
+                cout << "  end-of-line mismatch" << "\n";
+                exit (1);
+            }
+            char c = code [index];
+            if (newline_char_p (c))
+                return index - begin + 1;
+            index++;
+        }
+    }
     string_vector_t
     scan_word_vector (string code)
     {
         auto string_vector = string_vector_t ();
         size_t i = 0;
-        size_t length = code.length ();
-        while (i < length) {
+        while (i < code.length ()) {
             char c = code [i];
             if (space_char_p (c)) i++;
             else if (delimiter_char_p (c)) {
                 string_vector.push_back (string_from_char (c));
                 i++;
             }
+            else if (semicolon_char_p (c)) {
+                auto length = find_comment_length (code, i);
+                i += length;
+            }
             else if (doublequote_char_p (c)) {
-                auto string_length = find_string_length (code, i);
-                string str = code.substr (i, string_length);
+                auto length = find_string_length (code, i);
+                string str = code.substr (i, length);
                 string_vector.push_back (str);
-                i += string_length;
+                i += length;
             }
             else {
-                auto word_length = find_word_length (code, i);
-                string word = code.substr (i, word_length);
+                auto length = find_word_length (code, i);
+                string word = code.substr (i, length);
                 string_vector.push_back (word);
-                i += word_length;
+                i += length;
             }
         }
         return string_vector;
@@ -2122,21 +2157,21 @@
     bar_word_p (string word)
     {
         return word == "("
-            || word == "["
-            || word == "{";
+            or word == "["
+            or word == "{";
     }
     bool
     ket_word_p (string word)
     {
         return word == ")"
-            || word == "]"
-            || word == "}";
+            or word == "]"
+            or word == "}";
     }
     bool
     quote_word_p (string word)
     {
         return word == "'"
-            || word == "`";
+            or word == "`";
     }
     string
     bar_word_to_ket_word (string bar)
@@ -3494,10 +3529,10 @@
     stack_word_p (string word)
     {
         return word == "drop"
-            || word == "dup"
-            || word == "over"
-            || word == "tuck"
-            || word == "swap";
+            or word == "dup"
+            or word == "over"
+            or word == "tuck"
+            or word == "swap";
     }
         struct lambda_jo_t: jo_t
         {
