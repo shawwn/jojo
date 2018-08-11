@@ -11,3 +11,12 @@
 (assert (eq (type-of d) dict-t))
 (assert (eq d.a.car 1))
 (assert (eq d.b.cdr.car 2))
+
+(assert (eq (list-to-dict '(a b c d))
+            {a: "b" c: "d"}))
+
+(assert (eq (list-to-dict
+              (dict-to-list {a: "b" c: "d"}))
+            {a: "b" c: "d"}))
+
+(assert (eq (dict-length {a: "b" c: "d"}) 2))

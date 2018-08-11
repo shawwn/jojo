@@ -1177,7 +1177,7 @@
     {
         if (this->obj_map.size () == 0) {
             string repr = "";
-            repr += this->tag;
+            repr += name_of_tag (env, this->tag);
             repr.pop_back ();
             repr.pop_back ();
             repr += "-c";
@@ -1185,7 +1185,7 @@
         }
         else {
             string repr = "(";
-            repr += this->tag;
+            repr += name_of_tag (env, this->tag);
             repr.pop_back ();
             repr.pop_back ();
             repr += "-c ";
@@ -1652,6 +1652,8 @@
         env_t &env,
         shared_ptr <str_o> str)
     {
+        auto size = str->str.size ();
+        assert (size >= 1);
         auto c = str->str [0];
         auto s = string ();
         s += c;
@@ -1726,6 +1728,7 @@
         }
         return length;
     }
+
     void
     test_list ()
     {
@@ -1820,6 +1823,88 @@
             result = cons_c (env, *it, result);
         return result;
     }
+    shared_ptr <num_o>
+    vect_length (env_t &env, shared_ptr <vect_o> vect)
+    {
+        return make_num (env, vect->obj_vector.size ());
+    }
+    shared_ptr <vect_o>
+    vect_append (
+        env_t &env,
+        shared_ptr <vect_o> ante,
+        shared_ptr <vect_o> succ)
+    {
+        auto obj_vector = obj_vector_t ();
+        for (auto obj: ante->obj_vector)
+            obj_vector.push_back (obj);
+        for (auto obj: succ->obj_vector)
+            obj_vector.push_back (obj);
+        return make_vect (env, obj_vector);
+    }
+    shared_ptr <vect_o>
+    vect_slice (
+        env_t &env,
+        shared_ptr <vect_o> vect,
+        shared_ptr <num_o> begin,
+        shared_ptr <num_o> end)
+    {
+        auto size = vect->obj_vector.size ();
+        assert (begin->num >= 0);
+        assert (end->num < size);
+        auto obj_vector = obj_vector_t ();
+        for (auto it = vect->obj_vector.begin () + begin->num;
+             it != vect->obj_vector.begin () + end->num;
+             it++) {
+            auto obj = *it;
+            obj_vector.push_back (obj);
+        }
+        return make_vect (env, obj_vector);
+    }
+    shared_ptr <obj_t>
+    vect_ref (
+        env_t &env,
+        shared_ptr <vect_o> vect,
+        shared_ptr <num_o> index)
+    {
+        auto size = vect->obj_vector.size ();
+        assert (index->num >= 0);
+        assert (index->num < size);
+        return vect->obj_vector [index->num];
+    }
+    shared_ptr <obj_t>
+    vect_head (
+        env_t &env,
+        shared_ptr <vect_o> vect)
+    {
+        auto size = vect->obj_vector.size ();
+        assert (size >= 1);
+        return vect->obj_vector [0];
+    }
+    shared_ptr <vect_o>
+    vect_rest (
+        env_t &env,
+        shared_ptr <vect_o> vect)
+    {
+        auto size = vect->obj_vector.size ();
+        assert (size >= 1);
+        auto obj_vector = obj_vector_t ();
+        for (auto it = vect->obj_vector.begin () + 1;
+             it != vect->obj_vector.end ();
+             it++) {
+            auto obj = *it;
+            obj_vector.push_back (obj);
+        }
+        return make_vect (env, obj_vector);
+    }
+    shared_ptr <vect_o>
+    unit_vect (
+        env_t &env,
+        shared_ptr <obj_t> obj)
+    {
+        auto obj_vector = obj_vector_t ();
+        obj_vector.push_back (obj);
+        return make_vect (env, obj_vector);
+    }
     void
     test_vect ()
     {
@@ -1891,6 +1976,11 @@
             result = cons_c (env, str, result);
         }
         return result;
+    }
+    shared_ptr <num_o>
+    dict_length (env_t &env, shared_ptr <dict_o> dict)
+    {
+        return make_num (env, dict->obj_map.size ());
     }
     void
     test_dict ()
@@ -3400,6 +3490,15 @@
         else
             tk_assign_value (env, body);
     }
+    bool
+    stack_word_p (string word)
+    {
+        return word == "drop"
+            || word == "dup"
+            || word == "over"
+            || word == "tuck"
+            || word == "swap";
+    }
         struct lambda_jo_t: jo_t
         {
             name_vector_t name_vector;
@@ -3573,7 +3672,8 @@
           assert (cons_p (env, sexp_list));
           auto head = car (env, sexp_list);
           auto rest = cdr (env, sexp_list);
-          if (null_p (env, rest)) return sexp_list;
+          if (null_p (env, rest))
+              return sexp_list;
           else {
               auto drop = cons_c
                   (env, make_str (env, "drop"),
@@ -4180,79 +4280,79 @@
           expose_num_3 (env);
           expose_num_trigonometry (env);
       }
-      void
-      expose_str (env_t &env)
-      {
-          // def_type (env, "str-t");
-          define_prim (
-              env, { "str-print", "str" },
-              [] (env_t &env, obj_map_t &obj_map)
-              {
-                  auto obj = obj_map ["str"];
-                  assert (str_p (env, obj));
-                  auto str = as_str (obj);
-                  cout << str->str;
-                  env.obj_stack.push (str);
-              });
-          define_prim (
-              env, { "str-length", "str" },
-              [] (env_t &env, obj_map_t &obj_map)
-              {
-              env.obj_stack.push (
-                  str_length (
-                      env,
-                      as_str (obj_map ["str"])));
-              });
-          define_prim (
-              env, { "str-append", "ante", "succ" },
-              [] (env_t &env, obj_map_t &obj_map)
-              {
-                  env.obj_stack.push (
-                      str_append (
-                          env,
-                          as_str (obj_map ["ante"]),
-                          as_str (obj_map ["succ"])));
-              });
-          define_prim (
-              env, { "str-slice", "str", "begin", "end" },
-              [] (env_t &env, obj_map_t &obj_map)
-              {
-                  env.obj_stack.push (
-                      str_slice (
-                          env,
-                          as_str (obj_map ["str"]),
-                          as_num (obj_map ["begin"]),
-                          as_num (obj_map ["end"])));
-              });
-          define_prim (
-              env, { "str-ref", "str", "index" },
-              [] (env_t &env, obj_map_t &obj_map)
-              {
-                  env.obj_stack.push (
-                      str_ref (
-                          env,
-                          as_str (obj_map ["str"]),
-                          as_num (obj_map ["index"])));
-              });
-          define_prim (
-              env, { "str-head", "str" },
-              [] (env_t &env, obj_map_t &obj_map)
-              {
-                  env.obj_stack.push (
-                      str_head (
-                          env,
-                          as_str (obj_map ["str"])));
-              });
-          define_prim (
-              env, { "str-rest", "str" },
-              [] (env_t &env, obj_map_t &obj_map)
-              {
-                  env.obj_stack.push (
-                      str_rest (
-                          env,
-                          as_str (obj_map ["str"])));
-              });
-      }
+    void
+    expose_str (env_t &env)
+    {
+        // def_type (env, "str-t");
+        define_prim (
+            env, { "str-print", "str" },
+            [] (env_t &env, obj_map_t &obj_map)
+            {
+                auto obj = obj_map ["str"];
+                assert (str_p (env, obj));
+                auto str = as_str (obj);
+                cout << str->str;
+                env.obj_stack.push (str);
+            });
+        define_prim (
+            env, { "str-length", "str" },
+            [] (env_t &env, obj_map_t &obj_map)
+            {
+            env.obj_stack.push (
+                str_length (
+                    env,
+                    as_str (obj_map ["str"])));
+            });
+        define_prim (
+            env, { "str-append", "ante", "succ" },
+            [] (env_t &env, obj_map_t &obj_map)
+            {
+                env.obj_stack.push (
+                    str_append (
+                        env,
+                        as_str (obj_map ["ante"]),
+                        as_str (obj_map ["succ"])));
+            });
+        define_prim (
+            env, { "str-slice", "str", "begin", "end" },
+            [] (env_t &env, obj_map_t &obj_map)
+            {
+                env.obj_stack.push (
+                    str_slice (
+                        env,
+                        as_str (obj_map ["str"]),
+                        as_num (obj_map ["begin"]),
+                        as_num (obj_map ["end"])));
+            });
+        define_prim (
+            env, { "str-ref", "str", "index" },
+            [] (env_t &env, obj_map_t &obj_map)
+            {
+                env.obj_stack.push (
+                    str_ref (
+                        env,
+                        as_str (obj_map ["str"]),
+                        as_num (obj_map ["index"])));
+            });
+        define_prim (
+            env, { "str-head", "str" },
+            [] (env_t &env, obj_map_t &obj_map)
+            {
+                env.obj_stack.push (
+                    str_head (
+                        env,
+                        as_str (obj_map ["str"])));
+            });
+        define_prim (
+            env, { "str-rest", "str" },
+            [] (env_t &env, obj_map_t &obj_map)
+            {
+                env.obj_stack.push (
+                    str_rest (
+                        env,
+                        as_str (obj_map ["str"])));
+            });
+    }
       shared_ptr <obj_t>
       jj_null_c (env_t &env)
       {
@@ -4276,115 +4376,203 @@
           define (env, "null-c", jj_null_c (env));
           define (env, "cons-c", jj_cons_c (env));
       }
-      sig_t jj_list_to_vect_sig = { "list-to-vect", "list" };
-      // -- (list-t t) -> (vect-t t)
-      void jj_list_to_vect (env_t &env, obj_map_t &obj_map)
-      {
-          env.obj_stack.push (list_to_vect (env, obj_map ["list"]));
-      }
-      sig_t jj_vect_to_list_sig = { "vect-to-list", "vect" };
-      // -- (vect-t t) -> (list-t t)
-      void jj_vect_to_list (env_t &env, obj_map_t &obj_map)
-      {
-          auto obj = obj_map ["vect"];
-          auto vect = as_vect (obj);
-          env.obj_stack.push (vect_to_list (env, vect));
-      }
-      void
-      expose_vect (env_t &env)
-      {
-          // def_type (env, "vect-t");
-          define_prim (env,
-                       jj_list_to_vect_sig,
-                       jj_list_to_vect);
-          define_prim (env,
-                       jj_vect_to_list_sig,
-                       jj_vect_to_list);
-      }
-      void
-      expose_dict (env_t &env)
-      {
-          // def_type (env, "dict-t");
-      }
-      sig_t jj_scan_word_list_sig = { "scan-word-list", "code" };
-      // -- str-t -> (list-t str-t)
-      void jj_scan_word_list (env_t &env, obj_map_t &obj_map)
-      {
-          auto obj = obj_map ["code"];
-          assert (str_p (env, obj));
-          auto code = as_str (obj);
-          env.obj_stack.push (scan_word_list (env, code));
-      }
-      sig_t jj_parse_sexp_sig = { "parse-sexp", "word-list" };
-      // -- (list-t str-t) -> sexp-t
-      void jj_parse_sexp (env_t &env, obj_map_t &obj_map)
-      {
-          env.obj_stack.push (parse_sexp (env, obj_map ["word-list"]));
-      }
-      sig_t jj_parse_sexp_list_sig = { "parse-sexp-list", "word-list" };
-      // -- (list-t str-t) -> (list-t sexp-t)
-      void jj_parse_sexp_list (env_t &env, obj_map_t &obj_map)
-      {
-          env.obj_stack.push (parse_sexp_list (env, obj_map ["word-list"]));
-      }
-      sig_t jj_sexp_repr_sig = { "sexp-repr", "sexp" };
-      // -- sexp-t ->
-      void jj_sexp_repr (env_t &env, obj_map_t &obj_map)
-      {
-          auto str = sexp_repr (env, obj_map ["sexp"]);
-          env.obj_stack.push (make_str (env, str));
-      }
-      sig_t jj_sexp_list_repr_sig = { "sexp-list-repr", "sexp-list" };
-      // -- (list-t sexp-t) ->
-      void jj_sexp_list_repr (env_t &env, obj_map_t &obj_map)
-      {
-          auto str = sexp_list_repr (env, obj_map ["sexp-list"]);
-          env.obj_stack.push (make_str (env, str));
-      }
-      void
-      expose_sexp (env_t &env)
-      {
-          define_prim (env,
-                       jj_scan_word_list_sig,
-                       jj_scan_word_list);
-          define_prim (env,
-                       jj_parse_sexp_list_sig,
-                       jj_parse_sexp_list);
-          define_prim (env,
-                       jj_parse_sexp_sig,
-                       jj_parse_sexp);
-          define_prim (env,
-                       jj_sexp_repr_sig,
-                       jj_sexp_repr);
-          define_prim (env,
-                       jj_sexp_list_repr_sig,
-                       jj_sexp_list_repr);
-      }
-      void
-      expose_top_keyword (env_t &env)
-      {
-          // def_type (env, "top-keyword-t");
-      }
-      void
-      expose_keyword (env_t &env)
-      {
-          // def_type (env, "keyword-t");
-      }
-      sig_t jj_system_env_find_sig = { "system-env-find", "name" };
-      // -- str-t -> str-t
-      void jj_system_env_find (env_t &env, obj_map_t &obj_map)
-      {
-          auto str = as_str (obj_map ["name"]);
-          auto name = str->str;
-          env.obj_stack.push (make_str (env, system_env_find (name)));
-      }
-      void
-      expose_system (env_t &env)
-      {
-          define_prim (env,
-                       jj_system_env_find_sig,
-                       jj_system_env_find);
-      }
+    void
+    expose_vect (env_t &env)
+    {
+        // def_type (env, "vect-t");
+        define_prim (
+            env, { "list-to-vect", "list" },
+            [] (env_t &env, obj_map_t &obj_map)
+            {
+                env.obj_stack.push (
+                    list_to_vect (
+                        env,
+                        obj_map ["list"]));
+            });
+        define_prim (
+            env, { "vect-to-list", "vect" },
+            [] (env_t &env, obj_map_t &obj_map)
+            {
+                env.obj_stack.push (
+                    vect_to_list (
+                        env,
+                        as_vect (obj_map ["vect"])));
+            });
+        define_prim (
+            env, { "vect-length", "vect" },
+            [] (env_t &env, obj_map_t &obj_map)
+            {
+                env.obj_stack.push (
+                    vect_length (
+                        env,
+                        as_vect (obj_map ["vect"])));
+            });
+        define_prim (
+            env, { "vect-append", "ante", "succ" },
+            [] (env_t &env, obj_map_t &obj_map)
+            {
+                env.obj_stack.push (
+                    vect_append (
+                        env,
+                        as_vect (obj_map ["ante"]),
+                        as_vect (obj_map ["succ"])));
+            });
+        define_prim (
+            env, { "vect-slice", "vect", "begin", "end" },
+            [] (env_t &env, obj_map_t &obj_map)
+            {
+                env.obj_stack.push (
+                    vect_slice (
+                        env,
+                        as_vect (obj_map ["vect"]),
+                        as_num (obj_map ["begin"]),
+                        as_num (obj_map ["end"])));
+            });
+        define_prim (
+            env, { "vect-ref", "vect", "index" },
+            [] (env_t &env, obj_map_t &obj_map)
+            {
+                env.obj_stack.push (
+                    vect_ref (
+                        env,
+                        as_vect (obj_map ["vect"]),
+                        as_num (obj_map ["index"])));
+            });
+        define_prim (
+            env, { "vect-head", "vect" },
+            [] (env_t &env, obj_map_t &obj_map)
+            {
+                env.obj_stack.push (
+                    vect_head (
+                        env,
+                        as_vect (obj_map ["vect"])));
+            });
+        define_prim (
+            env, { "vect-rest", "vect" },
+            [] (env_t &env, obj_map_t &obj_map)
+            {
+                env.obj_stack.push (
+                    vect_rest (
+                        env,
+                        as_vect (obj_map ["vect"])));
+            });
+        define_prim (
+            env, { "unit-vect", "obj" },
+            [] (env_t &env, obj_map_t &obj_map)
+            {
+                env.obj_stack.push (
+                    unit_vect (
+                        env,
+                        obj_map ["obj"]));
+            });
+    }
+    void
+    expose_dict (env_t &env)
+    {
+        // def_type (env, "dict-t");
+        define_prim (
+            env, { "list-to-dict", "list" },
+            [] (env_t &env, obj_map_t &obj_map)
+            {
+                env.obj_stack.push (
+                    list_to_dict (
+                        env,
+                        obj_map ["list"]));
+            });
+        define_prim (
+            env, { "dict-to-list", "dict" },
+            [] (env_t &env, obj_map_t &obj_map)
+            {
+                env.obj_stack.push (
+                    dict_to_list (
+                        env,
+                        as_dict (obj_map ["dict"])));
+            });
+        define_prim (
+            env, { "dict-length", "dict" },
+            [] (env_t &env, obj_map_t &obj_map)
+            {
+                env.obj_stack.push (
+                    dict_length (
+                        env,
+                        as_dict (obj_map ["dict"])));
+            });
+    }
+    void
+    expose_sexp (env_t &env)
+    {
+        define_prim (
+            env, { "scan-word-list", "code" },
+            [] (env_t &env, obj_map_t &obj_map)
+            {
+                // -- str-t -> (list-t str-t)
+                env.obj_stack.push (
+                    scan_word_list (
+                        env,
+                        as_str (obj_map ["code"])));
+            });
+        define_prim (
+            env, { "parse-sexp", "word-list" },
+            [] (env_t &env, obj_map_t &obj_map)
+            {
+                // -- (list-t str-t) -> sexp-t
+                env.obj_stack.push (
+                    parse_sexp (
+                        env,
+                        obj_map ["word-list"]));
+            });
+        define_prim (
+            env, { "parse-sexp-list", "word-list" },
+            [] (env_t &env, obj_map_t &obj_map)
+            {
+                // -- (list-t str-t) -> (list-t sexp-t)
+                env.obj_stack.push (
+                    parse_sexp_list (
+                        env,
+                        obj_map ["word-list"]));
+            });
+        define_prim (
+            env, { "sexp-repr", "sexp" },
+            [] (env_t &env, obj_map_t &obj_map)
+            {
+                env.obj_stack.push (
+                    make_str (
+                        env,
+                        sexp_repr (env, obj_map ["sexp"])));
+            });
+        define_prim (
+            env, { "sexp-list-repr", "sexp-list" },
+            [] (env_t &env, obj_map_t &obj_map)
+            {
+                env.obj_stack.push (
+                    make_str (
+                        env,
+                        sexp_list_repr (env, obj_map ["sexp-list"])));
+            });
+    }
+    void
+    expose_top_keyword (env_t &env)
+    {
+        // def_type (env, "top-keyword-t");
+    }
+    void
+    expose_keyword (env_t &env)
+    {
+        // def_type (env, "keyword-t");
+    }
+    void
+    expose_system (env_t &env)
+    {
+        define_prim (
+            env, { "system-env-find", "name" },
+            [] (env_t &env, obj_map_t &obj_map)
+            {
+                // -- str-t -> str-t
+                auto str = as_str (obj_map ["name"]);
+                auto name = str->str;
+                env.obj_stack.push (make_str (env, system_env_find (name)));
+            });
+    }
       sig_t jj_import_sig = { "import", "module-path" };
       // -- str-t -> module-t
       void jj_import (env_t &env, obj_map_t &obj_map)
@@ -4407,136 +4595,128 @@
                        jj_import_sig,
                        jj_import);
       }
-      void
-      expose_syntax (env_t &env)
-      {
-          define_top_keyword (env, "=", tk_assign);
-          define_keyword (env, "lambda", k_lambda);
-          define_keyword (env, "case", k_case);
-          define_keyword (env, "quote", k_quote);
-          define_keyword (env, "note", k_note);
-          define_keyword (env, "assert", k_assert);
-      }
-      void
-      expose_stack (env_t &env)
-      {
-          define_prim (
-              env, { "drop" },
-              [] (env_t &env, obj_map_t &obj_map)
-              {
-                  env.obj_stack.pop ();
-              });
-          define_prim (
-              env, { "dup" },
-              [] (env_t &env, obj_map_t &obj_map)
-              {
-                  auto obj = env.obj_stack.top ();
-                  env.obj_stack.push (obj);
-              });
-          define_prim (
-              env, { "over" },
-              [] (env_t &env, obj_map_t &obj_map)
-              {
-                  auto b = env.obj_stack.top ();
-                  env.obj_stack.pop ();
-                  auto a = env.obj_stack.top ();
-                  env.obj_stack.pop ();
-                  env.obj_stack.push (a);
-                  env.obj_stack.push (b);
-                  env.obj_stack.push (a);
-              });
-          define_prim (
-              env, { "tuck" },
-              [] (env_t &env, obj_map_t &obj_map)
-              {
-                  auto b = env.obj_stack.top ();
-                  env.obj_stack.pop ();
-                  auto a = env.obj_stack.top ();
-                  env.obj_stack.pop ();
-                  env.obj_stack.push (b);
-                  env.obj_stack.push (a);
-                  env.obj_stack.push (b);
-              });
-          define_prim (
-              env, { "swap" },
-              [] (env_t &env, obj_map_t &obj_map)
-              {
-                  auto b = env.obj_stack.top ();
-                  env.obj_stack.pop ();
-                  auto a = env.obj_stack.top ();
-                  env.obj_stack.pop ();
-                  env.obj_stack.push (b);
-                  env.obj_stack.push (a);
-              });
-      }
-      sig_t jj_repr_sig = { "repr", "obj" };
-      void jj_repr (env_t &env, obj_map_t &obj_map)
-      {
-          auto obj = obj_map ["obj"];
-          env.obj_stack.push
-              (make_str
-               (env, obj->repr (env)));
-      }
-      sig_t jj_print_sig = { "print", "obj" };
-      void jj_print (env_t &env, obj_map_t &obj_map)
-      {
-          auto obj = obj_map ["obj"];
-          cout << obj->repr (env) << flush;
-          env.obj_stack.push (obj);
-      }
-      sig_t jj_println_sig = { "println", "obj" };
-      void jj_println (env_t &env, obj_map_t &obj_map)
-      {
-          auto obj = obj_map ["obj"];
-          cout << obj->repr (env) << "\n" << flush;
-          env.obj_stack.push (obj);
-      }
-      sig_t jj_nl_sig = { "nl" };
-      void jj_nl (env_t &env, obj_map_t &obj_map)
-      {
-          cout << "\n" << flush;
-          auto nl = make_str (env, "\n");
-          env.obj_stack.push (nl);
-      }
-      sig_t jj_eq_sig = { "eq", "lhs", "rhs" };
-      void jj_eq (env_t &env, obj_map_t &obj_map)
-      {
-          auto lhs = obj_map ["lhs"];
-          auto rhs = obj_map ["rhs"];
-          env.obj_stack.push (make_bool (env, obj_eq (env, lhs, rhs)));
-      }
-      sig_t jj_env_report_sig = { "env-report" };
-      void jj_env_report (env_t &env, obj_map_t &obj_map)
-      {
-          env.report ();
-          env.obj_stack.push (true_c (env));
-      }
-      void
-      expose_misc (env_t &env)
-      {
-          // def_type (env, "closure-t");
-          // def_type (env, "data-pred-t");
-          // def_type (env, "data-cons-t");
-          // def_type (env, "prim-t");
-          define_prim (env,
-                       jj_repr_sig,
-                       jj_repr);
-          define_prim (env,
-                       jj_print_sig,
-                       jj_print);
-          define_prim (env,
-                       jj_println_sig,
-                       jj_println);
-          define_prim (env,
-                       jj_nl_sig,
-                       jj_nl);
-          define_prim (env,
-                       jj_eq_sig,
-                       jj_eq);
-          define_prim (env,
-                       jj_env_report_sig,
-                       jj_env_report);
-      }
+    void
+    expose_stack (env_t &env)
+    {
+        define_prim (
+            env, { "drop" },
+            [] (env_t &env, obj_map_t &obj_map)
+            {
+                env.obj_stack.pop ();
+            });
+        define_prim (
+            env, { "dup" },
+            [] (env_t &env, obj_map_t &obj_map)
+            {
+                auto obj = env.obj_stack.top ();
+                env.obj_stack.push (obj);
+            });
+        define_prim (
+            env, { "over" },
+            [] (env_t &env, obj_map_t &obj_map)
+            {
+                auto b = env.obj_stack.top ();
+                env.obj_stack.pop ();
+                auto a = env.obj_stack.top ();
+                env.obj_stack.pop ();
+                env.obj_stack.push (a);
+                env.obj_stack.push (b);
+                env.obj_stack.push (a);
+            });
+        define_prim (
+            env, { "tuck" },
+            [] (env_t &env, obj_map_t &obj_map)
+            {
+                auto b = env.obj_stack.top ();
+                env.obj_stack.pop ();
+                auto a = env.obj_stack.top ();
+                env.obj_stack.pop ();
+                env.obj_stack.push (b);
+                env.obj_stack.push (a);
+                env.obj_stack.push (b);
+            });
+        define_prim (
+            env, { "swap" },
+            [] (env_t &env, obj_map_t &obj_map)
+            {
+                auto b = env.obj_stack.top ();
+                env.obj_stack.pop ();
+                auto a = env.obj_stack.top ();
+                env.obj_stack.pop ();
+                env.obj_stack.push (b);
+                env.obj_stack.push (a);
+            });
+    }
+    void
+    expose_syntax (env_t &env)
+    {
+        define_top_keyword (env, "=", tk_assign);
+        define_keyword (env, "lambda", k_lambda);
+        define_keyword (env, "case", k_case);
+        define_keyword (env, "quote", k_quote);
+        define_keyword (env, "note", k_note);
+        define_keyword (env, "assert", k_assert);
+    }
+    void
+    expose_misc (env_t &env)
+    {
+        // def_type (env, "closure-t");
+        // def_type (env, "data-pred-t");
+        // def_type (env, "data-cons-t");
+        // def_type (env, "prim-t");
+        define_prim (
+            env, { "repr", "obj" },
+            [] (env_t &env, obj_map_t &obj_map)
+            {
+                auto obj = obj_map ["obj"];
+                env.obj_stack.push (
+                    make_str (
+                        env,
+                        obj->repr (env)));
+            });
+        define_prim (
+            env, { "print", "obj" },
+            [] (env_t &env, obj_map_t &obj_map)
+            {
+                auto obj = obj_map ["obj"];
+                cout << obj->repr (env) << flush;
+                env.obj_stack.push (obj);
+            });
+        define_prim (
+            env, { "println", "obj" },
+            [] (env_t &env, obj_map_t &obj_map)
+            {
+                auto obj = obj_map ["obj"];
+                cout << obj->repr (env) << "\n" << flush;
+                env.obj_stack.push (obj);
+            });
+        define_prim (
+            env, { "nl" },
+            [] (env_t &env, obj_map_t &obj_map)
+            {
+                cout << "\n" << flush;
+                auto nl = make_str (env, "\n");
+                env.obj_stack.push (nl);
+            });
+        define_prim (
+            env, { "eq", "lhs", "rhs" },
+            [] (env_t &env, obj_map_t &obj_map)
+            {
+                auto lhs = obj_map ["lhs"];
+                auto rhs = obj_map ["rhs"];
+                env.obj_stack.push (
+                    make_bool (
+                        env,
+                        obj_eq (env, lhs, rhs)));
+            });
+        define_prim (
+            env, { "env-report" },
+            [] (env_t &env, obj_map_t &obj_map)
+            {
+                env.report ();
+                env.obj_stack.push (true_c (env));
+            });
+    }
     void
     expose_core (env_t &env)
     {
