@@ -8,7 +8,6 @@
   - an interpreter implemented by dynamic threaded code
 * macro system
   - with lisp like macro system
-*** (= <name> (macro))
 *** (quasiquote) (unquote) (unquote-splicing)
 *** (let) -- as macro
 *** (and) (or) -- as macro

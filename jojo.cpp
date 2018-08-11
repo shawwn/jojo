@@ -132,6 +132,21 @@
           if (! str.empty ()) str.pop_back ();
           return str;
       }
+    template <typename T>
+    vector <T>
+    vector_rest (vector <T> v)
+    {
+        auto size = v.size ();
+        assert (size >= 1);
+        vector <T> result = {};
+        for (auto it = v.begin () + 1;
+             it != v.end ();
+             it++) {
+            auto obj = *it;
+            result.push_back (obj);
+        }
+        return result;
+    }
       string
       name_vector_repr (name_vector_t &name_vector)
       {
@@ -546,6 +561,8 @@
     obj_t::apply (env_t &env, size_t arity)
     {
         cout << "- fatal error : applying non applicable object" << "\n";
+        cout << "  tag : " << name_of_tag (env, this->tag) << "\n";
+        cout << "  obj : " << this->repr (env) << "\n";
         exit (1);
     }
     shared_ptr <box_t>
@@ -577,6 +594,31 @@
         shared_ptr <obj_t> &rhs)
     {
         return lhs->eq (env, rhs);
+    }
+    shared_ptr <obj_t>
+    find_obj_from_name (env_t &env, name_t name)
+    {
+        auto string_vector = string_split (name, '.');
+        assert (string_vector.size () > 0);
+        auto first_name = string_vector [0];
+        auto it = env.box_map.find (first_name);
+        if (it != env.box_map.end ()) {
+            auto box = it->second;
+            auto obj = box->obj;
+            for (auto sub_name: vector_rest (string_vector)) {
+                auto it = obj->obj_map.find (sub_name);
+                if (it != obj->obj_map.end ()) {
+                    obj = it->second;
+                }
+                else {
+                    return nullptr;
+                }
+            }
+            return obj;
+        }
+        else {
+            return nullptr;
+        }
     }
     jo_t *
     jo_t::copy ()
@@ -798,7 +840,8 @@
       tag_t dict_tag         = 13;
       tag_t module_tag       = 14;
       tag_t keyword_tag      = 15;
-      tag_t top_keyword_tag  = 16;
+      tag_t macro_tag        = 16;
+      tag_t top_keyword_tag  = 17;
       void
       init_tagged_box_vector (env_t &env)
       {
@@ -817,6 +860,7 @@
           preserve_tag (env, dict_tag         , "dict-t");
           preserve_tag (env, module_tag       , "module-t");
           preserve_tag (env, keyword_tag      , "keyword-t");
+          preserve_tag (env, macro_tag        , "macro-t");
           preserve_tag (env, top_keyword_tag  , "top-keyword-t");
       }
     env_t::env_t ()
@@ -1017,6 +1061,11 @@
              this->bind_vector,
              that->bind_vector)) return false;
         else return true;
+    }
+    bool
+    closure_p (env_t &env, shared_ptr <obj_t> a)
+    {
+        return a->tag == closure_tag;
     }
     string
     closure_o::repr (env_t &env)
@@ -1521,8 +1570,9 @@
     {
         auto name = name_of_sig (sig);
         auto name_vector = name_vector_of_sig (sig);
-        define (env, name, make_shared <prim_o>
-                (env, name_vector, fn, obj_map_t ()));
+        auto prim = make_shared <prim_o> (
+            env, name_vector, fn, obj_map_t ());
+        define (env, name, prim);
     }
     struct num_o: obj_t
     {
@@ -2575,6 +2625,82 @@
               exit (1);
           }
       }
+      struct macro_o: obj_t
+      {
+          shared_ptr <obj_t> obj;
+          macro_o (env_t &env, shared_ptr <obj_t> obj);
+          bool eq (env_t &env, shared_ptr <obj_t> obj);
+      };
+      macro_o::
+      macro_o (env_t &env, shared_ptr <obj_t> obj)
+      {
+          this->tag = macro_tag;
+          this->obj = obj;
+      }
+      shared_ptr <macro_o>
+      make_macro (env_t &env, shared_ptr <obj_t> obj)
+      {
+          return make_shared <macro_o> (env, obj);
+      }
+      bool
+      macro_p (env_t &env, shared_ptr <obj_t> a)
+      {
+          return a->tag == macro_tag;
+      }
+      shared_ptr <macro_o>
+      as_macro (shared_ptr <obj_t> obj)
+      {
+          assert (obj->tag == macro_tag);
+          return static_pointer_cast <macro_o> (obj);
+      }
+      bool
+      macro_o::eq (env_t &env, shared_ptr <obj_t> obj)
+      {
+          if (this->tag != obj->tag) return false;
+          auto that = as_macro (obj);
+          return obj_eq (env, this->obj, that->obj);
+      }
+      shared_ptr <obj_t>
+      sexp_eval (env_t &env, shared_ptr <obj_t> sexp);
+      bool
+      macro_sexp_p (env_t &env, shared_ptr <obj_t> sexp)
+      {
+          if (! cons_p (env, sexp)) return false;;
+          auto head = car (env, sexp);
+          if (! str_p (env, head)) return false;
+          auto str = as_str (head);
+          auto name = str->str;
+          auto found = find_obj_from_name (env, name);
+          if (! found) return false;
+          auto obj = sexp_eval (env, head);
+          return macro_p (env, obj);
+      }
+      shared_ptr <obj_t>
+      macro_eval (env_t &env, shared_ptr <obj_t> sexp)
+      {
+          assert (cons_p (env, sexp));
+          auto head = car (env, sexp);
+          auto rest = cdr (env, sexp);
+          auto obj = sexp_eval (env, head);
+          auto macro = as_macro (obj);
+          env.obj_stack.push (rest);
+          auto base = env.frame_stack.size ();
+          macro->obj->apply (env, 1);
+          env.run_with_base (base);
+          auto new_sexp = env.obj_stack.top ();
+          env.obj_stack.pop ();
+          return new_sexp;
+      }
+      void
+      define_prim_macro (env_t &env, sig_t sig, prim_fn fn)
+      {
+          auto name = name_of_sig (sig);
+          auto name_vector = name_vector_of_sig (sig);
+          auto prim = make_shared <prim_o> (
+              env, name_vector, fn, obj_map_t ());
+          auto macro = make_shared <macro_o> (env, prim);
+          define (env, name, macro);
+      }
     shared_ptr <jojo_t>
     string_compile (
         env_t &env,
@@ -3046,6 +3172,17 @@
           auto fn = keyword_fn_from_name (env, name);
           return fn (env, local_ref_map, body);
       }
+      shared_ptr <jojo_t>
+      macro_compile (
+          env_t &env,
+          local_ref_map_t &local_ref_map,
+          shared_ptr <obj_t> sexp)
+      {
+          return sexp_compile (
+              env,
+              local_ref_map,
+              macro_eval (env, sexp));
+      }
         bool
         field_head_p (env_t &env, shared_ptr <obj_t> head)
         {
@@ -3149,6 +3286,9 @@
         }
         else if (keyword_sexp_p (env, sexp)) {
             return keyword_compile (env, local_ref_map, sexp);
+        }
+        else if (macro_sexp_p (env, sexp)) {
+            return macro_compile (env, local_ref_map, sexp);
         }
         else {
             assert (cons_p (env, sexp));
@@ -3254,14 +3394,13 @@
         env.run_with_base (base);
     }
     void
-    sexp_eval (env_t &env, shared_ptr <obj_t> sexp)
+    sexp_run (env_t &env, shared_ptr <obj_t> sexp)
     {
         if (top_keyword_sexp_p (env, sexp)) {
-            auto head = as_str (car (env, sexp));
-            auto body = cdr (env, sexp);
-            auto name = head->str;
-            auto fn = top_keyword_fn_from_name (env, name);
-            fn (env, body);
+            cout << "- fatal error : sexp_run" << "\n";
+            cout << "  can not handle top_keyword_sexp" << "\n";
+            cout << "  sexp : " << sexp_repr (env, sexp) << "\n";
+            exit (1);
         }
         else {
             auto local_ref_map = local_ref_map_t ();
@@ -3270,17 +3409,37 @@
         }
     }
     void
-    sexp_list_eval (env_t &env, shared_ptr <obj_t> sexp_list)
+    sexp_list_run (env_t &env, shared_ptr <obj_t> sexp_list)
     {
         if (null_p (env, sexp_list))
             return;
         else {
-            sexp_eval (env, car (env, sexp_list));
-            sexp_list_eval (env, cdr (env, sexp_list));
+            sexp_run (env, car (env, sexp_list));
+            sexp_list_run (env, cdr (env, sexp_list));
+        }
+    }
+    shared_ptr <obj_t>
+    sexp_eval (env_t &env, shared_ptr <obj_t> sexp)
+    {
+        auto size_before = env.obj_stack.size ();
+        sexp_run (env, sexp);
+        auto size_after = env.obj_stack.size ();
+        if (size_after - size_before == 1) {
+            auto obj = env.obj_stack.top ();
+            env.obj_stack.pop ();
+            return obj;
+        }
+        else {
+            cout << "- fatal error : sexp_eval mismatch" << "\n";
+            cout << "  sexp must eval to one value" << "\n";
+            cout << "  sexp : " << sexp_repr (env, sexp) << "\n";
+            cout << "  stack size before : " << size_before << "\n";
+            cout << "  stack size after : " << size_after << "\n";
+            exit (1);
         }
     }
     void
-    top_sexp_eval (env_t &env, shared_ptr <obj_t> sexp)
+    top_sexp_run (env_t &env, shared_ptr <obj_t> sexp)
     {
         if (top_keyword_sexp_p (env, sexp)) {
             auto head = as_str (car (env, sexp));
@@ -3298,21 +3457,21 @@
         }
     }
     void
-    top_sexp_list_eval (env_t &env, shared_ptr <obj_t> sexp_list)
+    top_sexp_list_run (env_t &env, shared_ptr <obj_t> sexp_list)
     {
         if (null_p (env, sexp_list))
             return;
         else {
-            top_sexp_eval (env, car (env, sexp_list));
-            top_sexp_list_eval (env, cdr (env, sexp_list));
+            top_sexp_run (env, car (env, sexp_list));
+            top_sexp_list_run (env, cdr (env, sexp_list));
         }
     }
     void
-    code_eval (env_t &env, shared_ptr <str_o> code)
+    code_run (env_t &env, shared_ptr <str_o> code)
     {
         auto word_list = scan_word_list (env, code);
         auto sexp_list = parse_sexp_list (env, word_list);
-        top_sexp_list_eval (env, sexp_list);
+        top_sexp_list_run (env, sexp_list);
     }
     shared_ptr <str_o>
     code_from_module_path (env_t &env, path_t module_path)
@@ -3357,24 +3516,24 @@
     expose_core (env_t &env);
 
     env_t
-    eval_file_to_env (path_t module_path)
+    env_from_module_path (path_t module_path)
     {
         auto env = env_t ();
         module_path = respect_current_dir (env, module_path);
         if (! fs::exists (module_path)) {
-            cout << "- fatal error : eval_file_to_env" << "\n";
+            cout << "- fatal error : env_from_module_path" << "\n";
             cout << "  file does not exists : " << module_path << "\n";
             exit (1);
         }
         if (! fs::is_regular_file (module_path)) {
-            cout << "- fatal error : eval_file_to_env" << "\n";
+            cout << "- fatal error : env_from_module_path" << "\n";
             cout << "  not regular file : " << module_path << "\n";
             exit (1);
         }
         env.module_path = module_path;
         expose_core (env);
         auto code = code_from_module_path (env, env.module_path);
-        code_eval (env, code);
+        code_run (env, code);
         return env;
     }
     name_t
@@ -3504,20 +3663,17 @@
               return sexp;
       }
       shared_ptr <obj_t>
-      rest_patch_this (env_t &env, shared_ptr <obj_t> rest)
+      sexp_patch_this (env_t &env, shared_ptr <obj_t> sexp)
       {
           auto this_str = make_str (env, "this");
           obj_vector_t obj_vector = { this_str };
           auto vect = make_vect (env, obj_vector);
-          auto lambda_body = cons_c (env, vect, rest);
-          lambda_body = cons_c
-              (env,
-               make_str (env, "lambda"),
-               lambda_body);
-          lambda_body = cons_c
-              (env,
-               lambda_body,
-               null_c (env));
+          auto lambda_body = cons_c (env, sexp, null_c (env));
+          lambda_body = cons_c (env, vect, lambda_body);
+          lambda_body = cons_c (
+              env,
+              make_str (env, "lambda"),
+              lambda_body);
           return lambda_body;
       }
       void
@@ -3525,14 +3681,14 @@
       {
           auto head = as_str (car (env, body));
           auto rest = cdr (env, body);
+          assert (null_p (env, cdr (env, rest)));
+          auto sexp = car (env, rest);
           auto name = name_of_string (head->str);
           auto prefix = prefix_of_string (head->str);
           if (prefix != "")
-              rest = rest_patch_this (env, rest);
-          rest = sexp_substitute_recur (env, head, rest);
-          sexp_list_eval (env, rest);
-          auto obj = env.obj_stack.top ();
-          env.obj_stack.pop ();
+              sexp = sexp_patch_this (env, sexp);
+          sexp = sexp_substitute_recur (env, head, sexp);
+          auto obj = sexp_eval (env, sexp);
           assign (env, prefix, name, obj);
       }
     void
@@ -3643,6 +3799,58 @@
               (env, local_ref_map, rest);
           jo_vector_t jo_vector = {
               new lambda_jo_t (name_vector, rest_jojo),
+          };
+          return make_shared <jojo_t> (jo_vector);
+      }
+        struct macro_maker_jo_t: jo_t
+        {
+            jo_t * copy ();
+            void exe (env_t &env, local_scope_t &local_scope);
+            string repr (env_t &env);
+        };
+        jo_t *
+        macro_maker_jo_t::copy ()
+        {
+            return new macro_maker_jo_t ();
+        }
+        void
+        macro_maker_jo_t::exe (env_t &env, local_scope_t &local_scope)
+        {
+            auto obj = env.obj_stack.top ();
+            env.obj_stack.pop ();
+            if (closure_p (env, obj)) {
+                auto macro = make_macro (env, obj);
+                env.obj_stack.push (macro);
+            }
+            else {
+                cout << "- fatal error : macro_maker_jo_t::exe" << "\n";
+                cout << "  can only make macro from closure" << "\n";
+                exit (1);
+            }
+        }
+        string
+        macro_maker_jo_t::repr (env_t &env)
+        {
+            return "(macro_maker)";
+        }
+      shared_ptr <jojo_t>
+      k_macro (
+          env_t &env,
+          local_ref_map_t &old_local_ref_map,
+          shared_ptr <obj_t> body)
+      {
+          auto name_vect = as_vect (car (env, body));
+          auto rest = cdr (env, body);
+          auto name_vector = obj_vector_to_name_vector
+              (env, name_vect->obj_vector);
+          auto local_ref_map = local_ref_map_extend
+              (env, old_local_ref_map, name_vector);
+          rest = lambda_patch_drop (env, rest);
+          auto rest_jojo = sexp_list_compile
+              (env, local_ref_map, rest);
+          jo_vector_t jo_vector = {
+              new lambda_jo_t (name_vector, rest_jojo),
+              new macro_maker_jo_t (),
           };
           return make_shared <jojo_t> (jo_vector);
       }
@@ -4093,7 +4301,7 @@
             }
             else {
                 cout << "- fatal error : if_jo_t::exe" << "\n";
-                cout << "  pred_jojo eval to non bool value" << "\n";
+                cout << "  pred_jojo run to non bool value" << "\n";
                 exit (1);
             }
         }
@@ -4168,7 +4376,7 @@
             }
             else {
                 cout << "- fatal error : when_jo_t::exe" << "\n";
-                cout << "  pred_jojo eval to non bool value" << "\n";
+                cout << "  pred_jojo run to non bool value" << "\n";
                 exit (1);
             }
         }
@@ -4917,7 +5125,7 @@
           auto module_path = path_t (str->str);
           module_path = respect_module_path
               (env, module_path);
-          auto module_env = eval_file_to_env (module_path);
+          auto module_env = env_from_module_path (module_path);
           auto mod = make_shared <module_o> (env, module_env);
           env.obj_stack.push (mod);
       }
@@ -4986,6 +5194,7 @@
     {
         define_top_keyword (env, "=", tk_assign);
         define_keyword (env, "lambda", k_lambda);
+        define_keyword (env, "macro", k_macro);
         define_keyword (env, "case", k_case);
         define_keyword (env, "quote", k_quote);
         define_keyword (env, "*", k_list);
@@ -5342,7 +5551,7 @@
     {
         for (auto module_path_string: arg_vector) {
             auto module_path = path_t (module_path_string);
-            eval_file_to_env (module_path);
+            env_from_module_path (module_path);
         }
     }
     int
