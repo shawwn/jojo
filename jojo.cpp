@@ -1718,15 +1718,15 @@
             or cons_p (env, a);
     }
     size_t
-    list_length (env_t &env, shared_ptr <obj_t> l)
+    list_size (env_t &env, shared_ptr <obj_t> l)
     {
         assert (list_p (env, l));
-        auto length = 0;
+        auto size = 0;
         while (! null_p (env, l)) {
-            length++;
+            size++;
             l = cdr (env, l);
         }
-        return length;
+        return size;
     }
 
     void
@@ -2173,6 +2173,12 @@
         return word == "'"
             or word == "`";
     }
+    bool
+    unquote_word_p (string word)
+    {
+        return word == "~"
+            or word == "~@";
+    }
     string
     bar_word_to_ket_word (string bar)
     {
@@ -2229,6 +2235,9 @@
                     bar, ket, 1));
         }
         else if (quote_word_p (word))
+            return cons_c (
+                env, head, word_list_head (env, cdr (env, word_list)));
+        else if (unquote_word_p (word))
             return cons_c (
                 env, head, word_list_head (env, cdr (env, word_list)));
         else
@@ -2329,7 +2338,15 @@
                            cons_c (env, parse_sexp (env, rest),
                                    null_c (env)));
         else if (word == "`")
-            return cons_c (env, make_str (env, "partquote"),
+            return cons_c (env, make_str (env, "quasiquote"),
+                           cons_c (env, parse_sexp (env, rest),
+                                   null_c (env)));
+        else if (word == "~")
+            return cons_c (env, make_str (env, "unquote"),
+                           cons_c (env, parse_sexp (env, rest),
+                                   null_c (env)));
+        else if (word == "~@")
+            return cons_c (env, make_str (env, "unquote-splicing"),
                            cons_c (env, parse_sexp (env, rest),
                                    null_c (env)));
         else
@@ -2368,9 +2385,12 @@
             auto l = dict_to_list (env, d);
             return "{" + sexp_list_repr (env, l) + "}";
         }
-        else {
+        else if (str_p (env, a)) {
             auto str = as_str (a);
             return str->str;
+        }
+        else {
+            return a->repr (env);
         }
     }
     string
@@ -2572,274 +2592,274 @@
         env_t &env,
         local_ref_map_t &local_ref_map,
         shared_ptr <obj_t> sexp_list);
-          struct field_jo_t: jo_t
-          {
-              name_t name;
-              jo_t * copy ();
-              field_jo_t (name_t name);
-              void exe (env_t &env, local_scope_t &local_scope);
-              string repr (env_t &env);
-          };
-          field_jo_t::field_jo_t (name_t name)
-          {
-              this->name = name;
-          }
-          jo_t *
-          field_jo_t::copy ()
-          {
-              return new field_jo_t (this->name);
-          }
-          void
-          field_jo_t::exe (env_t &env, local_scope_t &local_scope)
-          {
-              auto obj = env.obj_stack.top ();
-              env.obj_stack.pop ();
-              auto it = obj->obj_map.find (this->name);
-              if (it != obj->obj_map.end ()) {
-                  env.obj_stack.push (it->second);
-              }
-              else {
-                  auto type = type_of (env, obj);
-                  auto it = type->obj_map.find (this->name);
-                  if (it != type->obj_map.end ()) {
-                      if (it->second->tag == closure_tag) {
-                          auto method = static_pointer_cast <closure_o>
-                              (it->second);
-                          assert (method->name_vector.size () == 1);
-                          env.obj_stack.push (obj);
-                          method->apply (env, 1);
-                      }
-                      else {
-                          env.obj_stack.push (it->second);
-                      }
-                  }
-                  else {
-                      cout << "- fatal error : field_jo_t::exe" << "\n";
-                      cout << "  unknown field : " << this->name << "\n";
-                      cout << "  fail to find it in both object and type" << "\n";
-                      exit (1);
-                  }
-              }
-          }
-          string
-          field_jo_t::repr (env_t &env)
-          {
-              return "." + this->name;
-          }
-          struct lit_jo_t: jo_t
-          {
-              shared_ptr <obj_t> obj;
-              lit_jo_t (shared_ptr <obj_t> obj);
-              jo_t * copy ();
-              void exe (env_t &env, local_scope_t &local_scope);
-              string repr (env_t &env);
-          };
-          lit_jo_t::
-          lit_jo_t (shared_ptr <obj_t> obj)
-          {
-              this->obj = obj;
-          }
-          jo_t *
-          lit_jo_t::copy ()
-          {
-              return new lit_jo_t (this->obj);
-          }
-          void
-          lit_jo_t::exe (env_t &env, local_scope_t &local_scope)
-          {
-              env.obj_stack.push (this->obj);
-          }
-          string
-          lit_jo_t::repr (env_t &env)
-          {
-              return this->obj->repr (env);
-          }
-          struct ref_jo_t: jo_t
-          {
-              shared_ptr <box_t> box;
-              ref_jo_t (shared_ptr <box_t>);
-              jo_t * copy ();
-              void exe (env_t &env, local_scope_t &local_scope);
-              string repr (env_t &env);
-          };
-          ref_jo_t::ref_jo_t (shared_ptr <box_t> box)
-          {
-              this->box = box;
-          }
-          jo_t *
-          ref_jo_t::copy ()
-          {
-              return new ref_jo_t (this->box);
-          }
-          void
-          ref_jo_t::exe (env_t &env, local_scope_t &local_scope)
-          {
-              if (this->box->empty_p) {
-                  cout << "- fatal error : ref_jo_t::exe fail" << "\n";
-                  cout << "  undefined name : "
-                       << name_of_box (env, box) << "\n";
-                  exit (1);
-              }
-              else {
-                  env.obj_stack.push (this->box->obj);
-              }
-          }
-          string
-          ref_jo_t::repr (env_t &env)
-          {
-              return name_of_box (env, this->box);
-          }
-          struct local_ref_jo_t: jo_t
-          {
-              size_t level;
-              size_t index;
-              local_ref_jo_t (size_t level, size_t index);
-              jo_t * copy ();
-              void exe (env_t &env, local_scope_t &local_scope);
-              string repr (env_t &env);
-          };
-          local_ref_jo_t::
-          local_ref_jo_t (size_t level, size_t index)
-          {
-              this->level = level;
-              this->index = index;
-          }
-          jo_t *
-          local_ref_jo_t::copy ()
-          {
-              return new local_ref_jo_t (this->level, this->index);
-          }
-          void
-          local_ref_jo_t::exe (env_t &env, local_scope_t &local_scope)
-          {
-              // this is the only place where
-              //   the local_scope in the arg of exe is uesd.
-              auto bind_vector =
-                  local_scope [local_scope.size () - this->level - 1];
-              auto bind =
-                  bind_vector [bind_vector.size () - this->index - 1];
-              auto obj = bind.second;
-              env.obj_stack.push (obj);
-          }
-          string
-          local_ref_jo_t::repr (env_t &env)
-          {
-              return "local." +
-                  to_string (this->level) + "." +
-                  to_string (this->index);
-          }
-          struct collect_vect_jo_t: jo_t
-          {
-              size_t counter;
-              collect_vect_jo_t (size_t counter);
-              jo_t * copy ();
-              void exe (env_t &env, local_scope_t &local_scope);
-              string repr (env_t &env);
-          };
-          collect_vect_jo_t::
-          collect_vect_jo_t (size_t counter)
-          {
-              this->counter = counter;
-          }
-          jo_t *
-          collect_vect_jo_t::copy ()
-          {
-              return new collect_vect_jo_t (this->counter);
-          }
-          void
-          collect_vect_jo_t::exe (env_t &env, local_scope_t &local_scope)
-          {
-              size_t index = 0;
-              auto obj_vector = obj_vector_t ();
-              while (index < this->counter) {
-                  auto obj = env.obj_stack.top ();
-                  env.obj_stack.pop ();
-                  obj_vector.push_back (obj);
-                  index++;
-              }
-              reverse (obj_vector.begin (),
-                       obj_vector.end ());
-              auto vect = make_vect (env, obj_vector);
-              env.obj_stack.push (vect);
-          }
-          string
-          collect_vect_jo_t::repr (env_t &env)
-          {
-              return "(collect-vect " + to_string (this->counter) + ")";
-          }
-          struct collect_dict_jo_t: jo_t
-          {
-              size_t counter;
-              collect_dict_jo_t (size_t counter);
-              jo_t * copy ();
-              void exe (env_t &env, local_scope_t &local_scope);
-              string repr (env_t &env);
-          };
-          collect_dict_jo_t::
-          collect_dict_jo_t (size_t counter)
-          {
-              this->counter = counter;
-          }
-          jo_t *
-          collect_dict_jo_t::copy ()
-          {
-              return new collect_dict_jo_t (this->counter);
-          }
-          void
-          collect_dict_jo_t::exe (
-              env_t &env,
-              local_scope_t &local_scope)
-          {
-              size_t index = 0;
-              auto obj_map = obj_map_t ();
-              while (index < this->counter) {
-                  auto obj = env.obj_stack.top ();
-                  env.obj_stack.pop ();
-                  auto str = env.obj_stack.top ();
-                  env.obj_stack.pop ();
-                  auto key = as_str (str);
-                  obj_map [key->str] = obj;
-                  index++;
-              }
-              auto dict = make_dict (env, obj_map);
-              env.obj_stack.push (dict);
-          }
-          string
-          collect_dict_jo_t::repr (env_t &env)
-          {
-              return "(collect-dict " + to_string (this->counter) + ")";
-          }
-          struct apply_jo_t: jo_t
-          {
-              size_t arity;
-              apply_jo_t (size_t arity);
-              jo_t * copy ();
-              void exe (env_t &env, local_scope_t &local_scope);
-              string repr (env_t &env);
-          };
-          apply_jo_t::
-          apply_jo_t (size_t arity)
-          {
-              this->arity = arity;
-          }
-          jo_t *
-          apply_jo_t::copy ()
-          {
-              return new apply_jo_t (this->arity);
-          }
-          void
-          apply_jo_t::exe (env_t &env, local_scope_t &local_scope)
-          {
-              auto obj = env.obj_stack.top ();
-              env.obj_stack.pop ();
-              obj->apply (env, this->arity);
-          }
-          string
-          apply_jo_t::repr (env_t &env)
-          {
-              return "(apply " +
-                  to_string (this->arity) + ")";
-          }
+        struct field_jo_t: jo_t
+        {
+            name_t name;
+            jo_t * copy ();
+            field_jo_t (name_t name);
+            void exe (env_t &env, local_scope_t &local_scope);
+            string repr (env_t &env);
+        };
+        field_jo_t::field_jo_t (name_t name)
+        {
+            this->name = name;
+        }
+        jo_t *
+        field_jo_t::copy ()
+        {
+            return new field_jo_t (this->name);
+        }
+        void
+        field_jo_t::exe (env_t &env, local_scope_t &local_scope)
+        {
+            auto obj = env.obj_stack.top ();
+            env.obj_stack.pop ();
+            auto it = obj->obj_map.find (this->name);
+            if (it != obj->obj_map.end ()) {
+                env.obj_stack.push (it->second);
+            }
+            else {
+                auto type = type_of (env, obj);
+                auto it = type->obj_map.find (this->name);
+                if (it != type->obj_map.end ()) {
+                    if (it->second->tag == closure_tag) {
+                        auto method = static_pointer_cast <closure_o>
+                            (it->second);
+                        assert (method->name_vector.size () == 1);
+                        env.obj_stack.push (obj);
+                        method->apply (env, 1);
+                    }
+                    else {
+                        env.obj_stack.push (it->second);
+                    }
+                }
+                else {
+                    cout << "- fatal error : field_jo_t::exe" << "\n";
+                    cout << "  unknown field : " << this->name << "\n";
+                    cout << "  fail to find it in both object and type" << "\n";
+                    exit (1);
+                }
+            }
+        }
+        string
+        field_jo_t::repr (env_t &env)
+        {
+            return "." + this->name;
+        }
+        struct lit_jo_t: jo_t
+        {
+            shared_ptr <obj_t> obj;
+            lit_jo_t (shared_ptr <obj_t> obj);
+            jo_t * copy ();
+            void exe (env_t &env, local_scope_t &local_scope);
+            string repr (env_t &env);
+        };
+        lit_jo_t::
+        lit_jo_t (shared_ptr <obj_t> obj)
+        {
+            this->obj = obj;
+        }
+        jo_t *
+        lit_jo_t::copy ()
+        {
+            return new lit_jo_t (this->obj);
+        }
+        void
+        lit_jo_t::exe (env_t &env, local_scope_t &local_scope)
+        {
+            env.obj_stack.push (this->obj);
+        }
+        string
+        lit_jo_t::repr (env_t &env)
+        {
+            return this->obj->repr (env);
+        }
+        struct ref_jo_t: jo_t
+        {
+            shared_ptr <box_t> box;
+            ref_jo_t (shared_ptr <box_t>);
+            jo_t * copy ();
+            void exe (env_t &env, local_scope_t &local_scope);
+            string repr (env_t &env);
+        };
+        ref_jo_t::ref_jo_t (shared_ptr <box_t> box)
+        {
+            this->box = box;
+        }
+        jo_t *
+        ref_jo_t::copy ()
+        {
+            return new ref_jo_t (this->box);
+        }
+        void
+        ref_jo_t::exe (env_t &env, local_scope_t &local_scope)
+        {
+            if (this->box->empty_p) {
+                cout << "- fatal error : ref_jo_t::exe fail" << "\n";
+                cout << "  undefined name : "
+                     << name_of_box (env, box) << "\n";
+                exit (1);
+            }
+            else {
+                env.obj_stack.push (this->box->obj);
+            }
+        }
+        string
+        ref_jo_t::repr (env_t &env)
+        {
+            return name_of_box (env, this->box);
+        }
+        struct local_ref_jo_t: jo_t
+        {
+            size_t level;
+            size_t index;
+            local_ref_jo_t (size_t level, size_t index);
+            jo_t * copy ();
+            void exe (env_t &env, local_scope_t &local_scope);
+            string repr (env_t &env);
+        };
+        local_ref_jo_t::
+        local_ref_jo_t (size_t level, size_t index)
+        {
+            this->level = level;
+            this->index = index;
+        }
+        jo_t *
+        local_ref_jo_t::copy ()
+        {
+            return new local_ref_jo_t (this->level, this->index);
+        }
+        void
+        local_ref_jo_t::exe (env_t &env, local_scope_t &local_scope)
+        {
+            // this is the only place where
+            //   the local_scope in the arg of exe is uesd.
+            auto bind_vector =
+                local_scope [local_scope.size () - this->level - 1];
+            auto bind =
+                bind_vector [bind_vector.size () - this->index - 1];
+            auto obj = bind.second;
+            env.obj_stack.push (obj);
+        }
+        string
+        local_ref_jo_t::repr (env_t &env)
+        {
+            return "local." +
+                to_string (this->level) + "." +
+                to_string (this->index);
+        }
+        struct collect_vect_jo_t: jo_t
+        {
+            size_t counter;
+            collect_vect_jo_t (size_t counter);
+            jo_t * copy ();
+            void exe (env_t &env, local_scope_t &local_scope);
+            string repr (env_t &env);
+        };
+        collect_vect_jo_t::
+        collect_vect_jo_t (size_t counter)
+        {
+            this->counter = counter;
+        }
+        jo_t *
+        collect_vect_jo_t::copy ()
+        {
+            return new collect_vect_jo_t (this->counter);
+        }
+        void
+        collect_vect_jo_t::exe (env_t &env, local_scope_t &local_scope)
+        {
+            size_t index = 0;
+            auto obj_vector = obj_vector_t ();
+            while (index < this->counter) {
+                auto obj = env.obj_stack.top ();
+                env.obj_stack.pop ();
+                obj_vector.push_back (obj);
+                index++;
+            }
+            reverse (obj_vector.begin (),
+                     obj_vector.end ());
+            auto vect = make_vect (env, obj_vector);
+            env.obj_stack.push (vect);
+        }
+        string
+        collect_vect_jo_t::repr (env_t &env)
+        {
+            return "(collect-vect " + to_string (this->counter) + ")";
+        }
+        struct collect_dict_jo_t: jo_t
+        {
+            size_t counter;
+            collect_dict_jo_t (size_t counter);
+            jo_t * copy ();
+            void exe (env_t &env, local_scope_t &local_scope);
+            string repr (env_t &env);
+        };
+        collect_dict_jo_t::
+        collect_dict_jo_t (size_t counter)
+        {
+            this->counter = counter;
+        }
+        jo_t *
+        collect_dict_jo_t::copy ()
+        {
+            return new collect_dict_jo_t (this->counter);
+        }
+        void
+        collect_dict_jo_t::exe (
+            env_t &env,
+            local_scope_t &local_scope)
+        {
+            size_t index = 0;
+            auto obj_map = obj_map_t ();
+            while (index < this->counter) {
+                auto obj = env.obj_stack.top ();
+                env.obj_stack.pop ();
+                auto str = env.obj_stack.top ();
+                env.obj_stack.pop ();
+                auto key = as_str (str);
+                obj_map [key->str] = obj;
+                index++;
+            }
+            auto dict = make_dict (env, obj_map);
+            env.obj_stack.push (dict);
+        }
+        string
+        collect_dict_jo_t::repr (env_t &env)
+        {
+            return "(collect-dict " + to_string (this->counter) + ")";
+        }
+        struct apply_jo_t: jo_t
+        {
+            size_t arity;
+            apply_jo_t (size_t arity);
+            jo_t * copy ();
+            void exe (env_t &env, local_scope_t &local_scope);
+            string repr (env_t &env);
+        };
+        apply_jo_t::
+        apply_jo_t (size_t arity)
+        {
+            this->arity = arity;
+        }
+        jo_t *
+        apply_jo_t::copy ()
+        {
+            return new apply_jo_t (this->arity);
+        }
+        void
+        apply_jo_t::exe (env_t &env, local_scope_t &local_scope)
+        {
+            auto obj = env.obj_stack.top ();
+            env.obj_stack.pop ();
+            obj->apply (env, this->arity);
+        }
+        string
+        apply_jo_t::repr (env_t &env)
+        {
+            return "(apply " +
+                to_string (this->arity) + ")";
+        }
         bool
         dot_string_p (string str)
         {
@@ -2990,7 +3010,7 @@
           auto sexp_list = vect_to_list (env, vect);
           auto jojo = sexp_list_compile
               (env, local_ref_map, sexp_list);
-          auto counter = list_length (env, sexp_list);
+          auto counter = list_size (env, sexp_list);
           jo_vector_t jo_vector = {
               new collect_vect_jo_t (counter),
           };
@@ -3006,7 +3026,7 @@
           auto sexp_list = dict_to_list (env, dict);
           auto jojo = sexp_list_compile
               (env, local_ref_map, sexp_list);
-          auto counter = list_length (env, sexp_list);
+          auto counter = list_size (env, sexp_list);
           counter = counter / 2;
           jo_vector_t jo_vector = {
               new collect_dict_jo_t (counter),
@@ -3119,15 +3139,15 @@
             auto str = as_str (sexp);
             return string_compile (env, local_ref_map, str->str);
         }
-        if (vect_p (env, sexp)) {
+        else if (vect_p (env, sexp)) {
             auto vect = as_vect (sexp);
             return vect_compile (env, local_ref_map, vect);
         }
-        if (dict_p (env, sexp)) {
+        else if (dict_p (env, sexp)) {
             auto dict = as_dict (sexp);
             return dict_compile (env, local_ref_map, dict);
         }
-        if (keyword_sexp_p (env, sexp)) {
+        else if (keyword_sexp_p (env, sexp)) {
             return keyword_compile (env, local_ref_map, sexp);
         }
         else {
@@ -3798,6 +3818,17 @@
             }
         }
       shared_ptr <jojo_t>
+      sexp_qoute_compile (
+          env_t &env,
+          shared_ptr <obj_t> sexp)
+      {
+          jo_vector_t jo_vector = {
+              new lit_jo_t (sexp_literalize (env, sexp)),
+          };
+          auto jojo = make_shared <jojo_t> (jo_vector);
+          return jojo;
+      }
+      shared_ptr <jojo_t>
       k_quote (
           env_t &env,
           local_ref_map_t &local_ref_map,
@@ -3806,12 +3837,129 @@
           assert (cons_p (env, body));
           assert (null_p (env, cdr (env, body)));
           auto sexp = car (env, body);
-          jo_vector_t jo_vector = {
-              new lit_jo_t (sexp_literalize (env, sexp)),
-          };
-          auto jojo = make_shared <jojo_t> (jo_vector);
-          return jojo;
+          return sexp_qoute_compile (env, sexp);
       }
+        struct collect_list_jo_t: jo_t
+        {
+            size_t counter;
+            collect_list_jo_t (size_t counter);
+            jo_t * copy ();
+            void exe (env_t &env, local_scope_t &local_scope);
+            string repr (env_t &env);
+        };
+        collect_list_jo_t::
+        collect_list_jo_t (size_t counter)
+        {
+            this->counter = counter;
+        }
+        jo_t *
+        collect_list_jo_t::copy ()
+        {
+            return new collect_list_jo_t (this->counter);
+        }
+        void
+        collect_list_jo_t::exe (env_t &env, local_scope_t &local_scope)
+        {
+            size_t index = 0;
+            auto collection = null_c (env);
+            while (index < this->counter) {
+                auto obj = env.obj_stack.top ();
+                env.obj_stack.pop ();
+                collection = cons_c (env, obj, collection);
+                index++;
+            }
+            env.obj_stack.push (collection);
+        }
+        string
+        collect_list_jo_t::repr (env_t &env)
+        {
+            return "(collect-list " + to_string (this->counter) + ")";
+        }
+      shared_ptr <jojo_t>
+      k_list (
+          env_t &env,
+          local_ref_map_t &local_ref_map,
+          shared_ptr <obj_t> body)
+      {
+          auto sexp_list = body;
+          auto jojo = sexp_list_compile
+              (env, local_ref_map, sexp_list);
+          auto counter = list_size (env, sexp_list);
+          jo_vector_t jo_vector = {
+              new collect_list_jo_t (counter),
+          };
+          auto ending_jojo = make_shared <jojo_t> (jo_vector);
+          return jojo_append (jojo, ending_jojo);
+      }
+      // shared_ptr <jojo_t>
+      // sexp_list_quasiquote_compile (
+      //     env_t &env,
+      //     local_ref_map_t &local_ref_map,
+      //     shared_ptr <obj_t> sexp_list);
+
+      // shared_ptr <jojo_t>
+      // sexp_quasiquote_compile (
+      //     env_t &env,
+      //     local_ref_map_t &local_ref_map,
+      //     shared_ptr <obj_t> sexp)
+      // {
+      //     if (str_p (env, sexp)) {
+      //         return sexp_qoute_compile (env, sexp);
+      //     }
+      //     else if (vect_p (env, sexp)) {
+      //         auto vect = as_vect (sexp);
+      //         return vect_compile (env, local_ref_map, vect);
+      //     }
+      //     else if (dict_p (env, sexp)) {
+      //         auto dict = as_dict (sexp);
+      //         return dict_compile (env, local_ref_map, dict);
+      //     }
+      //     else {
+      //         assert (cons_p (env, sexp));
+      //         auto head = car (env, sexp);
+      //         if (str_p (env, head)) {
+      //             auto str = as_str (head);
+      //             if (str->str == "quasiquote") {
+
+      //             }
+      //             else if (str->str == "quasiquote") {
+
+      //             }
+      //             else {
+      //                 return sexp_list_quasiquote_compile (
+      //                     env,
+      //                     local_ref_map,
+      //                     sexp);
+      //             }
+      //         }
+      //         else {
+      //             return sexp_list_quasiquote_compile (
+      //                 env,
+      //                 local_ref_map,
+      //                 sexp);
+      //         }
+      //     }
+      // }
+      // shared_ptr <jojo_t>
+      // sexp_list_quasiquote_compile (
+      //     env_t &env,
+      //     local_ref_map_t &local_ref_map,
+      //     shared_ptr <obj_t> sexp_list)
+      // {
+
+      // }
+      // shared_ptr <jojo_t>
+      // k_quasiquote (
+      //     env_t &env,
+      //     local_ref_map_t &local_ref_map,
+      //     shared_ptr <obj_t> body)
+      // {
+      //     assert (cons_p (env, body));
+      //     assert (null_p (env, cdr (env, body)));
+      //     auto sexp = car (env, body);
+      //     auto jojo = sexp_quasiquote_compile (env, local_ref_map, sexp);
+      //     return jojo;
+      // }
       shared_ptr <jojo_t>
       k_note (
           env_t &env,
@@ -3960,8 +4108,8 @@
           local_ref_map_t &local_ref_map,
           shared_ptr <obj_t> body)
       {
-          auto length = list_length (env, body);
-          assert (length == 3);
+          auto size = list_size (env, body);
+          assert (size == 3);
           auto pred_sexp = car (env, body);
           auto then_sexp = car (env, cdr (env, body));
           auto else_sexp = car (env, cdr (env, cdr (env, body)));
@@ -4035,8 +4183,8 @@
           local_ref_map_t &local_ref_map,
           shared_ptr <obj_t> body)
       {
-          auto length = list_length (env, body);
-          assert (length == 2);
+          auto size = list_size (env, body);
+          assert (size == 2);
           auto pred_sexp = car (env, body);
           auto then_sexp = car (env, cdr (env, body));
           auto pred_jojo = sexp_compile (env, local_ref_map, pred_sexp);
@@ -4840,6 +4988,7 @@
         define_keyword (env, "lambda", k_lambda);
         define_keyword (env, "case", k_case);
         define_keyword (env, "quote", k_quote);
+        define_keyword (env, "*", k_list);
         define_keyword (env, "note", k_note);
         define_keyword (env, "assert", k_assert);
         define_keyword (env, "if", k_if);

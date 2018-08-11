@@ -1,3 +1,10 @@
 ;; (quasiquote (0 1 2))
 ;; (quasiquote (0 (unquote (+ 1 2)) 4))
 ;; (quasiquote (0 (unquote-splicing (list 1 2)) 4))
+
+;; `(0 1 2)
+;; `(0 ~(+ 1 2) 4)
+;; `(0 ~@(list 1 2) 4)
+
+;; (println (sexp-repr (quote `(0 ~(+ 1 2) 4))))
+;; (println (sexp-repr (quote `(0 ~@(list 1 2) 4))))

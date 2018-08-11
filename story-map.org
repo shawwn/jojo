@@ -8,14 +8,13 @@
   - an interpreter implemented by dynamic threaded code
 * macro system
   - with lisp like macro system
-*** (partquote) -- k_partquote
 *** (= <name> (macro))
+*** (quasiquote) (unquote) (unquote-splicing)
 *** (let) -- as macro
-*** (and) -- as macro
-*** (or) -- as macro
-*** (~>) -- k_threading
-*** (~>vect) -- k_threading_to_vect
-*** (~>list) -- k_threading_to_list
+*** (and) (or) -- as macro
+*** (>) -- k_threading
+*** (vect>) -- k_threading_to_vect
+*** (list>) -- k_threading_to_list
 *** (cond) -- k_cond
 *** (match) -- k_match
 * object system
