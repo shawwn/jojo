@@ -47,6 +47,7 @@
     using tagged_box_t = pair <name_t, shared_ptr <box_t>>;
     using tagged_box_vector_t = vector <tagged_box_t>;
     using tag_map_t = map <name_t, tag_t>;
+    using symbol = string;
     struct obj_t
     {
         tag_t tag;
@@ -842,6 +843,7 @@
       tag_t keyword_tag      = 15;
       tag_t macro_tag        = 16;
       tag_t top_keyword_tag  = 17;
+      tag_t sym_tag          = 18;
       void
       init_tagged_box_vector (env_t &env)
       {
@@ -862,6 +864,7 @@
           preserve_tag (env, keyword_tag      , "keyword-t");
           preserve_tag (env, macro_tag        , "macro-t");
           preserve_tag (env, top_keyword_tag  , "top-keyword-t");
+          preserve_tag (env, sym_tag          , "sym-t");
       }
     env_t::env_t ()
     {
@@ -1292,10 +1295,6 @@
         return true_p (env, a)
             or false_p (env, a);
     }
-    void
-    test_bool ()
-    {
-    }
     struct data_pred_o: obj_t
     {
         tag_t tag_of_type;
@@ -1717,9 +1716,108 @@
         auto size = str->str.size ();
         return make_str (env, str->str.substr (1, size -1));
     }
-    void
-    test_str ()
+    struct sym_o: obj_t
     {
+        symbol sym;
+        sym_o (env_t &env, symbol sym);
+        bool eq (env_t &env, shared_ptr <obj_t> obj);
+        symbol repr (env_t &env);
+    };
+    sym_o::sym_o (env_t &env, symbol sym)
+    {
+        this->tag = sym_tag;
+        this->sym = sym;
+    }
+    shared_ptr <sym_o>
+    make_sym (env_t &env, symbol sym)
+    {
+        return make_shared <sym_o> (env, sym);
+    }
+    symbol
+    sym_o::repr (env_t &env)
+    {
+        return "\"" + this->sym + "\"";
+    }
+    shared_ptr <sym_o>
+    as_sym (shared_ptr <obj_t> obj)
+    {
+        assert (obj->tag == sym_tag);
+        return static_pointer_cast <sym_o> (obj);
+    }
+    bool
+    sym_o::eq (env_t &env, shared_ptr <obj_t> obj)
+    {
+        if (this->tag != obj->tag) return false;
+        auto that = as_sym (obj);
+        return (this->sym == that->sym);
+    }
+    bool
+    sym_p (env_t &env, shared_ptr <obj_t> a)
+    {
+        return a->tag == sym_tag;
+    }
+    shared_ptr <num_o>
+    sym_length (
+        env_t &env,
+        shared_ptr <sym_o> sym)
+    {
+        auto size = sym->sym.size ();
+        return make_num (env, static_cast <num_t> (size));
+    }
+    shared_ptr <sym_o>
+    sym_append (
+        env_t &env,
+        shared_ptr <sym_o> ante,
+        shared_ptr <sym_o> succ)
+    {
+        return make_sym (env, ante->sym + succ->sym);
+    }
+    shared_ptr <sym_o>
+    sym_slice (
+        env_t &env,
+        shared_ptr <sym_o> sym,
+        shared_ptr <num_o> begin,
+        shared_ptr <num_o> end)
+    {
+        auto size = sym->sym.size ();
+        assert (begin->num >= 0);
+        assert (end->num < size);
+        auto length = end->num - begin->num;
+        return make_sym (env, sym->sym.substr (begin->num, length));
+    }
+    shared_ptr <sym_o>
+    sym_ref (
+        env_t &env,
+        shared_ptr <sym_o> sym,
+        shared_ptr <num_o> index)
+    {
+        auto size = sym->sym.size ();
+        assert (index->num >= 0);
+        assert (index->num < size);
+        auto c = sym->sym [index->num];
+        auto s = symbol ();
+        s += c;
+        return make_sym (env, s);
+    }
+    shared_ptr <sym_o>
+    sym_head (
+        env_t &env,
+        shared_ptr <sym_o> sym)
+    {
+        auto size = sym->sym.size ();
+        assert (size >= 1);
+        auto c = sym->sym [0];
+        auto s = symbol ();
+        s += c;
+        return make_sym (env, s);
+    }
+    shared_ptr <sym_o>
+    sym_rest (
+        env_t &env,
+        shared_ptr <sym_o> sym)
+    {
+        auto size = sym->sym.size ();
+        return make_sym (env, sym->sym.substr (1, size -1));
     }
     shared_ptr <obj_t>
     null_c (env_t &env)
@@ -1779,10 +1877,6 @@
         return size;
     }
 
-    void
-    test_list ()
-    {
-    }
     struct vect_o: obj_t
     {
         obj_vector_t obj_vector;
@@ -1955,10 +2049,6 @@
         obj_vector.push_back (obj);
         return make_vect (env, obj_vector);
     }
-    void
-    test_vect ()
-    {
-    }
     struct dict_o: obj_t
     {
         dict_o (env_t &env, obj_map_t obj_map);
@@ -2031,10 +2121,6 @@
     dict_length (env_t &env, shared_ptr <dict_o> dict)
     {
         return make_num (env, dict->obj_map.size ());
-    }
-    void
-    test_dict ()
-    {
     }
     bool
     space_char_p (char c)
@@ -4895,6 +4981,79 @@
                         as_str (obj_map ["str"])));
             });
     }
+    void
+    expose_sym (env_t &env)
+    {
+        // def_type (env, "sym-t");
+        define_prim (
+            env, { "sym-print", "sym" },
+            [] (env_t &env, obj_map_t &obj_map)
+            {
+                auto obj = obj_map ["sym"];
+                assert (sym_p (env, obj));
+                auto sym = as_sym (obj);
+                cout << sym->sym;
+                env.obj_stack.push (sym);
+            });
+        define_prim (
+            env, { "sym-length", "sym" },
+            [] (env_t &env, obj_map_t &obj_map)
+            {
+            env.obj_stack.push (
+                sym_length (
+                    env,
+                    as_sym (obj_map ["sym"])));
+            });
+        define_prim (
+            env, { "sym-append", "ante", "succ" },
+            [] (env_t &env, obj_map_t &obj_map)
+            {
+                env.obj_stack.push (
+                    sym_append (
+                        env,
+                        as_sym (obj_map ["ante"]),
+                        as_sym (obj_map ["succ"])));
+            });
+        define_prim (
+            env, { "sym-slice", "sym", "begin", "end" },
+            [] (env_t &env, obj_map_t &obj_map)
+            {
+                env.obj_stack.push (
+                    sym_slice (
+                        env,
+                        as_sym (obj_map ["sym"]),
+                        as_num (obj_map ["begin"]),
+                        as_num (obj_map ["end"])));
+            });
+        define_prim (
+            env, { "sym-ref", "sym", "index" },
+            [] (env_t &env, obj_map_t &obj_map)
+            {
+                env.obj_stack.push (
+                    sym_ref (
+                        env,
+                        as_sym (obj_map ["sym"]),
+                        as_num (obj_map ["index"])));
+            });
+        define_prim (
+            env, { "sym-head", "sym" },
+            [] (env_t &env, obj_map_t &obj_map)
+            {
+                env.obj_stack.push (
+                    sym_head (
+                        env,
+                        as_sym (obj_map ["sym"])));
+            });
+        define_prim (
+            env, { "sym-rest", "sym" },
+            [] (env_t &env, obj_map_t &obj_map)
+            {
+                env.obj_stack.push (
+                    sym_rest (
+                        env,
+                        as_sym (obj_map ["sym"])));
+            });
+    }
       shared_ptr <obj_t>
       jj_null_c (env_t &env)
       {
@@ -5269,6 +5428,7 @@
         expose_bool (env);
         expose_num (env);
         expose_str (env);
+        expose_sym (env);
         expose_list (env);
         expose_vect (env);
         expose_dict (env);
@@ -5539,11 +5699,6 @@
         test_data_cons ();
         test_data_cons_curry ();
         test_prim ();
-        test_bool ();
-        test_str ();
-        test_list ();
-        test_vect ();
-        test_dict ();
         test_scan ();
     }
     void
