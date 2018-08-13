@@ -25,8 +25,7 @@
 
     #include <cmath>
 
-    // #include <filesystem>
-    #include <experimental/filesystem>
+    #include <filesystem>
     #+end_src
 
 *** about namespace
@@ -34,8 +33,7 @@
     #+begin_src cpp
     using namespace std;
 
-    // namespace fs = filesystem;
-    namespace fs = experimental::filesystem;
+    namespace fs = filesystem;
     #+end_src
 
 * datatype
