@@ -1,1 +1,4 @@
-(note (println (list-to-vect (* 1 2 3 4))))
+(assert (eq (*) null-c))
+(assert (eq (* 1) (cons-c 1 null-c)))
+(assert (eq (* 1 2) (cons-c 1 (cons-c 2 null-c))))
+(assert (eq (list-to-vect (* 1 2 3 4)) [1 2 3 4]))

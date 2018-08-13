@@ -2435,6 +2435,8 @@
         }
         else if (quote_word_p (word))
             return word_list_rest (env, cdr (env, word_list));
+        else if (unquote_word_p (word))
+            return word_list_rest (env, cdr (env, word_list));
         else
             return cdr (env, word_list);
     }
@@ -2729,12 +2731,6 @@
         {
             return this->obj->repr (env);
         }
-      bool
-      lit_sexp_p (env_t &env, shared_ptr <obj_t> sexp)
-      {
-          return str_p (env, sexp)
-              or num_p (env, sexp);
-      }
       shared_ptr <jojo_t>
       lit_compile (
           env_t &env,
@@ -3366,7 +3362,9 @@
         local_ref_map_t &local_ref_map,
         shared_ptr <obj_t> sexp)
     {
-        if (lit_sexp_p (env, sexp)) {
+        if (str_p (env, sexp) or
+            num_p (env, sexp))
+        {
             return lit_compile (env, local_ref_map, sexp);
         }
         else if (sym_p (env, sexp)) {
@@ -4126,75 +4124,6 @@
           auto ending_jojo = make_shared <jojo_t> (jo_vector);
           return jojo_append (jojo, ending_jojo);
       }
-      // shared_ptr <jojo_t>
-      // sexp_list_quasiquote_compile (
-      //     env_t &env,
-      //     local_ref_map_t &local_ref_map,
-      //     shared_ptr <obj_t> sexp_list);
-
-      // shared_ptr <jojo_t>
-      // sexp_quasiquote_compile (
-      //     env_t &env,
-      //     local_ref_map_t &local_ref_map,
-      //     shared_ptr <obj_t> sexp)
-      // {
-      //     if (str_p (env, sexp)) {
-      //         return sexp_qoute_compile (env, sexp);
-      //     }
-      //     else if (vect_p (env, sexp)) {
-      //         auto vect = as_vect (sexp);
-      //         return vect_compile (env, local_ref_map, vect);
-      //     }
-      //     else if (dict_p (env, sexp)) {
-      //         auto dict = as_dict (sexp);
-      //         return dict_compile (env, local_ref_map, dict);
-      //     }
-      //     else {
-      //         assert (cons_p (env, sexp));
-      //         auto head = car (env, sexp);
-      //         if (str_p (env, head)) {
-      //             auto str = as_str (head);
-      //             if (str->str == "quasiquote") {
-
-      //             }
-      //             else if (str->str == "quasiquote") {
-
-      //             }
-      //             else {
-      //                 return sexp_list_quasiquote_compile (
-      //                     env,
-      //                     local_ref_map,
-      //                     sexp);
-      //             }
-      //         }
-      //         else {
-      //             return sexp_list_quasiquote_compile (
-      //                 env,
-      //                 local_ref_map,
-      //                 sexp);
-      //         }
-      //     }
-      // }
-      // shared_ptr <jojo_t>
-      // sexp_list_quasiquote_compile (
-      //     env_t &env,
-      //     local_ref_map_t &local_ref_map,
-      //     shared_ptr <obj_t> sexp_list)
-      // {
-
-      // }
-      // shared_ptr <jojo_t>
-      // k_quasiquote (
-      //     env_t &env,
-      //     local_ref_map_t &local_ref_map,
-      //     shared_ptr <obj_t> body)
-      // {
-      //     assert (cons_p (env, body));
-      //     assert (null_p (env, cdr (env, body)));
-      //     auto sexp = car (env, body);
-      //     auto jojo = sexp_quasiquote_compile (env, local_ref_map, sexp);
-      //     return jojo;
-      // }
       shared_ptr <jojo_t>
       k_note (
           env_t &env,
@@ -4456,6 +4385,89 @@
               rest = cons_c (env, rest, unit_list (env, obj));
           }
           env.obj_stack.push (rest);
+      }
+      shared_ptr <obj_t>
+      sexp_list_quote_and_unquote (
+          env_t &env,
+          shared_ptr <obj_t> sexp_list);
+
+      shared_ptr <obj_t>
+      sexp_quote_and_unquote (
+          env_t &env,
+          shared_ptr <obj_t> sexp)
+      {
+          if (str_p (env, sexp) or num_p (env, sexp)) {
+              return sexp;
+          }
+          else if (sym_p (env, sexp)) {
+              return cons_c (
+                  env,
+                  make_sym (env, "quote"),
+                  unit_list (env, sexp));
+          }
+          else if (vect_p (env, sexp)) {
+              return list_to_vect (
+                  env,
+                  sexp_list_quote_and_unquote (
+                      env,
+                      vect_to_list (env, as_vect (sexp))));
+          }
+          else if (dict_p (env, sexp)) {
+              return list_to_dict (
+                  env,
+                  sexp_list_quote_and_unquote (
+                      env,
+                      dict_to_list (env, as_dict (sexp))));
+          }
+          else if (null_p (env, sexp))
+          {
+              return sexp;
+          }
+          else {
+              assert (cons_p (env, sexp));
+              auto head = car (env, sexp);
+              if (sym_p (env, head) and
+                  as_sym (head) ->sym == "unquote")
+              {
+                  auto rest = cdr (env, sexp);
+                  assert (cons_p (env, rest));
+                  assert (null_p (env, cdr (env, rest)));
+                  return car (env, rest);
+              }
+              else {
+                  return cons_c (
+                      env,
+                      make_sym (env, "*"),
+                      sexp_list_quote_and_unquote (
+                          env,
+                          sexp));
+              }
+          }
+      }
+      shared_ptr <obj_t>
+      sexp_list_quote_and_unquote (
+          env_t &env,
+          shared_ptr <obj_t> sexp_list)
+      {
+          if (null_p (env, sexp_list))
+              return sexp_list;
+          else
+              return cons_c (
+                  env,
+                  sexp_quote_and_unquote (env, car (env, sexp_list)),
+                  sexp_list_quote_and_unquote (env, cdr (env, sexp_list)));
+      }
+      void
+      m_quasiquote (
+          env_t &env,
+          obj_map_t &obj_map)
+      {
+          auto body = obj_map ["body"];
+          assert (cons_p (env, body));
+          assert (null_p (env, cdr (env, body)));
+          auto sexp = car (env, body);
+          auto new_sexp = sexp_quote_and_unquote (env, sexp);
+          env.obj_stack.push (new_sexp);
       }
       void
       def_type (env_t &env, name_t name)
@@ -5339,6 +5351,7 @@
         define_keyword (env, "when", k_when);
         define_keyword (env, "begin", k_begin);
         define_prim_macro (env, "let", m_let);
+        define_prim_macro (env, "quasiquote", m_quasiquote);
     }
     void
     expose_misc (env_t &env)
