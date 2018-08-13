@@ -3,7 +3,8 @@
 # C="g++"
 C="clang++"
 W="-Wall -Wextra -Wno-infinite-recursion -Wno-unused-parameter"
-L="-std=c++17 -lstdc++fs"
+# L="-std=c++17 -lstdc++fs"
+L="-lstdc++fs"
 O="-foptimize-sibling-calls -O2"
 D="-g"
 
