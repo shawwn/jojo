@@ -1201,7 +1201,7 @@
         assert (! box->empty_p);
         return as_type (box->obj);
     }
-    struct data_o: obj_t
+    struct data_o: obj_t, enable_shared_from_this <obj_t>
     {
         data_o (
             env_t &env,
@@ -1228,9 +1228,17 @@
 
     }
     string
+    sexp_repr (env_t &env, shared_ptr <obj_t> a);
+
+    string
     data_o::repr (env_t &env)
     {
-        if (this->obj_map.size () == 0) {
+        if (this->tag == null_tag or
+            this->tag == cons_tag)
+        {
+            return sexp_repr (env, shared_from_this ());
+        }
+        else if (this->obj_map.size () == 0) {
             string repr = "";
             repr += name_of_tag (env, this->tag);
             repr.pop_back ();
@@ -1884,7 +1892,40 @@
         }
         return size;
     }
-
+    shared_ptr <num_o>
+    list_length (env_t &env, shared_ptr <obj_t> l)
+    {
+        auto size = list_size (env, l);
+        auto length = static_cast <num_t> (size);
+        return make_num (env, length);
+    }
+    shared_ptr <obj_t>
+    list_reverse (env_t &env, shared_ptr <obj_t> l)
+    {
+        assert (list_p (env, l));
+        auto result = null_c (env);
+        while (! null_p (env, l)) {
+            auto obj = car (env, l);
+            result = cons_c (env, obj, result);
+            l = cdr (env, l);
+        }
+        return result;
+    }
+    shared_ptr <obj_t>
+    list_append (
+        env_t &env,
+        shared_ptr <obj_t> ante,
+        shared_ptr <obj_t> succ)
+    {
+        auto l = list_reverse (env, ante);
+        auto result = succ;
+        while (! null_p (env, l)) {
+            auto obj = car (env, l);
+            result = cons_c (env, obj, result);
+            l = cdr (env, l);
+        }
+        return result;
+    }
     shared_ptr <obj_t>
     unit_list (env_t &env, shared_ptr <obj_t> obj)
     {
@@ -4410,23 +4451,25 @@
                   make_sym (env, "quote"),
                   unit_list (env, sexp));
           }
-          else if (vect_p (env, sexp)) {
-              return list_to_vect (
+          else if (null_p (env, sexp)) {
+              return cons_c (
                   env,
-                  sexp_list_quote_and_unquote (
-                      env,
-                      vect_to_list (env, as_vect (sexp))));
+                  make_sym (env, "quote"),
+                  unit_list (env, sexp));
+          }
+          else if (vect_p (env, sexp)) {
+              auto l = vect_to_list (env, as_vect (sexp));
+              return cons_c (
+                  env,
+                  make_sym (env, "list-to-vect"),
+                  unit_list (env, sexp_list_quote_and_unquote (env, l)));
           }
           else if (dict_p (env, sexp)) {
-              return list_to_dict (
+              auto l = dict_to_list (env, as_dict (sexp));
+              return cons_c (
                   env,
-                  sexp_list_quote_and_unquote (
-                      env,
-                      dict_to_list (env, as_dict (sexp))));
-          }
-          else if (null_p (env, sexp))
-          {
-              return sexp;
+                  make_sym (env, "list-to-dict"),
+                  unit_list (env, sexp_list_quote_and_unquote (env, l)));
           }
           else {
               assert (cons_p (env, sexp));
@@ -4440,12 +4483,9 @@
                   return car (env, rest);
               }
               else {
-                  return cons_c (
+                  return sexp_list_quote_and_unquote (
                       env,
-                      make_sym (env, "*"),
-                      sexp_list_quote_and_unquote (
-                          env,
-                          sexp));
+                      sexp);
               }
           }
       }
@@ -4454,13 +4494,34 @@
           env_t &env,
           shared_ptr <obj_t> sexp_list)
       {
-          if (null_p (env, sexp_list))
-              return sexp_list;
-          else
-              return cons_c (
-                  env,
-                  sexp_quote_and_unquote (env, car (env, sexp_list)),
-                  sexp_list_quote_and_unquote (env, cdr (env, sexp_list)));
+          if (null_p (env, sexp_list)) {
+              return unit_list (env, make_sym (env, "*"));
+          }
+          else {
+              assert (cons_p (env, sexp_list));
+              auto sexp = car (env, sexp_list);
+              if (cons_p (env, sexp) and
+                  sym_p (env, car (env, sexp)) and
+                  as_sym (car (env, sexp)) ->sym == "unquote-splicing")
+              {
+                  auto rest = cdr (env, sexp);
+                  assert (cons_p (env, rest));
+                  assert (null_p (env, cdr (env, rest)));
+                  sexp = car (env, rest);
+              }
+              else {
+                  sexp = cons_c (
+                      env,
+                      make_sym (env, "*"),
+                      unit_list (env, sexp_quote_and_unquote (env, sexp)));
+              }
+              auto result = sexp_list_quote_and_unquote (
+                  env, cdr (env, sexp_list));
+              result = unit_list (env, result);
+              result = cons_c (env, sexp, result);
+              result = cons_c (env, make_sym (env, "list-append"), result);
+              return result;
+          }
       }
       void
       m_quasiquote (
@@ -5061,6 +5122,34 @@
           // def_type (env, "cons-t");
           define (env, "null-c", jj_null_c (env));
           define (env, "cons-c", jj_cons_c (env));
+          define_prim (
+              env, { "list-length", "list" },
+              [] (env_t &env, obj_map_t &obj_map)
+              {
+                  env.obj_stack.push (
+                      list_length (
+                          env,
+                          obj_map ["list"]));
+              });
+          define_prim (
+              env, { "list-reverse", "list" },
+              [] (env_t &env, obj_map_t &obj_map)
+              {
+                  env.obj_stack.push (
+                      list_reverse (
+                          env,
+                          obj_map ["list"]));
+              });
+          define_prim (
+              env, { "list-append", "ante", "succ" },
+              [] (env_t &env, obj_map_t &obj_map)
+              {
+                  env.obj_stack.push (
+                      list_append (
+                          env,
+                          obj_map ["ante"],
+                          obj_map ["succ"]));
+              });
       }
     void
     expose_vect (env_t &env)
