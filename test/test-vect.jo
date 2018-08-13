@@ -21,3 +21,5 @@
              (unit-vect (vect-head [0 1 2 3 4]))
              (vect-rest [0 1 2 3 4]))
             [0 1 2 3 4]))
+
+(assert (eq (vect-reverse [1 2 3]) [3 2 1]))

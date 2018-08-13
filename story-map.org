@@ -9,7 +9,6 @@
 * macro system
   - with lisp like macro system
 *** (quasiquote) (unquote) (unquote-splicing)
-*** (let) -- as macro
 *** (and) (or) -- as macro
 *** (>) -- k_threading
 *** (vect>) -- k_threading_to_vect

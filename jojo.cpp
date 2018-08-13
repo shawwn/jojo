@@ -1736,7 +1736,7 @@
     symbol
     sym_o::repr (env_t &env)
     {
-        return "\"" + this->sym + "\"";
+        return "'" + this->sym;
     }
     shared_ptr <sym_o>
     as_sym (shared_ptr <obj_t> obj)
@@ -1877,6 +1877,11 @@
         return size;
     }
 
+    shared_ptr <obj_t>
+    unit_list (env_t &env, shared_ptr <obj_t> obj)
+    {
+        return cons_c (env, obj, null_c (env));
+    }
     struct vect_o: obj_t
     {
         obj_vector_t obj_vector;
@@ -2032,6 +2037,16 @@
             auto obj = *it;
             obj_vector.push_back (obj);
         }
+        return make_vect (env, obj_vector);
+    }
+    shared_ptr <vect_o>
+    vect_reverse (
+        env_t &env,
+        shared_ptr <vect_o> vect)
+    {
+        auto obj_vector = vect->obj_vector;
+        reverse (obj_vector.begin (),
+                 obj_vector.end ());
         return make_vect (env, obj_vector);
     }
     shared_ptr <vect_o>
@@ -2371,7 +2386,7 @@
             return cons_c (
                 env, head, word_list_head (env, cdr (env, word_list)));
         else
-            return cons_c (env, head, null_c (env));
+            return unit_list (env, head);
     }
     shared_ptr <obj_t>
     word_list_rest_with_bar_ket_counter (
@@ -2435,7 +2450,7 @@
         auto word = car_rest->str;
         if (null_p (env, cdr_rest)) {
             assert (word == ket);
-            return cons_c (env, head, null_c (env));
+            return unit_list (env, head);
         }
         else {
             return cons_c (
@@ -2498,20 +2513,16 @@
                  (env, word_list_drop_ket (env, rest, "}")));
         else if (word == "'")
             return cons_c (env, make_sym (env, "quote"),
-                           cons_c (env, parse_sexp (env, rest),
-                                   null_c (env)));
+                           unit_list (env, parse_sexp (env, rest)));
         else if (word == "`")
             return cons_c (env, make_sym (env, "quasiquote"),
-                           cons_c (env, parse_sexp (env, rest),
-                                   null_c (env)));
+                           unit_list (env, parse_sexp (env, rest)));
         else if (word == "~")
             return cons_c (env, make_sym (env, "unquote"),
-                           cons_c (env, parse_sexp (env, rest),
-                                   null_c (env)));
+                           unit_list (env, parse_sexp (env, rest)));
         else if (word == "~@")
             return cons_c (env, make_sym (env, "unquote-splicing"),
-                           cons_c (env, parse_sexp (env, rest),
-                                   null_c (env)));
+                           unit_list (env, parse_sexp (env, rest)));
         else if (num_string_p (word))
             return make_num (env, s2n (word));
         else if (string_string_p (word))
@@ -3231,10 +3242,10 @@
             return new_sexp;
         }
         void
-        define_prim_macro (env_t &env, sig_t sig, prim_fn fn)
+        define_prim_macro (env_t &env, name_t name, prim_fn fn)
         {
-            auto name = name_of_sig (sig);
-            auto name_vector = name_vector_of_sig (sig);
+            auto name_vector = name_vector_t ();
+            name_vector.push_back ("body");
             auto prim = make_shared <prim_o> (
                 env, name_vector, fn, obj_map_t ());
             auto macro = make_shared <macro_o> (env, prim);
@@ -3710,10 +3721,7 @@
               (env,
                make_sym (env, "lambda"),
                lambda_body);
-          lambda_body = cons_c
-              (env,
-               lambda_body,
-               null_c (env));
+          lambda_body = unit_list (env, lambda_body);
           return cons_c (env, name, lambda_body);
       }
       shared_ptr <obj_t>
@@ -3749,7 +3757,7 @@
           auto this_str = make_sym (env, "this");
           obj_vector_t obj_vector = { this_str };
           auto vect = make_vect (env, obj_vector);
-          auto lambda_body = cons_c (env, sexp, null_c (env));
+          auto lambda_body = unit_list (env, sexp);
           lambda_body = cons_c (env, vect, lambda_body);
           lambda_body = cons_c (
               env,
@@ -3836,7 +3844,7 @@
                 ")";
         }
       shared_ptr <obj_t>
-      lambda_patch_drop (env_t &env, shared_ptr <obj_t> sexp_list)
+      body_patch_drop (env_t &env, shared_ptr <obj_t> sexp_list)
       {
           assert (cons_p (env, sexp_list));
           auto head = car (env, sexp_list);
@@ -3844,10 +3852,8 @@
           if (null_p (env, rest))
               return sexp_list;
           else {
-              auto drop = cons_c
-                  (env, make_sym (env, "drop"),
-                   null_c (env));
-              sexp_list = lambda_patch_drop (env, rest);
+              auto drop = unit_list (env, make_sym (env, "drop"));
+              sexp_list = body_patch_drop (env, rest);
               sexp_list = cons_c (env, drop, sexp_list);
               sexp_list = cons_c (env, head, sexp_list);
               return sexp_list;
@@ -3875,7 +3881,7 @@
               (env, name_vect->obj_vector);
           auto local_ref_map = local_ref_map_extend
               (env, old_local_ref_map, name_vector);
-          rest = lambda_patch_drop (env, rest);
+          rest = body_patch_drop (env, rest);
           auto rest_jojo = sexp_list_compile
               (env, local_ref_map, rest);
           jo_vector_t jo_vector = {
@@ -3926,7 +3932,7 @@
               (env, name_vect->obj_vector);
           auto local_ref_map = local_ref_map_extend
               (env, old_local_ref_map, name_vector);
-          rest = lambda_patch_drop (env, rest);
+          rest = body_patch_drop (env, rest);
           auto rest_jojo = sexp_list_compile
               (env, local_ref_map, rest);
           jo_vector_t jo_vector = {
@@ -4419,6 +4425,34 @@
               new when_jo_t (pred_jojo, then_jojo),
           };
           return make_shared <jojo_t> (jo_vector);
+      }
+      shared_ptr <jojo_t>
+      k_begin (
+          env_t &env,
+          local_ref_map_t &local_ref_map,
+          shared_ptr <obj_t> body)
+      {
+          body = body_patch_drop (env, body);
+          return sexp_list_compile (env, local_ref_map, body);
+      }
+      void
+      m_let (env_t &env, obj_map_t &obj_map)
+      {
+          auto body = obj_map ["body"];
+          auto head = car (env, body);
+          auto rest = cdr (env, body);
+          auto binding_vect = as_vect (head);
+          binding_vect = vect_reverse (env, binding_vect);
+          rest = cons_c (env, make_sym (env, "begin"), rest);
+          for (auto binding: binding_vect->obj_vector) {
+              auto name = car (env, binding);
+              auto obj = car (env, cdr (env, binding));
+              rest = unit_list (env, rest);
+              rest = cons_c (env, unit_vect (env, name), rest);
+              rest = cons_c (env, make_sym (env, "lambda"), rest);
+              rest = cons_c (env, rest, unit_list (env, obj));
+          }
+          env.obj_stack.push (rest);
       }
       void
       def_type (env_t &env, name_t name)
@@ -5097,6 +5131,15 @@
                         env,
                         obj_map ["obj"]));
             });
+        define_prim (
+            env, { "vect-reverse", "vect" },
+            [] (env_t &env, obj_map_t &obj_map)
+            {
+                env.obj_stack.push (
+                    vect_reverse (
+                        env,
+                        as_vect (obj_map ["vect"])));
+            });
     }
     void
     expose_dict (env_t &env)
@@ -5291,6 +5334,8 @@
         define_keyword (env, "assert", k_assert);
         define_keyword (env, "if", k_if);
         define_keyword (env, "when", k_when);
+        define_keyword (env, "begin", k_begin);
+        define_prim_macro (env, "let", m_let);
     }
     void
     expose_misc (env_t &env)
