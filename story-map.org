@@ -37,6 +37,7 @@
 * secure
 *** can not handle big file -- due to the recursion in sexp parser
 *** make syntax frontend more secure
+* actor model
 * documentation
   - well documented
 *** renew old notes
