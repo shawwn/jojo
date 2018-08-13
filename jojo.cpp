@@ -1596,7 +1596,12 @@
     string
     num_o::repr (env_t &env)
     {
-        return to_string (this->num);
+        if (this->num == floor (this->num)) {
+            return to_string (static_cast <long long int> (this->num));
+        }
+        else {
+            return to_string (this->num);
+        }
     }
     shared_ptr <num_o>
     as_num (shared_ptr <obj_t> obj)
