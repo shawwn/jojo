@@ -4533,6 +4533,78 @@
           auto new_sexp = sexp_quote_and_unquote (env, sexp);
           env.obj_stack.push (new_sexp);
       }
+      shared_ptr <obj_t>
+      sexp_list_and (env_t &env, shared_ptr <obj_t> sexp_list)
+      {
+          if (null_p (env, sexp_list)) {
+              return make_sym (env, "true-c");
+          }
+          else if (null_p (env, cdr (env, sexp_list))) {
+              return car (env, sexp_list);
+          }
+          else {
+              auto head = car (env, sexp_list);
+              auto rest = cdr (env, sexp_list);
+              head = cons_c (
+                  env,
+                  make_sym (env, "not"),
+                  unit_list (env, head));
+              auto result = unit_list (env, sexp_list_and (env, rest));
+              result = cons_c (
+                  env,
+                  make_sym (env, "false-c"),
+                  result);
+              result = cons_c (
+                  env,
+                  head,
+                  result);
+              result = cons_c (
+                  env,
+                  make_sym (env, "if"),
+                  result);
+              return result;
+          }
+      }
+      void
+      m_and (env_t &env, obj_map_t &obj_map)
+      {
+          auto body = obj_map ["body"];
+          env.obj_stack.push (sexp_list_and (env, body));
+      }
+      shared_ptr <obj_t>
+      sexp_list_or (env_t &env, shared_ptr <obj_t> sexp_list)
+      {
+          if (null_p (env, sexp_list)) {
+              return make_sym (env, "false-c");
+          }
+          else if (null_p (env, cdr (env, sexp_list))) {
+              return car (env, sexp_list);
+          }
+          else {
+              auto head = car (env, sexp_list);
+              auto rest = cdr (env, sexp_list);
+              auto result = unit_list (env, sexp_list_or (env, rest));
+              result = cons_c (
+                  env,
+                  make_sym (env, "true-c"),
+                  result);
+              result = cons_c (
+                  env,
+                  head,
+                  result);
+              result = cons_c (
+                  env,
+                  make_sym (env, "if"),
+                  result);
+              return result;
+          }
+      }
+      void
+      m_or (env_t &env, obj_map_t &obj_map)
+      {
+          auto body = obj_map ["body"];
+          env.obj_stack.push (sexp_list_or (env, body));
+      }
       void
       def_type (env_t &env, name_t name)
       {
@@ -4580,6 +4652,8 @@
           // def_type (env, "false-t");
           define (env, "true-c", jj_true_c (env));
           define (env, "false-c", jj_false_c (env));
+          define (env, "true", jj_true_c (env));
+          define (env, "false", jj_false_c (env));
           define_prim (env,
                        jj_not_sig,
                        jj_not);
@@ -5120,6 +5194,8 @@
           // def_type (env, "cons-t");
           define (env, "null-c", jj_null_c (env));
           define (env, "cons-c", jj_cons_c (env));
+          define (env, "null", jj_null_c (env));
+          define (env, "cons", jj_cons_c (env));
           define_prim (
               env, { "list-length", "list" },
               [] (env_t &env, obj_map_t &obj_map)
@@ -5444,6 +5520,8 @@
         define_keyword (env, "begin", k_begin);
         define_prim_macro (env, "let", m_let);
         define_prim_macro (env, "quasiquote", m_quasiquote);
+        define_prim_macro (env, "and", m_and);
+        define_prim_macro (env, "or", m_or);
     }
     void
     expose_misc (env_t &env)

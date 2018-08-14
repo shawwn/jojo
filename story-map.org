@@ -8,11 +8,10 @@
   - an interpreter implemented by dynamic threaded code
 * macro system
   - with lisp like macro system
-*** (and) (or) -- as macro
+*** (cond)
 *** (>) -- k_threading
-*** (vect>) -- k_threading_to_vect
-*** (list>) -- k_threading_to_list
-*** (cond) -- k_cond
+*** (*>) -- k_threading_to_list
+*** (v>) -- k_threading_to_vect
 *** (match) -- k_match
 * object system
   - with object system
