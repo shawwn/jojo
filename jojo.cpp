@@ -2220,6 +2220,69 @@
     {
         return make_num (env, dict->obj_map.size ());
     }
+    shared_ptr <obj_t>
+    dict_key_list (env_t &env, shared_ptr <dict_o> dict)
+    {
+        auto result = null_c (env);
+        for (auto &kv: dict->obj_map) {
+            auto sym = make_sym (env, kv.first);
+            result = cons_c (env, sym, result);
+        }
+        return result;
+    }
+    shared_ptr <obj_t>
+    dict_value_list (env_t &env, shared_ptr <dict_o> dict)
+    {
+        auto result = null_c (env);
+        for (auto &kv: dict->obj_map) {
+            auto obj = kv.second;
+            result = cons_c (env, obj, result);
+        }
+        return result;
+    }
+    shared_ptr <dict_o>
+    dict_insert (
+        env_t &env,
+        shared_ptr <dict_o> dict,
+        shared_ptr <sym_o> sym,
+        shared_ptr <obj_t> value)
+    {
+        auto obj_map = dict->obj_map;
+        auto key = sym->sym;
+        obj_map [key] = value;
+        return make_dict (env, obj_map);
+    }
+    shared_ptr <dict_o>
+    dict_merge (
+        env_t &env,
+        shared_ptr <dict_o> ante,
+        shared_ptr <dict_o> succ)
+    {
+        auto obj_map = ante->obj_map;
+        for (auto &kv: succ->obj_map) {
+            auto key = kv.first;
+            auto value = kv.second;
+            obj_map [key] = value;
+        }
+        return make_dict (env, obj_map);
+    }
+    shared_ptr <obj_t>
+    dict_find (
+        env_t &env,
+        shared_ptr <dict_o> dict,
+        shared_ptr <sym_o> sym)
+    {
+        auto obj_map = dict->obj_map;
+        auto key = sym->sym;
+        auto it = obj_map.find (key);
+        if (it != obj_map.end ()) {
+            auto value = it->second;
+            return just_c (env, value);
+        }
+        else {
+            return nothing_c (env);
+        }
+    }
     bool
     space_char_p (char c)
     {
@@ -5438,6 +5501,55 @@
                     dict_length (
                         env,
                         as_dict (obj_map ["dict"])));
+            });
+        define_prim (
+            env, { "dict-key-list", "dict" },
+            [] (env_t &env, obj_map_t &obj_map)
+            {
+                env.obj_stack.push (
+                    dict_key_list (
+                        env,
+                        as_dict (obj_map ["dict"])));
+            });
+        define_prim (
+            env, { "dict-value-list", "dict" },
+            [] (env_t &env, obj_map_t &obj_map)
+            {
+                env.obj_stack.push (
+                    dict_value_list (
+                        env,
+                        as_dict (obj_map ["dict"])));
+            });
+        define_prim (
+            env, { "dict-insert", "dict", "key", "value" },
+            [] (env_t &env, obj_map_t &obj_map)
+            {
+                env.obj_stack.push (
+                    dict_insert (
+                        env,
+                        as_dict (obj_map ["dict"]),
+                        as_sym (obj_map ["key"]),
+                        obj_map ["value"]));
+            });
+        define_prim (
+            env, { "dict-merge", "ante", "succ" },
+            [] (env_t &env, obj_map_t &obj_map)
+            {
+                env.obj_stack.push (
+                    dict_merge (
+                        env,
+                        as_dict (obj_map ["ante"]),
+                        as_dict (obj_map ["succ"])));
+            });
+        define_prim (
+            env, { "dict-find", "dict", "key" },
+            [] (env_t &env, obj_map_t &obj_map)
+            {
+                env.obj_stack.push (
+                    dict_find (
+                        env,
+                        as_dict (obj_map ["dict"]),
+                        as_sym (obj_map ["key"])));
             });
     }
     void

@@ -30,3 +30,31 @@
     (case found
       (nothing-t ...)
       (just-t found.value ))))
+
+(assert (eq (list-length
+             (dict-key-list {a: "b" c: "d" e: "f"}))
+            3))
+
+(assert (eq (list-length
+             (dict-value-list {a: "b" c: "d" e: "f"}))
+            3))
+
+(assert (eq (dict-insert
+             (dict-insert
+              {a: "b" c: "d"}
+              'e "f")
+             'g "h")
+            {a: "b" c: "d"
+             e: "f" g: "h"}))
+
+(assert (eq (dict-merge {a: "b" c: "d"}
+                        {e: "f" g: "h"})
+            {a: "b" c: "d"
+             e: "f" g: "h"}))
+
+
+(assert (eq (dict-find {a: "b" c: "d"} 'a)
+            (just-c "b")))
+
+(assert (eq (dict-find {a: "b" c: "d"} 'x)
+            nothing-c))
