@@ -20,17 +20,6 @@
 
 (assert (eq (dict-length {a: "b" c: "d"}) 2))
 
-(note
-  (match (dict-find dict key)
-    (nothing-t ...)
-    ((just-c value) ...)))
-
-(note
-  (let [(found (dict-find dict key))]
-    (case found
-      (nothing-t ...)
-      (just-t found.value ))))
-
 (assert (eq (list-length
              (dict-key-list {a: "b" c: "d" e: "f"}))
             3))
@@ -58,3 +47,22 @@
 
 (assert (eq (dict-find {a: "b" c: "d"} 'x)
             nothing-c))
+
+(let [(key 'a)
+      (dict {a: "b" c: "d"})
+      (found (dict-find dict key))]
+  (case found
+    (nothing-t (assert false))
+    (just-t (assert (eq found.value "b")))))
+
+(let [(key 'x)
+      (dict {a: "b" c: "d"})
+      (found (dict-find dict key))]
+  (case found
+    (nothing-t (assert true))
+    (just-t (assert false))))
+
+;; (note
+;;   (match (dict-find dict key)
+;;     (nothing-t ...)
+;;     ((just-c value) ...)))

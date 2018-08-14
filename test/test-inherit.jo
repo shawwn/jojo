@@ -1,0 +1,8 @@
+(= just-2-t
+   (data <: [just-t]
+     value-2))
+
+;; (= just-2 (just-2-c 1 2))
+
+;; (assert (eq just-2.value 1))
+;; (assert (eq just-2.value-2 2))

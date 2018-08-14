@@ -12,10 +12,11 @@
 *** (*>) -- k_threading_to_list
 *** (v>) -- k_threading_to_vect
 *** (match) -- k_match
+*** call with named fields
 * object system
   - with object system
-*** inheriting types
-*** summing types
+*** summing & union-type
+*** inheriting & sub-type
 * ffi
   - with simple ffi to c++
 *** handle ffi by dynamic library
@@ -27,7 +28,7 @@
 *** basic git
 * module system
   - with simple module system
-*** `env_eq` -- for module_o::eq
+*** `env_eq` -- for module_o::eq -- actor-model might need this
 *** do not reload module -- need to use module cache
 *** use (module) for non file module
 * secure
