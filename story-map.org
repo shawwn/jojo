@@ -8,7 +8,6 @@
   - an interpreter implemented by dynamic threaded code
 * macro system
   - with lisp like macro system
-*** (cond)
 *** (>) -- k_threading
 *** (*>) -- k_threading_to_list
 *** (v>) -- k_threading_to_vect

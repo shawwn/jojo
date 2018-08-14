@@ -3524,11 +3524,40 @@
           }
       }
     void
-    jojo_run (env_t &env, shared_ptr <jojo_t> jojo)
+    jojo_run (
+        env_t &env,
+        local_scope_t &local_scope,
+        shared_ptr <jojo_t> jojo)
+    {
+        auto base = env.frame_stack.size ();
+        env.frame_stack.push (make_shared <frame_t> (jojo, local_scope));
+        env.run_with_base (base);
+    }
+    shared_ptr <obj_t>
+    jojo_eval (
+        env_t &env,
+        local_scope_t &local_scope,
+        shared_ptr <jojo_t> jojo)
+    {
+        jojo_run (env, local_scope, jojo);
+        auto result = env.obj_stack.top ();
+        env.obj_stack.pop ();
+        return result;
+    }
+    void
+    jojo_run_in_new_frame (env_t &env, shared_ptr <jojo_t> jojo)
     {
         auto base = env.frame_stack.size ();
         env.frame_stack.push (new_frame_from_jojo (jojo));
         env.run_with_base (base);
+    }
+    shared_ptr <obj_t>
+    jojo_eval_in_new_frame (env_t &env, shared_ptr <jojo_t> jojo)
+    {
+        jojo_run_in_new_frame (env, jojo);
+        auto result = env.obj_stack.top ();
+        env.obj_stack.pop ();
+        return result;
     }
     void
     sexp_run (env_t &env, shared_ptr <obj_t> sexp)
@@ -3542,7 +3571,7 @@
         else {
             auto local_ref_map = local_ref_map_t ();
             auto jojo = sexp_compile (env, local_ref_map, sexp);
-            jojo_run (env, jojo);
+            jojo_run_in_new_frame (env, jojo);
         }
     }
     void
@@ -3588,7 +3617,7 @@
         else {
             auto local_ref_map = local_ref_map_t ();
             auto jojo = sexp_compile (env, local_ref_map, sexp);
-            jojo_run (env, jojo);
+            jojo_run_in_new_frame (env, jojo);
             if (! env.obj_stack.empty ())
                 env.obj_stack.pop ();
         }
@@ -4280,13 +4309,7 @@
         void
         if_jo_t::exe (env_t &env, local_scope_t &local_scope)
         {
-            auto base = env.frame_stack.size ();
-            env.frame_stack.push (
-                make_shared <frame_t> (
-                    this->pred_jojo,
-                    local_scope));
-            env.run_with_base (base);
-            auto result = env.obj_stack.top ();
+            auto result = jojo_eval (env, local_scope, pred_jojo);
             if (true_p (env, result)) {
                 env.frame_stack.push (
                     make_shared <frame_t> (
@@ -4358,13 +4381,7 @@
         void
         when_jo_t::exe (env_t &env, local_scope_t &local_scope)
         {
-            auto base = env.frame_stack.size ();
-            env.frame_stack.push (
-                make_shared <frame_t> (
-                    this->pred_jojo,
-                    local_scope));
-            env.run_with_base (base);
-            auto result = env.obj_stack.top ();
+            auto result = jojo_eval (env, local_scope, pred_jojo);
             if (true_p (env, result)) {
                 env.frame_stack.push (
                     make_shared <frame_t> (
@@ -4605,6 +4622,47 @@
           auto body = obj_map ["body"];
           env.obj_stack.push (sexp_list_or (env, body));
       }
+      shared_ptr <obj_t>
+      vect_list_cond (env_t &env, shared_ptr <obj_t> vect_list)
+      {
+          assert (! null_p (env, vect_list));
+          auto head = car (env, vect_list);
+          auto rest = cdr (env, vect_list);
+          auto l = vect_to_list (env, as_vect (head));
+          auto question = car (env, l);
+          auto answer = cons_c (
+              env,
+              make_sym (env, "begin"),
+              cdr (env, l));
+          if (null_p (env, rest)) {
+              if (sym_p (env, question) and
+                  as_sym (question) ->sym == "else")
+              {
+                  return answer;
+              }
+              else {
+                  auto result = null_c (env);
+                  result = cons_c (env, answer, result);
+                  result = cons_c (env, question, result);
+                  result = cons_c (env, make_sym (env, "when"), result);
+                  return result;
+              }
+          }
+          else {
+              auto result = unit_list (env, vect_list_cond (env, rest));
+              result = cons_c (env, answer, result);
+              result = cons_c (env, question, result);
+              result = cons_c (env, make_sym (env, "if"), result);
+              return result;
+          }
+      }
+      void
+      m_cond (env_t &env, obj_map_t &obj_map)
+      {
+          auto body = obj_map ["body"];
+          env.obj_stack.push (vect_list_cond (env, body));
+      }
+
       void
       def_type (env_t &env, name_t name)
       {
@@ -5522,6 +5580,7 @@
         define_prim_macro (env, "quasiquote", m_quasiquote);
         define_prim_macro (env, "and", m_and);
         define_prim_macro (env, "or", m_or);
+        define_prim_macro (env, "cond", m_cond);
     }
     void
     expose_misc (env_t &env)
@@ -5580,6 +5639,20 @@
             [] (env_t &env, obj_map_t &obj_map)
             {
                 env.report ();
+                env.obj_stack.push (true_c (env));
+            });
+        define_prim (
+            env, { "env-stack-report" },
+            [] (env_t &env, obj_map_t &obj_map)
+            {
+                env.obj_stack_report ();
+                env.obj_stack.push (true_c (env));
+            });
+        define_prim (
+            env, { "env-frame-report" },
+            [] (env_t &env, obj_map_t &obj_map)
+            {
+                env.frame_stack_report ();
                 env.obj_stack.push (true_c (env));
             });
     }
