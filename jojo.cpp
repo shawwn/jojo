@@ -845,6 +845,8 @@
       tag_t macro_tag        = 16;
       tag_t top_keyword_tag  = 17;
       tag_t sym_tag          = 18;
+      tag_t nothing_tag      = 19;
+      tag_t just_tag         = 20;
       void
       init_tagged_box_vector (env_t &env)
       {
@@ -866,6 +868,8 @@
           preserve_tag (env, macro_tag        , "macro-t");
           preserve_tag (env, top_keyword_tag  , "top-keyword-t");
           preserve_tag (env, sym_tag          , "sym-t");
+          preserve_tag (env, nothing_tag      , "nothing-t");
+          preserve_tag (env, just_tag         , "just-t");
       }
     env_t::env_t ()
     {
@@ -1839,6 +1843,11 @@
        return make_shared <data_o>
            (env, null_tag, obj_map_t ());
     }
+    bool
+    null_p (env_t &env, shared_ptr <obj_t> a)
+    {
+        return a->tag == null_tag;
+    }
     shared_ptr <obj_t>
     cons_c (
         env_t &env,
@@ -1867,11 +1876,6 @@
     {
         assert (cons_p (env, cons));
         return cons->obj_map ["cdr"];
-    }
-    bool
-    null_p (env_t &env, shared_ptr <obj_t> a)
-    {
-        return a->tag == null_tag;
     }
     bool
     list_p (env_t &env, shared_ptr <obj_t> a)
@@ -2104,6 +2108,44 @@
         auto obj_vector = obj_vector_t ();
         obj_vector.push_back (obj);
         return make_vect (env, obj_vector);
+    }
+    shared_ptr <obj_t>
+    nothing_c (env_t &env)
+    {
+       return make_shared <data_o>
+           (env, nothing_tag, obj_map_t ());
+    }
+    bool
+    nothing_p (env_t &env, shared_ptr <obj_t> a)
+    {
+        return a->tag == nothing_tag;
+    }
+    shared_ptr <obj_t>
+    just_c (
+        env_t &env,
+        shared_ptr <obj_t> value)
+    {
+        auto obj_map = obj_map_t ();
+        obj_map ["value"] = value;
+        return make_shared <data_o>
+            (env, just_tag, obj_map);
+    }
+    bool
+    just_p (env_t &env, shared_ptr <obj_t> a)
+    {
+        return a->tag == just_tag;
+    }
+    shared_ptr <obj_t>
+    value_of_just (env_t &env, shared_ptr <obj_t> just)
+    {
+        assert (just_p (env, just));
+        return just->obj_map ["value"];
+    }
+    bool
+    maybe_p (env_t &env, shared_ptr <obj_t> a)
+    {
+        return nothing_p (env, a)
+            or just_p (env, a);
     }
     struct dict_o: obj_t
     {
@@ -4663,59 +4705,39 @@
           env.obj_stack.push (vect_list_cond (env, body));
       }
 
-      void
-      def_type (env_t &env, name_t name)
-      {
-          define_type (env, name);
-          define_data_pred (env, name_t2p (name), tagging (env, name));
-      }
-      sig_t jj_type_of_sig = { "type-of", "obj" };
-      void jj_type_of (env_t &env, obj_map_t &obj_map)
-      {
-          auto obj = obj_map ["obj"];
-          env.obj_stack.push (type_of (env, obj));
-      }
-      void
-      expose_type (env_t &env)
-      {
-          // def_type (env, "type-t");
-          define_prim (env,
-                       jj_type_of_sig,
-                       jj_type_of);
-      }
-      shared_ptr <obj_t>
-      jj_true_c (env_t &env)
-      {
-         return make_shared <data_o>
-             (env, true_tag, obj_map_t ());
-      }
-      shared_ptr <obj_t>
-      jj_false_c (env_t &env)
-      {
-         return make_shared <data_o>
-             (env, false_tag, obj_map_t ());
-      }
-      sig_t jj_not_sig = { "not", "bool" };
-      // -- bool-t -> bool-t
-      void jj_not (env_t &env, obj_map_t &obj_map)
-      {
-          auto obj = obj_map ["bool"];
-          assert (bool_p (env, obj));
-          env.obj_stack.push (make_bool (env, false_p (env, obj)));
-      }
-      void
-      expose_bool (env_t &env)
-      {
-          // def_type (env, "true-t");
-          // def_type (env, "false-t");
-          define (env, "true-c", jj_true_c (env));
-          define (env, "false-c", jj_false_c (env));
-          define (env, "true", jj_true_c (env));
-          define (env, "false", jj_false_c (env));
-          define_prim (env,
-                       jj_not_sig,
-                       jj_not);
-      }
+    void
+    def_type (env_t &env, name_t name)
+    {
+        define_type (env, name);
+        define_data_pred (env, name_t2p (name), tagging (env, name));
+    }
+    void
+    expose_type (env_t &env)
+    {
+        define_prim (
+            env, { "type-of", "obj" },
+            [] (env_t &env, obj_map_t &obj_map)
+            {
+                auto obj = obj_map ["obj"];
+                env.obj_stack.push (type_of (env, obj));
+            });
+    }
+    void
+    expose_bool (env_t &env)
+    {
+        define (env, "true-c", true_c (env));
+        define (env, "true", true_c (env));
+        define (env, "false-c", false_c (env));
+        define (env, "false", false_c (env));
+        define_prim (
+            env, { "not", "bool" },
+            [] (env_t &env, obj_map_t &obj_map)
+            {
+                auto obj = obj_map ["bool"];
+                assert (bool_p (env, obj));
+                env.obj_stack.push (make_bool (env, false_p (env, obj)));
+            });
+    }
       void
       expose_num_predicate (env_t &env)
       {
@@ -5078,7 +5100,6 @@
       void
       expose_num (env_t &env)
       {
-          // def_type (env, "num-t");
           expose_num_predicate (env);
           expose_num_1 (env);
           expose_num_2 (env);
@@ -5088,7 +5109,6 @@
     void
     expose_str (env_t &env)
     {
-        // def_type (env, "str-t");
         define_prim (
             env, { "str-print", "str" },
             [] (env_t &env, obj_map_t &obj_map)
@@ -5160,7 +5180,6 @@
     void
     expose_sym (env_t &env)
     {
-        // def_type (env, "sym-t");
         define_prim (
             env, { "sym-print", "sym" },
             [] (env_t &env, obj_map_t &obj_map)
@@ -5230,29 +5249,21 @@
                         as_sym (obj_map ["sym"])));
             });
     }
-      shared_ptr <obj_t>
-      jj_null_c (env_t &env)
-      {
-         return make_shared <data_o>
-             (env, null_tag, obj_map_t ());
-      }
       shared_ptr <data_cons_o>
       jj_cons_c (env_t &env)
       {
-          return make_shared <data_cons_o>
-              (env,
-               cons_tag,
-               name_vector_t ({ "car", "cdr" }),
-               obj_map_t ());
+          return make_shared <data_cons_o> (
+              env,
+              cons_tag,
+              name_vector_t ({ "car", "cdr" }),
+              obj_map_t ());
       }
       void
       expose_list (env_t &env)
       {
-          // def_type (env, "null-t");
-          // def_type (env, "cons-t");
-          define (env, "null-c", jj_null_c (env));
+          define (env, "null-c", null_c (env));
+          define (env, "null", null_c (env));
           define (env, "cons-c", jj_cons_c (env));
-          define (env, "null", jj_null_c (env));
           define (env, "cons", jj_cons_c (env));
           define_prim (
               env, { "list-length", "list" },
@@ -5286,7 +5297,6 @@
     void
     expose_vect (env_t &env)
     {
-        // def_type (env, "vect-t");
         define_prim (
             env, { "list-to-vect", "list" },
             [] (env_t &env, obj_map_t &obj_map)
@@ -5382,10 +5392,26 @@
                         as_vect (obj_map ["vect"])));
             });
     }
+      shared_ptr <data_cons_o>
+      jj_just_c (env_t &env)
+      {
+          return make_shared <data_cons_o> (
+              env,
+              just_tag,
+              name_vector_t ({ "value" }),
+              obj_map_t ());
+      }
+      void
+      expose_maybe (env_t &env)
+      {
+          define (env, "nothing-c", nothing_c (env));
+          define (env, "nothing", nothing_c (env));
+          define (env, "just-c", jj_just_c (env));
+          define (env, "just", jj_just_c (env));
+      }
     void
     expose_dict (env_t &env)
     {
-        // def_type (env, "dict-t");
         define_prim (
             env, { "list-to-dict", "list" },
             [] (env_t &env, obj_map_t &obj_map)
@@ -5469,12 +5495,10 @@
     void
     expose_top_keyword (env_t &env)
     {
-        // def_type (env, "top-keyword-t");
     }
     void
     expose_keyword (env_t &env)
     {
-        // def_type (env, "keyword-t");
     }
     void
     expose_system (env_t &env)
@@ -5505,7 +5529,6 @@
       void
       expose_module (env_t &env)
       {
-          // def_type (env, "module-t");
           define_prim (env,
                        jj_import_sig,
                        jj_import);
@@ -5585,10 +5608,6 @@
     void
     expose_misc (env_t &env)
     {
-        // def_type (env, "closure-t");
-        // def_type (env, "data-pred-t");
-        // def_type (env, "data-cons-t");
-        // def_type (env, "prim-t");
         define_prim (
             env, { "repr", "obj" },
             [] (env_t &env, obj_map_t &obj_map)
@@ -5665,6 +5684,7 @@
         expose_sym (env);
         expose_list (env);
         expose_vect (env);
+        expose_maybe (env);
         expose_dict (env);
         expose_sexp (env);
         expose_top_keyword (env);
