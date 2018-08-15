@@ -3353,13 +3353,12 @@
     list_to_dict (env_t &env, shared_ptr <obj_t> l)
     {
         auto obj_map = obj_map_t ();
-        while (cons_p (env, l)) {
-            auto head = car (env, l);
-            auto key = as_sym (head);
-            assert (cons_p (env, cdr (env, l)));
-            auto obj = car (env, cdr (env, l));
-            obj_map [key->sym] = obj;
-            l = cdr (env, cdr (env, l));
+        while (! null_p (env, l)) {
+            auto pair = car (env, l);
+            auto sym = as_sym (car (env, pair));
+            auto obj = car (env, cdr (env, pair));
+            obj_map [sym->sym] = obj;
+            l = cdr (env, l);
         }
         return make_dict (env, obj_map);
     }
@@ -3375,8 +3374,29 @@
         for (auto &kv: dict->obj_map) {
             auto sym = make_sym (env, kv.first);
             auto obj = kv.second;
+            auto pair = cons_c (env, sym, unit_list (env, obj));
+            result = cons_c (env, pair, result);
+        }
+        return result;
+    }
+    #+end_src
+
+*** dict_to_flat_list
+
+    #+begin_src cpp
+    shared_ptr <obj_t>
+    dict_to_flat_list (env_t &env, shared_ptr <dict_o> dict)
+    {
+        auto result = null_c (env);
+        for (auto &kv: dict->obj_map) {
+            auto sym = make_sym (env, kv.first);
+            auto key = cons_c (
+                env,
+                make_sym (env, "quote"),
+                unit_list (env, sym));
+            auto obj = kv.second;
             result = cons_c (env, obj, result);
-            result = cons_c (env, sym, result);
+            result = cons_c (env, key, result);
         }
         return result;
     }
@@ -3982,6 +4002,108 @@
     }
     #+end_src
 
+*** sexp_list_to_vect
+
+    #+begin_src cpp
+    shared_ptr <vect_o>
+    sexp_list_to_vect (env_t &env, shared_ptr <obj_t> sexp_list)
+    {
+        return list_to_vect (env, sexp_list);
+    }
+    #+end_src
+
+*** sexp_list_prefix_assign_with_last_sexp
+
+    #+begin_src cpp
+    shared_ptr <obj_t>
+    sexp_list_prefix_assign (
+        env_t &env,
+        shared_ptr <obj_t> sexp_list);
+
+    shared_ptr <obj_t>
+    sexp_list_prefix_assign_with_last_sexp (
+        env_t &env,
+        shared_ptr <obj_t> sexp_list,
+        shared_ptr <obj_t> last_sexp)
+    {
+        if (null_p (env, sexp_list)) {
+            return unit_list (env, last_sexp);
+        }
+        else {
+            auto head = car (env, sexp_list);
+            if (sym_p (env, head) and as_sym (head) ->sym == "=") {
+                auto next = car (env, cdr (env, sexp_list));
+                auto rest = cdr (env, cdr (env, sexp_list));
+                auto new_last_sexp = cons_c (
+                    env, head, cons_c (
+                        env, last_sexp,
+                        unit_list (env, next)));
+                return cons_c (
+                    env, new_last_sexp,
+                    sexp_list_prefix_assign (
+                        env, rest));
+            }
+            else {
+                auto rest = cdr (env, sexp_list);
+                return cons_c (
+                    env, last_sexp,
+                    sexp_list_prefix_assign_with_last_sexp (
+                        env, rest, head));
+            }
+        }
+    }
+    #+end_src
+
+*** sexp_list_prefix_assign
+
+    #+begin_src cpp
+    shared_ptr <obj_t>
+    sexp_list_prefix_assign (
+        env_t &env,
+        shared_ptr <obj_t> sexp_list)
+    {
+        if (null_p (env, sexp_list))
+            return sexp_list;
+        else {
+            return sexp_list_prefix_assign_with_last_sexp (
+                env,
+                cdr (env, sexp_list),
+                car (env, sexp_list));
+        }
+    }
+    #+end_src
+
+*** sexp_list_assign_to_pair
+
+    #+begin_src cpp
+    shared_ptr <obj_t>
+    sexp_list_assign_to_pair (
+        env_t &env,
+        shared_ptr <obj_t> sexp_list)
+    {
+        if (null_p (env, sexp_list))
+            return sexp_list;
+        else
+            return cons_c (
+                env,
+                cdr (env, car (env, sexp_list)),
+                sexp_list_assign_to_pair (
+                    env, cdr (env, sexp_list)));
+    }
+    #+end_src
+
+*** sexp_list_to_dict
+
+    #+begin_src cpp
+    shared_ptr <dict_o>
+    sexp_list_to_dict (env_t &env, shared_ptr <obj_t> sexp_list)
+    {
+        return list_to_dict (
+            env, sexp_list_assign_to_pair (
+                env, sexp_list_prefix_assign (env, sexp_list)));
+    }
+    #+end_src
+
 *** [note] about sexp
 
     - sexp-t := str-t | sym-t | num-t |
@@ -4000,16 +4122,17 @@
         auto word = head->str;
         auto rest = cdr (env, word_list);
         if (word == "(")
-            return parse_sexp_list
-                (env, word_list_drop_ket (env, rest, ")"));
+            return parse_sexp_list (
+                env,
+                word_list_drop_ket (env, rest, ")"));
         else if (word == "[")
-            return list_to_vect
-                (env, parse_sexp_list
-                 (env, word_list_drop_ket (env, rest, "]")));
+            return sexp_list_to_vect (
+                env, parse_sexp_list (
+                    env, word_list_drop_ket (env, rest, "]")));
         else if (word == "{")
-            return list_to_dict
-                (env, parse_sexp_list
-                 (env, word_list_drop_ket (env, rest, "}")));
+            return sexp_list_to_dict (
+                env, parse_sexp_list (
+                    env, word_list_drop_ket (env, rest, "}")));
         else if (word == "'")
             return cons_c (env, make_sym (env, "quote"),
                            unit_list (env, parse_sexp (env, rest)));
@@ -4494,40 +4617,6 @@
       }
       #+end_src
 
-*** key_symbol_compile
-
-***** key_symbol_p
-
-      #+begin_src cpp
-      bool
-      key_symbol_p (string str)
-      {
-          auto size = str.size ();
-          if (size < 2) return false;
-          if (str [size-1] != ':') return false;
-          return true;
-      }
-      #+end_src
-
-***** key_symbol_compile
-
-      #+begin_src cpp
-      shared_ptr <jojo_t>
-      key_symbol_compile (
-          env_t &env,
-          local_ref_map_t &local_ref_map,
-          symbol sym)
-      {
-          auto size = sym.size () - 1;
-          sym = sym.substr (0, size);
-          jo_vector_t jo_vector = {
-              new lit_jo_t (make_sym (env, sym)),
-          };
-          auto jojo = make_shared <jojo_t> (jo_vector);
-          return jojo;
-      }
-      #+end_src
-
 *** ref_compile
 
 ***** ref_jo
@@ -4691,9 +4780,7 @@
         local_ref_map_t &local_ref_map,
         symbol sym)
     {
-        if (key_symbol_p (sym))
-            return key_symbol_compile (env, local_ref_map, sym);
-        else if (dot_symbol_p (sym))
+        if (dot_symbol_p (sym))
             return dot_symbol_compile (env, local_ref_map, sym);
         else if (field_symbol_p (sym))
             return field_symbol_compile (env, local_ref_map, sym);
@@ -4871,7 +4958,7 @@
           local_ref_map_t &local_ref_map,
           shared_ptr <dict_o> dict)
       {
-          auto sexp_list = dict_to_list (env, dict);
+          auto sexp_list = dict_to_flat_list (env, dict);
           auto jojo = sexp_list_compile
               (env, local_ref_map, sexp_list);
           auto counter = list_size (env, sexp_list);

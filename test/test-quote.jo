@@ -14,14 +14,3 @@
                  (cons-c 'b
                    (cons-c 'c
                      null-c)))))
-
-(assert (eq vect-t (type-of (quote [a b c]))))
-(assert (eq vect-t (type-of '[a b c])))
-
-(assert (eq dict-t (type-of (quote {a b c d}))))
-(assert (eq dict-t (type-of '{a b c d})))
-
-(= d '{a b c d})
-
-(assert (eq d.a 'b))
-(assert (eq d.c 'd))
