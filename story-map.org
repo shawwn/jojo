@@ -12,7 +12,6 @@
 *** (*>) -- k_threading_to_list
 *** (v>) -- k_threading_to_vect
 *** (match) -- k_match
-*** call_with_arg_dict
 * object system
   - with object system
 *** summing & union-type

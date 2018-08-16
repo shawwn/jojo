@@ -324,6 +324,7 @@
       #+begin_src cpp
       void
       bind_vector_insert_obj (
+          env_t &env,
           bind_vector_t &bind_vector,
           shared_ptr <obj_t> obj)
       {
@@ -346,12 +347,63 @@
       #+begin_src cpp
       bind_vector_t
       bind_vector_merge_obj_vector (
+          env_t &env,
           bind_vector_t &old_bind_vector,
           obj_vector_t &obj_vector)
       {
           auto bind_vector = old_bind_vector;
           for (auto obj: obj_vector)
-              bind_vector_insert_obj (bind_vector, obj);
+              bind_vector_insert_obj (env, bind_vector, obj);
+          return bind_vector;
+      }
+      #+end_src
+
+***** bind_vector_insert_obj_with_name
+
+      #+begin_src cpp
+      void
+      bind_vector_insert_obj_with_name (
+          env_t &env,
+          bind_vector_t &bind_vector,
+          shared_ptr <obj_t> obj,
+          name_t name)
+      {
+          auto begin = bind_vector.rbegin ();
+          auto end = bind_vector.rend ();
+          for (auto it = begin; it != end; it++) {
+              if (it->first == name) {
+                  it->second = obj;
+                  return;
+              }
+          }
+          cout << "- fatal error : bind_vector_insert_obj_with_name" << "\n";
+          cout << "  name not found in the bind_vector" << "\n";
+          cout << "  name : " << name << "\n";
+          cout << "  bind_vector : "
+               << bind_vector_repr (env, bind_vector) << "\n";
+          exit (1);
+      }
+      #+end_src
+
+***** bind_vector_merge_obj_map
+
+      #+begin_src cpp
+      bind_vector_t
+      bind_vector_merge_obj_map (
+          env_t &env,
+          bind_vector_t &old_bind_vector,
+          obj_map_t &obj_map)
+      {
+          auto bind_vector = old_bind_vector;
+          for (auto &kv: obj_map) {
+              auto name = kv.first;
+              auto obj = kv.second;
+              bind_vector_insert_obj_with_name (
+                  env,
+                  bind_vector,
+                  obj,
+                  name);
+          }
           return bind_vector;
       }
       #+end_src
@@ -1457,6 +1509,7 @@
                    local_scope_t local_scope);
         bool eq (env_t &env, shared_ptr <obj_t> obj);
         void apply (env_t &env, size_t arity);
+        void apply_to_arg_dict (env_t &env);
         string repr (env_t &env);
     };
     #+end_src
@@ -1509,20 +1562,26 @@
         auto size = this->name_vector.size ();
         auto have = number_of_obj_in_bind_vector (this->bind_vector);
         auto lack = size - have;
+        if (arity > lack) {
+            cout << "- fatal error : closure_o::apply" << "\n";
+            cout << "  over-arity apply" << "\n";
+            cout << "  arity > lack" << "\n";
+            cout << "  arity : " << arity << "\n";
+            cout << "  lack : " << lack << "\n";
+            exit (1);
+        }
+        auto obj_vector = pick_up_obj_vector (env, arity);
+        auto bind_vector = bind_vector_merge_obj_vector (
+            env, this->bind_vector, obj_vector);
         if (lack == arity) {
-            auto obj_vector = pick_up_obj_vector (env, arity);
-            auto bind_vector = bind_vector_merge_obj_vector (
-                this->bind_vector, obj_vector);
             auto local_scope = local_scope_extend (
                 this->local_scope, bind_vector);
             auto frame = make_shared <frame_t> (
                 this->jojo, local_scope);
             env.frame_stack.push (frame);
         }
-        else if (arity < lack) {
-            auto obj_vector = pick_up_obj_vector (env, arity);
-            auto bind_vector = bind_vector_merge_obj_vector (
-                this->bind_vector, obj_vector);
+        else {
+            assert ((arity < lack));
             auto closure = make_closure (
                 env,
                 this->name_vector,
@@ -1530,14 +1589,6 @@
                 bind_vector,
                 this->local_scope);
             env.obj_stack.push (closure);
-        }
-        else {
-            cout << "- fatal error : closure_o::apply" << "\n";
-            cout << "  over-arity apply" << "\n";
-            cout << "  arity > lack" << "\n";
-            cout << "  arity : " << arity << "\n";
-            cout << "  lack : " << lack << "\n";
-            exit (1);
         }
     }
     #+end_src
@@ -5447,6 +5498,40 @@
         apply_to_arg_dict_jo_t::repr (env_t &env)
         {
             return "(apply-to-arg-dict)";
+        }
+        #+end_src
+
+***** apply_to_arg_dict
+
+******* closure_o::apply_to_arg_dict
+
+        #+begin_src cpp
+        void
+        closure_o::apply_to_arg_dict (env_t &env)
+        {
+            auto obj = env.obj_stack.top ();
+            env.obj_stack.pop ();
+            auto arg_dict = as_dict (obj);
+            auto bind_vector = bind_vector_merge_obj_map (
+                env, this->bind_vector, arg_dict->obj_map);
+            auto size = this->name_vector.size ();
+            auto have = number_of_obj_in_bind_vector (bind_vector);
+            if (size == have) {
+                auto local_scope = local_scope_extend (
+                    this->local_scope, bind_vector);
+                auto frame = make_shared <frame_t> (
+                    this->jojo, local_scope);
+                env.frame_stack.push (frame);
+            }
+            else {
+                auto closure = make_closure (
+                    env,
+                    this->name_vector,
+                    this->jojo,
+                    bind_vector,
+                    this->local_scope);
+                env.obj_stack.push (closure);
+            }
         }
         #+end_src
 
