@@ -2,7 +2,7 @@
 
 ------
 
-- A Dynamic Programming Language -- Aiming to script C++.
+- A Dynamic Programming Language
   - [Story Map][story-map]
 
 ------
