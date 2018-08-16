@@ -1,6 +1,6 @@
-### jojo's bizarre programming adventure
-
 ------
+
+### jojo's bizarre programming adventure
 
 - A dynamic and object oriented programming language, aiming to script C++.
 
@@ -11,13 +11,9 @@
 - [Module System][module-system]
 - [Style Guide][style-guide]
 
-------
-
 #### note
 
 - [Semantic of De Bruijn Notation and Bizarre Syntax Adventure][de-bruijn-notation]
-
-------
 
 #### src
 
