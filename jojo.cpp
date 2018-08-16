@@ -37,7 +37,7 @@
     using jo_vector_t = vector <jo_t *>;
     using obj_map_t = map <name_t, shared_ptr <obj_t>>;
     using obj_vector_t = vector <shared_ptr <obj_t>>;
-    using box_map_t = map <name_t, shared_ptr <box_t>>;
+    using box_map_t = map <name_t, box_t *>;
     using obj_stack_t = stack <shared_ptr <obj_t>>;
     using frame_stack_t = stack <shared_ptr <frame_t>>;
     using jojo_map_t = map <tag_t, shared_ptr <jojo_t>>;
@@ -46,7 +46,7 @@
     using local_ref_map_t = map <name_t, local_ref_t>;
     using path_t = fs::path;
     using num_t = double;
-    using tagged_box_t = pair <name_t, shared_ptr <box_t>>;
+    using tagged_box_t = pair <name_t, box_t *>;
     using tagged_box_vector_t = vector <tagged_box_t>;
     using tag_map_t = map <name_t, tag_t>;
     using symbol = string;
@@ -92,7 +92,6 @@
         shared_ptr <obj_t> obj;
         bool empty_p;
         box_t ();
-        box_t (shared_ptr <obj_t> obj);
     };
     struct jojo_t
     {
@@ -579,7 +578,7 @@
         cout << "  obj : " << this->repr (env) << "\n";
         exit (1);
     }
-    shared_ptr <box_t>
+    box_t *
     boxing (env_t &env, name_t name);
 
     void
@@ -588,15 +587,6 @@
         name_t name,
         shared_ptr <obj_t> obj)
     {
-        // auto it = env.box_map.find (name);
-        // if (it != env.box_map.end ()) {
-        //     auto box = it->second;
-        //     box->empty_p = false;
-        //     box->obj = obj;
-        // }
-        // else {
-        //     env.box_map [name] = make_shared <box_t> (obj);
-        // }
         auto box = boxing (env, name);
         box->obj = obj;
         box->empty_p = false;
@@ -662,13 +652,7 @@
       {
           this->empty_p = true;
       }
-
-      box_t::box_t (shared_ptr <obj_t> obj)
-      {
-          this->empty_p = false;
-          this->obj = obj;
-      }
-      shared_ptr <box_t>
+      box_t *
       boxing (env_t &env, name_t name)
       {
           auto it = env.box_map.find (name);
@@ -677,13 +661,13 @@
               return box;
           }
           else {
-              auto box = make_shared <box_t> ();
+              auto box = new box_t ();
               env.box_map [name] = box;
               return box;
           }
       }
       name_t
-      name_of_box (env_t &env, shared_ptr <box_t> box)
+      name_of_box (env_t &env, box_t *box)
       {
           for (auto &kv: env.box_map) {
               auto name = kv.first;
@@ -799,7 +783,7 @@
               return tag;
           }
       }
-      shared_ptr <box_t>
+      box_t *
       box_of_tag (env_t &env, tag_t tag)
       {
           if (tag >= env.tagged_box_vector.size ()) {
@@ -3129,13 +3113,13 @@
       }
         struct ref_jo_t: jo_t
         {
-            shared_ptr <box_t> box;
-            ref_jo_t (shared_ptr <box_t>);
+            box_t *box;
+            ref_jo_t (box_t *);
             jo_t * copy ();
             void exe (env_t &env, local_scope_t &local_scope);
             string repr (env_t &env);
         };
-        ref_jo_t::ref_jo_t (shared_ptr <box_t> box)
+        ref_jo_t::ref_jo_t (box_t *box)
         {
             this->box = box;
         }
