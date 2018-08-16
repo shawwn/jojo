@@ -58,6 +58,7 @@
         virtual string repr (env_t &env);
         virtual bool eq (env_t &env, shared_ptr <obj_t> obj);
         virtual void apply (env_t &env, size_t arity);
+        virtual void apply_to_arg_dict (env_t &env);
     };
     struct jo_t
     {
@@ -243,8 +244,8 @@
       bind_vector_from_name_vector (name_vector_t &name_vector)
       {
           auto bind_vector = bind_vector_t ();
-          auto begin = name_vector.begin ();
-          auto end = name_vector.end ();
+          auto begin = name_vector.rbegin ();
+          auto end = name_vector.rend ();
           for (auto it = begin; it != end; it++)
               bind_vector.push_back (make_pair (*it, nullptr));
           return bind_vector;
@@ -563,7 +564,17 @@
     void
     obj_t::apply (env_t &env, size_t arity)
     {
-        cout << "- fatal error : applying non applicable object" << "\n";
+        cout << "- fatal error : obj_t::apply" << "\n";
+        cout << "  applying non applicable object" << "\n";
+        cout << "  tag : " << name_of_tag (env, this->tag) << "\n";
+        cout << "  obj : " << this->repr (env) << "\n";
+        exit (1);
+    }
+    void
+    obj_t::apply_to_arg_dict (env_t &env)
+    {
+        cout << "- fatal error : obj_t::apply_to_arg_dict" << "\n";
+        cout << "  applying non applicable object" << "\n";
         cout << "  tag : " << name_of_tag (env, this->tag) << "\n";
         cout << "  obj : " << this->repr (env) << "\n";
         exit (1);
@@ -1469,6 +1480,11 @@
         if (this->tag_of_type != that->tag_of_type) return false;
         return obj_map_eq (env, this->obj_map, that->obj_map);
     }
+    bool
+    data_cons_p (env_t &env, shared_ptr <obj_t> a)
+    {
+        return a->tag == data_cons_tag;
+    }
     string
     data_cons_o::repr (env_t &env)
     {
@@ -1529,6 +1545,11 @@
         this->name_vector = name_vector;
         this->fn = fn;
         this->obj_map = obj_map;
+    }
+    bool
+    prim_p (env_t &env, shared_ptr <obj_t> a)
+    {
+        return a->tag == prim_tag;
     }
     string
     prim_o::repr (env_t &env)
@@ -3532,13 +3553,6 @@
             return "(apply " +
                 to_string (this->arity) + ")";
         }
-      bool
-      field_head_p (env_t &env, shared_ptr <obj_t> head)
-      {
-          if (! sym_p (env, head)) return false;
-          auto sym = as_sym (head);
-          return field_symbol_p (sym->sym);
-      }
       size_t
       arity_of_body (env_t &env, shared_ptr <obj_t> body)
       {
@@ -3587,11 +3601,77 @@
           auto body = cdr (env, sexp);
           auto jo_vector = jo_vector_t ();
           auto arity = arity_of_body (env, body);
-          jo_vector.push_back
-              (new apply_jo_t (arity));
+          jo_vector.push_back (new apply_jo_t (arity));
           auto jojo = make_shared <jojo_t> (jo_vector);
           auto head_jojo = sexp_compile (env, local_ref_map, head);
           auto body_jojo = sexp_list_compile (env, local_ref_map, body);
+          jojo = jojo_append (head_jojo, jojo);
+          jojo = jojo_append (body_jojo, jojo);
+          return jojo;
+      }
+        struct apply_to_arg_dict_jo_t: jo_t
+        {
+            jo_t * copy ();
+            void exe (env_t &env, local_scope_t &local_scope);
+            string repr (env_t &env);
+        };
+        jo_t *
+        apply_to_arg_dict_jo_t::copy ()
+        {
+            return new apply_to_arg_dict_jo_t ();
+        }
+        void
+        apply_to_arg_dict_jo_t::exe (
+            env_t &env,
+            local_scope_t &local_scope)
+        {
+            auto obj = env.obj_stack.top ();
+            env.obj_stack.pop ();
+            obj->apply_to_arg_dict (env);
+        }
+        string
+        apply_to_arg_dict_jo_t::repr (env_t &env)
+        {
+            return "(apply-to-arg-dict)";
+        }
+      bool
+      call_with_arg_dict_sexp_p (
+          env_t &env,
+          shared_ptr <obj_t> sexp)
+      {
+          if (! cons_p (env, sexp)) return false;
+          auto l = cdr (env, sexp);
+          while (! null_p (env, l)) {
+              auto head = car (env, l);
+              if (sym_p (env, head) and as_sym (head) ->sym == "=") {
+                  return true;
+              }
+              if (cons_p (env, head)) {
+                  auto head_head = car (env, head);
+                  if (sym_p (env, head_head) and
+                      as_sym (head_head) ->sym == "=")
+                  {
+                      return true;
+                  }
+              }
+              l = cdr (env, l);
+          }
+          return false;
+      }
+      shared_ptr <jojo_t>
+      call_with_arg_dict_compile (
+          env_t &env,
+          local_ref_map_t &local_ref_map,
+          shared_ptr <obj_t> sexp)
+      {
+          auto head = car (env, sexp);
+          auto body = cdr (env, sexp);
+          auto jo_vector = jo_vector_t ();
+          jo_vector.push_back (new apply_to_arg_dict_jo_t ());
+          auto jojo = make_shared <jojo_t> (jo_vector);
+          auto head_jojo = sexp_compile (env, local_ref_map, head);
+          auto dict = sexp_list_to_dict (env, body);
+          auto body_jojo = dict_compile (env, local_ref_map, dict);
           jojo = jojo_append (head_jojo, jojo);
           jojo = jojo_append (body_jojo, jojo);
           return jojo;
@@ -3622,6 +3702,9 @@
         }
         else if (macro_sexp_p (env, sexp)) {
             return macro_compile (env, local_ref_map, sexp);
+        }
+        else if (call_with_arg_dict_sexp_p (env, sexp)) {
+            return call_with_arg_dict_compile (env, local_ref_map, sexp);
         }
         else {
             assert (cons_p (env, sexp));
