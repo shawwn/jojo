@@ -1,4 +1,4 @@
-#+html_head: <link rel="stylesheet" href="css/org-page.css"/>
+#+html_head: <link rel="stylesheet" href="../css/org-page.css"/>
 #+title: module system
 
 * [note]

@@ -1,6 +1,6 @@
 #+html_head: <link rel="stylesheet" href="css/org-page.css"/>
 #+title: Story Map
-
+- write vs print
 * [note]
 - learn more about float encoding
 - dive deep into c++ standard lib
@@ -28,7 +28,6 @@
 * module system
   - with simple module system
 *** `env_eq` -- for module_o::eq -- actor-model might need this
-*** do not reload module -- need to use module cache
 *** use (module) for non file module
 * secure
 *** can not handle big file -- due to the recursion in sexp parser

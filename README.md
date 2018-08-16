@@ -15,7 +15,10 @@
 ------
 
 [paper]: https://xieyuheng.github.io/jojo
-[jojo]: https://xieyuheng.github.io/jojo/jojo
-[module-system]: https://xieyuheng.github.io/jojo/module-system
+
+[jojo]: https://xieyuheng.github.io/jojo/src/jojo
+
+[module-system]: https://xieyuheng.github.io/jojo/docs/module-system
+[style-guide]: https://xieyuheng.github.io/jojo/docs/style-guide
+
 [story-map]: https://xieyuheng.github.io/jojo/story-map
-[style-guide]: https://xieyuheng.github.io/jojo/style-guide

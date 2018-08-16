@@ -3,12 +3,12 @@
 "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd">
 <html xmlns="http://www.w3.org/1999/xhtml" lang="en" xml:lang="en">
 <head>
-<!-- 2018-08-09 Thu 03:04 -->
+<!-- 2018-08-17 Fri 04:18 -->
 <meta http-equiv="Content-Type" content="text/html;charset=utf-8" />
 <meta name="viewport" content="width=device-width, initial-scale=1" />
 <title>module system</title>
 <meta name="generator" content="Org-mode" />
-<link rel="stylesheet" href="css/org-page.css"/>
+<link rel="stylesheet" href="../css/org-page.css"/>
 <script type="text/javascript">
 /*
 @licstart  The following is the entire license notice for the
@@ -63,39 +63,39 @@ for the JavaScript code in this tag.
 <h2>overview</h2>
 <div id="text-table-of-contents">
 <ul>
-<li><a href="#org9e8a1c6"><span class="done _note_">[note]</span> </a></li>
-<li><a href="#orgc5d885d">module provide export specification</a>
+<li><a href="#orgdaa0827"><span class="done _note_">[note]</span> </a></li>
+<li><a href="#org3341492">module provide export specification</a>
 <ul>
-<li><a href="#orgcca9735">like</a></li>
-<li><a href="#org928cae2">one file one module</a></li>
-<li><a href="#org2e6d9a4">one project one directory</a></li>
-<li><a href="#orgb9470b4">non-first-class-ness</a></li>
-<li><a href="#orgd521e02">non-extendable</a></li>
-<li><a href="#org9cebfab">syntax</a></li>
+<li><a href="#org7f0e3d">like</a></li>
+<li><a href="#orgf1c9820">one file one module</a></li>
+<li><a href="#org1af081">one project one directory</a></li>
+<li><a href="#orga46286b">non-first-class-ness</a></li>
+<li><a href="#orgdd97b18">non-extendable</a></li>
+<li><a href="#org9d62a26">syntax</a></li>
 </ul>
 </li>
-<li><a href="#org4322e75">objective module system &#x2013; named by file-name</a>
+<li><a href="#org141cf69">objective module system &#x2013; named by file-name</a>
 <ul>
-<li><a href="#orgf4c6dc9">like</a></li>
-<li><a href="#org1baddb4">one file one module</a></li>
-<li><a href="#orgd98db4c">first-class-ness</a></li>
-<li><a href="#org396218f">extendable</a></li>
-<li><a href="#org4a651ec">syntax</a></li>
+<li><a href="#org763375c">like</a></li>
+<li><a href="#org5e2e23">one file one module</a></li>
+<li><a href="#orgad086e1">first-class-ness</a></li>
+<li><a href="#orgac7c341">extendable</a></li>
+<li><a href="#org8792a1e">syntax</a></li>
 </ul>
 </li>
-<li><a href="#orge56638">objective module system &#x2013; named by user</a>
+<li><a href="#org534eb12">objective module system &#x2013; named by user</a>
 <ul>
-<li><a href="#org5c5dc05">like</a></li>
-<li><a href="#orgd091729">syntax</a></li>
+<li><a href="#orge14cb14">like</a></li>
+<li><a href="#org6d9d18b">syntax</a></li>
 </ul>
 </li>
 </ul>
 </div>
 </div>
 
-<div id="outline-container-org9e8a1c6" class="outline-2">
-<h2 id="org9e8a1c6"><span class="done _note_">[note]</span> </h2>
-<div class="outline-text-2" id="text-org9e8a1c6">
+<div id="outline-container-orgdaa0827" class="outline-2">
+<h2 id="orgdaa0827"><span class="done _note_">[note]</span> </h2>
+<div class="outline-text-2" id="text-orgdaa0827">
 <ul class="org-ul">
 <li><p>I document three styles of module system for dynamic language here.</p></li>
 
@@ -103,36 +103,36 @@ for the JavaScript code in this tag.
 </div>
 </div>
 
-<div id="outline-container-orgc5d885d" class="outline-2">
-<h2 id="orgc5d885d">module provide export specification</h2>
-<div class="outline-text-2" id="text-orgc5d885d">
-</div><div id="outline-container-orgcca9735" class="outline-3">
-<h3 id="orgcca9735">like</h3>
-<div class="outline-text-3" id="text-orgcca9735">
+<div id="outline-container-org3341492" class="outline-2">
+<h2 id="org3341492">module provide export specification</h2>
+<div class="outline-text-2" id="text-org3341492">
+</div><div id="outline-container-org7f0e3d" class="outline-3">
+<h3 id="org7f0e3d">like</h3>
+<div class="outline-text-3" id="text-org7f0e3d">
 <ul class="org-ul">
 <li><p>r7rs scheme</p></li></ul>
 </div>
 </div>
 
-<div id="outline-container-org928cae2" class="outline-3">
-<h3 id="org928cae2">one file one module</h3>
-<div class="outline-text-3" id="text-org928cae2">
+<div id="outline-container-orgf1c9820" class="outline-3">
+<h3 id="orgf1c9820">one file one module</h3>
+<div class="outline-text-3" id="text-orgf1c9820">
 <ul class="org-ul">
 <li><p>one `.mo` file one module</p></li></ul>
 </div>
 </div>
 
-<div id="outline-container-org2e6d9a4" class="outline-3">
-<h3 id="org2e6d9a4">one project one directory</h3>
-<div class="outline-text-3" id="text-org2e6d9a4">
+<div id="outline-container-org1af081" class="outline-3">
+<h3 id="org1af081">one project one directory</h3>
+<div class="outline-text-3" id="text-org1af081">
 <ul class="org-ul">
 <li><p>there shell be not sub-directory</p></li></ul>
 </div>
 </div>
 
-<div id="outline-container-orgb9470b4" class="outline-3">
-<h3 id="orgb9470b4">non-first-class-ness</h3>
-<div class="outline-text-3" id="text-orgb9470b4">
+<div id="outline-container-orga46286b" class="outline-3">
+<h3 id="orga46286b">non-first-class-ness</h3>
+<div class="outline-text-3" id="text-orga46286b">
 <ul class="org-ul">
 <li><p>a module is not first-class object.</p></li>
 
@@ -140,9 +140,9 @@ for the JavaScript code in this tag.
 </div>
 </div>
 
-<div id="outline-container-orgd521e02" class="outline-3">
-<h3 id="orgd521e02">non-extendable</h3>
-<div class="outline-text-3" id="text-orgd521e02">
+<div id="outline-container-orgdd97b18" class="outline-3">
+<h3 id="orgdd97b18">non-extendable</h3>
+<div class="outline-text-3" id="text-orgdd97b18">
 <ul class="org-ul">
 <li><p>module syntax is strict and non-extendable</p></li>
 
@@ -150,9 +150,9 @@ for the JavaScript code in this tag.
 </div>
 </div>
 
-<div id="outline-container-org9cebfab" class="outline-3">
-<h3 id="org9cebfab">syntax</h3>
-<div class="outline-text-3" id="text-org9cebfab">
+<div id="outline-container-org9d62a26" class="outline-3">
+<h3 id="org9d62a26">syntax</h3>
+<div class="outline-text-3" id="text-org9d62a26">
 <ul class="org-ul">
 <li><p>(import &lt;import-spec&gt; &#x2026;)</p><p><ul class="org-ul"></p><p><li><p>&lt;import-spec&gt; = (&lt;module-name&gt;) | (&lt;module-name&gt; &lt;name-patch&gt; &#x2026;)</p></li></p><p><li><p>&lt;module-name&gt; = &lt;local-module-name&gt; | &lt;global-module-name&gt;</p></li></p><p><li><p>&lt;name-patch&gt; = [todo]</p></li></ul></p></li>
 <li><p>(include &lt;path&gt; &#x2026;)</p></li>
@@ -161,44 +161,44 @@ for the JavaScript code in this tag.
 </div>
 </div>
 
-<div id="outline-container-org4322e75" class="outline-2">
-<h2 id="org4322e75">objective module system &#x2013; named by file-name</h2>
-<div class="outline-text-2" id="text-org4322e75">
-</div><div id="outline-container-orgf4c6dc9" class="outline-3">
-<h3 id="orgf4c6dc9">like</h3>
-<div class="outline-text-3" id="text-orgf4c6dc9">
+<div id="outline-container-org141cf69" class="outline-2">
+<h2 id="org141cf69">objective module system &#x2013; named by file-name</h2>
+<div class="outline-text-2" id="text-org141cf69">
+</div><div id="outline-container-org763375c" class="outline-3">
+<h3 id="org763375c">like</h3>
+<div class="outline-text-3" id="text-org763375c">
 <ul class="org-ul">
 <li><p>python</p></li></ul>
 </div>
 </div>
 
-<div id="outline-container-org1baddb4" class="outline-3">
-<h3 id="org1baddb4">one file one module</h3>
-<div class="outline-text-3" id="text-org1baddb4">
+<div id="outline-container-org5e2e23" class="outline-3">
+<h3 id="org5e2e23">one file one module</h3>
+<div class="outline-text-3" id="text-org5e2e23">
 <ul class="org-ul">
 <li><p>one `.jo` file is one module</p></li></ul>
 </div>
 </div>
 
-<div id="outline-container-orgd98db4c" class="outline-3">
-<h3 id="orgd98db4c">first-class-ness</h3>
-<div class="outline-text-3" id="text-orgd98db4c">
+<div id="outline-container-orgad086e1" class="outline-3">
+<h3 id="orgad086e1">first-class-ness</h3>
+<div class="outline-text-3" id="text-orgad086e1">
 <ul class="org-ul">
 <li><p>a module is just an object.</p></li></ul>
 </div>
 </div>
 
-<div id="outline-container-org396218f" class="outline-3">
-<h3 id="org396218f">extendable</h3>
-<div class="outline-text-3" id="text-org396218f">
+<div id="outline-container-orgac7c341" class="outline-3">
+<h3 id="orgac7c341">extendable</h3>
+<div class="outline-text-3" id="text-orgac7c341">
 <ul class="org-ul">
 <li><p>module syntax is extendable</p></li></ul>
 </div>
 </div>
 
-<div id="outline-container-org4a651ec" class="outline-3">
-<h3 id="org4a651ec">syntax</h3>
-<div class="outline-text-3" id="text-org4a651ec">
+<div id="outline-container-org8792a1e" class="outline-3">
+<h3 id="org8792a1e">syntax</h3>
+<div class="outline-text-3" id="text-org8792a1e">
 <ul class="org-ul">
 <li><p>(import &lt;module-name&gt;)</p></li>
 <li><p>(import-as &lt;module-name&gt; &lt;as-name&gt;)</p></li>
@@ -207,20 +207,20 @@ for the JavaScript code in this tag.
 </div>
 </div>
 
-<div id="outline-container-orge56638" class="outline-2">
-<h2 id="orge56638">objective module system &#x2013; named by user</h2>
-<div class="outline-text-2" id="text-orge56638">
-</div><div id="outline-container-org5c5dc05" class="outline-3">
-<h3 id="org5c5dc05">like</h3>
-<div class="outline-text-3" id="text-org5c5dc05">
+<div id="outline-container-org534eb12" class="outline-2">
+<h2 id="org534eb12">objective module system &#x2013; named by user</h2>
+<div class="outline-text-2" id="text-org534eb12">
+</div><div id="outline-container-orge14cb14" class="outline-3">
+<h3 id="orge14cb14">like</h3>
+<div class="outline-text-3" id="text-orge14cb14">
 <ul class="org-ul">
 <li><p>nodejs</p></li></ul>
 </div>
 </div>
 
-<div id="outline-container-orgd091729" class="outline-3">
-<h3 id="orgd091729">syntax</h3>
-<div class="outline-text-3" id="text-orgd091729">
+<div id="outline-container-org6d9d18b" class="outline-3">
+<h3 id="org6d9d18b">syntax</h3>
+<div class="outline-text-3" id="text-org6d9d18b">
 <ul class="org-ul">
 <li><p>(= &lt;name&gt; (import &lt;module-name&gt;))</p></li></ul>
 </div>
@@ -228,7 +228,7 @@ for the JavaScript code in this tag.
 </div>
 </div>
 <div id="postamble" class="status">
-<p class="date">Created: 2018-08-09 Thu 03:04</p>
+<p class="date">Created: 2018-08-17 Fri 04:18</p>
 <p class="validation"><a href="http://validator.w3.org/check?uri=referer">Validate</a></p>
 </div>
 </body>

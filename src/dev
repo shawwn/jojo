@@ -43,15 +43,15 @@ clean ()
 
 t () # test
 {
-    for FILE in $(ls test | grep "\.jo" | grep "test-")
+    for FILE in $(ls ../test | grep "\.jo" | grep "test-")
     do
-        ./jojo "test/$FILE"
+        ./jojo "../test/$FILE"
     done
 }
 
 # debug () {
 #     # time valgrind --leak-check=full jojo
-#     for FILE in $(ls test | grep "\.jo" | grep "test-")
+#     for FILE in $(ls ../test | grep "\.jo" | grep "test-")
 #     do
 #         echo "<test/$FILE>" && valgrind jojo "test/$FILE" && echo "</test/$FILE>" && echo ""
 #     done
@@ -60,11 +60,10 @@ t () # test
 i () # install
 {
     rm -rf $JOJO
-    # install -Dsm755 jojo $JOJO/bin/jojo
     install -Dm755 jojo $JOJO/bin/jojo
-    for FILE in $(ls lib)
+    for FILE in $(ls ../lib)
     do
-        install -Dm644 lib/$FILE $JOJO/lib/$FILE
+        install -Dm644 ../lib/$FILE $JOJO/lib/$FILE
     done
 }
 
