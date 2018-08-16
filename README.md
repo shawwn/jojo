@@ -1,4 +1,4 @@
-### jojo's bizarre programming adventure
+# jojo's bizarre programming adventure
 
 ------
 
@@ -7,16 +7,16 @@
 
 ------
 
-#### docs
+## docs
 
 - [Module System][module-system]
 - [Style Guide][style-guide]
 
-#### note
+## note
 
 - [Semantic of De Bruijn Notation and Bizarre Syntax Adventure][de-bruijn-notation]
 
-#### src
+## src
 
 - [The implementation in C++][jojo]
 
