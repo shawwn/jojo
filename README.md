@@ -1,22 +1,22 @@
-# jojo's bizarre programming adventure
+# JOJO's Bizarre Programming Adventure
 
 ------
 
-- A dynamic and object oriented programming language, aiming to script C++.
+- A Dynamic Programming Language -- Aiming to script C++.
   - [Story Map][story-map]
 
 ------
 
-## docs
+## Docs
 
 - [Module System][module-system]
 - [Style Guide][style-guide]
 
-## note
+## Note
 
 - [Semantic of De Bruijn Notation and Bizarre Syntax Adventure][de-bruijn-notation]
 
-## src
+## Source Code
 
 - [The implementation in C++][jojo]
 
