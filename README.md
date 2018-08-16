@@ -7,7 +7,7 @@
 
 ------
 
-## Docs
+## Documentation
 
 - [Module System][module-system]
 - [Style Guide][style-guide]
