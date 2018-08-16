@@ -3,10 +3,10 @@
 "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd">
 <html xmlns="http://www.w3.org/1999/xhtml" lang="en" xml:lang="en">
 <head>
-<!-- 2018-08-17 Fri 04:34 -->
+<!-- 2018-08-17 Fri 04:32 -->
 <meta http-equiv="Content-Type" content="text/html;charset=utf-8" />
 <meta name="viewport" content="width=device-width, initial-scale=1" />
-<title>Style Guide</title>
+<title>Semantic of De Bruijn Notation and Bizarre Syntax Adventure</title>
 <meta name="generator" content="Org-mode" />
 <link rel="stylesheet" href="../css/org-page.css"/>
 <script type="text/javascript">
@@ -58,73 +58,67 @@ for the JavaScript code in this tag.
 </head>
 <body>
 <div id="content">
-<h1 class="title">Style Guide</h1>
+<h1 class="title">Semantic of De Bruijn Notation and Bizarre Syntax Adventure</h1>
 <div id="table-of-contents">
 <h2>overview</h2>
 <div id="text-table-of-contents">
 <ul>
-<li><a href="#orgab1e5b6">org-mode</a></li>
-<li><a href="#org6d8cd42">c++</a>
-<ul>
-<li><a href="#orge41db87">standard</a></li>
-<li><a href="#orgcb44e39">naming</a></li>
-</ul>
-</li>
-<li><a href="#org917d2a2">jojo</a>
-<ul>
-<li><a href="#org5c2567a">naming</a></li>
-</ul>
-</li>
+<li><a href="#org19cc3e6">Semantic</a></li>
+<li><a href="#org8acdce5">Translating</a></li>
+<li><a href="#orgdb1385e">Example</a></li>
+<li><a href="#orgeaafcbf">Advantage</a></li>
 </ul>
 </div>
 </div>
-
-<div id="outline-container-orgab1e5b6" class="outline-2">
-<h2 id="orgab1e5b6">org-mode</h2>
-<div class="outline-text-2" id="text-orgab1e5b6">
 <ul class="org-ul">
-<li><p><a href="https://github.com/xieyuheng/jojo/tree/master/old/without-org-mode">reason to not quit using org-mode</a></p></li></ul>
-</div>
-</div>
+<li><p>Author : <a href="https://xieyuheng.github.io">Xie Yuheng</a></p></li>
+<li><p>Date : 2018-07-22</p></li>
+<li><p>Keywords : Programming Language Design.</p></li></ul>
 
-<div id="outline-container-org6d8cd42" class="outline-2">
-<h2 id="org6d8cd42">c++</h2>
-<div class="outline-text-2" id="text-org6d8cd42">
-</div><div id="outline-container-orge41db87" class="outline-3">
-<h3 id="orge41db87">standard</h3>
-<div class="outline-text-3" id="text-orge41db87">
+<div id="outline-container-org19cc3e6" class="outline-2">
+<h2 id="org19cc3e6">Semantic</h2>
+<div class="outline-text-2" id="text-org19cc3e6">
 <ul class="org-ul">
-<li><p>use c++17</p></li></ul>
+<li><p>The direct semantic of De Bruijn notation,</p><p>is stack based postfix programming language.</p></li></ul>
 </div>
 </div>
 
-<div id="outline-container-orgcb44e39" class="outline-3">
-<h3 id="orgcb44e39">naming</h3>
-<div class="outline-text-3" id="text-orgcb44e39">
+<div id="outline-container-org8acdce5" class="outline-2">
+<h2 id="org8acdce5">Translating</h2>
+<div class="outline-text-2" id="text-org8acdce5">
 <ul class="org-ul">
-<li><p>do not use `camelCase`, use `snake_case` instead.</p></li>
+<li><p>Note that,</p><p>I use `{&#x2026;}` for De Bruijn's `(&#x2026;)`,</p><p>and `(let &#x2026;)` for De Bruijn's `[]`.</p></li>
 
-<li><p>use `_t` for type, `_p` for predicate</p></li></ul>
-</div>
+<li><p>Suppose [ ] is a syntax translating function,</p><p>which translate normal lambda notation to De Bruijn notation.</p></li>
+
+<li><p>The rules :</p><p></p><p><ol class="org-ol"></p><p><li>[ v ] =&gt; v</li></p><p></p><p><li>[ (lambda (v) M) ] =&gt; (let v) [ M ]</li></p><p></p><p><li>[ (M N) ] =&gt; {[ N ]} [ M ]</li></ol></p></li></ul>
 </div>
 </div>
 
-<div id="outline-container-org917d2a2" class="outline-2">
-<h2 id="org917d2a2">jojo</h2>
-<div class="outline-text-2" id="text-org917d2a2">
-</div><div id="outline-container-org5c2567a" class="outline-3">
-<h3 id="org5c2567a">naming</h3>
-<div class="outline-text-3" id="text-org5c2567a">
+<div id="outline-container-orgdb1385e" class="outline-2">
+<h2 id="orgdb1385e">Example</h2>
+<div class="outline-text-2" id="text-orgdb1385e">
 <ul class="org-ul">
-<li><p>do not use `camelCase`, use `lisp-case` instead.</p></li>
+<li><p>in De Bruijn notation :</p><p>{M} {N} (let u) {P} (let v) (let w) {Q} z</p></li>
 
-<li><p>use `-t` for type, `-p` for predicate</p></li></ul>
+<li><p>which is equal to (for example) :</p><p>{N} (let u) {P} (let v) {M} (let w) {Q} z</p></li></ul>
 </div>
+</div>
+
+<div id="outline-container-orgeaafcbf" class="outline-2">
+<h2 id="orgeaafcbf">Advantage</h2>
+<div class="outline-text-2" id="text-orgeaafcbf">
+<ul class="org-ul">
+<li><p>More equivalence between functions</p><p>are explicitly revealed by the syntax.</p></li>
+
+<li><p>Syntax A is better than syntax B,</p><p>if, when using A, it is easier to manipulate</p><p>the underlying semantics.</p></li>
+
+<li><p>Or say, the semantics will be easier to imagine,</p><p>when expressed in syntax A.</p></li></ul>
 </div>
 </div>
 </div>
 <div id="postamble" class="status">
-<p class="date">Created: 2018-08-17 Fri 04:34</p>
+<p class="date">Created: 2018-08-17 Fri 04:32</p>
 <p class="validation"><a href="http://validator.w3.org/check?uri=referer">Validate</a></p>
 </div>
 </body>

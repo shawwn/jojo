@@ -6,19 +6,34 @@
 
 ------
 
-- [Semantic of De Bruijn Notation and Bizarre Syntax Adventure][paper]
-- [The implementation in C++][jojo]
+#### docs
+
 - [Module System][module-system]
-- [Story Map][story-map]
 - [Style Guide][style-guide]
 
 ------
 
-[paper]: https://xieyuheng.github.io/jojo
+#### note
 
-[jojo]: https://xieyuheng.github.io/jojo/src/jojo
+- [Semantic of De Bruijn Notation and Bizarre Syntax Adventure][de-bruijn-notation]
+
+------
+
+#### src
+
+- [The implementation in C++][jojo]
+
+------
+
+- [Story Map][story-map]
+
+------
 
 [module-system]: https://xieyuheng.github.io/jojo/docs/module-system
 [style-guide]: https://xieyuheng.github.io/jojo/docs/style-guide
+
+[de-bruijn-notation]: https://xieyuheng.github.io/jojo/note/de-bruijn-notation
+
+[jojo]: https://xieyuheng.github.io/jojo/src/jojo
 
 [story-map]: https://xieyuheng.github.io/jojo/story-map
