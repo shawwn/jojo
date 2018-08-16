@@ -1,4 +1,4 @@
-### About quit using org-mode
+# About quit using org-mode
 
 This `src/` tree contains an effort to quit using org-mode,
 by separating one `.org` file to many `.hpp` and `.cpp` files.
