@@ -1,3 +1,5 @@
+;; closure
+
 (= (f a b c d)
    (add (add a b)
         (add c d)))
@@ -46,9 +48,17 @@
          (= c 3)
          (= d 4))))
 
-;; (println f)
-;; (println (f))
-;; (println (f 1))
-;; (println (f 1 2))
-;; (println (f 1 2 3))
-;; (println (f 1 2 3 4))
+;; prim
+
+(assert (eq (add x = 1 y = 2) 3))
+(assert (eq ((add x = 1) y = 2) 3))
+
+;; data-cons
+
+(assert
+  (eq (cons-c car = 1 cdr = 2)
+      (cons-c 1 2)))
+
+(assert
+  (eq ((cons-c car = 1) cdr = 2)
+      (cons-c 1 2)))

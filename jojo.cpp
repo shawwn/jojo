@@ -465,6 +465,25 @@
           if (! repr.empty ()) repr.pop_back ();
           return repr;
       }
+      obj_map_t
+      obj_map_merge (
+          env_t &env,
+          obj_map_t &ante,
+          obj_map_t &succ)
+      {
+          auto obj_map = obj_map_t ();
+          for (auto &kv: ante) {
+              auto name = kv.first;
+              auto obj = kv.second;
+              obj_map [name] = obj;
+          }
+          for (auto &kv: succ) {
+              auto name = kv.first;
+              auto obj = kv.second;
+              obj_map [name] = obj;
+          }
+          return obj_map;
+      }
       name_t
       name_t2c (name_t type_name)
       {
@@ -1279,6 +1298,17 @@
         this->tag = tag;
         this->obj_map = obj_map;
     }
+    shared_ptr <obj_t>
+    make_data (
+        env_t &env,
+        tag_t tag,
+        obj_map_t obj_map)
+    {
+        return make_shared <data_o> (
+            env,
+            tag,
+            obj_map);
+    }
     bool
     data_o::eq (env_t &env, shared_ptr <obj_t> obj)
     {
@@ -1324,15 +1354,13 @@
         name_t data_name,
         tag_t tag_of_type)
     {
-        auto data = make_shared <data_o>
-            (env, tag_of_type, obj_map_t ());
+        auto data = make_data (env, tag_of_type, obj_map_t ());
         assign (env, prefix, data_name, data);
     }
     shared_ptr <obj_t>
     true_c (env_t &env)
     {
-       return make_shared <data_o>
-           (env, true_tag, obj_map_t ());
+       return make_data (env, true_tag, obj_map_t ());
     }
     bool
     true_p (env_t &env, shared_ptr <obj_t> a)
@@ -1342,8 +1370,7 @@
     shared_ptr <obj_t>
     false_c (env_t &env)
     {
-       return make_shared <data_o>
-           (env, false_tag, obj_map_t ());
+       return make_data (env, false_tag, obj_map_t ());
     }
     bool
     false_p (env_t &env, shared_ptr <obj_t> a)
@@ -1449,6 +1476,7 @@
             name_vector_t name_vector,
             obj_map_t obj_map);
         void apply (env_t &env, size_t arity);
+        void apply_to_arg_dict (env_t &env);
         bool eq (env_t &env, shared_ptr <obj_t> obj);
         string repr (env_t &env);
     };
@@ -1464,6 +1492,19 @@
         this->name_vector = name_vector;
         this->obj_map = obj_map;
     }
+    shared_ptr <data_cons_o>
+    make_data_cons (
+        env_t &env,
+        tag_t tag_of_type,
+        name_vector_t name_vector,
+        obj_map_t obj_map)
+    {
+        return make_shared <data_cons_o> (
+            env,
+            tag_of_type,
+            name_vector,
+            obj_map);
+    }
     void
     data_cons_o::apply (env_t &env, size_t arity)
     {
@@ -1471,21 +1512,24 @@
         auto have = this->obj_map.size ();
         auto lack = size - have;
         if (lack == arity) {
-            auto lack_name_vector = name_vector_obj_map_lack
-                (this->name_vector, this->obj_map);
-            auto obj_map = pick_up_obj_map_and_merge
-                (env, lack_name_vector, this->obj_map);
-            auto data = make_shared <data_o>
-                (env, this->tag_of_type, obj_map);
+            auto lack_name_vector = name_vector_obj_map_lack (
+                this->name_vector, this->obj_map);
+            auto obj_map = pick_up_obj_map_and_merge (
+                env, lack_name_vector, this->obj_map);
+            auto data = make_data (
+                env, this->tag_of_type, obj_map);
             env.obj_stack.push (data);
         }
         else if (arity < lack) {
-            auto lack_name_vector = name_vector_obj_map_arity_lack
-                (this->name_vector, this->obj_map, arity);
-            auto obj_map = pick_up_obj_map_and_merge
-                (env, lack_name_vector, this->obj_map);
-            auto data_cons = make_shared <data_cons_o>
-                (env, this->tag_of_type, this->name_vector, obj_map);
+            auto lack_name_vector = name_vector_obj_map_arity_lack (
+                this->name_vector, this->obj_map, arity);
+            auto obj_map = pick_up_obj_map_and_merge (
+                env, lack_name_vector, this->obj_map);
+            auto data_cons = make_data_cons (
+                env,
+                this->tag_of_type,
+                this->name_vector,
+                obj_map);
             env.obj_stack.push (data_cons);
         }
         else {
@@ -1541,8 +1585,11 @@
         tag_t tag_of_type,
         name_vector_t name_vector)
     {
-        auto data_cons = make_shared <data_cons_o>
-            (env, tag_of_type, name_vector, obj_map_t ());
+        auto data_cons = make_data_cons (
+            env,
+            tag_of_type,
+            name_vector,
+            obj_map_t ());
         assign (env, prefix, data_name, data_cons);
     }
     using prim_fn = function
@@ -1558,6 +1605,7 @@
             obj_map_t obj_map);
         bool eq (env_t &env, shared_ptr <obj_t> obj);
         void apply (env_t &env, size_t arity);
+        void apply_to_arg_dict (env_t &env);
         string repr (env_t &env);
     };
     prim_o::prim_o (
@@ -1570,6 +1618,19 @@
         this->name_vector = name_vector;
         this->fn = fn;
         this->obj_map = obj_map;
+    }
+    shared_ptr <prim_o>
+    make_prim (
+        env_t &env,
+        name_vector_t name_vector,
+        prim_fn fn,
+        obj_map_t obj_map)
+    {
+        return make_shared <prim_o> (
+            env,
+            name_vector,
+            fn,
+            obj_map);
     }
     bool
     prim_p (env_t &env, shared_ptr <obj_t> a)
@@ -1604,19 +1665,22 @@
         auto have = this->obj_map.size ();
         auto lack = size - have;
         if (lack == arity) {
-            auto lack_name_vector = name_vector_obj_map_lack
-                (this->name_vector, this->obj_map);
-            auto obj_map = pick_up_obj_map_and_merge
-                (env, lack_name_vector, this->obj_map);
+            auto lack_name_vector = name_vector_obj_map_lack (
+                this->name_vector, this->obj_map);
+            auto obj_map = pick_up_obj_map_and_merge (
+                env, lack_name_vector, this->obj_map);
             this->fn (env, obj_map);
         }
         else if (arity < lack) {
-            auto lack_name_vector = name_vector_obj_map_arity_lack
-                (this->name_vector, this->obj_map, arity);
-            auto obj_map = pick_up_obj_map_and_merge
-                (env, lack_name_vector, this->obj_map);
-            auto prim = make_shared <prim_o>
-                (env, this->name_vector, this->fn, obj_map);
+            auto lack_name_vector = name_vector_obj_map_arity_lack (
+                this->name_vector, this->obj_map, arity);
+            auto obj_map = pick_up_obj_map_and_merge (
+                env, lack_name_vector, this->obj_map);
+            auto prim = make_prim (
+                env,
+                this->name_vector,
+                this->fn,
+                obj_map);
             env.obj_stack.push (prim);
         }
         else {
@@ -1650,7 +1714,7 @@
     {
         auto name = name_of_sig (sig);
         auto name_vector = name_vector_of_sig (sig);
-        auto prim = make_shared <prim_o> (
+        auto prim = make_prim (
             env, name_vector, fn, obj_map_t ());
         define (env, name, prim);
     }
@@ -1908,8 +1972,7 @@
     shared_ptr <obj_t>
     null_c (env_t &env)
     {
-       return make_shared <data_o>
-           (env, null_tag, obj_map_t ());
+       return make_data (env, null_tag, obj_map_t ());
     }
     bool
     null_p (env_t &env, shared_ptr <obj_t> a)
@@ -1925,8 +1988,7 @@
         auto obj_map = obj_map_t ();
         obj_map ["car"] = car;
         obj_map ["cdr"] = cdr;
-        return make_shared <data_o>
-            (env, cons_tag, obj_map);
+        return make_data (env, cons_tag, obj_map);
     }
     bool
     cons_p (env_t &env, shared_ptr <obj_t> a)
@@ -2180,8 +2242,7 @@
     shared_ptr <obj_t>
     nothing_c (env_t &env)
     {
-       return make_shared <data_o>
-           (env, nothing_tag, obj_map_t ());
+       return make_data (env, nothing_tag, obj_map_t ());
     }
     bool
     nothing_p (env_t &env, shared_ptr <obj_t> a)
@@ -2195,8 +2256,7 @@
     {
         auto obj_map = obj_map_t ();
         obj_map ["value"] = value;
-        return make_shared <data_o>
-            (env, just_tag, obj_map);
+        return make_data (env, just_tag, obj_map);
     }
     bool
     just_p (env_t &env, shared_ptr <obj_t> a)
@@ -2897,6 +2957,10 @@
             return "";
         else if (null_p (env, cdr (env, sexp_list)))
             return sexp_repr (env, car (env, sexp_list));
+        else if (! cons_p (env, cdr (env, sexp_list)))
+            return
+                sexp_repr (env, car (env, sexp_list)) + " . " +
+                sexp_repr (env, cdr (env, sexp_list));
         else {
             return
                 sexp_repr (env, car (env, sexp_list)) + " " +
@@ -3531,7 +3595,7 @@
         {
             auto name_vector = name_vector_t ();
             name_vector.push_back ("body");
-            auto prim = make_shared <prim_o> (
+            auto prim = make_prim (
                 env, name_vector, fn, obj_map_t ());
             auto macro = make_shared <macro_o> (env, prim);
             define (env, name, macro);
@@ -3684,6 +3748,52 @@
                     bind_vector,
                     this->local_scope);
                 env.obj_stack.push (closure);
+            }
+        }
+        void
+        prim_o::apply_to_arg_dict (env_t &env)
+        {
+            auto obj = env.obj_stack.top ();
+            env.obj_stack.pop ();
+            auto arg_dict = as_dict (obj);
+            auto obj_map = obj_map_merge (
+                env, this->obj_map, arg_dict->obj_map);
+            auto size = this->name_vector.size ();
+            auto have = obj_map.size ();
+            if (size == have) {
+                this->fn (env, obj_map);
+            }
+            else {
+                auto prim = make_prim (
+                    env,
+                    this->name_vector,
+                    this->fn,
+                    obj_map);
+                env.obj_stack.push (prim);
+            }
+        }
+        void
+        data_cons_o::apply_to_arg_dict (env_t &env)
+        {
+            auto obj = env.obj_stack.top ();
+            env.obj_stack.pop ();
+            auto arg_dict = as_dict (obj);
+            auto obj_map = obj_map_merge (
+                env, this->obj_map, arg_dict->obj_map);
+            auto size = this->name_vector.size ();
+            auto have = obj_map.size ();
+            if (size == have) {
+                auto data = make_data (
+                    env, this->tag_of_type, obj_map);
+                env.obj_stack.push (data);
+            }
+            else {
+                auto data_cons = make_data_cons (
+                    env,
+                    this->tag_of_type,
+                    this->name_vector,
+                    obj_map);
+                env.obj_stack.push (data_cons);
             }
         }
       bool
@@ -5667,7 +5777,7 @@
       shared_ptr <data_cons_o>
       jj_cons_c (env_t &env)
       {
-          return make_shared <data_cons_o> (
+          return make_data_cons (
               env,
               cons_tag,
               name_vector_t ({ "car", "cdr" }),
@@ -5810,7 +5920,7 @@
       shared_ptr <data_cons_o>
       jj_just_c (env_t &env)
       {
-          return make_shared <data_cons_o> (
+          return make_data_cons (
               env,
               just_tag,
               name_vector_t ({ "value" }),
@@ -6193,8 +6303,7 @@
               {"cdr", make_str (env, "world")},
           };
 
-          define (env, "last-cry", make_shared <data_o>
-                  (env, cons_tag, obj_map));
+          define (env, "last-cry", make_data (env, cons_tag, obj_map));
 
           jo_vector_t jo_vector = {
               new ref_jo_t (boxing (env, "last-cry")),
@@ -6210,10 +6319,11 @@
               env.run ();
 
               assert_stack_size (env, 3);
-              assert_pop_eq (env, make_shared <data_o>
-                             (env,
-                              cons_tag,
-                              obj_map));
+              assert_pop_eq (
+                  env, make_data (
+                      env,
+                      cons_tag,
+                      obj_map));
               assert_pop_eq (env, make_str (env, "world"));
               assert_pop_eq (env, make_str (env, "bye"));
               assert_stack_size (env, 0);
@@ -6302,11 +6412,12 @@
 
           define (env, "s1", make_str (env, "bye"));
           define (env, "s2", make_str (env, "world"));
-          define (env, "cons-c", make_shared <data_cons_o>
-                  (env,
-                   cons_tag,
-                   name_vector_t ({ "car", "cdr" }),
-                   obj_map_t ()));
+          define (env, "cons-c",
+                  make_data_cons (
+                      env,
+                      cons_tag,
+                      name_vector_t ({ "car", "cdr" }),
+                      obj_map_t ()));
 
           jo_vector_t jo_vector = {
               new ref_jo_t (boxing (env, "s1")),
@@ -6334,11 +6445,12 @@
 
           define (env, "s1", make_str (env, "bye"));
           define (env, "s2", make_str (env, "world"));
-          define (env, "cons-c", make_shared <data_cons_o>
-                  (env,
-                   cons_tag,
-                   name_vector_t ({ "car", "cdr" }),
-                   obj_map_t ()));
+          define (env, "cons-c",
+                  make_data_cons (
+                      env,
+                      cons_tag,
+                      name_vector_t ({ "car", "cdr" }),
+                      obj_map_t ()));
 
           jo_vector_t jo_vector = {
               new ref_jo_t (boxing (env, "s1")),
@@ -6375,11 +6487,12 @@
                   env.obj_stack.push (obj_map ["x"]);
               };
 
-          define (env, "swap", make_shared <prim_o>
-                  (env,
-                   name_vector_t { "x", "y" },
-                   swap,
-                   obj_map_t ()));
+          define (env, "swap",
+                  make_prim (
+                      env,
+                      name_vector_t { "x", "y" },
+                      swap,
+                      obj_map_t ()));
 
           jo_vector_t jo_vector = {
               new ref_jo_t (boxing (env, "s1")),
