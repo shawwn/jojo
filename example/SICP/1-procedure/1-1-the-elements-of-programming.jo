@@ -1,0 +1,21 @@
+;; 1-1-1 Expressions
+
+(add 137 349)
+(sub 1000 334)
+(mul 5 99)
+(div 10 5)
+(add 2.7 10)
+(add (mul 3 5) (sub 10 6))
+
+; 1-1-2 Naming and the Environment
+
+size = 2
+size
+(mul 5 size)
+
+pi = 3.14159
+radius = 10
+(mul pi (mul radius radius))
+
+circumference = (mul 2 (mul pi radius))
+circumference

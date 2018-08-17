@@ -1098,7 +1098,7 @@
             env.frame_stack.push (frame);
         }
         else {
-            assert ((arity < lack));
+            assert (arity < lack);
             auto closure = make_closure (
                 env,
                 this->name_vector,
@@ -4064,14 +4064,25 @@
         }
     }
     void
-    top_sexp_list_run (env_t &env, shared_ptr <obj_t> sexp_list)
+    top_sexp_list_run_with_out_prefix_assign (
+        env_t &env,
+        shared_ptr <obj_t> sexp_list)
     {
         if (null_p (env, sexp_list))
             return;
         else {
             top_sexp_run (env, car (env, sexp_list));
-            top_sexp_list_run (env, cdr (env, sexp_list));
+            top_sexp_list_run_with_out_prefix_assign (
+                env,
+                cdr (env, sexp_list));
         }
+    }
+    void
+    top_sexp_list_run (env_t &env, shared_ptr <obj_t> sexp_list)
+    {
+        top_sexp_list_run_with_out_prefix_assign (
+            env, sexp_list_prefix_assign (
+                env, sexp_list));
     }
     void
     code_run (env_t &env, shared_ptr <str_o> code)
