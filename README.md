@@ -16,10 +16,6 @@
 
 - [Semantic of De Bruijn Notation and Bizarre Syntax Adventure][de-bruijn-notation]
 
-## Source Code
-
-- [The implementation in C++][jojo]
-
 ------
 
 [story-map]: https://xieyuheng.github.io/jojo/story-map
@@ -28,5 +24,3 @@
 [style-guide]: https://xieyuheng.github.io/jojo/docs/style-guide
 
 [de-bruijn-notation]: https://xieyuheng.github.io/jojo/note/de-bruijn-notation
-
-[jojo]: https://xieyuheng.github.io/jojo/src/jojo
