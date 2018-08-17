@@ -1085,6 +1085,7 @@
             cout << "  arity > lack" << "\n";
             cout << "  arity : " << arity << "\n";
             cout << "  lack : " << lack << "\n";
+            cout << "  closure : " << this->repr (env) <<  "\n";
             exit (1);
         }
         auto obj_vector = pick_up_obj_vector (env, arity);
@@ -4064,7 +4065,7 @@
         }
     }
     void
-    top_sexp_list_run_with_out_prefix_assign (
+    top_sexp_list_run_without_infix_assign (
         env_t &env,
         shared_ptr <obj_t> sexp_list)
     {
@@ -4072,7 +4073,7 @@
             return;
         else {
             top_sexp_run (env, car (env, sexp_list));
-            top_sexp_list_run_with_out_prefix_assign (
+            top_sexp_list_run_without_infix_assign (
                 env,
                 cdr (env, sexp_list));
         }
@@ -4080,7 +4081,7 @@
     void
     top_sexp_list_run (env_t &env, shared_ptr <obj_t> sexp_list)
     {
-        top_sexp_list_run_with_out_prefix_assign (
+        top_sexp_list_run_without_infix_assign (
             env, sexp_list_prefix_assign (
                 env, sexp_list));
     }
@@ -4451,6 +4452,71 @@
             or word == "tuck"
             or word == "swap";
     }
+      bool
+      assign_sexp_p (
+          env_t &env,
+          shared_ptr <obj_t> sexp)
+      {
+          if (! cons_p (env, sexp)) return false;
+          auto head = car (env, sexp);
+          if (! sym_p (env, head)) return false;
+          auto sym = as_sym (head);
+          if (sym->sym != "=") return false;
+          return true;
+      }
+      shared_ptr <obj_t>
+      assign_sexp_normalize (
+          env_t &env,
+          shared_ptr <obj_t> sexp)
+      {
+          auto head = car (env, sexp);
+          auto body = cdr (env, sexp);
+          if (assign_lambda_sugar_p (env, body))
+              return cons_c (
+                  env, head,
+                  assign_lambda_desugar (env, body));
+          else
+              return sexp;
+      }
+      shared_ptr <obj_t>
+      do_body_trans (
+        env_t &env,
+        shared_ptr <obj_t> body)
+      {
+          if (null_p (env, body)) return body;
+          auto sexp = car (env, body);
+          auto rest = cdr (env, body);
+          if (null_p (env, rest))
+              return body;
+          else if (assign_sexp_p (env, sexp)) {
+              sexp = assign_sexp_normalize (env, sexp);
+              auto obj_vector = obj_vector_t ();
+              obj_vector.push_back (cdr (env, sexp));
+              auto let_sexp = cons_c (
+                  env, make_sym (env, "let"),
+                  cons_c (
+                      env, make_vect (env, obj_vector),
+                      rest));
+              return unit_list (env, let_sexp);
+          }
+          else {
+              auto drop = unit_list (env, make_sym (env, "drop"));
+              body = do_body_trans (env, rest);
+              body = cons_c (env, drop, body);
+              body = cons_c (env, sexp, body);
+              return body;
+          }
+      }
+      shared_ptr <jojo_t>
+      k_do (
+          env_t &env,
+          local_ref_map_t &local_ref_map,
+          shared_ptr <obj_t> body)
+      {
+          body = sexp_list_prefix_assign (env, body);
+          body = do_body_trans (env, body);
+          return sexp_list_compile (env, local_ref_map, body);
+      }
         struct lambda_jo_t: jo_t
         {
             name_vector_t name_vector;
@@ -4495,22 +4561,6 @@
                 jojo_repr (env, this->jojo) +
                 ")";
         }
-      shared_ptr <obj_t>
-      body_patch_drop (env_t &env, shared_ptr <obj_t> sexp_list)
-      {
-          assert (cons_p (env, sexp_list));
-          auto head = car (env, sexp_list);
-          auto rest = cdr (env, sexp_list);
-          if (null_p (env, rest))
-              return sexp_list;
-          else {
-              auto drop = unit_list (env, make_sym (env, "drop"));
-              sexp_list = body_patch_drop (env, rest);
-              sexp_list = cons_c (env, drop, sexp_list);
-              sexp_list = cons_c (env, head, sexp_list);
-              return sexp_list;
-          }
-      }
       name_vector_t
       obj_vector_to_name_vector (env_t &env, obj_vector_t &obj_vect)
       {
@@ -4529,17 +4579,39 @@
       {
           auto name_vect = as_vect (car (env, body));
           auto rest = cdr (env, body);
-          auto name_vector = obj_vector_to_name_vector
-              (env, name_vect->obj_vector);
-          auto local_ref_map = local_ref_map_extend
-              (env, old_local_ref_map, name_vector);
-          rest = body_patch_drop (env, rest);
-          auto rest_jojo = sexp_list_compile
-              (env, local_ref_map, rest);
+          auto name_vector = obj_vector_to_name_vector (
+              env, name_vect->obj_vector);
+          auto local_ref_map = local_ref_map_extend (
+              env, old_local_ref_map, name_vector);
+          auto rest_jojo = sexp_compile (
+              env, local_ref_map,
+              cons_c (
+                  env,
+                  make_sym (env, "do"),
+                  rest));
           jo_vector_t jo_vector = {
               new lambda_jo_t (name_vector, rest_jojo),
           };
           return make_shared <jojo_t> (jo_vector);
+      }
+      void
+      m_let (env_t &env, obj_map_t &obj_map)
+      {
+          auto body = obj_map ["body"];
+          auto head = car (env, body);
+          auto rest = cdr (env, body);
+          auto binding_vect = as_vect (head);
+          binding_vect = vect_reverse (env, binding_vect);
+          rest = cons_c (env, make_sym (env, "do"), rest);
+          for (auto binding: binding_vect->obj_vector) {
+              auto name = car (env, binding);
+              auto obj = car (env, cdr (env, binding));
+              rest = unit_list (env, rest);
+              rest = cons_c (env, unit_vect (env, name), rest);
+              rest = cons_c (env, make_sym (env, "lambda"), rest);
+              rest = cons_c (env, rest, unit_list (env, obj));
+          }
+          env.obj_stack.push (rest);
       }
         struct macro_maker_jo_t: jo_t
         {
@@ -4575,23 +4647,14 @@
       shared_ptr <jojo_t>
       k_macro (
           env_t &env,
-          local_ref_map_t &old_local_ref_map,
+          local_ref_map_t &local_ref_map,
           shared_ptr <obj_t> body)
       {
-          auto name_vect = as_vect (car (env, body));
-          auto rest = cdr (env, body);
-          auto name_vector = obj_vector_to_name_vector
-              (env, name_vect->obj_vector);
-          auto local_ref_map = local_ref_map_extend
-              (env, old_local_ref_map, name_vector);
-          rest = body_patch_drop (env, rest);
-          auto rest_jojo = sexp_list_compile
-              (env, local_ref_map, rest);
-          jo_vector_t jo_vector = {
-              new lambda_jo_t (name_vector, rest_jojo),
-              new macro_maker_jo_t (),
-          };
-          return make_shared <jojo_t> (jo_vector);
+          auto jo_vector = jo_vector_t ();
+          jo_vector.push_back (new macro_maker_jo_t ());
+          auto lambda_jojo = k_lambda (env, local_ref_map, body);
+          auto jojo = make_shared <jojo_t> (jo_vector);
+          return jojo_append (lambda_jojo, jojo);
       }
         struct case_jo_t: jo_t
         {
@@ -4997,34 +5060,6 @@
           };
           return make_shared <jojo_t> (jo_vector);
       }
-      shared_ptr <jojo_t>
-      k_begin (
-          env_t &env,
-          local_ref_map_t &local_ref_map,
-          shared_ptr <obj_t> body)
-      {
-          body = body_patch_drop (env, body);
-          return sexp_list_compile (env, local_ref_map, body);
-      }
-      void
-      m_let (env_t &env, obj_map_t &obj_map)
-      {
-          auto body = obj_map ["body"];
-          auto head = car (env, body);
-          auto rest = cdr (env, body);
-          auto binding_vect = as_vect (head);
-          binding_vect = vect_reverse (env, binding_vect);
-          rest = cons_c (env, make_sym (env, "begin"), rest);
-          for (auto binding: binding_vect->obj_vector) {
-              auto name = car (env, binding);
-              auto obj = car (env, cdr (env, binding));
-              rest = unit_list (env, rest);
-              rest = cons_c (env, unit_vect (env, name), rest);
-              rest = cons_c (env, make_sym (env, "lambda"), rest);
-              rest = cons_c (env, rest, unit_list (env, obj));
-          }
-          env.obj_stack.push (rest);
-      }
       shared_ptr <obj_t>
       sexp_list_quote_and_unquote (
           env_t &env,
@@ -5210,7 +5245,7 @@
           auto question = car (env, l);
           auto answer = cons_c (
               env,
-              make_sym (env, "begin"),
+              make_sym (env, "do"),
               cdr (env, l));
           if (null_p (env, rest)) {
               if (sym_p (env, question) and
@@ -6183,7 +6218,7 @@
         define_keyword (env, "assert", k_assert);
         define_keyword (env, "if", k_if);
         define_keyword (env, "when", k_when);
-        define_keyword (env, "begin", k_begin);
+        define_keyword (env, "do", k_do);
         define_prim_macro (env, "let", m_let);
         define_prim_macro (env, "quasiquote", m_quasiquote);
         define_prim_macro (env, "and", m_and);

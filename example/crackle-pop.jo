@@ -10,7 +10,7 @@
 (= (crackle-pop-loop x)
    (println (num-crackle-pop x))
    (when (lt x 100)
-     (recur (add 1 x))))
+     (crackle-pop-loop (add 1 x))))
 
 (= (num-crackle-pop x)
    (cond [(eq 0 (mod x (mul 3 5))) 'CracklePop]
