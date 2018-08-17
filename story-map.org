@@ -1,9 +1,8 @@
 #+html_head: <link rel="stylesheet" href="css/org-page.css"/>
 #+title: Story Map
-- write vs print
+
 * [note]
 - learn more about float encoding
-- dive deep into c++ standard lib
 * core
   - an interpreter implemented by dynamic threaded code
 * macro system

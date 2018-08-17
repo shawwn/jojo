@@ -87,6 +87,7 @@
         obj_map_t obj_map;
         virtual ~obj_t ();
         virtual string repr (env_t &env);
+        virtual void print (env_t &env);
         virtual bool eq (env_t &env, shared_ptr <obj_t> obj);
         virtual void apply (env_t &env, size_t arity);
         virtual void apply_to_arg_dict (env_t &env);
@@ -130,7 +131,7 @@
     };
     #+end_src
 
-** box_t
+*** box_t
 
     - box will be used as shared raw pointer.
 
@@ -881,6 +882,16 @@
     obj_t::repr (env_t &env)
     {
         return "#<" + name_of_tag (env, this->tag) + ">";
+    }
+    #+end_src
+
+*** obj_t::print
+
+    #+begin_src cpp
+    void
+    obj_t::print (env_t &env)
+    {
+        cout << this->repr (env) << flush;
     }
     #+end_src
 
@@ -2598,6 +2609,7 @@
         str_o (env_t &env, string str);
         bool eq (env_t &env, shared_ptr <obj_t> obj);
         string repr (env_t &env);
+        void print (env_t &env);
     };
     #+end_src
 
@@ -2628,6 +2640,16 @@
     str_o::repr (env_t &env)
     {
         return "\"" + this->str + "\"";
+    }
+    #+end_src
+
+*** str_o::print
+
+    #+begin_src cpp
+    void
+    str_o::print (env_t &env)
+    {
+        cout << this->str;
     }
     #+end_src
 
@@ -2768,6 +2790,7 @@
         sym_o (env_t &env, symbol sym);
         bool eq (env_t &env, shared_ptr <obj_t> obj);
         symbol repr (env_t &env);
+        void print (env_t &env);
     };
     #+end_src
 
@@ -2798,6 +2821,16 @@
     sym_o::repr (env_t &env)
     {
         return "'" + this->sym;
+    }
+    #+end_src
+
+*** sym_o::print
+
+    #+begin_src cpp
+    void
+    sym_o::print (env_t &env)
+    {
+        cout << this->sym;
     }
     #+end_src
 
@@ -8847,7 +8880,7 @@
             [] (env_t &env, obj_map_t &obj_map)
             {
                 auto obj = obj_map ["obj"];
-                cout << obj->repr (env) << flush;
+                obj->print (env);
                 env.obj_stack.push (obj);
             });
         define_prim (
@@ -8855,7 +8888,8 @@
             [] (env_t &env, obj_map_t &obj_map)
             {
                 auto obj = obj_map ["obj"];
-                cout << obj->repr (env) << "\n" << flush;
+                obj->print (env);
+                cout << "\n" << flush;
                 env.obj_stack.push (obj);
             });
         define_prim (

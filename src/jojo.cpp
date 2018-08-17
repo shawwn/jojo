@@ -56,6 +56,7 @@
         obj_map_t obj_map;
         virtual ~obj_t ();
         virtual string repr (env_t &env);
+        virtual void print (env_t &env);
         virtual bool eq (env_t &env, shared_ptr <obj_t> obj);
         virtual void apply (env_t &env, size_t arity);
         virtual void apply_to_arg_dict (env_t &env);
@@ -608,6 +609,11 @@
     obj_t::repr (env_t &env)
     {
         return "#<" + name_of_tag (env, this->tag) + ">";
+    }
+    void
+    obj_t::print (env_t &env)
+    {
+        cout << this->repr (env) << flush;
     }
     bool
     obj_t::eq (env_t &env, shared_ptr <obj_t> obj)
@@ -1770,6 +1776,7 @@
         str_o (env_t &env, string str);
         bool eq (env_t &env, shared_ptr <obj_t> obj);
         string repr (env_t &env);
+        void print (env_t &env);
     };
     str_o::str_o (env_t &env, string str)
     {
@@ -1785,6 +1792,11 @@
     str_o::repr (env_t &env)
     {
         return "\"" + this->str + "\"";
+    }
+    void
+    str_o::print (env_t &env)
+    {
+        cout << this->str;
     }
     shared_ptr <str_o>
     as_str (shared_ptr <obj_t> obj)
@@ -1873,6 +1885,7 @@
         sym_o (env_t &env, symbol sym);
         bool eq (env_t &env, shared_ptr <obj_t> obj);
         symbol repr (env_t &env);
+        void print (env_t &env);
     };
     sym_o::sym_o (env_t &env, symbol sym)
     {
@@ -1888,6 +1901,11 @@
     sym_o::repr (env_t &env)
     {
         return "'" + this->sym;
+    }
+    void
+    sym_o::print (env_t &env)
+    {
+        cout << this->sym;
     }
     shared_ptr <sym_o>
     as_sym (shared_ptr <obj_t> obj)
@@ -6243,7 +6261,7 @@
             [] (env_t &env, obj_map_t &obj_map)
             {
                 auto obj = obj_map ["obj"];
-                cout << obj->repr (env) << flush;
+                obj->print (env);
                 env.obj_stack.push (obj);
             });
         define_prim (
@@ -6251,7 +6269,8 @@
             [] (env_t &env, obj_map_t &obj_map)
             {
                 auto obj = obj_map ["obj"];
-                cout << obj->repr (env) << "\n" << flush;
+                obj->print (env);
+                cout << "\n" << flush;
                 env.obj_stack.push (obj);
             });
         define_prim (
