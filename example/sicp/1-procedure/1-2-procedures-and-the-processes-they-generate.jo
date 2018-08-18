@@ -1,0 +1,52 @@
+;; 1-2-1 Linear Recursion and Iteration
+
+(= (factorial n)
+   (if (eq n 1)
+     1
+     (mul n (recur (sub n 1)))))
+
+(factorial 6)
+
+(= (factorial n)
+   (fact-iter 1 1 n))
+
+(= (fact-iter product counter max-count)
+   (if (gt counter max-count)
+     product
+     (fact-iter (mul counter product)
+                (add counter 1)
+                max-count)))
+
+(factorial 6)
+
+(= (ackermann x y)
+   (cond [(eq y 0) 0]
+         [(eq x 0) (mul 2 y)]
+         [(eq y 1) 2]
+         [else (recur (sub x 1)
+                      (recur x (sub y 1)))]))
+
+(ackermann 1 10)
+(ackermann 2 4)
+(ackermann 3 3)
+
+;; 1-2-2 Tree Recursion
+
+(= (fib n)
+   (cond [(eq n 0) 0]
+         [(eq n 1) 1]
+         [else (add (recur (sub n 1))
+                    (recur (sub n 2)))]))
+
+(fib 10)
+
+(fib n) = (fib-iter 1 0 n)
+
+(= (fib-iter a b count)
+   (if (eq count 0)
+     b
+     (recur (add a b) a (sub count 1))))
+
+(fib 10)
+
+;; Example: Counting change
