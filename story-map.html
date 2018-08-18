@@ -3,7 +3,7 @@
 "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd">
 <html xmlns="http://www.w3.org/1999/xhtml" lang="en" xml:lang="en">
 <head>
-<!-- 2018-08-17 Fri 04:34 -->
+<!-- 2018-08-19 Sun 01:02 -->
 <meta http-equiv="Content-Type" content="text/html;charset=utf-8" />
 <meta name="viewport" content="width=device-width, initial-scale=1" />
 <title>Story Map</title>
@@ -63,256 +63,246 @@ for the JavaScript code in this tag.
 <h2>overview</h2>
 <div id="text-table-of-contents">
 <ul>
-<li><a href="#orgbb55416"><span class="done _note_">[note]</span> </a></li>
-<li><a href="#org74f4730">core</a></li>
-<li><a href="#orga60049c">macro system</a>
+<li><a href="#org6617f7e">core</a></li>
+<li><a href="#org385c334">macro system</a>
 <ul>
-<li><a href="#org300d914">(&gt;) &#x2013; k_threading</a></li>
-<li><a href="#org6c13384">(*&gt;) &#x2013; k_threading_to_list</a></li>
-<li><a href="#org369a9ae">(v&gt;) &#x2013; k_threading_to_vect</a></li>
-<li><a href="#org3421ccd">(match) &#x2013; k_match</a></li>
+<li><a href="#orgd80a025">(&gt;) &#x2013; k_threading</a></li>
+<li><a href="#org3c6c91c">(*&gt;) &#x2013; k_threading_to_list</a></li>
+<li><a href="#org68c89a1">(v&gt;) &#x2013; k_threading_to_vect</a></li>
+<li><a href="#orgf36a63f">(match) &#x2013; k_match</a></li>
 </ul>
 </li>
-<li><a href="#orge1056a9">object system</a>
+<li><a href="#org251b274">object system</a>
 <ul>
-<li><a href="#org9940fc3">summing &amp; union-type</a></li>
-<li><a href="#org9a9940c">inheriting &amp; sub-type</a></li>
+<li><a href="#org244012f">summing &amp; union-type</a></li>
+<li><a href="#orga8bf77c">inheriting &amp; sub-type</a></li>
 </ul>
 </li>
-<li><a href="#org95e0201">ffi</a>
+<li><a href="#org167d35">ffi</a>
 <ul>
-<li><a href="#org11ff2fa">handle ffi by dynamic library</a></li>
+<li><a href="#org2127fed">handle ffi by dynamic library</a></li>
 </ul>
 </li>
-<li><a href="#orgdd35e69">prelude</a>
+<li><a href="#org5e46b84">prelude</a>
 <ul>
-<li><a href="#orgcc36508">basic stream</a></li>
-<li><a href="#org2369efe">basic fs</a></li>
-<li><a href="#org2f4e99e">basic network</a></li>
-<li><a href="#orga57e1b2">basic git</a></li>
+<li><a href="#org51275c8">basic stream</a></li>
+<li><a href="#org425534a">basic fs</a></li>
+<li><a href="#orgbe6bb1f">basic network</a></li>
+<li><a href="#org82a128a">basic git</a></li>
 </ul>
 </li>
-<li><a href="#org8a75ad">module system</a>
+<li><a href="#org9dae7a4">module system</a>
 <ul>
-<li><a href="#orgd8e345d">`env_eq` &#x2013; for module_o::eq &#x2013; actor-model might need this</a></li>
-<li><a href="#orgb117197">use (module) for non file module</a></li>
+<li><a href="#orgf5ccb0e">`env_eq` &#x2013; for module_o::eq &#x2013; actor-model might need this</a></li>
+<li><a href="#org9b888b3">use (module) for non file module</a></li>
 </ul>
 </li>
-<li><a href="#orge455be9">secure</a>
+<li><a href="#orgd2a2e72">secure</a>
 <ul>
-<li><a href="#org3d324f9">can not handle big file &#x2013; due to the recursion in sexp parser</a></li>
-<li><a href="#orgc62766e">make syntax frontend more secure</a></li>
+<li><a href="#org23f3a2a">can not handle big file &#x2013; due to the recursion in sexp parser</a></li>
+<li><a href="#org53685b1">make syntax frontend more secure</a></li>
 </ul>
 </li>
-<li><a href="#org77e38ab">actor model</a></li>
-<li><a href="#org1e52b5">documentation</a>
+<li><a href="#orgbbfc56">actor model</a></li>
+<li><a href="#org4a3de2d">documentation</a>
 <ul>
-<li><a href="#orgdb425f1">renew old notes</a></li>
-<li><a href="#orgb8d14c9">renew ideas form jojo-history</a></li>
+<li><a href="#org74cf2a6">renew old notes</a></li>
+<li><a href="#orgf2388f4">renew ideas form jojo-history</a></li>
 </ul>
 </li>
-<li><a href="#org7d7ab3c">toolchain</a>
+<li><a href="#orgc481aa1">toolchain</a>
 <ul>
-<li><a href="#orgdceccd6">debug</a></li>
-<li><a href="#orgd9b441a">profile</a></li>
-<li><a href="#org25cd729">repl</a></li>
-<li><a href="#org85cfd9e">package manager</a></li>
-<li><a href="#orgee91736">editing support</a>
+<li><a href="#org5112">debug</a></li>
+<li><a href="#org20a5956">profile</a></li>
+<li><a href="#org3fa6f3d">repl</a></li>
+<li><a href="#org373eb10">package manager</a></li>
+<li><a href="#orgd065d51">editing support</a>
 <ul>
-<li><a href="#org3c1d748">jojo-mode</a></li>
-<li><a href="#org5c5f4d4">org-mode for neovim</a></li>
+<li><a href="#orgbe7f49a">jojo-mode</a></li>
+<li><a href="#orgd74687e">org-mode for neovim</a></li>
 </ul>
 </li>
 </ul>
 </li>
-<li><a href="#org606b886">apps</a>
+<li><a href="#org82184c6">apps</a>
 <ul>
-<li><a href="#orgaa28563">jojo-bch</a></li>
-<li><a href="#org2babb6b">org-mode parser</a></li>
-<li><a href="#orgff9d740">git-dir parser</a></li>
-<li><a href="#org4733d70">xml/html generator</a></li>
+<li><a href="#org18865bc">jojo-bch</a></li>
+<li><a href="#org5f801b9">org-mode parser</a></li>
+<li><a href="#org4fb0dde">git-dir parser</a></li>
+<li><a href="#orgf905087">xml/html generator</a></li>
 </ul>
 </li>
-<li><a href="#orgd925463">community</a></li>
+<li><a href="#org5914b6a">community</a></li>
 </ul>
 </div>
 </div>
-<ul class="org-ul">
-<li><p>write vs print</p></li></ul>
-<div id="outline-container-orgbb55416" class="outline-2">
-<h2 id="orgbb55416"><span class="done _note_">[note]</span> </h2>
-<div class="outline-text-2" id="text-orgbb55416">
-<ul class="org-ul">
-<li><p>learn more about float encoding</p></li>
-<li><p>dive deep into c++ standard lib</p></li></ul>
-</div>
-</div>
-<div id="outline-container-org74f4730" class="outline-2">
-<h2 id="org74f4730">core</h2>
-<div class="outline-text-2" id="text-org74f4730">
+
+<div id="outline-container-org6617f7e" class="outline-2">
+<h2 id="org6617f7e">core</h2>
+<div class="outline-text-2" id="text-org6617f7e">
 <ul class="org-ul">
 <li><p>an interpreter implemented by dynamic threaded code</p></li></ul>
 </div>
 </div>
-<div id="outline-container-orga60049c" class="outline-2">
-<h2 id="orga60049c">macro system</h2>
-<div class="outline-text-2" id="text-orga60049c">
+<div id="outline-container-org385c334" class="outline-2">
+<h2 id="org385c334">macro system</h2>
+<div class="outline-text-2" id="text-org385c334">
 <ul class="org-ul">
 <li><p>with lisp like macro system</p></li></ul>
 </div>
-<div id="outline-container-org300d914" class="outline-3">
-<h3 id="org300d914">(&gt;) &#x2013; k_threading</h3>
+<div id="outline-container-orgd80a025" class="outline-3">
+<h3 id="orgd80a025">(&gt;) &#x2013; k_threading</h3>
 </div>
-<div id="outline-container-org6c13384" class="outline-3">
-<h3 id="org6c13384">(*&gt;) &#x2013; k_threading_to_list</h3>
+<div id="outline-container-org3c6c91c" class="outline-3">
+<h3 id="org3c6c91c">(*&gt;) &#x2013; k_threading_to_list</h3>
 </div>
-<div id="outline-container-org369a9ae" class="outline-3">
-<h3 id="org369a9ae">(v&gt;) &#x2013; k_threading_to_vect</h3>
+<div id="outline-container-org68c89a1" class="outline-3">
+<h3 id="org68c89a1">(v&gt;) &#x2013; k_threading_to_vect</h3>
 </div>
-<div id="outline-container-org3421ccd" class="outline-3">
-<h3 id="org3421ccd">(match) &#x2013; k_match</h3>
+<div id="outline-container-orgf36a63f" class="outline-3">
+<h3 id="orgf36a63f">(match) &#x2013; k_match</h3>
 </div>
 </div>
-<div id="outline-container-orge1056a9" class="outline-2">
-<h2 id="orge1056a9">object system</h2>
-<div class="outline-text-2" id="text-orge1056a9">
+<div id="outline-container-org251b274" class="outline-2">
+<h2 id="org251b274">object system</h2>
+<div class="outline-text-2" id="text-org251b274">
 <ul class="org-ul">
 <li><p>with object system</p></li></ul>
 </div>
-<div id="outline-container-org9940fc3" class="outline-3">
-<h3 id="org9940fc3">summing &amp; union-type</h3>
+<div id="outline-container-org244012f" class="outline-3">
+<h3 id="org244012f">summing &amp; union-type</h3>
 </div>
-<div id="outline-container-org9a9940c" class="outline-3">
-<h3 id="org9a9940c">inheriting &amp; sub-type</h3>
+<div id="outline-container-orga8bf77c" class="outline-3">
+<h3 id="orga8bf77c">inheriting &amp; sub-type</h3>
 </div>
 </div>
-<div id="outline-container-org95e0201" class="outline-2">
-<h2 id="org95e0201">ffi</h2>
-<div class="outline-text-2" id="text-org95e0201">
+<div id="outline-container-org167d35" class="outline-2">
+<h2 id="org167d35">ffi</h2>
+<div class="outline-text-2" id="text-org167d35">
 <ul class="org-ul">
 <li><p>with simple ffi to c++</p></li></ul>
 </div>
-<div id="outline-container-org11ff2fa" class="outline-3">
-<h3 id="org11ff2fa">handle ffi by dynamic library</h3>
+<div id="outline-container-org2127fed" class="outline-3">
+<h3 id="org2127fed">handle ffi by dynamic library</h3>
 </div>
 </div>
-<div id="outline-container-orgdd35e69" class="outline-2">
-<h2 id="orgdd35e69">prelude</h2>
-<div class="outline-text-2" id="text-orgdd35e69">
+<div id="outline-container-org5e46b84" class="outline-2">
+<h2 id="org5e46b84">prelude</h2>
+<div class="outline-text-2" id="text-org5e46b84">
 <ul class="org-ul">
 <li><p>with a practical prelude</p></li></ul>
 </div>
-<div id="outline-container-orgcc36508" class="outline-3">
-<h3 id="orgcc36508">basic stream</h3>
+<div id="outline-container-org51275c8" class="outline-3">
+<h3 id="org51275c8">basic stream</h3>
 </div>
-<div id="outline-container-org2369efe" class="outline-3">
-<h3 id="org2369efe">basic fs</h3>
+<div id="outline-container-org425534a" class="outline-3">
+<h3 id="org425534a">basic fs</h3>
 </div>
-<div id="outline-container-org2f4e99e" class="outline-3">
-<h3 id="org2f4e99e">basic network</h3>
+<div id="outline-container-orgbe6bb1f" class="outline-3">
+<h3 id="orgbe6bb1f">basic network</h3>
 </div>
-<div id="outline-container-orga57e1b2" class="outline-3">
-<h3 id="orga57e1b2">basic git</h3>
+<div id="outline-container-org82a128a" class="outline-3">
+<h3 id="org82a128a">basic git</h3>
 </div>
 </div>
-<div id="outline-container-org8a75ad" class="outline-2">
-<h2 id="org8a75ad">module system</h2>
-<div class="outline-text-2" id="text-org8a75ad">
+<div id="outline-container-org9dae7a4" class="outline-2">
+<h2 id="org9dae7a4">module system</h2>
+<div class="outline-text-2" id="text-org9dae7a4">
 <ul class="org-ul">
 <li><p>with simple module system</p></li></ul>
 </div>
-<div id="outline-container-orgd8e345d" class="outline-3">
-<h3 id="orgd8e345d">`env_eq` &#x2013; for module_o::eq &#x2013; actor-model might need this</h3>
+<div id="outline-container-orgf5ccb0e" class="outline-3">
+<h3 id="orgf5ccb0e">`env_eq` &#x2013; for module_o::eq &#x2013; actor-model might need this</h3>
 </div>
-<div id="outline-container-orgb117197" class="outline-3">
-<h3 id="orgb117197">use (module) for non file module</h3>
-</div>
-</div>
-<div id="outline-container-orge455be9" class="outline-2">
-<h2 id="orge455be9">secure</h2>
-<div class="outline-text-2" id="text-orge455be9">
-</div><div id="outline-container-org3d324f9" class="outline-3">
-<h3 id="org3d324f9">can not handle big file &#x2013; due to the recursion in sexp parser</h3>
-</div>
-<div id="outline-container-orgc62766e" class="outline-3">
-<h3 id="orgc62766e">make syntax frontend more secure</h3>
+<div id="outline-container-org9b888b3" class="outline-3">
+<h3 id="org9b888b3">use (module) for non file module</h3>
 </div>
 </div>
-<div id="outline-container-org77e38ab" class="outline-2">
-<h2 id="org77e38ab">actor model</h2>
+<div id="outline-container-orgd2a2e72" class="outline-2">
+<h2 id="orgd2a2e72">secure</h2>
+<div class="outline-text-2" id="text-orgd2a2e72">
+</div><div id="outline-container-org23f3a2a" class="outline-3">
+<h3 id="org23f3a2a">can not handle big file &#x2013; due to the recursion in sexp parser</h3>
 </div>
-<div id="outline-container-org1e52b5" class="outline-2">
-<h2 id="org1e52b5">documentation</h2>
-<div class="outline-text-2" id="text-org1e52b5">
+<div id="outline-container-org53685b1" class="outline-3">
+<h3 id="org53685b1">make syntax frontend more secure</h3>
+</div>
+</div>
+<div id="outline-container-orgbbfc56" class="outline-2">
+<h2 id="orgbbfc56">actor model</h2>
+</div>
+<div id="outline-container-org4a3de2d" class="outline-2">
+<h2 id="org4a3de2d">documentation</h2>
+<div class="outline-text-2" id="text-org4a3de2d">
 <ul class="org-ul">
 <li><p>well documented</p></li></ul>
 </div>
-<div id="outline-container-orgdb425f1" class="outline-3">
-<h3 id="orgdb425f1">renew old notes</h3>
+<div id="outline-container-org74cf2a6" class="outline-3">
+<h3 id="org74cf2a6">renew old notes</h3>
 </div>
-<div id="outline-container-orgb8d14c9" class="outline-3">
-<h3 id="orgb8d14c9">renew ideas form jojo-history</h3>
-</div>
-</div>
-<div id="outline-container-org7d7ab3c" class="outline-2">
-<h2 id="org7d7ab3c">toolchain</h2>
-<div class="outline-text-2" id="text-org7d7ab3c">
-</div><div id="outline-container-orgdceccd6" class="outline-3">
-<h3 id="orgdceccd6">debug</h3>
-</div>
-<div id="outline-container-orgd9b441a" class="outline-3">
-<h3 id="orgd9b441a">profile</h3>
-</div>
-<div id="outline-container-org25cd729" class="outline-3">
-<h3 id="org25cd729">repl</h3>
-</div>
-<div id="outline-container-org85cfd9e" class="outline-3">
-<h3 id="org85cfd9e">package manager</h3>
-</div>
-<div id="outline-container-orgee91736" class="outline-3">
-<h3 id="orgee91736">editing support</h3>
-<div class="outline-text-3" id="text-orgee91736">
-</div><div id="outline-container-org3c1d748" class="outline-4">
-<h4 id="org3c1d748">jojo-mode</h4>
-</div>
-<div id="outline-container-org5c5f4d4" class="outline-4">
-<h4 id="org5c5f4d4">org-mode for neovim</h4>
+<div id="outline-container-orgf2388f4" class="outline-3">
+<h3 id="orgf2388f4">renew ideas form jojo-history</h3>
 </div>
 </div>
+<div id="outline-container-orgc481aa1" class="outline-2">
+<h2 id="orgc481aa1">toolchain</h2>
+<div class="outline-text-2" id="text-orgc481aa1">
+</div><div id="outline-container-org5112" class="outline-3">
+<h3 id="org5112">debug</h3>
 </div>
-<div id="outline-container-org606b886" class="outline-2">
-<h2 id="org606b886">apps</h2>
-<div class="outline-text-2" id="text-org606b886">
+<div id="outline-container-org20a5956" class="outline-3">
+<h3 id="org20a5956">profile</h3>
+</div>
+<div id="outline-container-org3fa6f3d" class="outline-3">
+<h3 id="org3fa6f3d">repl</h3>
+</div>
+<div id="outline-container-org373eb10" class="outline-3">
+<h3 id="org373eb10">package manager</h3>
+</div>
+<div id="outline-container-orgd065d51" class="outline-3">
+<h3 id="orgd065d51">editing support</h3>
+<div class="outline-text-3" id="text-orgd065d51">
+</div><div id="outline-container-orgbe7f49a" class="outline-4">
+<h4 id="orgbe7f49a">jojo-mode</h4>
+</div>
+<div id="outline-container-orgd74687e" class="outline-4">
+<h4 id="orgd74687e">org-mode for neovim</h4>
+</div>
+</div>
+</div>
+<div id="outline-container-org82184c6" class="outline-2">
+<h2 id="org82184c6">apps</h2>
+<div class="outline-text-2" id="text-org82184c6">
 <ul class="org-ul">
 <li><p>with some good applications written in it</p></li></ul>
 </div>
-<div id="outline-container-orgaa28563" class="outline-3">
-<h3 id="orgaa28563">jojo-bch</h3>
-<div class="outline-text-3" id="text-orgaa28563">
+<div id="outline-container-org18865bc" class="outline-3">
+<h3 id="org18865bc">jojo-bch</h3>
+<div class="outline-text-3" id="text-org18865bc">
 <ul class="org-ul">
 <li><p>compile a subset of jojo to bch opcode</p></li></ul>
 </div>
 </div>
-<div id="outline-container-org2babb6b" class="outline-3">
-<h3 id="org2babb6b">org-mode parser</h3>
+<div id="outline-container-org5f801b9" class="outline-3">
+<h3 id="org5f801b9">org-mode parser</h3>
 </div>
-<div id="outline-container-orgff9d740" class="outline-3">
-<h3 id="orgff9d740">git-dir parser</h3>
+<div id="outline-container-org4fb0dde" class="outline-3">
+<h3 id="org4fb0dde">git-dir parser</h3>
 </div>
-<div id="outline-container-org4733d70" class="outline-3">
-<h3 id="org4733d70">xml/html generator</h3>
+<div id="outline-container-orgf905087" class="outline-3">
+<h3 id="orgf905087">xml/html generator</h3>
 </div>
 </div>
-<div id="outline-container-orgd925463" class="outline-2">
-<h2 id="orgd925463">community</h2>
-<div class="outline-text-2" id="text-orgd925463">
+<div id="outline-container-org5914b6a" class="outline-2">
+<h2 id="org5914b6a">community</h2>
+<div class="outline-text-2" id="text-org5914b6a">
 <ul class="org-ul">
 <li><p>maintained by a community as a live system</p></li></ul>
 </div>
 </div>
 </div>
 <div id="postamble" class="status">
-<p class="date">Created: 2018-08-17 Fri 04:34</p>
+<p class="date">Created: 2018-08-19 Sun 01:02</p>
 <p class="validation"><a href="http://validator.w3.org/check?uri=referer">Validate</a></p>
 </div>
 </body>

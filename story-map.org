@@ -1,8 +1,6 @@
 #+html_head: <link rel="stylesheet" href="css/org-page.css"/>
 #+title: Story Map
 
-* [note]
-- learn more about float encoding
 * core
   - an interpreter implemented by dynamic threaded code
 * macro system
