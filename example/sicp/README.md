@@ -1,3 +1,1 @@
-# SICP
-
-- SICP is a CS textbook.
+# Structure and Interpretation of Computer Programs

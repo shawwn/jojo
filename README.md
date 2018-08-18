@@ -20,6 +20,8 @@
 
 - [Structure and Interpretation of Computer Programs a.k.a. SICP][sicp]
 - [Essentials of Programming Languages a.k.a. EOPL][eopl]
+- [Communicating Sequential Processes a.k.a. CSP][csp]
+- [The Reasoned Schemer][reasoned]
 
 ------
 
