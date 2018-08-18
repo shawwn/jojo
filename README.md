@@ -30,7 +30,7 @@
 
 [de-bruijn-notation]: https://xieyuheng.github.io/jojo/note/de-bruijn-notation
 
-[sicp]: https://xieyuheng.github.io/jojo/example/sicp
-[eopl]: https://xieyuheng.github.io/jojo/example/eopl
-[csp]: https://xieyuheng.github.io/jojo/example/csp
-[reasoned]: https://xieyuheng.github.io/jojo/example/reasoned
+[sicp]: https://github.com/xieyuheng/jojo/tree/master/example/sicp
+[eopl]: https://github.com/xieyuheng/jojo/tree/master/example/eopl
+[csp]: https://github.com/xieyuheng/jojo/tree/master/example/csp
+[reasoned]: https://github.com/xieyuheng/jojo/tree/master/example/reasoned
