@@ -5367,6 +5367,24 @@
       expose_num_1 (env_t &env)
       {
           define_prim (
+              env, { "inc", "x" },
+              [] (env_t &env, obj_map_t &obj_map)
+              {
+                  auto x = as_num (obj_map ["x"]);
+                  env.obj_stack.push
+                      (make_num
+                       (env, x->num + 1));
+              });
+          define_prim (
+              env, { "dec", "x" },
+              [] (env_t &env, obj_map_t &obj_map)
+              {
+                  auto x = as_num (obj_map ["x"]);
+                  env.obj_stack.push
+                      (make_num
+                       (env, x->num - 1));
+              });
+          define_prim (
               env, { "add", "x", "y" },
               [] (env_t &env, obj_map_t &obj_map)
               {
