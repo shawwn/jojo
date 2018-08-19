@@ -559,7 +559,7 @@
               auto local_ref = local_ref_t ();
               local_ref.first = old_local_ref.first + 1;
               local_ref.second = old_local_ref.second;
-              local_ref_map.insert (make_pair (name, local_ref));
+              local_ref_map [name] = local_ref;
           }
           size_t index = 0;
           auto size = name_vector.size ();
@@ -568,7 +568,7 @@
               auto local_ref = local_ref_t ();
               local_ref.first = 0;
               local_ref.second = index;
-              local_ref_map.insert (make_pair (name, local_ref));
+              local_ref_map [name] = local_ref;
               index++;
           }
           return local_ref_map;

@@ -4,7 +4,7 @@
 C="clang++"
 W="-Wall -Wextra -Wno-infinite-recursion -Wno-unused-parameter"
 L="-std=c++17 -lstdc++fs"
-O="-foptimize-sibling-calls -O2"
+O="-foptimize-sibling-calls -Ofast"
 D="-g"
 
 export JOJO=$HOME/.jojo

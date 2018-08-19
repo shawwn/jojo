@@ -21,11 +21,62 @@
                       (cube 3)))))
 
 (= (pi-sum a b)
-   (if (> a b)
+   (if (gt a b)
      0
      (add (div 1 (mul a (add a 2)))
           (recur (add a 4) b))))
 
+(= pi 3.1415926)
+
+(assert (lt (abs (sub pi
+                      (mul 8 (pi-sum 1 10000))))
+            0.001))
+
+(= (sum term a next b)
+   (if (gt a b)
+     0
+     (add (term a)
+          (recur term (next a) next b))))
+
+(= (sum-cubes a b)
+   (sum cube a inc b))
+
+(assert (eq (sum-cubes 0 3)
+            (add (cube 1)
+                 (add (cube 2)
+                      (cube 3)))))
+
+(assert (eq (sum-cubes 1 10)
+            3025))
+
+(= (identity x) x)
+
+(= (sum-integers a b)
+   (sum identity a inc b))
+
+(assert (eq 5050 (sum-integers 0 100)))
+
+(= (pi-sum a b)
+   (= (pi-term a) (div 1 (mul a (add a 2))))
+   (= (pi-next a) (add a 4))
+   (sum pi-term a pi-next b))
+
+(assert (lt (abs (sub pi
+                      (mul 8 (pi-sum 1 10000))))
+            0.001))
+
+(= (integral f a b dx)
+   (= (add-dx x) (add x dx))
+   (mul (sum f (add a (div dx 2)) add-dx b)
+        dx))
+
+
+(assert (lt (abs (sub (integral cube 0 1 0.001)
+                      (div 1 4)))
+            0.001))
+
 ;; 1-3-2 Constructing Procedures Using Lambda
+
 ;; 1-3-3 Procedures as General Methods
+
 ;; 1-3-4 Procedures as Returned Values
