@@ -1,4 +1,3 @@
-#+property: tangle LETREC.cs
 #+title: LETREC
 
 * intro
