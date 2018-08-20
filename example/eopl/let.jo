@@ -6,26 +6,29 @@
 (= let-exp-t    (data var exp1 body))
 
 (= exp-t
-   :> [const-exp-t
-       zero-p-exp-t
-       if-exp-t
-       diff-exp-t
-       var-exp-t
-       let-exp-t])
+   (union
+     [const-exp-t
+      zero-p-exp-t
+      if-exp-t
+      diff-exp-t
+      var-exp-t
+      let-exp-t]))
 
 (= num-val-t  (data num))
 (= bool-val-t (data bool))
 
 (= val-t
-   :> [num-val-t
-       bool-val-t])
+   (union
+     [num-val-t
+      bool-val-t]))
 
 (= null-env-t (data))
 (= cons-env-t (data var val rest))
 
 (= env-t
-   :> [null-env-t
-       cons-env-t])
+   (union
+     [null-env-t
+      cons-env-t]))
 
 (= (env-apply var env)
    (case env
@@ -35,7 +38,7 @@
      (cons-env-t
        (if (eq env.var var)
          env.val
-         (recur var env.rest)))))
+         (env-apply var env.rest)))))
 
 (= init-env
    (cons-env-c 'i (num-val-c 1)
@@ -52,16 +55,16 @@
        (num-val-c exp.num))
      (zero-p-exp-t
        (bool-val-c
-         (eq (recur exp.exp1 env)
+         (eq (eval exp.exp1 env)
              (num-val-c 0))))
      (if-exp-t
-       val = (recur exp.exp1 env)
+       val = (eval exp.exp1 env)
        (if val.bool
-         (recur exp.exp2 env)
-         (recur exp.exp3 env)))
+         (eval exp.exp2 env)
+         (eval exp.exp3 env)))
      (diff-exp-t
-       val1 = (recur exp.exp1 env)
-       val2 = (recur exp.exp2 env)
+       val1 = (eval exp.exp1 env)
+       val2 = (eval exp.exp2 env)
        (num-val-c
          (sub val1.num
               val2.num)))
@@ -70,8 +73,8 @@
      (let-exp-t
        (= new-env
           (cons-env-c
-            exp.var (recur exp.exp1 env) env))
-       (recur exp.body new-env))))
+            exp.var (eval exp.exp1 env) env))
+       (eval exp.body new-env))))
 
 (note about syntax
   123 -- const-exp-t
@@ -121,5 +124,3 @@
             body.car
             body.cdr.car
             body.cdr.cdr.car)]))
-
-;; (program-eval (parse 1))

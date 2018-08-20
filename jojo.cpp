@@ -4391,33 +4391,33 @@
           lambda_body = unit_list (env, lambda_body);
           return cons_c (env, name, lambda_body);
       }
-      shared_ptr <obj_t>
-      sexp_substitute_recur (
-          env_t &env,
-          shared_ptr <obj_t> sub,
-          shared_ptr <obj_t> sexp)
-      {
-          if (sym_p (env, sexp)) {
-              auto sym = as_sym (sexp);
-              if (sym->sym == "recur")
-                  return sub;
-              else
-                  return sexp;
-          }
-          if (cons_p (env, sexp))
-              return cons_c
-                  (env,
-                   sexp_substitute_recur (env, sub, car (env, sexp)),
-                   sexp_substitute_recur (env, sub, cdr (env, sexp)));
-          if (vect_p (env, sexp)) {
-              auto vect_sexp = as_vect (sexp);
-              auto list_sexp = vect_to_list (env, vect_sexp);
-              auto new_list_sexp = sexp_substitute_recur (env, sub, list_sexp);
-              return list_to_vect (env, new_list_sexp);
-          }
-          else
-              return sexp;
-      }
+      // shared_ptr <obj_t>
+      // sexp_substitute_recur (
+      //     env_t &env,
+      //     shared_ptr <obj_t> sub,
+      //     shared_ptr <obj_t> sexp)
+      // {
+      //     if (sym_p (env, sexp)) {
+      //         auto sym = as_sym (sexp);
+      //         if (sym->sym == "recur")
+      //             return sub;
+      //         else
+      //             return sexp;
+      //     }
+      //     if (cons_p (env, sexp))
+      //         return cons_c
+      //             (env,
+      //              sexp_substitute_recur (env, sub, car (env, sexp)),
+      //              sexp_substitute_recur (env, sub, cdr (env, sexp)));
+      //     if (vect_p (env, sexp)) {
+      //         auto vect_sexp = as_vect (sexp);
+      //         auto list_sexp = vect_to_list (env, vect_sexp);
+      //         auto new_list_sexp = sexp_substitute_recur (env, sub, list_sexp);
+      //         return list_to_vect (env, new_list_sexp);
+      //     }
+      //     else
+      //         return sexp;
+      // }
       shared_ptr <obj_t>
       sexp_patch_this (env_t &env, shared_ptr <obj_t> sexp)
       {
@@ -4443,7 +4443,7 @@
           auto prefix = prefix_of_string (head->sym);
           if (prefix != "")
               sexp = sexp_patch_this (env, sexp);
-          sexp = sexp_substitute_recur (env, head, sexp);
+          // sexp = sexp_substitute_recur (env, head, sexp);
           auto obj = sexp_eval (env, sexp);
           assign (env, prefix, name, obj);
       }

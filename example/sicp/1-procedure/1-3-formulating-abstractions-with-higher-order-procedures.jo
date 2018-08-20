@@ -3,7 +3,7 @@
 (= (sum-integers a b)
    (if (gt a b)
      0
-     (add a (recur (add a 1) b))))
+     (add a (sum-integers (add a 1) b))))
 
 (assert (eq 5050 (sum-integers 0 100)))
 
@@ -13,7 +13,7 @@
    (if (gt a b)
      0
      (add (cube a)
-          (recur (add a 1) b))))
+          (sum-cubes (add a 1) b))))
 
 (assert (eq (sum-cubes 0 3)
             (add (cube 1)
@@ -24,7 +24,7 @@
    (if (gt a b)
      0
      (add (div 1 (mul a (add a 2)))
-          (recur (add a 4) b))))
+          (pi-sum (add a 4) b))))
 
 (= pi 3.1415926)
 
@@ -36,7 +36,7 @@
    (if (gt a b)
      0
      (add (term a)
-          (recur term (next a) next b))))
+          (sum term (next a) next b))))
 
 (= (sum-cubes a b)
    (sum cube a inc b))
@@ -106,7 +106,7 @@
 (= (sum-iter term a next b result)
    (if (gt a b)
      result
-     (recur term (next a) next b (add (term a) result))))
+     (sum-iter term (next a) next b (add (term a) result))))
 
 (= (sum term a next b)
    (sum-iter term a next b 0))
@@ -128,7 +128,7 @@
    (if (gt a b)
      1
      (mul (term a)
-          (recur term (next a) next b))))
+          (product term (next a) next b))))
 
 (= (wallis-product a b)
    (= (wallis-term x)
@@ -147,8 +147,8 @@
    (if (gt a b)
      null-value
      (combiner (term a)
-               (recur combiner null-value
-                      term (next a) next b))))
+               (accumulate combiner null-value
+                           term (next a) next b))))
 
 (= (sum term a next b)
    (accumulate add 0 term a next b))
@@ -185,12 +185,14 @@
      null-value
      (if (filter a)
        (combiner (term a)
-                 (recur combiner null-value
-                        term (next a) next b
-                        filter))
-       (recur combiner null-value
-              term (next a) next b
-              filter))))
+                 (filtered-accumulate
+                  combiner null-value
+                  term (next a) next b
+                  filter))
+       (filtered-accumulate
+        combiner null-value
+        term (next a) next b
+        filter))))
 
 (= section-1-2
    (import "1-2-procedures-and-the-processes-they-generate.jo"))
