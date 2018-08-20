@@ -5362,6 +5362,20 @@
                   auto y = as_num (obj_map ["y"]);
                   env.obj_stack.push (make_bool (env, x->num >= y->num));
               });
+          define_prim (
+              env, { "even-p", "x" },
+              [] (env_t &env, obj_map_t &obj_map)
+              {
+                  auto x = as_num (obj_map ["x"]);
+                  env.obj_stack.push (make_bool (env, 0 == fmod (x->num, 2)));
+              });
+          define_prim (
+              env, { "odd-p", "x" },
+              [] (env_t &env, obj_map_t &obj_map)
+              {
+                  auto x = as_num (obj_map ["x"]);
+                  env.obj_stack.push (make_bool (env, 1 == fmod (x->num, 2)));
+              });
       }
       void
       expose_num_1 (env_t &env)
