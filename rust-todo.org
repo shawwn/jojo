@@ -1,0 +1,29 @@
+#+title: rust todo
+
+* [note]
+
+  - before a re-imp
+    we must mark the points where a re-design is needed
+    and what might be improved in the a rust imp
+
+* not yet implemented in c++
+
+  - (= ((f x) y) ...)
+  - (match)
+  - (orz)
+  - (>)
+  - actor-model
+
+* re-design
+
+*** object module
+
+* improve
+
+*** no org-mode
+
+*** ffi
+
+*** doc
+
+*** cargo as package manager -- how about module system ?
