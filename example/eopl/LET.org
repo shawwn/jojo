@@ -1,4 +1,3 @@
-#+property: tangle LET.cs
 #+title: LET: A Simple Language
 
 * intro
