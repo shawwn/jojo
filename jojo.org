@@ -214,25 +214,27 @@
       }
       #+end_src
 
-*** vector_rest
+*** vector
 
-    #+begin_src cpp
-    template <typename T>
-    vector <T>
-    vector_rest (vector <T> v)
-    {
-        auto size = v.size ();
-        assert (size >= 1);
-        vector <T> result = {};
-        for (auto it = v.begin () + 1;
-             it != v.end ();
-             it++) {
-            auto obj = *it;
-            result.push_back (obj);
-        }
-        return result;
-    }
-    #+end_src
+***** vector_rest
+
+      #+begin_src cpp
+      template <typename T>
+      vector <T>
+      vector_rest (vector <T> v)
+      {
+          auto size = v.size ();
+          assert (size >= 1);
+          vector <T> result = {};
+          for (auto it = v.begin () + 1;
+               it != v.end ();
+               it++) {
+              auto obj = *it;
+              result.push_back (obj);
+          }
+          return result;
+      }
+      #+end_src
 
 *** name_vector
 

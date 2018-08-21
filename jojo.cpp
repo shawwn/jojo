@@ -138,21 +138,21 @@
           if (! str.empty ()) str.pop_back ();
           return str;
       }
-    template <typename T>
-    vector <T>
-    vector_rest (vector <T> v)
-    {
-        auto size = v.size ();
-        assert (size >= 1);
-        vector <T> result = {};
-        for (auto it = v.begin () + 1;
-             it != v.end ();
-             it++) {
-            auto obj = *it;
-            result.push_back (obj);
-        }
-        return result;
-    }
+      template <typename T>
+      vector <T>
+      vector_rest (vector <T> v)
+      {
+          auto size = v.size ();
+          assert (size >= 1);
+          vector <T> result = {};
+          for (auto it = v.begin () + 1;
+               it != v.end ();
+               it++) {
+              auto obj = *it;
+              result.push_back (obj);
+          }
+          return result;
+      }
       string
       name_vector_repr (name_vector_t &name_vector)
       {

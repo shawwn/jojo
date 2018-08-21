@@ -3,6 +3,12 @@
 
 * prolog
 
+*** feature
+
+    #+begin_src rust
+    #![feature(nll)]
+    #+end_src
+
 *** use
 
     #+begin_src rust
@@ -12,33 +18,44 @@
 
 * datatype
 
-*** datatype
+  #+begin_src rust
+  type Name = String;
 
-    #+begin_src rust
-    type Name = String;
+  type ObjRecord = Vec <(Name, Rc <Obj>)>;
+  type ObjRef = usize; // index in to ObjRecord
 
-    type ObjRecord = Vec <(Name, Rc <Obj>)>;
-    type ObjRef = usize; // index in to ObjRecord
+  type TypeRecord = Vec <(Name, Rc <Type>)>;
+  type Tag = usize; // index in to TypeRecord
+  type TagMap = HashMap <Tag, Name>;
 
-    type TypeRecord = Vec <(Name, Rc <Type>)>;
-    type Tag = usize; // index in to TypeRecord
-    type TagMap = HashMap <Tag, Name>;
+  type JoVec = Vec <Rc <Jo>>;
 
-    type JoVec = Vec <Box <Jo>>;
+  type ObjStack = Vec <Rc <Obj>>;
 
-    type ObjStack = Vec <Rc <Obj>>;
+  type Bind = (Name, Rc <Obj>);
+  type BindVec = Vec <Bind>; // index from end
+  type LocalScope = Vec <BindVec>; // index from end
 
-    type Bind = (Name, Rc <Obj>);
-    type BindVec = Vec <Bind>; // index from end
-    type LocalScope = Vec <BindVec>; // index from end
+  type FrameStack = Vec <Box <Frame>>;
+  #+end_src
 
-    type FrameStack = Vec <Rc <Frame>>;
-    #+end_src
+* utility
+
+*** Vec
+
+***** tos
+
+      #+begin_src rust
+
+      #+end_src
+
+* obj
 
 *** Obj
 
     #+begin_src rust
-    trait Obj {
+    trait Obj
+    {
         fn tag (&self) -> Tag;
         fn obj_map (&self) -> HashMap <Name, Rc <Obj>>;
         fn repr (&self, env: &Env) -> String;
@@ -49,57 +66,86 @@
     }
     #+end_src
 
+* jo
+
 *** Jo
 
     #+begin_src rust
-    trait Jo {
-        fn exe (&self, env: &Env, local_scope: &LocalScope);
+    trait Jo
+    {
+        fn exe (&self, env: &mut Env, local_scope: Rc <LocalScope>);
         fn repr (&self, env: &Env) -> String;
     }
     #+end_src
 
-*** Env
-
-    #+begin_src rust
-    struct Env {
-       obj_record: ObjRecord,
-       obj_stack: ObjStack,
-       frame_stack: FrameStack,
-       type_record: TypeRecord,
-       tag_map: TagMap,
-    }
-    #+end_src
+* frame
 
 *** Frame
 
     #+begin_src rust
-    struct Frame {
+    struct Frame
+    {
         index: usize,
         jojo: Rc <JoVec>,
-        local_scope: LocalScope,
+        local_scope: Rc <LocalScope>,
     }
     #+end_src
 
 * env
 
-  #+begin_src rust
-  // fn step ();
-  // fn run ();
-  // fn box_map_report ();
-  // fn frame_stack_report ();
-  // fn obj_stack_report ();
-  // fn report ();
-  // fn run_with_base (size_t base);
-  // fn double_report ();
-  // fn step_and_report ();
-  #+end_src
+*** Env
+
+    #+begin_src rust
+    struct Env
+    {
+        obj_record: ObjRecord,
+        obj_stack: ObjStack,
+        frame_stack: FrameStack,
+        type_record: TypeRecord,
+        tag_map: TagMap,
+    }
+    #+end_src
+
+*** env_step
+
+    #+begin_src rust
+    fn env_step (env: &mut Env)
+    {
+        if let Some(mut frame) = env.frame_stack.pop ()
+        {
+            let jo = frame.jojo [frame.index] .clone ();
+            frame.index += 1;
+            if frame.index < frame.jojo.len () {
+                let local_scope = frame.local_scope.clone ();
+                env.frame_stack.push (frame);
+                jo.exe (env, local_scope);
+            }
+            else {
+                jo.exe (env, frame.local_scope);
+            }
+        }
+    }
+    #+end_src
+
+*** env_run
+
+    #+begin_src rust
+
+    #+end_src
+
+*** env_run_with_base
+
+    #+begin_src rust
+
+    #+end_src
 
 * type
 
 *** Type
 
     #+begin_src rust
-    struct Type {
+    struct Type
+    {
 
     }
     #+end_src
@@ -109,7 +155,8 @@
 *** main
 
     #+begin_src rust
-    fn main () {
+    fn main ()
+    {
         println! ("jojo!");
     }
     #+end_src
