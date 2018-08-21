@@ -1,5 +1,20 @@
+#+property: tangle main.rs
+#+title: jojo
+
+* prolog
+
+*** use
+
+    #+begin_src rust
     use std::collections::HashMap;
     use std::rc::Rc;
+    #+end_src
+
+* datatype
+
+*** datatype
+
+    #+begin_src rust
     type Name = String;
 
     type ObjRecord = Vec <(Name, Rc <Obj>)>;
@@ -18,6 +33,11 @@
     type LocalScope = Vec <BindVec>; // index from end
 
     type FrameStack = Vec <Rc <Frame>>;
+    #+end_src
+
+*** Obj
+
+    #+begin_src rust
     trait Obj {
         fn tag (&self) -> Tag;
         fn obj_map (&self) -> HashMap <Name, Rc <Obj>>;
@@ -27,10 +47,20 @@
         fn apply (&self, env: &Env, arity: usize);
         fn apply_to_arg_dict (&self, env: &Env);
     }
+    #+end_src
+
+*** Jo
+
+    #+begin_src rust
     trait Jo {
         fn exe (&self, env: &Env, local_scope: &LocalScope);
         fn repr (&self, env: &Env) -> String;
     }
+    #+end_src
+
+*** Env
+
+    #+begin_src rust
     struct Env {
        obj_record: ObjRecord,
        obj_stack: ObjStack,
@@ -38,11 +68,21 @@
        type_record: TypeRecord,
        tag_map: TagMap,
     }
+    #+end_src
+
+*** Frame
+
+    #+begin_src rust
     struct Frame {
         index: usize,
         jojo: Rc <JoVec>,
         local_scope: LocalScope,
     }
+    #+end_src
+
+* env
+
+  #+begin_src rust
   // fn step ();
   // fn run ();
   // fn box_map_report ();
@@ -52,9 +92,24 @@
   // fn run_with_base (size_t base);
   // fn double_report ();
   // fn step_and_report ();
+  #+end_src
+
+* type
+
+*** Type
+
+    #+begin_src rust
     struct Type {
 
     }
+    #+end_src
+
+* epilog
+
+*** main
+
+    #+begin_src rust
     fn main () {
         println! ("jojo!");
     }
+    #+end_src

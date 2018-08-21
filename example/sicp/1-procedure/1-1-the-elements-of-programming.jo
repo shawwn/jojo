@@ -73,7 +73,7 @@ circumference
 (= (sqrt-iter guess x)
    (if (good-enough-p guess x)
      guess
-     (sqrt-iter (improve guess x) x)))
+     (recur (improve guess x) x)))
 
 (improve guess x) = (average guess (div x guess))
 (good-enough-p guess x) = (lt (abs (sub (square guess) x)) 0.001)
@@ -96,7 +96,7 @@ circumference
       (average guess (div x guess)))
    (if (good-enough-p guess)
      guess
-     (sqrt-iter (improve guess) x)))
+     (recur (improve guess) x)))
 
 (sqrt 9)
 (sqrt (add 100 37))

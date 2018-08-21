@@ -31,9 +31,11 @@
     using tag_vector_t = vector <tag_t>;
     using name_vector_t = vector <name_t>;
     using name_stack_t = stack <name_t>;
+
     using bind_t = pair <name_t, shared_ptr <obj_t>>;
     using bind_vector_t = vector <bind_t>; // index from end
     using local_scope_t = vector <bind_vector_t>; // index from end
+
     using jo_vector_t = vector <jo_t *>;
     using obj_map_t = map <name_t, shared_ptr <obj_t>>;
     using obj_vector_t = vector <shared_ptr <obj_t>>;
@@ -880,7 +882,7 @@
           return tagged_box_vector;
       }
       void
-      def_type (env_t &env, name_t name);
+      define_type (env_t &env, name_t name);
 
       void
       preserve_tag (env_t &env, tag_t tag, name_t name)
@@ -888,13 +890,13 @@
           env.tag_map [name] = tag;
           auto box = boxing (env, name);
           env.tagged_box_vector [tag] = make_pair (name, box);
-          def_type (env, name);
+          define_type (env, name);
       }
       tag_t closure_tag      = 0;
       tag_t type_tag         = 1;
       tag_t true_tag         = 2;
       tag_t false_tag        = 3;
-      tag_t data_pred_tag    = 4;
+      // tag_t data_pred_tag    = 4;
       tag_t data_cons_tag    = 5;
       tag_t prim_tag         = 6;
       tag_t num_tag          = 7;
@@ -917,7 +919,6 @@
           preserve_tag (env, type_tag         , "type-t");
           preserve_tag (env, true_tag         , "true-t");
           preserve_tag (env, false_tag        , "false-t");
-          preserve_tag (env, data_pred_tag    , "data-pred-t");
           preserve_tag (env, data_cons_tag    , "data-cons-t");
           preserve_tag (env, prim_tag         , "prim-t");
           preserve_tag (env, num_tag          , "num-t");
@@ -1399,79 +1400,6 @@
     {
         return true_p (env, a)
             or false_p (env, a);
-    }
-    struct data_pred_o: obj_t
-    {
-        tag_t tag_of_type;
-        data_pred_o (
-            env_t &env,
-            tag_t tag_of_type);
-        void apply (env_t &env, size_t arity);
-        bool eq (env_t &env, shared_ptr <obj_t> obj);
-        string repr (env_t &env);
-    };
-    data_pred_o::
-    data_pred_o (
-        env_t &env,
-        tag_t tag_of_type)
-    {
-        this->tag = data_pred_tag;
-        this->tag_of_type = tag_of_type;
-    }
-    void
-    data_pred_o::apply (env_t &env, size_t arity)
-    {
-        if (arity == 1) {
-            auto obj = env.obj_stack.top ();
-            env.obj_stack.pop ();
-            env.obj_stack.push (
-                make_bool (
-                    env,
-                    obj->tag == this->tag_of_type));
-        }
-        else {
-            cout << "- fatal error : data_pred_o::apply" << "\n";
-            cout << "  arity of this kind of apply must be 1" << "\n";
-            cout << "  arity : " << arity << "\n";
-            exit (1);
-        }
-    }
-    bool
-    data_pred_o::eq (env_t &env, shared_ptr <obj_t> obj)
-    {
-        if (this->tag != obj->tag) return false;
-        auto that = static_pointer_cast <data_pred_o> (obj);
-        if (this->tag_of_type != that->tag_of_type) return false;
-        return true;
-    }
-    string
-    data_pred_o::repr (env_t &env)
-    {
-        string repr = "";
-        repr += name_of_tag (env, this->tag_of_type);
-        repr.pop_back ();
-        repr.pop_back ();
-        repr += "-p";
-        return repr;
-    }
-    void
-    assign_data_pred (
-        env_t &env,
-        name_t prefix,
-        name_t pred_name,
-        tag_t tag_of_type)
-    {
-        auto data_pred = make_shared <data_pred_o>
-            (env, tag_of_type);
-        assign (env, prefix, pred_name, data_pred);
-    }
-    void
-    define_data_pred (
-        env_t &env,
-        name_t pred_name,
-        tag_t tag_of_type)
-    {
-        assign_data_pred (env, "", pred_name, tag_of_type);
     }
     struct data_cons_o: obj_t
     {
@@ -4235,8 +4163,6 @@
           if (null_p (env, data_body)) {
               assign_type
                   (env, prefix, type_name, tag_of_type, {});
-              assign_data_pred
-                  (env, prefix, pred_name, tag_of_type);
               assign_data
                   (env, prefix, data_name, tag_of_type);
           }
@@ -4249,8 +4175,6 @@
               }
               assign_type
                   (env, prefix, type_name, tag_of_type, {});
-              assign_data_pred
-                  (env, prefix, pred_name, tag_of_type);
               assign_data_cons
                   (env, prefix, data_name, tag_of_type, name_vector);
           }
@@ -4315,8 +4239,6 @@
           if (null_p (env, data_body)) {
               assign_type
                   (env, prefix, type_name, tag_of_type, super_tag_vector);
-              assign_data_pred
-                  (env, prefix, pred_name, tag_of_type);
               assign_data
                   (env, prefix, data_name, tag_of_type);
           }
@@ -4329,8 +4251,6 @@
               }
               assign_type
                   (env, prefix, type_name, tag_of_type, super_tag_vector);
-              assign_data_pred
-                  (env, prefix, pred_name, tag_of_type);
               assign_data_cons
                   (env, prefix, data_name, tag_of_type, name_vector);
           }
@@ -5294,12 +5214,6 @@
           env.obj_stack.push (vect_list_cond (env, body));
       }
 
-    void
-    def_type (env_t &env, name_t name)
-    {
-        define_type (env, name);
-        define_data_pred (env, name_t2p (name), tagging (env, name));
-    }
     void
     expose_type (env_t &env)
     {

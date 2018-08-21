@@ -1,15 +1,15 @@
 (= (bool-not x)
    (case x
-     (true-t false-c)
-     (false-t true-c)))
+     (true-t false)
+     (false-t true)))
 
-(assert (eq (bool-not true-c) false-c))
-(assert (eq (bool-not false-c) true-c))
+(assert (eq (bool-not true) false))
+(assert (eq (bool-not false) true))
 
 (= (bool-not x)
    (case x
-     (true-t false-c)
-     (_ true-c)))
+     (true-t false)
+     (_ true)))
 
-(assert (eq (bool-not true-c) false-c))
-(assert (eq (bool-not false-c) true-c))
+(assert (eq (bool-not true) false))
+(assert (eq (bool-not false) true))
