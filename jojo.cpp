@@ -4074,12 +4074,6 @@
               return true;
           if (! sym_p (env, car (env, cdr (env, car (env, cdr (env, body))))))
               return true;
-          if (as_sym (car (env, cdr (env, car (env, cdr (env, body)))))
-              ->sym == ":>")
-              return false;
-          if (as_sym (car (env, cdr (env, car (env, cdr (env, body)))))
-              ->sym == "<:")
-              return false;
           else
               return true;
       }
@@ -4105,105 +4099,6 @@
           assign_data
               (env, prefix, data_name, tag_of_type, name_vector);
       }
-      bool
-      assign_data_inherit_p (env_t &env, shared_ptr <obj_t> body)
-      {
-          if (! cons_p (env, body))
-              return false;
-          if (! sym_p (env, car (env, body)))
-              return false;
-          if (! cons_p (env, cdr (env, body)))
-              return false;
-          if (! cons_p (env, car (env, cdr (env, body))))
-              return false;
-          if (! sym_p (env, car (env, car (env, cdr (env, body)))))
-              return false;
-          auto sym = as_sym (car (env, car (env, cdr (env, body))));
-          if (sym->sym != "data")
-              return false;
-          if (null_p (env, cdr (env, car (env, cdr (env, body)))))
-              return false;
-          if (! sym_p (env, car (env, cdr (env, car (env, cdr (env, body))))))
-              return false;
-          if (as_sym (car (env, cdr (env, car (env, cdr (env, body)))))
-              ->sym == ":>")
-              return false;
-          if (as_sym (car (env, cdr (env, car (env, cdr (env, body)))))
-              ->sym == "<:")
-              return true;
-          else
-              return false;
-      }
-      tag_vector_t
-      tagging_name_vect (
-          env_t &env,
-          shared_ptr <vect_o> vect)
-      {
-          auto tag_vector = tag_vector_t ();
-          for (auto obj: vect->obj_vector) {
-              auto sym = as_sym (obj);
-              auto name = sym->sym;
-              auto tag = tagging (env, name);
-              tag_vector.push_back (tag);
-          }
-          return tag_vector;
-      }
-      void
-      tk_assign_data_inherit (env_t &env, shared_ptr <obj_t> body)
-      {
-          auto head = as_sym (car (env, body));
-          auto prefix = prefix_of_string (head->sym);
-          auto type_name = name_of_string (head->sym);
-          auto data_name = name_t2c (type_name);
-          auto pred_name = name_t2p (type_name);
-          auto tag_of_type = tagging (env, head->sym);
-          auto rest = cdr (env, body);
-          auto data_body = cdr (env, (car (env, rest)));
-          auto super_name_vect = as_vect (car (env, cdr (env, data_body)));
-          auto super_tag_vector = tagging_name_vect (env, super_name_vect);
-          data_body = cdr (env, (cdr (env, data_body)));
-          auto name_vect = list_to_vect (env, data_body);
-          auto name_vector = name_vector_t ();
-          for (auto obj: name_vect->obj_vector) {
-              auto sym = as_sym (obj);
-              name_vector.push_back (sym->sym);
-          }
-          assign_type
-              (env, prefix, type_name, tag_of_type, super_tag_vector);
-          assign_data
-              (env, prefix, data_name, tag_of_type, name_vector);
-
-      }
-      bool
-      assign_data_union_p (env_t &env, shared_ptr <obj_t> body)
-      {
-          if (! cons_p (env, body))
-              return false;
-          if (! sym_p (env, car (env, body)))
-              return false;
-          if (! cons_p (env, cdr (env, body)))
-              return false;
-          if (! cons_p (env, car (env, cdr (env, body))))
-              return false;
-          if (! sym_p (env, car (env, car (env, cdr (env, body)))))
-              return false;
-          auto sym = as_sym (car (env, car (env, cdr (env, body))));
-          if (sym->sym != "data")
-              return false;
-          if (null_p (env, cdr (env, car (env, cdr (env, body)))))
-              return false;
-          if (! sym_p (env, car (env, cdr (env, car (env, cdr (env, body))))))
-              return false;
-          if (as_sym (car (env, cdr (env, car (env, cdr (env, body)))))
-              ->sym == ":>")
-              return true;
-          if (as_sym (car (env, cdr (env, car (env, cdr (env, body)))))
-              ->sym == "<:")
-              return false;
-          else
-              return false;
-      }
-
       bool
       assign_lambda_sugar_p (env_t &env, shared_ptr <obj_t> body)
       {
@@ -4291,10 +4186,6 @@
     {
         if (assign_data_p (env, body))
             tk_assign_data (env, body);
-        else if (assign_data_inherit_p (env, body))
-            tk_assign_data_inherit (env, body);
-        // else if (assign_data_union_p (env, body))
-        //     tk_assign_data_union (env, body);
         else if (assign_lambda_sugar_p (env, body))
             tk_assign_value (env, assign_lambda_desugar (env, body));
         else

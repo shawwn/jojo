@@ -11,8 +11,8 @@
 *** (match) -- k_match
 * object system
   - with object system
-*** summing & union-type
-*** inheriting & sub-type
+*** (union)
+*** (inherit)
 * ffi
   - with simple ffi to c++
 *** handle ffi by dynamic library
