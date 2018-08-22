@@ -53,7 +53,7 @@
 (assert (eq (add x = 1 y = 2) 3))
 (assert (eq ((add x = 1) y = 2) 3))
 
-;; data-cons
+;; data
 
 (assert
   (eq (cons-c car = 1 cdr = 2)

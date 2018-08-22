@@ -897,7 +897,7 @@
       tag_t true_tag         = 2;
       tag_t false_tag        = 3;
       // tag_t data_pred_tag    = 4;
-      tag_t data_cons_tag    = 5;
+      // tag_t data_cons_tag    = 5;
       tag_t prim_tag         = 6;
       tag_t num_tag          = 7;
       tag_t str_tag          = 8;
@@ -919,7 +919,6 @@
           preserve_tag (env, type_tag         , "type-t");
           preserve_tag (env, true_tag         , "true-t");
           preserve_tag (env, false_tag        , "false-t");
-          preserve_tag (env, data_cons_tag    , "data-cons-t");
           preserve_tag (env, prim_tag         , "prim-t");
           preserve_tag (env, num_tag          , "num-t");
           preserve_tag (env, str_tag          , "str-t");
@@ -1290,10 +1289,14 @@
     }
     struct data_o: obj_t, enable_shared_from_this <obj_t>
     {
+        name_vector_t name_vector;
         data_o (
             env_t &env,
             tag_t tag,
+            name_vector_t name_vector,
             obj_map_t obj_map);
+        void apply (env_t &env, size_t arity);
+        void apply_to_arg_dict (env_t &env);
         bool eq (env_t &env, shared_ptr <obj_t> obj);
         string repr (env_t &env);
     };
@@ -1301,20 +1304,24 @@
     data_o (
         env_t &env,
         tag_t tag,
+        name_vector_t name_vector,
         obj_map_t obj_map)
     {
         this->tag = tag;
+        this->name_vector = name_vector;
         this->obj_map = obj_map;
     }
-    shared_ptr <obj_t>
+    shared_ptr <data_o>
     make_data (
         env_t &env,
         tag_t tag,
+        name_vector_t name_vector,
         obj_map_t obj_map)
     {
         return make_shared <data_o> (
             env,
             tag,
+            name_vector,
             obj_map);
     }
     bool
@@ -1323,7 +1330,6 @@
         if (this->tag != obj->tag) return false;
         auto that = static_pointer_cast <data_o> (obj);
         return obj_map_eq (env, this->obj_map, that->obj_map);
-
     }
     string
     sexp_repr (env_t &env, shared_ptr <obj_t> a);
@@ -1360,25 +1366,70 @@
         env_t &env,
         name_t prefix,
         name_t data_name,
-        tag_t tag_of_type)
+        tag_t tag_of_type,
+        name_vector_t name_vector)
     {
-        auto data = make_data (env, tag_of_type, obj_map_t ());
+        auto data = make_data (
+            env,
+            tag_of_type,
+            name_vector,
+            obj_map_t ());
         assign (env, prefix, data_name, data);
     }
-    shared_ptr <obj_t>
+    void
+    data_o::apply (env_t &env, size_t arity)
+    {
+        auto size = this->name_vector.size ();
+        auto have = this->obj_map.size ();
+        auto lack = size - have;
+        auto lack_name_vector = name_vector_t ();
+        if (lack == arity) {
+            lack_name_vector = name_vector_obj_map_lack (
+                this->name_vector, this->obj_map);
+        }
+        else if (arity < lack) {
+            lack_name_vector = name_vector_obj_map_arity_lack (
+                this->name_vector, this->obj_map, arity);
+        }
+        else {
+            cout << "- fatal error : data_o::apply" << "\n";
+            cout << "  over-arity apply" << "\n";
+            cout << "  arity > lack" << "\n";
+            cout << "  arity : " << arity << "\n";
+            cout << "  lack : " << lack << "\n";
+            exit (1);
+        }
+        auto obj_map = pick_up_obj_map_and_merge (
+            env, lack_name_vector, this->obj_map);
+        auto data = make_data (
+            env,
+            this->tag,
+            this->name_vector,
+            obj_map);
+        env.obj_stack.push (data);
+    }
+    shared_ptr <data_o>
     true_c (env_t &env)
     {
-       return make_data (env, true_tag, obj_map_t ());
+       return make_data (
+           env,
+           true_tag,
+           name_vector_t (),
+           obj_map_t ());
     }
     bool
     true_p (env_t &env, shared_ptr <obj_t> a)
     {
         return a->tag == true_tag;
     }
-    shared_ptr <obj_t>
+    shared_ptr <data_o>
     false_c (env_t &env)
     {
-       return make_data (env, false_tag, obj_map_t ());
+       return make_data (
+           env,
+           false_tag,
+           name_vector_t (),
+           obj_map_t ());
     }
     bool
     false_p (env_t &env, shared_ptr <obj_t> a)
@@ -1400,132 +1451,6 @@
     {
         return true_p (env, a)
             or false_p (env, a);
-    }
-    struct data_cons_o: obj_t
-    {
-        tag_t tag_of_type;
-        name_vector_t name_vector;
-        data_cons_o (
-            env_t &env,
-            tag_t tag_of_type,
-            name_vector_t name_vector,
-            obj_map_t obj_map);
-        void apply (env_t &env, size_t arity);
-        void apply_to_arg_dict (env_t &env);
-        bool eq (env_t &env, shared_ptr <obj_t> obj);
-        string repr (env_t &env);
-    };
-    data_cons_o::
-    data_cons_o (
-        env_t &env,
-        tag_t tag_of_type,
-        name_vector_t name_vector,
-        obj_map_t obj_map)
-    {
-        this->tag = data_cons_tag;
-        this->tag_of_type = tag_of_type;
-        this->name_vector = name_vector;
-        this->obj_map = obj_map;
-    }
-    shared_ptr <data_cons_o>
-    make_data_cons (
-        env_t &env,
-        tag_t tag_of_type,
-        name_vector_t name_vector,
-        obj_map_t obj_map)
-    {
-        return make_shared <data_cons_o> (
-            env,
-            tag_of_type,
-            name_vector,
-            obj_map);
-    }
-    void
-    data_cons_o::apply (env_t &env, size_t arity)
-    {
-        auto size = this->name_vector.size ();
-        auto have = this->obj_map.size ();
-        auto lack = size - have;
-        if (lack == arity) {
-            auto lack_name_vector = name_vector_obj_map_lack (
-                this->name_vector, this->obj_map);
-            auto obj_map = pick_up_obj_map_and_merge (
-                env, lack_name_vector, this->obj_map);
-            auto data = make_data (
-                env, this->tag_of_type, obj_map);
-            env.obj_stack.push (data);
-        }
-        else if (arity < lack) {
-            auto lack_name_vector = name_vector_obj_map_arity_lack (
-                this->name_vector, this->obj_map, arity);
-            auto obj_map = pick_up_obj_map_and_merge (
-                env, lack_name_vector, this->obj_map);
-            auto data_cons = make_data_cons (
-                env,
-                this->tag_of_type,
-                this->name_vector,
-                obj_map);
-            env.obj_stack.push (data_cons);
-        }
-        else {
-            cout << "- fatal error : data_cons_o::apply" << "\n";
-            cout << "  over-arity apply" << "\n";
-            cout << "  arity > lack" << "\n";
-            cout << "  arity : " << arity << "\n";
-            cout << "  lack : " << lack << "\n";
-            exit (1);
-        }
-    }
-    bool
-    data_cons_o::eq (env_t &env, shared_ptr <obj_t> obj)
-    {
-        if (this->tag != obj->tag) return false;
-        auto that = static_pointer_cast <data_cons_o> (obj);
-        if (this->tag_of_type != that->tag_of_type) return false;
-        return obj_map_eq (env, this->obj_map, that->obj_map);
-    }
-    bool
-    data_cons_p (env_t &env, shared_ptr <obj_t> a)
-    {
-        return a->tag == data_cons_tag;
-    }
-    string
-    data_cons_o::repr (env_t &env)
-    {
-        if (this->name_vector.size () == 0) {
-            string repr = "";
-            repr += name_of_tag (env, this->tag_of_type);
-            repr.pop_back ();
-            repr.pop_back ();
-            repr += "-c";
-            return repr;
-        }
-        else {
-            string repr = "(";
-            repr += name_of_tag (env, this->tag_of_type);
-            repr.pop_back ();
-            repr.pop_back ();
-            repr += "-c ";
-            repr += name_vector_and_obj_map_repr
-                (env, this->name_vector, this->obj_map);
-            repr += ")";
-            return repr;
-        }
-    }
-    void
-    assign_data_cons (
-        env_t &env,
-        name_t prefix,
-        name_t data_name,
-        tag_t tag_of_type,
-        name_vector_t name_vector)
-    {
-        auto data_cons = make_data_cons (
-            env,
-            tag_of_type,
-            name_vector,
-            obj_map_t ());
-        assign (env, prefix, data_name, data_cons);
     }
     using prim_fn = function
         <void (env_t &, obj_map_t &)>;
@@ -1916,17 +1841,21 @@
         auto size = sym->sym.size ();
         return make_sym (env, sym->sym.substr (1, size -1));
     }
-    shared_ptr <obj_t>
+    shared_ptr <data_o>
     null_c (env_t &env)
     {
-       return make_data (env, null_tag, obj_map_t ());
+       return make_data (
+           env,
+           null_tag,
+           name_vector_t (),
+           obj_map_t ());
     }
     bool
     null_p (env_t &env, shared_ptr <obj_t> a)
     {
         return a->tag == null_tag;
     }
-    shared_ptr <obj_t>
+    shared_ptr <data_o>
     cons_c (
         env_t &env,
         shared_ptr <obj_t> car,
@@ -1935,7 +1864,11 @@
         auto obj_map = obj_map_t ();
         obj_map ["car"] = car;
         obj_map ["cdr"] = cdr;
-        return make_data (env, cons_tag, obj_map);
+        return make_data (
+            env,
+            cons_tag,
+            name_vector_t (),
+            obj_map);
     }
     bool
     cons_p (env_t &env, shared_ptr <obj_t> a)
@@ -2186,24 +2119,32 @@
         obj_vector.push_back (obj);
         return make_vect (env, obj_vector);
     }
-    shared_ptr <obj_t>
+    shared_ptr <data_o>
     nothing_c (env_t &env)
     {
-       return make_data (env, nothing_tag, obj_map_t ());
+       return make_data (
+           env,
+           nothing_tag,
+           name_vector_t (),
+           obj_map_t ());
     }
     bool
     nothing_p (env_t &env, shared_ptr <obj_t> a)
     {
         return a->tag == nothing_tag;
     }
-    shared_ptr <obj_t>
+    shared_ptr <data_o>
     just_c (
         env_t &env,
         shared_ptr <obj_t> value)
     {
         auto obj_map = obj_map_t ();
         obj_map ["value"] = value;
-        return make_data (env, just_tag, obj_map);
+        return make_data (
+            env,
+            just_tag,
+            name_vector_t (),
+            obj_map);
     }
     bool
     just_p (env_t &env, shared_ptr <obj_t> a)
@@ -3720,28 +3661,21 @@
             }
         }
         void
-        data_cons_o::apply_to_arg_dict (env_t &env)
+        data_o::apply_to_arg_dict (env_t &env)
         {
             auto obj = env.obj_stack.top ();
             env.obj_stack.pop ();
             auto arg_dict = as_dict (obj);
             auto obj_map = obj_map_merge (
                 env, this->obj_map, arg_dict->obj_map);
-            auto size = this->name_vector.size ();
-            auto have = obj_map.size ();
-            if (size == have) {
-                auto data = make_data (
-                    env, this->tag_of_type, obj_map);
-                env.obj_stack.push (data);
-            }
-            else {
-                auto data_cons = make_data_cons (
-                    env,
-                    this->tag_of_type,
-                    this->name_vector,
-                    obj_map);
-                env.obj_stack.push (data_cons);
-            }
+            // auto size = this->name_vector.size ();
+            // auto have = obj_map.size ();
+            auto data = make_data (
+                env,
+                this->tag,
+                this->name_vector,
+                obj_map);
+            env.obj_stack.push (data);
         }
       bool
       call_with_arg_dict_sexp_p (
@@ -4160,24 +4094,16 @@
           auto tag_of_type = tagging (env, head->sym);
           auto rest = cdr (env, body);
           auto data_body = cdr (env, (car (env, rest)));
-          if (null_p (env, data_body)) {
-              assign_type
-                  (env, prefix, type_name, tag_of_type, {});
-              assign_data
-                  (env, prefix, data_name, tag_of_type);
+          auto name_vect = list_to_vect (env, data_body);
+          auto name_vector = name_vector_t ();
+          for (auto obj: name_vect->obj_vector) {
+              auto sym = as_sym (obj);
+              name_vector.push_back (sym->sym);
           }
-          else {
-              auto name_vect = list_to_vect (env, data_body);
-              auto name_vector = name_vector_t ();
-              for (auto obj: name_vect->obj_vector) {
-                  auto sym = as_sym (obj);
-                  name_vector.push_back (sym->sym);
-              }
-              assign_type
-                  (env, prefix, type_name, tag_of_type, {});
-              assign_data_cons
-                  (env, prefix, data_name, tag_of_type, name_vector);
-          }
+          assign_type
+              (env, prefix, type_name, tag_of_type, {});
+          assign_data
+              (env, prefix, data_name, tag_of_type, name_vector);
       }
       bool
       assign_data_inherit_p (env_t &env, shared_ptr <obj_t> body)
@@ -4236,24 +4162,17 @@
           auto super_name_vect = as_vect (car (env, cdr (env, data_body)));
           auto super_tag_vector = tagging_name_vect (env, super_name_vect);
           data_body = cdr (env, (cdr (env, data_body)));
-          if (null_p (env, data_body)) {
-              assign_type
-                  (env, prefix, type_name, tag_of_type, super_tag_vector);
-              assign_data
-                  (env, prefix, data_name, tag_of_type);
+          auto name_vect = list_to_vect (env, data_body);
+          auto name_vector = name_vector_t ();
+          for (auto obj: name_vect->obj_vector) {
+              auto sym = as_sym (obj);
+              name_vector.push_back (sym->sym);
           }
-          else {
-              auto name_vect = list_to_vect (env, data_body);
-              auto name_vector = name_vector_t ();
-              for (auto obj: name_vect->obj_vector) {
-                  auto sym = as_sym (obj);
-                  name_vector.push_back (sym->sym);
-              }
-              assign_type
-                  (env, prefix, type_name, tag_of_type, super_tag_vector);
-              assign_data_cons
-                  (env, prefix, data_name, tag_of_type, name_vector);
-          }
+          assign_type
+              (env, prefix, type_name, tag_of_type, super_tag_vector);
+          assign_data
+              (env, prefix, data_name, tag_of_type, name_vector);
+
       }
       bool
       assign_data_union_p (env_t &env, shared_ptr <obj_t> body)
@@ -5784,10 +5703,10 @@
                         as_sym (obj_map ["sym"])));
             });
     }
-      shared_ptr <data_cons_o>
+      shared_ptr <data_o>
       jj_cons_c (env_t &env)
       {
-          return make_data_cons (
+          return make_data (
               env,
               cons_tag,
               name_vector_t ({ "car", "cdr" }),
@@ -5927,10 +5846,10 @@
                         as_vect (obj_map ["vect"])));
             });
     }
-      shared_ptr <data_cons_o>
+      shared_ptr <data_o>
       jj_just_c (env_t &env)
       {
-          return make_data_cons (
+          return make_data (
               env,
               just_tag,
               name_vector_t ({ "value" }),
@@ -6314,7 +6233,12 @@
               {"cdr", make_str (env, "world")},
           };
 
-          define (env, "last-cry", make_data (env, cons_tag, obj_map));
+          define (env, "last-cry",
+                  make_data (
+                      env,
+                      cons_tag,
+                      name_vector_t ({ "car", "cdr" }),
+                      obj_map));
 
           jo_vector_t jo_vector = {
               new ref_jo_t (boxing (env, "last-cry")),
@@ -6334,6 +6258,7 @@
                   env, make_data (
                       env,
                       cons_tag,
+                      name_vector_t ({ "car", "cdr" }),
                       obj_map));
               assert_pop_eq (env, make_str (env, "world"));
               assert_pop_eq (env, make_str (env, "bye"));
@@ -6424,7 +6349,7 @@
           define (env, "s1", make_str (env, "bye"));
           define (env, "s2", make_str (env, "world"));
           define (env, "cons-c",
-                  make_data_cons (
+                  make_data (
                       env,
                       cons_tag,
                       name_vector_t ({ "car", "cdr" }),
@@ -6457,7 +6382,7 @@
           define (env, "s1", make_str (env, "bye"));
           define (env, "s2", make_str (env, "world"));
           define (env, "cons-c",
-                  make_data_cons (
+                  make_data (
                       env,
                       cons_tag,
                       name_vector_t ({ "car", "cdr" }),

@@ -22,8 +22,8 @@
 
 (assert (eq null-t (type-of null-c)))
 
-(assert (eq data-cons-t (type-of cons-c)))
-(assert (eq data-cons-t (type-of (cons-c null-c))))
+(assert (eq cons-t (type-of cons-c)))
+(assert (eq cons-t (type-of (cons-c null-c))))
 
 (assert (eq prim-t (type-of println)))
 (assert (eq closure-t (type-of (lambda [x] x))))

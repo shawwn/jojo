@@ -41,14 +41,6 @@
 
 * utility
 
-*** Vec
-
-***** tos
-
-      #+begin_src rust
-
-      #+end_src
-
 * obj
 
 *** Obj
@@ -64,6 +56,14 @@
         fn apply (&self, env: &Env, arity: usize);
         fn apply_to_arg_dict (&self, env: &Env);
     }
+    #+end_src
+
+*** define
+
+*** obj_eq
+
+    #+begin_src rust
+
     #+end_src
 
 * jo
@@ -130,25 +130,36 @@
 *** env_run
 
     #+begin_src rust
-
+    fn env_run (env: &mut Env)
+    {
+        while ! env.frame_stack.is_empty () {
+            env_step (env);
+        }
+    }
     #+end_src
 
 *** env_run_with_base
 
     #+begin_src rust
-
-    #+end_src
-
-* type
-
-*** Type
-
-    #+begin_src rust
-    struct Type
+    fn env_run_with_base (env: &mut Env, base: usize)
     {
-
+        while env.frame_stack.len () > base {
+            env_step (env);
+        }
     }
     #+end_src
+
+* data
+
+* prim
+
+* scan
+
+* sexp
+
+* compile
+
+* run
 
 * epilog
 
