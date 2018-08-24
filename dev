@@ -49,13 +49,13 @@ t () # test
     done
 }
 
-# debug () {
-#     # time valgrind --leak-check=full jojo
-#     for FILE in $(ls test | grep "\.jo" | grep "test-")
-#     do
-#         echo "<test/$FILE>" && valgrind jojo "test/$FILE" && echo "</test/$FILE>" && echo ""
-#     done
-# }
+debug () {
+    # time valgrind --leak-check=full jojo
+    for FILE in $(ls test | grep "\.jo" | grep "test-")
+    do
+        echo "<test/$FILE>" && valgrind jojo "test/$FILE" && echo "</test/$FILE>" && echo ""
+    done
+}
 
 i () # install
 {
