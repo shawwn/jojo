@@ -9,44 +9,24 @@
   type ObjRef = usize; // index in to ObjRecord
 
   type TypeRecord = Vec <(Name, Ptr <Type>)>;
-  type Tag = usize; // index in to TypeRecord
-  type TagMap = HashMap <Tag, Name>;
+  type TypeRef = usize; // index in to TypeRecord
 
   type JoVec = Vec <Ptr <Jo>>;
 
   type ObjStack = Vec <Ptr <Obj>>;
 
+  type FrameStack = Vec <Box <Frame>>;
+
   type Bind = (Name, Ptr <Obj>);
   type BindVec = Vec <Bind>; // index from end
   type LocalScope = Vec <BindVec>; // index from end
 
-  type FrameStack = Vec <Box <Frame>>;
-
   type StringVec = Vec <String>;
-    trait Obj {
-        fn tag (&self) -> Tag;
-        fn obj_map (&self) -> HashMap <Name, Ptr <Obj>>;
-        fn repr (&self, env: &Env) -> String;
-        fn print (&self, env: &Env);
-        fn eq (&self, env: &Env, obj: Ptr <Obj>) -> bool;
-        fn apply (&self, env: &Env, arity: usize);
-        fn apply_to_arg_dict (&self, env: &Env);
-    }
-    trait Jo {
-        fn exe (&self, env: &mut Env, local_scope: Ptr <LocalScope>);
-        fn repr (&self, env: &Env) -> String;
-    }
-    struct Frame {
-        index: usize,
-        jojo: Ptr <JoVec>,
-        local_scope: Ptr <LocalScope>,
-    }
     struct Env {
         obj_record: ObjRecord,
+        type_record: TypeRecord,
         obj_stack: ObjStack,
         frame_stack: FrameStack,
-        type_record: TypeRecord,
-        tag_map: TagMap,
     }
     fn env_step (env: &mut Env) {
         if let Some (mut frame) = env.frame_stack.pop () {
@@ -72,8 +52,37 @@
             env_step (env);
         }
     }
+    trait Obj {
+        fn type_ref (&self) -> TypeRef;
+        fn obj_map (&self) -> HashMap <Name, Ptr <Obj>>;
+        fn repr (&self, env: &Env) -> String;
+        fn print (&self, env: &Env);
+        fn eq (&self, env: &Env, obj: Ptr <Obj>) -> bool;
+        fn apply (&self, env: &Env, arity: usize);
+        fn apply_to_arg_dict (&self, env: &Env);
+    }
+    trait Jo {
+        fn exe (&self, env: &mut Env, local_scope: Ptr <LocalScope>);
+        fn repr (&self, env: &Env) -> String;
+    }
+    struct Frame {
+        index: usize,
+        jojo: Ptr <JoVec>,
+        local_scope: Ptr <LocalScope>,
+    }
     struct Type {
 
+    }
+    fn type_ref_name (
+        env: &Env,
+        type_ref: TypeRef,
+    ) -> Name {
+        if type_ref >= env.type_record.len () {
+            format! ("#<unknown-tag:{}>", type_ref.to_string ())
+        }
+        else {
+            env.type_record [type_ref] .0 .clone ()
+        }
     }
     fn space_char_p (c: char) -> bool {
         (c == ' ' ||
@@ -135,7 +144,7 @@
                             }
                         }
                         else {
-                            // error
+                            panic! ("doublequote mismatch!");
                         }
                     }
                     word_vector.push (word);
@@ -167,6 +176,17 @@
         }
         word_vector
     }
+    #[test]
+    fn test_scan () {
+        assert_eq! (scan_word_vector (""),
+                    StringVec::new ());
+        assert_eq! (scan_word_vector ("a b c"),
+                    ["a", "b", "c"]);
+        assert_eq! (scan_word_vector ("(a b c)"),
+                    ["(", "a", "b", "c", ")"]);
+        assert_eq! (scan_word_vector ("(a (b) c)"),
+                    ["(", "a", "(", "b", ")", "c", ")"]);
+    }
     fn main() {
-        println! ("{:#?}", scan_word_vector ("(a (a b c) b c)"));
+        println! ("JOJO's Bizarre Programming Adventure!");
     }
