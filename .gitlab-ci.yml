@@ -6,11 +6,11 @@ image: "rustlang/rust:nightly"
 before_script:
 - apt-get update -yqq
 - apt-get install -yqq --no-install-recommends build-essential
-- apt-get install -yqq --no-install-recommends nodejs
-- apt-get install -yqq --no-install-recommends clang
+# - apt-get install -yqq --no-install-recommends clang
 
 test:jojo_in_cpp:
   script:
+  - g++ --version
   - ./dev b t
   - ./dev bo t
 

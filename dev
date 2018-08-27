@@ -1,7 +1,7 @@
 #!/usr/bin/env bash
 
-# C="g++"
-C="clang++"
+C="g++"
+# C="clang++"
 W="-Wall -Wextra -Wno-infinite-recursion -Wno-unused-parameter"
 L="-std=c++17 -lstdc++fs"
 O="-foptimize-sibling-calls -Ofast"
@@ -18,21 +18,18 @@ tangle ()
 b () # build
 {
     clean
-    tangle
     time $C -o jojo jojo.cpp $W $L
 }
 
 bo () # build with optimization
 {
     clean
-    tangle
     time $C -o jojo jojo.cpp $W $L $O
 }
 
 bd () # build with debug info
 {
     clean
-    tangle
     time $C -o jojo jojo.cpp $W $L $D
 }
 
@@ -47,6 +44,14 @@ t () # test
     do
         ./jojo "test/$FILE"
     done
+}
+
+d () # dev
+{
+    clean
+    tangle
+    time $C -o jojo jojo.cpp $W $L
+    t
 }
 
 debug () {
