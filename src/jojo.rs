@@ -1,5 +1,6 @@
   use std::collections::HashMap;
   use std::rc::Rc;
+  use dic::Dic;
   pub type Ptr <T> = Rc <T>;
 
   pub type Name = String;
@@ -147,7 +148,7 @@
   pub struct Type {
       obj_map: ObjMap,
       tag_of_type: Tag,
-      super_tag_vector: TagVec,
+      super_tag_vec: TagVec,
   }
 
   impl Obj for Type {
@@ -185,7 +186,7 @@
       let typ = Ptr::new (Type {
           obj_map: ObjMap::new (),
           tag_of_type: tag,
-          super_tag_vector: TagVec::new (),
+          super_tag_vec: TagVec::new (),
       });
       let type_entry = TypeEntry {
           name: Name::from (name_str),
@@ -236,7 +237,6 @@
   pub struct Data {
       tag: Tag,
       obj_map: ObjMap,
-      name_stack: NameStack,
   }
 
   impl Obj for Data {
@@ -248,5 +248,3 @@
 
       }
   }
-
-

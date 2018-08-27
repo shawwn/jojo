@@ -1,6 +1,8 @@
 #![feature(nll)]
 #![allow(unused_parens)]
 
+pub mod dic;
+
 mod jojo;
 pub use jojo::*;
 

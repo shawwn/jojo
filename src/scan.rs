@@ -30,8 +30,8 @@ fn doublequote_char_p (c: char) -> bool {
     (c == '"')
 }
 
-pub fn scan_word_vector (code: &str) -> StringVec {
-    let mut word_vector = StringVec::new ();
+pub fn scan_word_vec (code: &str) -> StringVec {
+    let mut word_vec = StringVec::new ();
     let mut iter = code.chars () .peekable ();
     while iter.peek () != None {
         if let Some (c) = iter.next () {
@@ -40,7 +40,7 @@ pub fn scan_word_vector (code: &str) -> StringVec {
             else if delimiter_char_p (c) {
                 let mut word = String::from ("");
                 word.push (c);
-                word_vector.push (word);
+                word_vec.push (word);
             }
             else if semicolon_char_p (c) {
                 loop {
@@ -68,7 +68,7 @@ pub fn scan_word_vector (code: &str) -> StringVec {
                         panic! ("doublequote mismatch!");
                     }
                 }
-                word_vector.push (word);
+                word_vec.push (word);
             }
             else {
                 let mut word = String::from ("");
@@ -91,21 +91,21 @@ pub fn scan_word_vector (code: &str) -> StringVec {
                         break;
                     }
                 }
-                word_vector.push (word);
+                word_vec.push (word);
             }
         }
     }
-    word_vector
+    word_vec
 }
 
 #[test]
 fn test_scan () {
-    assert_eq! (scan_word_vector (""),
+    assert_eq! (scan_word_vec (""),
                 StringVec::new ());
-    assert_eq! (scan_word_vector ("a b c"),
+    assert_eq! (scan_word_vec ("a b c"),
                 ["a", "b", "c"]);
-    assert_eq! (scan_word_vector ("(a b c)"),
+    assert_eq! (scan_word_vec ("(a b c)"),
                 ["(", "a", "b", "c", ")"]);
-    assert_eq! (scan_word_vector ("(a (b) c)"),
+    assert_eq! (scan_word_vec ("(a (b) c)"),
                 ["(", "a", "(", "b", ")", "c", ")"]);
 }
