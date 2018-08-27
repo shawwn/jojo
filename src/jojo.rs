@@ -1,19 +1,6 @@
-#+property: tangle jojo.rs
-#+title: jojo
-
-* prolog
-
-*** use
-
-    #+begin_src rust
     use std::collections::HashMap;
     use std::rc::Rc;
     // use std::fmt;
-    #+end_src
-
-* datatype
-
-  #+begin_src rust
   pub type Ptr <T> = Rc <T>;
 
   pub type Name = String;
@@ -51,24 +38,12 @@
   pub type NameVec = Vec <Name>;
 
   pub type StringVec = Vec <String>;
-  #+end_src
-
-* env
-
-*** Env
-
-    #+begin_src rust
     pub struct Env {
         pub obj_record: ObjRecord,
         pub type_record: TypeRecord,
         pub obj_stack: ObjStack,
         pub frame_stack: FrameStack,
     }
-    #+end_src
-
-*** new_env
-
-    #+begin_src rust
     pub fn new_env () -> Env {
         let mut env = Env {
             obj_record: ObjRecord::new (),
@@ -79,11 +54,6 @@
         init_type_record (&mut env);
         env
     }
-    #+end_src
-
-*** env_step
-
-    #+begin_src rust
     fn env_step (env: &mut Env) {
         if let Some (mut frame) = env.frame_stack.pop () {
             let jo = frame.jojo [frame.index] .clone ();
@@ -97,33 +67,16 @@
             }
         }
     }
-    #+end_src
-
-*** env_run
-
-    #+begin_src rust
     fn env_run (env: &mut Env) {
         while ! env.frame_stack.is_empty () {
             env_step (env);
         }
     }
-    #+end_src
-
-*** env_run_with_base
-
-    #+begin_src rust
     fn env_run_with_base (env: &mut Env, base: usize) {
         while env.frame_stack.len () > base {
             env_step (env);
         }
     }
-    #+end_src
-
-* obj
-
-*** Obj
-
-    #+begin_src rust
     pub trait Obj {
 
         // fn tag (&self) -> Tag;
@@ -144,11 +97,6 @@
 
         }
     }
-    #+end_src
-
-*** define
-
-    #+begin_src rust
     fn define (
         env: &mut Env,
         name: Name,
@@ -162,51 +110,20 @@
         env.obj_record.push (Some (obj_entry));
         return obj_ref;
     }
-    #+end_src
-
-* jo
-
-*** Jo
-
-    #+begin_src rust
     pub trait Jo {
         fn exe (&self, env: &mut Env, local_scope: Ptr <LocalScope>);
         fn repr (&self, env: &Env) -> String;
     }
-    #+end_src
-
-* frame
-
-*** Frame
-
-    #+begin_src rust
     pub struct Frame {
         index: usize,
         jojo: Ptr <JoVec>,
         local_scope: Ptr <LocalScope>,
     }
-    #+end_src
-
-* type
-
-*** Type
-
-    #+begin_src rust
     pub struct Type {
         tag_of_type: Tag,
         super_tag_vector: TagVec,
     }
-    #+end_src
 
-*** Obj for Type
-
-    #+begin_src rust
-
-    #+end_src
-
-*** define_type
-
-    #+begin_src rust
     fn define_type (
         env: &mut Env,
         name: Name,
@@ -220,13 +137,6 @@
         env.type_record.push (Some (type_entry));
         return tag;
     }
-    #+end_src
-
-* tag
-
-*** tag_name
-
-    #+begin_src rust
     fn tag_name (
         env: &Env,
         tag: Tag,
@@ -241,11 +151,6 @@
             }
         }
     }
-    #+end_src
-
-*** make_type_record
-
-    #+begin_src rust
     fn make_type_record () -> TypeRecord {
         let mut type_record = TypeRecord::new ();
         for _x in 0..64 {
@@ -253,11 +158,6 @@
         }
         type_record
     }
-    #+end_src
-
-*** about preserved tags
-
-    #+begin_src rust
     const CLOSURE_TAG      : Tag = 0;
     const TYPE_TAG         : Tag = 1;
     const TRUE_TAG         : Tag = 2;
@@ -276,11 +176,6 @@
     const SYM_TAG          : Tag = 18;
     const NOTHING_TAG      : Tag = 19;
     const JUST_TAG         : Tag = 20;
-    #+end_src
-
-*** preserve_tag
-
-    #+begin_src rust
     fn preserve_tag (
         env: &mut Env,
         tag: Tag,
@@ -296,11 +191,6 @@
         };
         env.type_record [tag] = Some (type_entry);
     }
-    #+end_src
-
-*** init_type_record
-
-    #+begin_src rust
     fn init_type_record (env: &mut Env) {
         preserve_tag (env, CLOSURE_TAG      , "closure-t");
         preserve_tag (env, TYPE_TAG         , "type-t");
@@ -321,39 +211,13 @@
         preserve_tag (env, NOTHING_TAG      , "nothing-t");
         preserve_tag (env, JUST_TAG         , "just-t");
     }
-    #+end_src
-
-* data
-
-*** Data
-
-    #+begin_src rust
     pub struct Data {
 
     }
-    #+end_src
-
-* field
-
-*** Field
-
-    #+begin_src rust
     pub trait Field {
         fn get (&self, name: Name) -> Ptr <Obj>;
     }
-    #+end_src
 
-*** Field for Data
-
-    #+begin_src rust
-
-    #+end_src
-
-* closure
-
-*** Closure
-
-    #+begin_src rust
     pub struct Closure {
         obj_map: ObjMap,
         name_vector: NameVec,
@@ -361,11 +225,6 @@
         bind_vector: BindVec,
         local_scope: LocalScope,
     }
-    #+end_src
-
-*** Obj for Closure
-
-    #+begin_src rust
     impl Obj for Closure {
         // fn tag (&self) -> Tag {
         //
@@ -375,32 +234,12 @@
             self.obj_map.clone ()
         }
     }
-    #+end_src
-
-* prim
-
-*** Prim
-
-    #+begin_src rust
     pub struct Prim {
 
     }
-    #+end_src
-
-* num
-
-*** Num
-
-    #+begin_src rust
     type Num = isize;
-    #+end_src
-
-*** Obj for Num
-
-    #+begin_src rust
     impl Obj for Num {
         fn obj_map (&self) -> ObjMap {
             ObjMap::new ()
         }
     }
-    #+end_src
