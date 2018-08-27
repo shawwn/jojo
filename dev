@@ -1,7 +1,7 @@
 #!/usr/bin/env bash
 
-C="g++"
-# C="clang++"
+# C="g++"
+C="clang++"
 W="-Wall -Wextra -Wno-infinite-recursion -Wno-unused-parameter"
 L="-std=c++17 -lstdc++fs"
 O="-foptimize-sibling-calls -Ofast"

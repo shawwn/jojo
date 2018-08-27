@@ -6,32 +6,31 @@
 
   pub type ObjMap = HashMap <Name, Ptr <Obj>>;
 
-  pub struct ObjEntry { name: Name, obj: Ptr <Obj> }
+  pub type Id = usize; // index in to ObjRecord
+  pub type IdMap = HashMap <Name, Id>;
   pub type ObjRecord = Vec <Option <ObjEntry>>;
-  pub type ObjRef = usize; // index in to ObjRecord
+  pub struct ObjEntry { name: Name, obj: Ptr <Obj> }
 
-  pub struct TypeEntry { name: Name, t: Ptr <Type> }
-  pub type TypeRecord = Vec <Option <TypeEntry>>;
   pub type Tag = usize; // index in to TypeRecord
-
-  pub type TagVec = Vec <Tag>;
-
-  pub type JoVec = Vec <Ptr <Jo>>;
+  pub type TagMap = HashMap <Name, Tag>;
+  pub type TypeRecord = Vec <Option <TypeEntry>>;
+  pub struct TypeEntry { name: Name, typ: Ptr <Type> }
 
   pub type ObjStack = Vec <Ptr <Obj>>;
-
   pub type FrameStack = Vec <Box <Frame>>;
 
-  pub type Bind = (Name, Ptr <Obj>);
-  pub type BindVec = Vec <Bind>; // index from end
-  pub type LocalScope = Vec <BindVec>; // index from end
+  pub type LocalScope = Vec <ObjMap>; // index from end
 
   pub type NameVec = Vec <Name>;
-
+  pub type NameStack = Vec <Name>;
   pub type StringVec = Vec <String>;
+  pub type TagVec = Vec <Tag>;
+  pub type JoVec = Vec <Ptr <Jo>>;
   pub struct Env {
       pub obj_record: ObjRecord,
+      pub id_map: IdMap,
       pub type_record: TypeRecord,
+      pub tag_map: TagMap,
       pub obj_stack: ObjStack,
       pub frame_stack: FrameStack,
   }
@@ -39,7 +38,9 @@
   pub fn new_env () -> Env {
       let mut env = Env {
           obj_record: ObjRecord::new (),
+          id_map: IdMap::new (),
           type_record: make_type_record (),
+          tag_map: TagMap::new (),
           obj_stack: ObjStack::new (),
           frame_stack: FrameStack::new (),
       };
@@ -121,23 +122,27 @@
       }
   }
 
-  pub fn define (env: &mut Env, name: &Name, obj: Ptr <Obj>) -> ObjRef {
-      let obj_ref = env.obj_record.len ();
+  pub fn define (
+      env: &mut Env,
+      name: &Name,
+      obj: Ptr <Obj>,
+  ) -> Id {
+      let id = env.obj_record.len ();
       let obj_entry = ObjEntry {
           name: name.clone (),
           obj: obj.clone (),
       };
       env.obj_record.push (Some (obj_entry));
-      return obj_ref;
-  }
-  pub trait Jo {
-      fn exe (&self, env: &mut Env, local_scope: Ptr <LocalScope>);
-      fn repr (&self, env: &Env) -> String;
+      return id;
   }
   pub struct Frame {
       index: usize,
       jojo: Ptr <JoVec>,
       local_scope: Ptr <LocalScope>,
+  }
+  pub trait Jo {
+      fn exe (&self, env: &mut Env, local_scope: Ptr <LocalScope>);
+      fn repr (&self, env: &Env) -> String;
   }
   pub struct Type {
       obj_map: ObjMap,
@@ -151,11 +156,15 @@
       fn obj_map (&self) -> ObjMap { self.obj_map.clone () }
   }
 
-  pub fn define_type (env: &mut Env, name: &Name, t: Ptr <Type>) -> Tag {
+  pub fn define_type (
+      env: &mut Env,
+      name: &Name,
+      typ: Ptr <Type>,
+  ) -> Tag {
       let tag = env.type_record.len ();
       let type_entry = TypeEntry {
           name: name.clone (),
-          t: t.clone (),
+          typ: typ.clone (),
       };
       env.type_record.push (Some (type_entry));
       return tag;
@@ -173,14 +182,14 @@
   }
 
   fn preserve_tag (env: &mut Env, tag: Tag, name_str: &str) {
-      let t = Ptr::new (Type {
+      let typ = Ptr::new (Type {
           obj_map: ObjMap::new (),
           tag_of_type: tag,
           super_tag_vector: TagVec::new (),
       });
       let type_entry = TypeEntry {
           name: Name::from (name_str),
-          t,
+          typ,
       };
       env.type_record [tag] = Some (type_entry);
   }
@@ -227,11 +236,17 @@
   pub struct Data {
       tag: Tag,
       obj_map: ObjMap,
-      name_vector: NameVec,
+      name_stack: NameStack,
   }
 
   impl Obj for Data {
       fn tag (&self) -> Tag { self.tag }
 
       fn obj_map (&self) -> ObjMap { self.obj_map.clone () }
+
+      fn apply (&self, env: &Env, arity: usize) {
+
+      }
   }
+
+
