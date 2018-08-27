@@ -2,6 +2,10 @@
 #![allow(unused_parens)]
 
 mod jojo;
-mod scan;
-
 pub use jojo::*;
+
+pub mod closure;
+pub mod prim;
+pub mod num;
+
+pub mod scan;

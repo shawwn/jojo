@@ -30,7 +30,7 @@ fn doublequote_char_p (c: char) -> bool {
     (c == '"')
 }
 
-fn scan_word_vector (code: &str) -> StringVec {
+pub fn scan_word_vector (code: &str) -> StringVec {
     let mut word_vector = StringVec::new ();
     let mut iter = code.chars () .peekable ();
     while iter.peek () != None {

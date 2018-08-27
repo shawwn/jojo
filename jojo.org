@@ -1,6 +1,6 @@
 #+property: tangle jojo.cpp
 #+title: jojo
-
+- no `env: env_t` in make
 * prolog
 
 *** include
