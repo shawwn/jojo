@@ -3,10 +3,13 @@
 
 * prolog
 
-  #+begin_src rust
-  use std::rc::Rc;
-  use dic::Dic;
-  #+end_src
+*** use
+
+    #+begin_src rust
+    use std::rc::Rc;
+    use dic::Dic;
+    // use scan::scan_word_vec;
+    #+end_src
 
 * datatype
 
@@ -35,45 +38,53 @@
 
 *** obj_stack
 
-    #+begin_src rust
-    pub fn obj_stack_pop_to_vec (
-        env: &mut Env,
-        len: usize,
-    ) -> ObjVec {
-        let mut obj_vec = ObjVec::new ();
-        (0..len)
-            .into_iter ()
-            .for_each (|_| obj_vec.push (
-                env.obj_stack.pop () .unwrap ()));
-        obj_vec
-    }
-    #+end_src
+***** obj_stack_pop_to_vec
+
+      #+begin_src rust
+      pub fn obj_stack_pop_to_vec (
+          env: &mut Env,
+          len: usize,
+      ) -> ObjVec {
+          let mut obj_vec = ObjVec::new ();
+          (0..len)
+              .into_iter ()
+              .for_each (|_| obj_vec.push (
+                  env.obj_stack.pop () .unwrap ()));
+          obj_vec
+      }
+      #+end_src
 
 *** obj_dic
 
-    #+begin_src rust
-    pub fn obj_dic_eat_obj_vec (
-        obj_dic: &ObjDic,
-        obj_vec: ObjVec,
-    ) -> ObjDic {
-        let mut obj_dic = obj_dic.clone ();
-        obj_vec
-            .into_iter ()
-            .rev ()
-            .for_each (|obj| obj_dic.eat (obj));
-        obj_dic
-    }
+***** obj_dic_eat_obj_vec
 
-    pub fn obj_dic_pick_up (
-        env: &mut Env,
-        obj_dic: &ObjDic,
-        arity: usize,
-    ) -> ObjDic {
-        obj_dic_eat_obj_vec (
-            obj_dic,
-            obj_stack_pop_to_vec (env, arity))
-    }
-    #+end_src
+      #+begin_src rust
+      pub fn obj_dic_eat_obj_vec (
+          obj_dic: &ObjDic,
+          obj_vec: ObjVec,
+      ) -> ObjDic {
+          let mut obj_dic = obj_dic.clone ();
+          obj_vec
+              .into_iter ()
+              .rev ()
+              .for_each (|obj| obj_dic.eat (obj));
+          obj_dic
+      }
+      #+end_src
+
+***** obj_dic_pick_up
+
+      #+begin_src rust
+      pub fn obj_dic_pick_up (
+          env: &mut Env,
+          obj_dic: &ObjDic,
+          arity: usize,
+      ) -> ObjDic {
+          obj_dic_eat_obj_vec (
+              obj_dic,
+              obj_stack_pop_to_vec (env, arity))
+      }
+      #+end_src
 
 *** local_scope
 
@@ -90,194 +101,134 @@
 
 *** tag
 
-    #+begin_src rust
-    pub fn name_of_tag (
-        env: &Env,
-        tag: Tag,
-    ) -> Name {
-        if tag >= env.type_dic.len () {
-            format! ("#<unknown-tag:{}>", tag.to_string ())
-        } else {
-            let entry = env.type_dic.idx (tag);
-            entry.name.clone ()
-        }
-    }
+***** name_of_tag
 
-    fn preserve_tag (
-        env: &mut Env,
-        tag: Tag,
-        name: &str,
-    ) {
-        let typ = Ptr::new (Type {
-            obj_dic: ObjDic::new (),
-            tag_of_type: tag,
-            super_tag_vec: TagVec::new (),
-        });
-        let index = env.type_dic.ins (name, Some (typ));
-        assert_eq! (tag, index);
-    }
+      #+begin_src rust
+      pub fn name_of_tag (
+          env: &Env,
+          tag: Tag,
+      ) -> Name {
+          if tag >= env.type_dic.len () {
+              format! ("#<unknown-tag:{}>", tag.to_string ())
+          } else {
+              let entry = env.type_dic.idx (tag);
+              entry.name.clone ()
+          }
+      }
+      #+end_src
 
-    pub const CLOSURE_TAG      : Tag = 0;
-    pub const TYPE_TAG         : Tag = 1;
-    pub const TRUE_TAG         : Tag = 2;
-    pub const FALSE_TAG        : Tag = 3;
-    pub const PRIM_TAG         : Tag = 4;
-    pub const NUM_TAG          : Tag = 5;
-    pub const STR_TAG          : Tag = 6;
-    pub const SYM_TAG          : Tag = 7;
-    pub const NULL_TAG         : Tag = 8;
-    pub const CONS_TAG         : Tag = 9;
-    pub const VECT_TAG         : Tag = 10;
-    pub const DICT_TAG         : Tag = 11;
-    pub const MODULE_TAG       : Tag = 12;
-    pub const KEYWORD_TAG      : Tag = 13;
-    pub const MACRO_TAG        : Tag = 14;
-    pub const TOP_KEYWORD_TAG  : Tag = 15;
-    pub const NOTHING_TAG      : Tag = 16;
-    pub const JUST_TAG         : Tag = 17;
+***** preserve_tag
 
-    fn init_type_dic (env: &mut Env) {
-        preserve_tag (env, CLOSURE_TAG      , "closure-t");
-        preserve_tag (env, TYPE_TAG         , "type-t");
-        preserve_tag (env, TRUE_TAG         , "true-t");
-        preserve_tag (env, FALSE_TAG        , "false-t");
-        preserve_tag (env, PRIM_TAG         , "prim-t");
-        preserve_tag (env, NUM_TAG          , "num-t");
-        preserve_tag (env, STR_TAG          , "str-t");
-        preserve_tag (env, SYM_TAG          , "sym-t");
-        preserve_tag (env, NULL_TAG         , "null-t");
-        preserve_tag (env, CONS_TAG         , "cons-t");
-        preserve_tag (env, VECT_TAG         , "vect-t");
-        preserve_tag (env, DICT_TAG         , "dict-t");
-        preserve_tag (env, MODULE_TAG       , "module-t");
-        preserve_tag (env, KEYWORD_TAG      , "keyword-t");
-        preserve_tag (env, MACRO_TAG        , "macro-t");
-        preserve_tag (env, TOP_KEYWORD_TAG  , "top-keyword-t");
-        preserve_tag (env, NOTHING_TAG      , "nothing-t");
-        preserve_tag (env, JUST_TAG         , "just-t");
-    }
-    #+end_src
-
-* env
-
-  #+begin_src rust
-  pub struct Env {
-      pub obj_dic: ObjDic,
-      pub type_dic: TypeDic,
-      pub obj_stack: ObjStack,
-      pub frame_stack: FrameStack,
-  }
-
-  impl Env {
-      pub fn new () -> Env {
-          let mut env = Env {
+      #+begin_src rust
+      fn preserve_tag (
+          env: &mut Env,
+          tag: Tag,
+          name: &str,
+      ) {
+          let typ = Ptr::new (Type {
               obj_dic: ObjDic::new (),
-              type_dic: TypeDic::new (),
-              obj_stack: ObjStack::new (),
-              frame_stack: FrameStack::new (),
-          };
-          init_type_dic (&mut env);
-          env
+              tag_of_type: tag,
+              super_tag_vec: TagVec::new (),
+          });
+          let index = env.type_dic.ins (name, Some (typ));
+          assert_eq! (tag, index);
       }
+      #+end_src
 
-      pub fn step (&mut self) {
-          if let Some (mut frame) = self.frame_stack.pop () {
-              let jo = frame.jojo [frame.index] .clone ();
-              frame.index += 1;
-              if frame.index < frame.jojo.len () {
-                  let local_scope = frame.local_scope.clone ();
-                  self.frame_stack.push (frame);
-                  jo.exe (self, local_scope);
-              } else {
-                  jo.exe (self, frame.local_scope);
-              }
-          }
-      }
+***** const tags
 
-      pub fn run (&mut self) {
-          while ! self.frame_stack.is_empty () {
-              self.step ();
-          }
-      }
+      #+begin_src rust
+      pub const CLOSURE_TAG      : Tag = 0;
+      pub const TYPE_TAG         : Tag = 1;
+      pub const TRUE_TAG         : Tag = 2;
+      pub const FALSE_TAG        : Tag = 3;
+      pub const PRIM_TAG         : Tag = 4;
+      pub const NUM_TAG          : Tag = 5;
+      pub const STR_TAG          : Tag = 6;
+      pub const SYM_TAG          : Tag = 7;
+      pub const NULL_TAG         : Tag = 8;
+      pub const CONS_TAG         : Tag = 9;
+      pub const VECT_TAG         : Tag = 10;
+      pub const DICT_TAG         : Tag = 11;
+      pub const MODULE_TAG       : Tag = 12;
+      pub const KEYWORD_TAG      : Tag = 13;
+      pub const MACRO_TAG        : Tag = 14;
+      pub const TOP_KEYWORD_TAG  : Tag = 15;
+      pub const NOTHING_TAG      : Tag = 16;
+      pub const JUST_TAG         : Tag = 17;
+      #+end_src
 
-      pub fn run_with_base (&mut self, base: usize) {
-          while self.frame_stack.len () > base {
-              self.step ();
-          }
-      }
+***** init_type_dic
 
-      pub fn define (
-          &mut self,
-          name: &str,
-          obj: Ptr <Obj>,
-      ) -> Id {
-          self.obj_dic.ins (name, Some (obj.clone ()))
+      #+begin_src rust
+      fn init_type_dic (env: &mut Env) {
+          preserve_tag (env, CLOSURE_TAG      , "closure-t");
+          preserve_tag (env, TYPE_TAG         , "type-t");
+          preserve_tag (env, TRUE_TAG         , "true-t");
+          preserve_tag (env, FALSE_TAG        , "false-t");
+          preserve_tag (env, PRIM_TAG         , "prim-t");
+          preserve_tag (env, NUM_TAG          , "num-t");
+          preserve_tag (env, STR_TAG          , "str-t");
+          preserve_tag (env, SYM_TAG          , "sym-t");
+          preserve_tag (env, NULL_TAG         , "null-t");
+          preserve_tag (env, CONS_TAG         , "cons-t");
+          preserve_tag (env, VECT_TAG         , "vect-t");
+          preserve_tag (env, DICT_TAG         , "dict-t");
+          preserve_tag (env, MODULE_TAG       , "module-t");
+          preserve_tag (env, KEYWORD_TAG      , "keyword-t");
+          preserve_tag (env, MACRO_TAG        , "macro-t");
+          preserve_tag (env, TOP_KEYWORD_TAG  , "top-keyword-t");
+          preserve_tag (env, NOTHING_TAG      , "nothing-t");
+          preserve_tag (env, JUST_TAG         , "just-t");
       }
-
-      pub fn define_type (
-          &mut self,
-          name: &str,
-          typ: Ptr <Type>,
-      ) -> Tag {
-          self.type_dic.ins (name, Some (typ.clone ()))
-      }
-  }
-  #+end_src
+      #+end_src
 
 * obj
 
-  #+begin_src rust
-  pub trait Obj {
-      fn tag (&self) -> Tag;
-      fn obj_dic (&self) -> ObjDic;
+*** Obj
 
-      fn get (&self, name: &str) -> Option <Ptr <Obj>> {
-          match self.obj_dic () .get (name) {
-              Some (obj) => Some (obj.clone ()),
-              None => None,
-          }
-      }
+    #+begin_src rust
+    pub trait Obj {
+        fn tag (&self) -> Tag;
+        fn obj_dic (&self) -> ObjDic;
 
-      fn repr (&self, env: &Env) -> String {
-          format! ("#<{}>", name_of_tag (&env, self.tag ()))
-      }
+        fn get (&self, name: &str) -> Option <Ptr <Obj>> {
+            match self.obj_dic () .get (name) {
+                Some (obj) => Some (obj.clone ()),
+                None => None,
+            }
+        }
 
-      fn print (&self, env: &Env) {
-          println! ("{}", self.repr (&env));
-      }
+        fn repr (&self, env: &Env) -> String {
+            format! ("#<{}>", name_of_tag (&env, self.tag ()))
+        }
 
-      fn eq (&self, _env: &Env, _obj: Ptr <Obj>) -> bool {
-          false
-      }
+        fn print (&self, env: &Env) {
+            println! ("{}", self.repr (&env));
+        }
 
-      fn apply (&self, env: &mut Env, arity: usize) {
-          eprintln! ("- Obj::apply");
-          eprintln! ("  applying non applicable object");
-          eprintln! ("  tag : {}", name_of_tag (&env, self.tag ()));
-          eprintln! ("  obj : {}", self.repr (env));
-          eprintln! ("  arity : {}", arity);
-          panic! ("jojo fatal error!");
-      }
+        fn eq (&self, _env: &Env, _obj: Ptr <Obj>) -> bool {
+            false
+        }
 
-      // fn apply_to_arg_dict (&self, env: &mut Env) {
-      //     eprintln! ("- Obj::apply_to_arg_dict");
-      //     eprintln! ("  applying non applicable object");
-      //     eprintln! ("  tag : {}", name_of_tag (&env, self.tag ()));
-      //     eprintln! ("  obj : {}", self.repr (&env));
-      //     panic! ("jojo fatal error!");
-      // }
-  }
-  #+end_src
+        fn apply (&self, env: &mut Env, arity: usize) {
+            eprintln! ("- Obj::apply");
+            eprintln! ("  applying non applicable object");
+            eprintln! ("  tag : {}", name_of_tag (&env, self.tag ()));
+            eprintln! ("  obj : {}", self.repr (env));
+            eprintln! ("  arity : {}", arity);
+            panic! ("jojo fatal error!");
+        }
 
-* frame
-
-  #+begin_src rust
-  pub struct Frame {
-      pub index: usize,
-      pub jojo: Ptr <JoVec>,
-      pub local_scope: Ptr <LocalScope>,
-  }
-  #+end_src
+        // fn apply_to_arg_dict (&self, env: &mut Env) {
+        //     eprintln! ("- Obj::apply_to_arg_dict");
+        //     eprintln! ("  applying non applicable object");
+        //     eprintln! ("  tag : {}", name_of_tag (&env, self.tag ()));
+        //     eprintln! ("  obj : {}", self.repr (&env));
+        //     panic! ("jojo fatal error!");
+        // }
+    }
+    #+end_src
 
 * jo
 
@@ -355,6 +306,84 @@
             let obj = env.obj_stack.pop () .unwrap ();
             obj.apply (env, self.arity);
         }
+    }
+    #+end_src
+
+* env
+
+*** Env
+
+    #+begin_src rust
+    pub struct Env {
+        pub obj_dic: ObjDic,
+        pub type_dic: TypeDic,
+        pub obj_stack: ObjStack,
+        pub frame_stack: FrameStack,
+    }
+
+    impl Env {
+        pub fn new () -> Env {
+            let mut env = Env {
+                obj_dic: ObjDic::new (),
+                type_dic: TypeDic::new (),
+                obj_stack: ObjStack::new (),
+                frame_stack: FrameStack::new (),
+            };
+            init_type_dic (&mut env);
+            env
+        }
+
+        pub fn step (&mut self) {
+            if let Some (mut frame) = self.frame_stack.pop () {
+                let jo = frame.jojo [frame.index] .clone ();
+                frame.index += 1;
+                if frame.index < frame.jojo.len () {
+                    let local_scope = frame.local_scope.clone ();
+                    self.frame_stack.push (frame);
+                    jo.exe (self, local_scope);
+                } else {
+                    jo.exe (self, frame.local_scope);
+                }
+            }
+        }
+
+        pub fn run (&mut self) {
+            while ! self.frame_stack.is_empty () {
+                self.step ();
+            }
+        }
+
+        pub fn run_with_base (&mut self, base: usize) {
+            while self.frame_stack.len () > base {
+                self.step ();
+            }
+        }
+
+        pub fn define (
+            &mut self,
+            name: &str,
+            obj: Ptr <Obj>,
+        ) -> Id {
+            self.obj_dic.ins (name, Some (obj.clone ()))
+        }
+
+        pub fn define_type (
+            &mut self,
+            name: &str,
+            typ: Ptr <Type>,
+        ) -> Tag {
+            self.type_dic.ins (name, Some (typ.clone ()))
+        }
+    }
+    #+end_src
+
+*** Frame
+
+    #+begin_src rust
+    pub struct Frame {
+        pub index: usize,
+        pub jojo: Ptr <JoVec>,
+        pub local_scope: Ptr <LocalScope>,
     }
     #+end_src
 
@@ -517,11 +546,34 @@
 
 * str
 
-*** Obj for String
+*** Str
 
     #+begin_src rust
-    impl Obj for String {
+    pub struct Str (pub String);
+    #+end_src
+
+*** Obj for Str
+
+    #+begin_src rust
+    impl Obj for Str {
         fn tag (&self) -> Tag { STR_TAG }
+        fn obj_dic (&self) -> ObjDic { ObjDic::new () }
+    }
+    #+end_src
+
+* sym
+
+*** Sym
+
+    #+begin_src rust
+    pub struct Sym (pub String);
+    #+end_src
+
+*** Obj for Sym
+
+    #+begin_src rust
+    impl Obj for Sym {
+        fn tag (&self) -> Tag { SYM_TAG }
         fn obj_dic (&self) -> ObjDic { ObjDic::new () }
     }
     #+end_src
@@ -531,7 +583,7 @@
 *** Num
 
     #+begin_src rust
-    pub type Num = f64;
+    pub struct Num (pub f64);
     #+end_src
 
 *** Obj for Num
@@ -542,8 +594,6 @@
         fn obj_dic (&self) -> ObjDic { ObjDic::new () }
     }
     #+end_src
-
-* [todo] compile
 
 * test
 
