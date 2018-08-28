@@ -1,4 +1,3 @@
-  // use std::collections::HashMap;
   use std::rc::Rc;
   use dic::Dic;
   pub type Ptr <T> = Rc <T>;
@@ -18,6 +17,7 @@
 
   pub type TagVec = Vec <Tag>;
   pub type JoVec = Vec <Ptr <Jo>>;
+  pub type ObjVec = Vec <Ptr <Obj>>;
   pub struct Env {
       pub obj_dic: ObjDic,
       pub type_dic: TypeDic,
@@ -25,47 +25,65 @@
       pub frame_stack: FrameStack,
   }
 
-  pub fn new_env () -> Env {
-      let mut env = Env {
-          obj_dic: ObjDic::new (),
-          type_dic: TypeDic::new (),
-          obj_stack: ObjStack::new (),
-          frame_stack: FrameStack::new (),
-      };
-      init_type_dic (&mut env);
-      env
-  }
+  impl Env {
+      pub fn new () -> Env {
+          let mut env = Env {
+              obj_dic: ObjDic::new (),
+              type_dic: TypeDic::new (),
+              obj_stack: ObjStack::new (),
+              frame_stack: FrameStack::new (),
+          };
+          init_type_dic (&mut env);
+          env
+      }
 
-  pub fn env_step (env: &mut Env) {
-      if let Some (mut frame) = env.frame_stack.pop () {
-          let jo = frame.jojo [frame.index] .clone ();
-          frame.index += 1;
-          if frame.index < frame.jojo.len () {
-              let local_scope = frame.local_scope.clone ();
-              env.frame_stack.push (frame);
-              jo.exe (env, local_scope);
-          } else {
-              jo.exe (env, frame.local_scope);
+      pub fn step (&mut self) {
+          if let Some (mut frame) = self.frame_stack.pop () {
+              let jo = frame.jojo [frame.index] .clone ();
+              frame.index += 1;
+              if frame.index < frame.jojo.len () {
+                  let local_scope = frame.local_scope.clone ();
+                  self.frame_stack.push (frame);
+                  jo.exe (self, local_scope);
+              } else {
+                  jo.exe (self, frame.local_scope);
+              }
           }
       }
-  }
 
-  pub fn env_run (env: &mut Env) {
-      while ! env.frame_stack.is_empty () {
-          env_step (env);
+      pub fn run (&mut self) {
+          while ! self.frame_stack.is_empty () {
+              self.step ();
+          }
       }
-  }
 
-  pub fn env_run_with_base (env: &mut Env, base: usize) {
-      while env.frame_stack.len () > base {
-          env_step (env);
+      pub fn run_with_base (&mut self, base: usize) {
+          while self.frame_stack.len () > base {
+              self.step ();
+          }
+      }
+
+      pub fn define (
+          &mut self,
+          name: &str,
+          obj: Ptr <Obj>,
+      ) -> Id {
+          self.obj_dic.ins (name, Some (obj.clone ()))
+      }
+
+      pub fn define_type (
+          &mut self,
+          name: &str,
+          typ: Ptr <Type>,
+      ) -> Tag {
+          self.type_dic.ins (name, Some (typ.clone ()))
       }
   }
   pub trait Obj {
       fn tag (&self) -> Tag;
       fn obj_dic (&self) -> ObjDic;
 
-      fn get (&self, name: &Name) -> Option <Ptr <Obj>> {
+      fn get (&self, name: &str) -> Option <Ptr <Obj>> {
           match self.obj_dic () .get (name) {
               Some (obj) => Some (obj.clone ()),
               None => None,
@@ -84,34 +102,35 @@
           false
       }
 
-      fn apply (&self, env: &Env, _arity: usize) {
+      fn apply (&self, env: &mut Env, arity: usize) {
           eprintln! ("- Obj::apply");
           eprintln! ("  applying non applicable object");
           eprintln! ("  tag : {}", name_of_tag (&env, self.tag ()));
           eprintln! ("  obj : {}", self.repr (env));
+          eprintln! ("  arity : {}", arity);
           panic! ("jojo fatal error!");
       }
 
-      fn apply_to_arg_dict (&self, env: &Env) {
-          eprintln! ("- Obj::apply_to_arg_dict");
-          eprintln! ("  applying non applicable object");
-          eprintln! ("  tag : {}", name_of_tag (&env, self.tag ()));
-          eprintln! ("  obj : {}", self.repr (&env));
-          panic! ("jojo fatal error!");
-      }
-  }
-
-  pub fn define (
-      env: &mut Env,
-      name: &Name,
-      obj: Ptr <Obj>,
-  ) -> Id {
-      env.obj_dic.ins (name, Some (obj.clone ()))
+      // fn apply_to_arg_dict (&self, env: &mut Env) {
+      //     eprintln! ("- Obj::apply_to_arg_dict");
+      //     eprintln! ("  applying non applicable object");
+      //     eprintln! ("  tag : {}", name_of_tag (&env, self.tag ()));
+      //     eprintln! ("  obj : {}", self.repr (&env));
+      //     panic! ("jojo fatal error!");
+      // }
   }
   pub struct Frame {
-      index: usize,
-      jojo: Ptr <JoVec>,
+      pub index: usize,
+      pub jojo: Ptr <JoVec>,
+      pub local_scope: Ptr <LocalScope>,
+  }
+  pub fn local_scope_extend (
       local_scope: Ptr <LocalScope>,
+      obj_dic: ObjDic,
+  ) -> Ptr <LocalScope> {
+      let mut obj_dic_vec = (*local_scope).clone ();
+      obj_dic_vec.push (obj_dic);
+      Ptr::new (obj_dic_vec)
   }
   pub trait Jo {
       fn exe (&self, env: &mut Env, local_scope: Ptr <LocalScope>);
@@ -127,15 +146,10 @@
       fn tag (&self) -> Tag { TYPE_TAG }
       fn obj_dic (&self) -> ObjDic { self.obj_dic.clone () }
   }
-
-  pub fn define_type (
-      env: &mut Env,
-      name: &Name,
-      typ: Ptr <Type>,
-  ) -> Tag {
-      env.type_dic.ins (name, Some (typ))
-  }
-  pub fn name_of_tag (env: &Env, tag: Tag) -> Name {
+  pub fn name_of_tag (
+      env: &Env,
+      tag: Tag,
+  ) -> Name {
       if tag >= env.type_dic.len () {
           format! ("#<unknown-tag:{}>", tag.to_string ())
       } else {
@@ -144,7 +158,11 @@
       }
   }
 
-  fn preserve_tag (env: &mut Env, tag: Tag, name: &str) {
+  fn preserve_tag (
+      env: &mut Env,
+      tag: Tag,
+      name: &str,
+  ) {
       let typ = Ptr::new (Type {
           obj_dic: ObjDic::new (),
           tag_of_type: tag,
@@ -193,16 +211,35 @@
       preserve_tag (env, NOTHING_TAG      , "nothing-t");
       preserve_tag (env, JUST_TAG         , "just-t");
   }
-  pub struct Data {
-      tag: Tag,
-      obj_dic: ObjDic,
+  pub fn obj_stack_pop_to_vec (
+      env: &mut Env,
+      len: usize,
+  ) -> ObjVec {
+      let mut obj_vec = ObjVec::new ();
+      (0..len)
+          .into_iter ()
+          .for_each (|_| obj_vec.push (
+              env.obj_stack.pop () .unwrap ()));
+      obj_vec
+  }
+  pub fn obj_dic_eat_obj_vec (
+      obj_dic: &ObjDic,
+      obj_vec: ObjVec,
+  ) -> ObjDic {
+      let mut obj_dic = obj_dic.clone ();
+      obj_vec
+          .into_iter ()
+          .rev ()
+          .for_each (|obj| obj_dic.eat (obj));
+      obj_dic
   }
 
-  impl Obj for Data {
-      fn tag (&self) -> Tag { self.tag }
-      fn obj_dic (&self) -> ObjDic { self.obj_dic.clone () }
-
-      fn apply (&self, env: &Env, arity: usize) {
-
-      }
+  pub fn obj_dic_pick_up (
+      env: &mut Env,
+      obj_dic: &ObjDic,
+      arity: usize,
+  ) -> ObjDic {
+      obj_dic_eat_obj_vec (
+          obj_dic,
+          obj_stack_pop_to_vec (env, arity))
   }

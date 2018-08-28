@@ -1,5 +1,4 @@
 use std::collections::HashMap;
-use std::clone::Clone;
 
 #[derive(Clone)]
 pub struct Entry <T> {
@@ -78,6 +77,16 @@ impl <T> Dic <T> {
             None
         }
     }
+
+    pub fn eat (&mut self, x: T) {
+        for entry in &mut self.entry_vector {
+            if let None = entry.value {
+                entry.value = Some (x);
+                return;
+            }
+        }
+        panic! ("Dic::eat fail!");
+    }
 }
 
 #[test]
@@ -85,40 +94,49 @@ fn test_dic () {
     let mut dic: Dic <Vec <isize>> = Dic::new ();
     assert_eq! (0, dic.len ());
 
-    let index = dic.ins ("key1", Some (vec! [ 0, 1, 2, 3 ]));
+    let index = dic.ins ("key1", Some (vec! [1, 1, 1]));
     assert_eq! (0, index);
     assert_eq! (1, dic.len ());
     assert! (dic.has_name ("key1"));
     assert! (! dic.has_name ("non-key"));
     let entry = dic.idx (0);
     assert_eq! (entry.name, "key1");
-    assert_eq! (entry.value, Some (vec! [ 0, 1, 2, 3 ]));
+    assert_eq! (entry.value, Some (vec! [1, 1, 1]));
 
-    let index = dic.ins ("key2", Some (vec! [ 4, 5, 6, 7 ]));
+    let index = dic.ins ("key2", Some (vec! [2, 2, 2]));
     assert_eq! (1, index);
     assert_eq! (2, dic.len ());
     assert! (dic.has_name ("key2"));
     let entry = dic.idx (1);
     assert_eq! (entry.name, "key2");
-    assert_eq! (entry.value, Some (vec! [ 4, 5, 6, 7 ]));
+    assert_eq! (entry.value, Some (vec! [2, 2, 2]));
 
-    let value = dic.get ("key1");
-    assert_eq! (value, Some (&vec! [ 0, 1, 2, 3 ]));
+    assert_eq! (dic.get ("key1"), Some (&vec! [1, 1, 1]));
+    assert_eq! (dic.get ("key2"), Some (&vec! [2, 2, 2]));
 
-    let value = dic.get ("key2");
-    assert_eq! (value, Some (&vec! [ 4, 5, 6, 7 ]));
-
-    dic.set ("key1", Some (vec! [ 4, 5, 6, 7 ]));
-    let value = dic.get ("key1");
-    assert_eq! (value, Some (&vec! [ 4, 5, 6, 7 ]));
-
+    dic.set ("key1", Some (vec! [2, 2, 2]));
+    assert_eq! (dic.get ("key1"), Some (&vec! [2, 2, 2]));
     assert_eq! (2, dic.len ());
     assert_eq! (0, dic.lack ());
 
     dic.set ("key2", None);
-    let value = dic.get ("key2");
-    assert_eq! (value, None);
-
+    assert_eq! (dic.get ("key2"), None);
     assert_eq! (2, dic.len ());
     assert_eq! (1, dic.lack ());
+
+    dic.eat (vec! [6, 6, 6]);
+    assert_eq! (dic.get ("key2"), Some (&vec! [6, 6, 6]));
+
+    dic.set ("key1", None);
+    assert_eq! (dic.get ("key1"), None);
+
+    dic.eat (vec! [7, 7, 7]);
+    assert_eq! (dic.get ("key1"), Some (&vec! [7, 7, 7]));
+
+    dic.set ("key1", None);
+    dic.set ("key2", None);
+    dic.eat (vec! [6, 6, 6]);
+    dic.eat (vec! [7, 7, 7]);
+    assert_eq! (dic.get ("key1"), Some (&vec! [6, 6, 6]));
+    assert_eq! (dic.get ("key2"), Some (&vec! [7, 7, 7]));
 }
