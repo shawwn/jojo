@@ -6,19 +6,6 @@
   #+begin_src rust
   use std::rc::Rc;
   use dic::Dic;
-
-  pub use bool::*;
-  pub use num::*;
-  pub use data::*;
-  pub use closure::*;
-  pub use prim::*;
-  pub use bool::*;
-  pub use str::*;
-  pub use sym::*;
-  pub use num::*;
-  pub use list::*;
-  pub use vect::*;
-  pub use dict::*;
   #+end_src
 
 * datatype
@@ -373,18 +360,188 @@
 
 * type
 
-  #+begin_src rust
-  pub struct Type {
-      obj_dic: ObjDic,
-      tag_of_type: Tag,
-      super_tag_vec: TagVec,
-  }
+*** Type
 
-  impl Obj for Type {
-      fn tag (&self) -> Tag { TYPE_TAG }
-      fn obj_dic (&self) -> ObjDic { self.obj_dic.clone () }
-  }
-  #+end_src
+    #+begin_src rust
+    pub struct Type {
+        obj_dic: ObjDic,
+        tag_of_type: Tag,
+        super_tag_vec: TagVec,
+    }
+    #+end_src
+
+*** Obj for Type
+
+    #+begin_src rust
+    impl Obj for Type {
+        fn tag (&self) -> Tag { TYPE_TAG }
+        fn obj_dic (&self) -> ObjDic { self.obj_dic.clone () }
+    }
+    #+end_src
+
+* data
+
+*** Data
+
+    #+begin_src rust
+    pub struct Data {
+        tag: Tag,
+        obj_dic: ObjDic,
+    }
+    #+end_src
+
+*** Obj for Data
+
+    #+begin_src rust
+    impl Obj for Data {
+        fn tag (&self) -> Tag { self.tag }
+        fn obj_dic (&self) -> ObjDic { self.obj_dic.clone () }
+
+        fn apply (&self, env: &mut Env, arity: usize) {
+            let lack = self.obj_dic.lack ();
+            if arity > lack {
+                eprintln! ("- Data::apply");
+                eprintln! ("  over-arity apply");
+                eprintln! ("  arity > lack");
+                eprintln! ("  arity : {}", arity);
+                eprintln! ("  lack : {}", lack);
+                panic! ("jojo fatal error!");
+            }
+            let tag = self.tag;
+            let obj_dic = obj_dic_pick_up (env, &self.obj_dic, arity);
+            env.obj_stack.push (Ptr::new (Data {
+                tag,
+                obj_dic,
+            }));
+        }
+    }
+    #+end_src
+
+* closure
+
+*** Closure
+
+    #+begin_src rust
+    pub struct Closure {
+        obj_dic: ObjDic,
+        jojo: Ptr <JoVec>,
+        local_scope: Ptr <LocalScope>,
+    }
+    #+end_src
+
+*** Obj for Closure
+
+    #+begin_src rust
+    impl Obj for Closure {
+        fn tag (&self) -> Tag { CLOSURE_TAG }
+        fn obj_dic (&self) -> ObjDic { self.obj_dic.clone () }
+
+        fn apply (&self, env: &mut Env, arity: usize) {
+            let lack = self.obj_dic.lack ();
+            if arity > lack {
+                eprintln! ("- Closure::apply");
+                eprintln! ("  over-arity apply");
+                eprintln! ("  arity > lack");
+                eprintln! ("  arity : {}", arity);
+                eprintln! ("  lack : {}", lack);
+                panic! ("jojo fatal error!");
+            }
+            let jojo = self.jojo.clone ();
+            let obj_dic = obj_dic_pick_up (env, &self.obj_dic, arity);
+            let local_scope = self.local_scope.clone ();
+            if arity == lack {
+                env.frame_stack.push (Box::new (Frame {
+                    index: 0,
+                    jojo,
+                    local_scope: local_scope_extend (
+                        local_scope, obj_dic),
+                }));
+            } else {
+                env.obj_stack.push (Ptr::new (Closure {
+                    obj_dic,
+                    jojo,
+                    local_scope,
+                }));
+            }
+        }
+    }
+    #+end_src
+
+* prim
+
+*** PrimFn
+
+    #+begin_src rust
+    type PrimFn = fn (env: &mut Env, obj_dic: &ObjDic);
+    #+end_src
+
+*** Prim
+
+    #+begin_src rust
+    pub struct Prim {
+        obj_dic: ObjDic,
+        fun: PrimFn,
+    }
+    #+end_src
+
+*** Obj for Prim
+
+    #+begin_src rust
+    impl Obj for Prim {
+        fn tag (&self) -> Tag { PRIM_TAG }
+        fn obj_dic (&self) -> ObjDic { self.obj_dic.clone () }
+
+        fn apply (&self, env: &mut Env, arity: usize) {
+            let lack = self.obj_dic.lack ();
+            if arity > lack {
+                eprintln! ("- Prim::apply");
+                eprintln! ("  over-arity apply");
+                eprintln! ("  arity > lack");
+                eprintln! ("  arity : {}", arity);
+                eprintln! ("  lack : {}", lack);
+                panic! ("jojo fatal error!");
+            }
+            let fun = self.fun;
+            let obj_dic = obj_dic_pick_up (env, &self.obj_dic, arity);
+            if arity == lack {
+                fun (env, &obj_dic);
+            } else {
+                env.obj_stack.push (Ptr::new (Prim {
+                    obj_dic,
+                    fun,
+                }));
+            }
+        }
+    }
+    #+end_src
+
+* str
+
+*** Obj for String
+
+    #+begin_src rust
+    impl Obj for String {
+        fn tag (&self) -> Tag { STR_TAG }
+        fn obj_dic (&self) -> ObjDic { ObjDic::new () }
+    }
+    #+end_src
+
+* num
+
+*** Num
+
+    #+begin_src rust
+    pub type Num = f64;
+    #+end_src
+
+*** Obj for Num
+
+    #+begin_src rust
+    impl Obj for Num {
+        fn tag (&self) -> Tag { NUM_TAG }
+        fn obj_dic (&self) -> ObjDic { ObjDic::new () }
+    }
+    #+end_src
 
 * [todo] compile
 

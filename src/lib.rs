@@ -3,20 +3,7 @@
 #![allow(dead_code)]
 
 pub mod dic;
+pub mod scan;
 
 mod core;
 pub use core::*;
-
-mod data;
-mod closure;
-mod prim;
-mod bool;
-mod str;
-mod sym;
-mod num;
-mod list;
-mod vect;
-mod dict;
-
-pub mod scan;
-pub mod sexp;
