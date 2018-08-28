@@ -1,4 +1,4 @@
-use jojo::*;
+use core::*;
 
 type PrimFn = fn (env: &mut Env, obj_dic: &ObjDic);
 

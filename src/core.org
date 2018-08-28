@@ -1,5 +1,5 @@
-#+property: tangle jojo.rs
-#+title: jojo
+#+property: tangle core.rs
+#+title: core
 
 * prolog
 

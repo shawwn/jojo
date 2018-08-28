@@ -1,4 +1,4 @@
-use jojo::*;
+use core::*;
 
 pub type Num = f64;
 

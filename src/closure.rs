@@ -1,4 +1,4 @@
-use jojo::*;
+use core::*;
 
 pub struct Closure {
     obj_dic: ObjDic,

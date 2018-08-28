@@ -4,8 +4,8 @@
 
 pub mod dic;
 
-mod jojo;
-pub use jojo::*;
+mod core;
+pub use core::*;
 
 pub mod data;
 pub mod closure;

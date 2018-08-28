@@ -44,4 +44,4 @@ function line_array_to_string  (line_array) {
     return result_string;
 }
 
-tangle ("jojo.org", "jojo.rs");
+tangle ("core.org", "core.rs");
