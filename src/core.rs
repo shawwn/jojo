@@ -1,5 +1,18 @@
   use std::rc::Rc;
   use dic::Dic;
+
+  pub use bool::*;
+  pub use num::*;
+  pub use data::*;
+  pub use closure::*;
+  pub use prim::*;
+  pub use bool::*;
+  pub use str::*;
+  pub use sym::*;
+  pub use num::*;
+  pub use list::*;
+  pub use vect::*;
+  pub use dict::*;
   pub type Ptr <T> = Rc <T>;
 
   pub type Name = String;
