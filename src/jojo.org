@@ -4,7 +4,7 @@
 * prolog
 
   #+begin_src rust
-  use std::collections::HashMap;
+  // use std::collections::HashMap;
   use std::rc::Rc;
   use dic::Dic;
   #+end_src
@@ -16,26 +16,17 @@
 
   pub type Name = String;
 
-  pub type ObjMap = HashMap <Name, Ptr <Obj>>;
+  pub type Id = usize; // index in to ObjDic
+  pub type ObjDic = Dic <Ptr <Obj>>;
 
-  pub type Id = usize; // index in to ObjRecord
-  pub type IdMap = HashMap <Name, Id>;
-  pub type ObjRecord = Vec <Option <ObjEntry>>;
-  pub struct ObjEntry { name: Name, obj: Ptr <Obj> }
-
-  pub type Tag = usize; // index in to TypeRecord
-  pub type TagMap = HashMap <Name, Tag>;
-  pub type TypeRecord = Vec <Option <TypeEntry>>;
-  pub struct TypeEntry { name: Name, typ: Ptr <Type> }
+  pub type Tag = usize; // index in to TypeDic
+  pub type TypeDic = Dic <Ptr <Type>>;
 
   pub type ObjStack = Vec <Ptr <Obj>>;
   pub type FrameStack = Vec <Box <Frame>>;
 
-  pub type LocalScope = Vec <ObjMap>; // index from end
+  pub type LocalScope = Vec <ObjDic>; // index from end
 
-  pub type NameVec = Vec <Name>;
-  pub type NameStack = Vec <Name>;
-  pub type StringVec = Vec <String>;
   pub type TagVec = Vec <Tag>;
   pub type JoVec = Vec <Ptr <Jo>>;
   #+end_src
@@ -44,33 +35,21 @@
 
   #+begin_src rust
   pub struct Env {
-      pub obj_record: ObjRecord,
-      pub id_map: IdMap,
-      pub type_record: TypeRecord,
-      pub tag_map: TagMap,
+      pub obj_dic: ObjDic,
+      pub type_dic: TypeDic,
       pub obj_stack: ObjStack,
       pub frame_stack: FrameStack,
   }
 
   pub fn new_env () -> Env {
       let mut env = Env {
-          obj_record: ObjRecord::new (),
-          id_map: IdMap::new (),
-          type_record: make_type_record (),
-          tag_map: TagMap::new (),
+          obj_dic: ObjDic::new (),
+          type_dic: TypeDic::new (),
           obj_stack: ObjStack::new (),
           frame_stack: FrameStack::new (),
       };
-      init_type_record (&mut env);
+      init_type_dic (&mut env);
       env
-  }
-
-  fn make_type_record () -> TypeRecord {
-      let mut type_record = TypeRecord::new ();
-      for _ in 0..64 {
-          type_record.push (None);
-      }
-      type_record
   }
 
   pub fn env_step (env: &mut Env) {
@@ -105,11 +84,10 @@
   #+begin_src rust
   pub trait Obj {
       fn tag (&self) -> Tag;
-
-      fn obj_map (&self) -> ObjMap;
+      fn obj_dic (&self) -> ObjDic;
 
       fn get (&self, name: &Name) -> Option <Ptr <Obj>> {
-          match self.obj_map () .get (name) {
+          match self.obj_dic () .get (name) {
               Some (obj) => Some (obj.clone ()),
               None => None,
           }
@@ -123,11 +101,11 @@
           println! ("{}", self.repr (&env));
       }
 
-      fn eq (&self, env: &Env, obj: Ptr <Obj>) -> bool {
+      fn eq (&self, _env: &Env, _obj: Ptr <Obj>) -> bool {
           false
       }
 
-      fn apply (&self, env: &Env, arity: usize) {
+      fn apply (&self, env: &Env, _arity: usize) {
           eprintln! ("- Obj::apply");
           eprintln! ("  applying non applicable object");
           eprintln! ("  tag : {}", name_of_tag (&env, self.tag ()));
@@ -149,13 +127,7 @@
       name: &Name,
       obj: Ptr <Obj>,
   ) -> Id {
-      let id = env.obj_record.len ();
-      let obj_entry = ObjEntry {
-          name: name.clone (),
-          obj: obj.clone (),
-      };
-      env.obj_record.push (Some (obj_entry));
-      return id;
+      env.obj_dic.ins (name, Some (obj.clone ()))
   }
   #+end_src
 
@@ -182,15 +154,14 @@
 
   #+begin_src rust
   pub struct Type {
-      obj_map: ObjMap,
+      obj_dic: ObjDic,
       tag_of_type: Tag,
       super_tag_vec: TagVec,
   }
 
   impl Obj for Type {
       fn tag (&self) -> Tag { TYPE_TAG }
-
-      fn obj_map (&self) -> ObjMap { self.obj_map.clone () }
+      fn obj_dic (&self) -> ObjDic { self.obj_dic.clone () }
   }
 
   pub fn define_type (
@@ -198,13 +169,7 @@
       name: &Name,
       typ: Ptr <Type>,
   ) -> Tag {
-      let tag = env.type_record.len ();
-      let type_entry = TypeEntry {
-          name: name.clone (),
-          typ: typ.clone (),
-      };
-      env.type_record.push (Some (type_entry));
-      return tag;
+      env.type_dic.ins (name, Some (typ))
   }
   #+end_src
 
@@ -212,50 +177,44 @@
 
   #+begin_src rust
   pub fn name_of_tag (env: &Env, tag: Tag) -> Name {
-      if tag >= env.type_record.len () {
+      if tag >= env.type_dic.len () {
           format! ("#<unknown-tag:{}>", tag.to_string ())
       } else {
-          if let Some (type_entry) = &env.type_record [tag] {
-              type_entry.name.clone ()
-          } else {
-              format! ("#<unknown-tag:{}>", tag.to_string ())
-          }
+          let entry = env.type_dic.idx (tag);
+          entry.name.clone ()
       }
   }
 
-  fn preserve_tag (env: &mut Env, tag: Tag, name_str: &str) {
+  fn preserve_tag (env: &mut Env, tag: Tag, name: &str) {
       let typ = Ptr::new (Type {
-          obj_map: ObjMap::new (),
+          obj_dic: ObjDic::new (),
           tag_of_type: tag,
           super_tag_vec: TagVec::new (),
       });
-      let type_entry = TypeEntry {
-          name: Name::from (name_str),
-          typ,
-      };
-      env.type_record [tag] = Some (type_entry);
+      let index = env.type_dic.ins (name, Some (typ));
+      assert_eq! (tag, index);
   }
 
   pub const CLOSURE_TAG      : Tag = 0;
   pub const TYPE_TAG         : Tag = 1;
   pub const TRUE_TAG         : Tag = 2;
   pub const FALSE_TAG        : Tag = 3;
-  pub const PRIM_TAG         : Tag = 6;
-  pub const NUM_TAG          : Tag = 7;
-  pub const STR_TAG          : Tag = 8;
-  pub const NULL_TAG         : Tag = 9;
-  pub const CONS_TAG         : Tag = 10;
-  pub const VECT_TAG         : Tag = 12;
-  pub const DICT_TAG         : Tag = 13;
-  pub const MODULE_TAG       : Tag = 14;
-  pub const KEYWORD_TAG      : Tag = 15;
-  pub const MACRO_TAG        : Tag = 16;
-  pub const TOP_KEYWORD_TAG  : Tag = 17;
-  pub const SYM_TAG          : Tag = 18;
-  pub const NOTHING_TAG      : Tag = 19;
-  pub const JUST_TAG         : Tag = 20;
+  pub const PRIM_TAG         : Tag = 4;
+  pub const NUM_TAG          : Tag = 5;
+  pub const STR_TAG          : Tag = 6;
+  pub const SYM_TAG          : Tag = 7;
+  pub const NULL_TAG         : Tag = 8;
+  pub const CONS_TAG         : Tag = 9;
+  pub const VECT_TAG         : Tag = 10;
+  pub const DICT_TAG         : Tag = 11;
+  pub const MODULE_TAG       : Tag = 12;
+  pub const KEYWORD_TAG      : Tag = 13;
+  pub const MACRO_TAG        : Tag = 14;
+  pub const TOP_KEYWORD_TAG  : Tag = 15;
+  pub const NOTHING_TAG      : Tag = 16;
+  pub const JUST_TAG         : Tag = 17;
 
-  fn init_type_record (env: &mut Env) {
+  fn init_type_dic (env: &mut Env) {
       preserve_tag (env, CLOSURE_TAG      , "closure-t");
       preserve_tag (env, TYPE_TAG         , "type-t");
       preserve_tag (env, TRUE_TAG         , "true-t");
@@ -263,6 +222,7 @@
       preserve_tag (env, PRIM_TAG         , "prim-t");
       preserve_tag (env, NUM_TAG          , "num-t");
       preserve_tag (env, STR_TAG          , "str-t");
+      preserve_tag (env, SYM_TAG          , "sym-t");
       preserve_tag (env, NULL_TAG         , "null-t");
       preserve_tag (env, CONS_TAG         , "cons-t");
       preserve_tag (env, VECT_TAG         , "vect-t");
@@ -271,7 +231,6 @@
       preserve_tag (env, KEYWORD_TAG      , "keyword-t");
       preserve_tag (env, MACRO_TAG        , "macro-t");
       preserve_tag (env, TOP_KEYWORD_TAG  , "top-keyword-t");
-      preserve_tag (env, SYM_TAG          , "sym-t");
       preserve_tag (env, NOTHING_TAG      , "nothing-t");
       preserve_tag (env, JUST_TAG         , "just-t");
   }
@@ -282,13 +241,12 @@
   #+begin_src rust
   pub struct Data {
       tag: Tag,
-      obj_map: ObjMap,
+      obj_dic: ObjDic,
   }
 
   impl Obj for Data {
       fn tag (&self) -> Tag { self.tag }
-
-      fn obj_map (&self) -> ObjMap { self.obj_map.clone () }
+      fn obj_dic (&self) -> ObjDic { self.obj_dic.clone () }
 
       fn apply (&self, env: &Env, arity: usize) {
 

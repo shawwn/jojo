@@ -1,28 +1,31 @@
 use std::collections::HashMap;
+use std::clone::Clone;
 
+#[derive(Clone)]
 pub struct Entry <T> {
-    name: String,
-    value: Option <T>,
+    pub name: String,
+    pub value: Option <T>,
 }
 
+#[derive(Clone)]
 pub struct Dic <T> {
     index_map: HashMap <String, usize>,
     entry_vector: Vec <Entry <T>>,
 }
 
 impl <T> Dic <T> {
-    fn new () -> Dic <T> {
+    pub fn new () -> Dic <T> {
         Dic {
             index_map: HashMap::new (),
             entry_vector: Vec::new (),
         }
     }
 
-    fn len (&self) -> usize {
+    pub fn len (&self) -> usize {
         self.entry_vector.len ()
     }
 
-    fn lack (&self) -> usize {
+    pub fn lack (&self) -> usize {
         let mut n = 0;
         for entry in &self.entry_vector {
             if let None = &entry.value {
@@ -32,19 +35,19 @@ impl <T> Dic <T> {
         n
     }
 
-    fn nth (&self, index: usize) -> &Entry <T> {
+    pub fn idx (&self, index: usize) -> &Entry <T> {
         &self.entry_vector [index]
     }
 
-    fn set_nth (&mut self, index: usize, value: Option <T>) {
+    pub fn idx_set_value (&mut self, index: usize, value: Option <T>) {
         self.entry_vector [index] .value = value;
     }
 
-    fn has_name (&self, name: &str) -> bool {
+    pub fn has_name (&self, name: &str) -> bool {
         self.index_map.contains_key (name)
     }
 
-    fn ins (&mut self, name: &str, value: Option <T>) -> usize {
+    pub fn ins (&mut self, name: &str, value: Option <T>) -> usize {
         assert! (! self.has_name (name));
         let index = self.len ();
         let entry = Entry { name: name.to_string (), value };
@@ -53,9 +56,9 @@ impl <T> Dic <T> {
         index
     }
 
-    fn set (&mut self, name: &str, value: Option <T>) {
+    pub fn set (&mut self, name: &str, value: Option <T>) {
         if let Some (index) = self.index_map.get (name) {
-            self.set_nth (*index, value);
+            self.idx_set_value (*index, value);
         } else {
             eprintln! ("- Dic::set");
             eprintln! ("  dic does not have name : {}", name);
@@ -63,9 +66,9 @@ impl <T> Dic <T> {
         }
     }
 
-    fn get (&self, name: &str) -> Option <&T> {
+    pub fn get (&self, name: &str) -> Option <&T> {
         if let Some (index) = self.index_map.get (name) {
-            let entry = self.nth (*index);
+            let entry = self.idx (*index);
             if let Some (value) = &entry.value {
                 Some (value)
             } else {
@@ -87,7 +90,7 @@ fn test_dic () {
     assert_eq! (1, dic.len ());
     assert! (dic.has_name ("key1"));
     assert! (! dic.has_name ("non-key"));
-    let entry = dic.nth (0);
+    let entry = dic.idx (0);
     assert_eq! (entry.name, "key1");
     assert_eq! (entry.value, Some (vec! [ 0, 1, 2, 3 ]));
 
@@ -95,7 +98,7 @@ fn test_dic () {
     assert_eq! (1, index);
     assert_eq! (2, dic.len ());
     assert! (dic.has_name ("key2"));
-    let entry = dic.nth (1);
+    let entry = dic.idx (1);
     assert_eq! (entry.name, "key2");
     assert_eq! (entry.value, Some (vec! [ 4, 5, 6, 7 ]));
 
