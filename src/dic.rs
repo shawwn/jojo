@@ -1,18 +1,13 @@
-/// todo-list:
-///   use str as key
-
 use std::collections::HashMap;
 
-pub type Name = String;
-
 pub struct Entry <T> {
-    name: Name,
-    value: T,
+    name: String,
+    value: Option <T>,
 }
 
 pub struct Dic <T> {
-    index_map: HashMap <Name, usize>,
-    entry_vector: Vec <Option <Entry <T>>>,
+    index_map: HashMap <String, usize>,
+    entry_vector: Vec <Entry <T>>,
 }
 
 impl <T> Dic <T> {
@@ -27,42 +22,38 @@ impl <T> Dic <T> {
         self.entry_vector.len ()
     }
 
-    fn nth (&self, index: usize) -> &Option <Entry <T>> {
-        if index < self.len () {
-            &self.entry_vector [index]
-        } else {
-            &None
+    fn lack (&self) -> usize {
+        let mut n = 0;
+        for entry in &self.entry_vector {
+            if let None = &entry.value {
+                n += 1;
+            }
         }
+        n
     }
 
-    fn set_nth (&mut self, index: usize, value: T) {
-        if let Some (entry) = &mut self.entry_vector [index] {
-            entry.value = value;
-        }
+    fn nth (&self, index: usize) -> &Entry <T> {
+        &self.entry_vector [index]
     }
 
-    fn has (&self, name: &Name) -> bool {
+    fn set_nth (&mut self, index: usize, value: Option <T>) {
+        self.entry_vector [index] .value = value;
+    }
+
+    fn has_name (&self, name: &str) -> bool {
         self.index_map.contains_key (name)
     }
 
-    fn ins_none (&mut self, name: &Name) -> usize {
-        assert! (! self.has (name));
+    fn ins (&mut self, name: &str, value: Option <T>) -> usize {
+        assert! (! self.has_name (name));
         let index = self.len ();
-        self.entry_vector.push (None);
-        self.index_map.insert (name.clone (), index);
+        let entry = Entry { name: name.to_string (), value };
+        self.entry_vector.push (entry);
+        self.index_map.insert (name.to_string (), index);
         index
     }
 
-    fn ins (&mut self, name: &Name, value: T) -> usize {
-        assert! (! self.has (name));
-        let index = self.len ();
-        let entry = Entry { name: name.clone (), value };
-        self.entry_vector.push (Some (entry));
-        self.index_map.insert (name.clone (), index);
-        index
-    }
-
-    fn set (&mut self, name: &Name, value: T) {
+    fn set (&mut self, name: &str, value: Option <T>) {
         if let Some (index) = self.index_map.get (name) {
             self.set_nth (*index, value);
         } else {
@@ -72,10 +63,11 @@ impl <T> Dic <T> {
         }
     }
 
-    fn get (&self, name: &Name) -> Option <&T> {
+    fn get (&self, name: &str) -> Option <&T> {
         if let Some (index) = self.index_map.get (name) {
-            if let Some (entry) = &self.entry_vector [*index] {
-                Some (&entry.value)
+            let entry = self.nth (*index);
+            if let Some (value) = &entry.value {
+                Some (value)
             } else {
                 None
             }
@@ -87,20 +79,43 @@ impl <T> Dic <T> {
 
 #[test]
 fn test_dic () {
-    let mut dic: Dic <Vec <String>> = Dic::new ();
+    let mut dic: Dic <Vec <isize>> = Dic::new ();
     assert_eq! (0, dic.len ());
-    let index = dic.ins (&"k1".to_string (),
-                         vec! [
-                             "s1".to_string (),
-                             "s2".to_string (),
-                         ]);
+
+    let index = dic.ins ("key1", Some (vec! [ 0, 1, 2, 3 ]));
+    assert_eq! (0, index);
     assert_eq! (1, dic.len ());
-    assert! (dic.has (&"k1".to_string ()));
-    if let Some (entry) = dic.nth (0) {
-        assert_eq! (entry.name, "k1".to_string ());
-        assert_eq! (entry.value,
-                    vec! [ "s1".to_string (), "s2".to_string () ]);
-    } else {
-        assert! (false);
-    }
+    assert! (dic.has_name ("key1"));
+    assert! (! dic.has_name ("non-key"));
+    let entry = dic.nth (0);
+    assert_eq! (entry.name, "key1");
+    assert_eq! (entry.value, Some (vec! [ 0, 1, 2, 3 ]));
+
+    let index = dic.ins ("key2", Some (vec! [ 4, 5, 6, 7 ]));
+    assert_eq! (1, index);
+    assert_eq! (2, dic.len ());
+    assert! (dic.has_name ("key2"));
+    let entry = dic.nth (1);
+    assert_eq! (entry.name, "key2");
+    assert_eq! (entry.value, Some (vec! [ 4, 5, 6, 7 ]));
+
+    let value = dic.get ("key1");
+    assert_eq! (value, Some (&vec! [ 0, 1, 2, 3 ]));
+
+    let value = dic.get ("key2");
+    assert_eq! (value, Some (&vec! [ 4, 5, 6, 7 ]));
+
+    dic.set ("key1", Some (vec! [ 4, 5, 6, 7 ]));
+    let value = dic.get ("key1");
+    assert_eq! (value, Some (&vec! [ 4, 5, 6, 7 ]));
+
+    assert_eq! (2, dic.len ());
+    assert_eq! (0, dic.lack ());
+
+    dic.set ("key2", None);
+    let value = dic.get ("key2");
+    assert_eq! (value, None);
+
+    assert_eq! (2, dic.len ());
+    assert_eq! (1, dic.lack ());
 }
