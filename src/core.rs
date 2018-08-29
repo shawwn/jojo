@@ -50,14 +50,14 @@
               obj_dic,
               obj_stack_pop_to_vec (env, arity))
       }
-    pub fn local_scope_extend (
-        local_scope: Ptr <LocalScope>,
-        obj_dic: ObjDic,
-    ) -> Ptr <LocalScope> {
-        let mut obj_dic_vec = (*local_scope).clone ();
-        obj_dic_vec.push (obj_dic);
-        Ptr::new (obj_dic_vec)
-    }
+      pub fn local_scope_extend (
+          local_scope: Ptr <LocalScope>,
+          obj_dic: ObjDic,
+      ) -> Ptr <LocalScope> {
+          let mut obj_dic_vec = (*local_scope).clone ();
+          obj_dic_vec.push (obj_dic);
+          Ptr::new (obj_dic_vec)
+      }
       pub fn name_of_tag (
           env: &Env,
           tag: Tag,
@@ -86,25 +86,27 @@
       pub const TYPE_TAG         : Tag = 1;
       pub const TRUE_TAG         : Tag = 2;
       pub const FALSE_TAG        : Tag = 3;
-      pub const PRIM_TAG         : Tag = 4;
-      pub const NUM_TAG          : Tag = 5;
-      pub const STR_TAG          : Tag = 6;
-      pub const SYM_TAG          : Tag = 7;
-      pub const NULL_TAG         : Tag = 8;
-      pub const CONS_TAG         : Tag = 9;
-      pub const VECT_TAG         : Tag = 10;
-      pub const DICT_TAG         : Tag = 11;
-      pub const MODULE_TAG       : Tag = 12;
-      pub const KEYWORD_TAG      : Tag = 13;
-      pub const MACRO_TAG        : Tag = 14;
-      pub const TOP_KEYWORD_TAG  : Tag = 15;
-      pub const NOTHING_TAG      : Tag = 16;
-      pub const JUST_TAG         : Tag = 17;
+      pub const DATA_CONS_TAG    : Tag = 4;
+      pub const PRIM_TAG         : Tag = 5;
+      pub const NUM_TAG          : Tag = 6;
+      pub const STR_TAG          : Tag = 7;
+      pub const SYM_TAG          : Tag = 8;
+      pub const NULL_TAG         : Tag = 9;
+      pub const CONS_TAG         : Tag = 10;
+      pub const VECT_TAG         : Tag = 11;
+      pub const DICT_TAG         : Tag = 12;
+      pub const MODULE_TAG       : Tag = 13;
+      pub const KEYWORD_TAG      : Tag = 14;
+      pub const MACRO_TAG        : Tag = 15;
+      pub const TOP_KEYWORD_TAG  : Tag = 16;
+      pub const NOTHING_TAG      : Tag = 17;
+      pub const JUST_TAG         : Tag = 18;
       fn init_type_dic (env: &mut Env) {
           preserve_tag (env, CLOSURE_TAG      , "closure-t");
           preserve_tag (env, TYPE_TAG         , "type-t");
           preserve_tag (env, TRUE_TAG         , "true-t");
           preserve_tag (env, FALSE_TAG        , "false-t");
+          preserve_tag (env, DATA_CONS_TAG    , "data-cons-t");
           preserve_tag (env, PRIM_TAG         , "prim-t");
           preserve_tag (env, NUM_TAG          , "num-t");
           preserve_tag (env, STR_TAG          , "str-t");
@@ -293,29 +295,44 @@
         fn obj_dic (&self) -> ObjDic { self.obj_dic.clone () }
     }
     pub struct Data {
-        tag: Tag,
+        tag_of_type: Tag,
         obj_dic: ObjDic,
     }
     impl Obj for Data {
-        fn tag (&self) -> Tag { self.tag }
+        fn tag (&self) -> Tag { self.tag_of_type }
+        fn obj_dic (&self) -> ObjDic { self.obj_dic.clone () }
+    }
+    pub struct DataCons {
+        tag_of_type: Tag,
+        obj_dic: ObjDic,
+    }
+    impl Obj for DataCons {
+        fn tag (&self) -> Tag { DATA_CONS_TAG }
         fn obj_dic (&self) -> ObjDic { self.obj_dic.clone () }
 
         fn apply (&self, env: &mut Env, arity: usize) {
             let lack = self.obj_dic.lack ();
             if arity > lack {
-                eprintln! ("- Data::apply");
+                eprintln! ("- DataCons::apply");
                 eprintln! ("  over-arity apply");
                 eprintln! ("  arity > lack");
                 eprintln! ("  arity : {}", arity);
                 eprintln! ("  lack : {}", lack);
                 panic! ("jojo fatal error!");
             }
-            let tag = self.tag;
+            let tag_of_type = self.tag_of_type;
             let obj_dic = obj_dic_pick_up (env, &self.obj_dic, arity);
-            env.obj_stack.push (Ptr::new (Data {
-                tag,
-                obj_dic,
-            }));
+            if arity == lack {
+                env.obj_stack.push (Ptr::new (Data {
+                    tag_of_type,
+                    obj_dic,
+                }));
+            } else {
+                env.obj_stack.push (Ptr::new (DataCons {
+                    tag_of_type,
+                    obj_dic,
+                }));
+            }
         }
     }
     pub struct Closure {
@@ -405,7 +422,10 @@
     #[test]
     fn test_step () {
         let mut env = Env::new ();
-        let id = env.define ("s1", Ptr::new (Str ("bye".to_string ())));
+
+        let id = env.define (
+            "s1", Ptr::new (Str ("bye".to_string ())));
+
         let jo_vec: JoVec = vec! [
             Ptr::new (RefJo {id}),
             Ptr::new (RefJo {id}),
@@ -416,14 +436,21 @@
             jojo: Ptr::new (jo_vec),
             local_scope: Ptr::new (LocalScope::new ()),
         });
+        // frame_from_jo_vec (jo_vec);
         env.frame_stack.push (frame);
 
         env.run ();
         assert_eq! (2, env.obj_stack.len ());
-        assert_eq! (env.obj_stack.pop () .unwrap () .repr (&env),
-                    "#<str-t>");
+        assert_eq! (
+            "#<str-t>",
+            env.obj_stack.pop ()
+                .unwrap ()
+                .repr (&env));
         assert_eq! (1, env.obj_stack.len ());
-        assert_eq! (env.obj_stack.pop () .unwrap () .repr (&env),
-                    "#<str-t>");
+        assert_eq! (
+            "#<str-t>",
+            env.obj_stack.pop ()
+                .unwrap ()
+                .repr (&env));
         assert_eq! (0, env.obj_stack.len ());
     }
