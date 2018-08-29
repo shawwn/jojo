@@ -74,8 +74,7 @@
           tag: Tag,
           name: &str,
       ) {
-
-          let index = env.type_dic.ins (name, None);
+          let index = env.type_dic.ins (name, Some (Type::make (tag)));
           assert_eq! (tag, index);
       }
       pub const CLOSURE_T      : Tag = 0;
@@ -297,6 +296,16 @@
         method_dic: ObjDic,
         tag_of_type: Tag,
         super_tag_vec: TagVec,
+    }
+
+    impl Type {
+       fn make (tag_of_type: Tag) -> Ptr <Type> {
+          Ptr::new (Type {
+             method_dic: ObjDic::new (),
+             tag_of_type,
+             super_tag_vec: TagVec::new (),
+          })
+       }
     }
     impl Obj for Type {
         fn tag (&self) -> Tag { TYPE_T }
