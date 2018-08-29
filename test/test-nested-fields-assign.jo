@@ -1,8 +1,8 @@
 (= zero-t (data))
-(= zero.one-t (data))
-(= zero.one.two-t (data))
-(= zero.one.two.three-t (data))
-(= zero.one.two.three.four-t (data))
+(= zero-t.one-t (data))
+(= zero-t.one-t.two-t (data))
+(= zero-t.one-t.two-t.three-t (data))
+(= zero-t.one-t.two-t.three-t.four-t (data))
 
 (= zero zero-c)
 (= one zero.one-c)

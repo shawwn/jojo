@@ -74,6 +74,7 @@
           tag: Tag,
           name: &str,
       ) {
+
           let index = env.type_dic.ins (name, None);
           assert_eq! (tag, index);
       }
@@ -119,12 +120,17 @@
       }
     pub trait Obj {
         fn tag (&self) -> Tag;
-        fn obj_dic (&self) -> ObjDic;
+        fn obj_dic (&self) -> Option <&ObjDic> { None }
 
-        fn get (&self, name: &str) -> Option <Ptr <Obj>> {
-            match self.obj_dic () .get (name) {
-                Some (obj) => Some (obj.clone ()),
-                None => None,
+        fn dot (&self, name: &str) -> Option <Ptr <Obj>> {
+            if let Some (obj_dic) = self.obj_dic () {
+                if let Some (obj) = obj_dic.get (name) {
+                    Some (obj.clone ())
+                } else {
+                    None
+                }
+            } else {
+                None
             }
         }
 
@@ -288,40 +294,40 @@
         }
     }
     pub struct Type {
-        obj_dic: ObjDic,
+        method_dic: ObjDic,
         tag_of_type: Tag,
         super_tag_vec: TagVec,
     }
     impl Obj for Type {
         fn tag (&self) -> Tag { TYPE_T }
-        fn obj_dic (&self) -> ObjDic { self.obj_dic.clone () }
+        fn obj_dic (&self) -> Option <&ObjDic> { Some (&self.method_dic) }
     }
     pub struct Data {
         tag_of_type: Tag,
-        obj_dic: ObjDic,
+        field_dic: ObjDic,
     }
     impl Data {
         fn unit (tag: Tag) -> Ptr <Data> {
             Ptr::new (Data {
                 tag_of_type: tag,
-                obj_dic: ObjDic::new (),
+                field_dic: ObjDic::new (),
             })
         }
     }
     impl Obj for Data {
         fn tag (&self) -> Tag { self.tag_of_type }
-        fn obj_dic (&self) -> ObjDic { self.obj_dic.clone () }
+        fn obj_dic (&self) -> Option <&ObjDic> { Some (&self.field_dic) }
     }
     pub struct DataCons {
         tag_of_type: Tag,
-        obj_dic: ObjDic,
+        field_dic: ObjDic,
     }
     impl Obj for DataCons {
         fn tag (&self) -> Tag { DATA_CONS_T }
-        fn obj_dic (&self) -> ObjDic { self.obj_dic.clone () }
+        fn obj_dic (&self) -> Option <&ObjDic> { Some (&self.field_dic) }
 
         fn apply (&self, env: &mut Env, arity: usize) {
-            let lack = self.obj_dic.lack ();
+            let lack = self.field_dic.lack ();
             if arity > lack {
                 eprintln! ("- DataCons::apply");
                 eprintln! ("  over-arity apply");
@@ -331,31 +337,32 @@
                 panic! ("jojo fatal error!");
             }
             let tag_of_type = self.tag_of_type;
-            let obj_dic = obj_dic_pick_up (env, &self.obj_dic, arity);
+            let field_dic = obj_dic_pick_up (
+                env, &self.field_dic, arity);
             if arity == lack {
                 env.obj_stack.push (Ptr::new (Data {
                     tag_of_type,
-                    obj_dic,
+                    field_dic,
                 }));
             } else {
                 env.obj_stack.push (Ptr::new (DataCons {
                     tag_of_type,
-                    obj_dic,
+                    field_dic,
                 }));
             }
         }
     }
     pub struct Closure {
-        obj_dic: ObjDic,
+        arg_dic: ObjDic,
         jojo: Ptr <JoVec>,
         local_scope: Ptr <LocalScope>,
     }
     impl Obj for Closure {
         fn tag (&self) -> Tag { CLOSURE_T }
-        fn obj_dic (&self) -> ObjDic { self.obj_dic.clone () }
+        fn obj_dic (&self) -> Option <&ObjDic> { Some (&self.arg_dic) }
 
         fn apply (&self, env: &mut Env, arity: usize) {
-            let lack = self.obj_dic.lack ();
+            let lack = self.arg_dic.lack ();
             if arity > lack {
                 eprintln! ("- Closure::apply");
                 eprintln! ("  over-arity apply");
@@ -365,35 +372,34 @@
                 panic! ("jojo fatal error!");
             }
             let jojo = self.jojo.clone ();
-            let obj_dic = obj_dic_pick_up (env, &self.obj_dic, arity);
+            let arg_dic = obj_dic_pick_up (env, &self.arg_dic, arity);
             let local_scope = self.local_scope.clone ();
             if arity == lack {
                 env.frame_stack.push (Box::new (Frame {
                     index: 0,
                     jojo,
                     local_scope: local_scope_extend (
-                        local_scope, obj_dic),
+                        local_scope, arg_dic),
                 }));
             } else {
                 env.obj_stack.push (Ptr::new (Closure {
-                    obj_dic,
+                    arg_dic,
                     jojo,
                     local_scope,
                 }));
             }
         }
     }
-    pub type PrimFn = fn (env: &mut Env, obj_dic: &ObjDic);
+    pub type PrimFn = fn (env: &mut Env, arg_dic: &ObjDic);
     pub struct Prim {
-        obj_dic: ObjDic,
+        arg_dic: ObjDic,
         fun: PrimFn,
     }
     impl Obj for Prim {
         fn tag (&self) -> Tag { PRIM_T }
-        fn obj_dic (&self) -> ObjDic { self.obj_dic.clone () }
 
         fn apply (&self, env: &mut Env, arity: usize) {
-            let lack = self.obj_dic.lack ();
+            let lack = self.arg_dic.lack ();
             if arity > lack {
                 eprintln! ("- Prim::apply");
                 eprintln! ("  over-arity apply");
@@ -403,12 +409,12 @@
                 panic! ("jojo fatal error!");
             }
             let fun = self.fun;
-            let obj_dic = obj_dic_pick_up (env, &self.obj_dic, arity);
+            let arg_dic = obj_dic_pick_up (env, &self.arg_dic, arity);
             if arity == lack {
-                fun (env, &obj_dic);
+                fun (env, &arg_dic);
             } else {
                 env.obj_stack.push (Ptr::new (Prim {
-                    obj_dic,
+                    arg_dic,
                     fun,
                 }));
             }
@@ -431,17 +437,14 @@
     pub struct Str (pub String);
     impl Obj for Str {
         fn tag (&self) -> Tag { STR_T }
-        fn obj_dic (&self) -> ObjDic { ObjDic::new () }
     }
     pub struct Sym (pub String);
     impl Obj for Sym {
         fn tag (&self) -> Tag { SYM_T }
-        fn obj_dic (&self) -> ObjDic { ObjDic::new () }
     }
     pub struct Num (pub f64);
     impl Obj for Num {
         fn tag (&self) -> Tag { NUM_T }
-        fn obj_dic (&self) -> ObjDic { ObjDic::new () }
     }
     pub fn null_c () -> Ptr <Data> {
        Data::unit (NULL_T)
