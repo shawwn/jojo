@@ -1,6 +1,6 @@
 #+property: tangle core.rs
 #+title: core
-- DataCons::make
+
 * prolog
 
 *** use
@@ -485,6 +485,7 @@
     }
 
     impl DataCons {
+        // [TODO]
         // DataCons::make (CONS_T, ["car", "cdr"])
         //     .set ("car", car)
         //     .set ("cdr", cdr)
@@ -724,13 +725,41 @@
     }
     #+end_src
 
-*** [todo] car
+*** car
 
-*** [todo] cdr
+    #+begin_src rust
+    fn car (cons: Ptr <Data>) -> Ptr <Obj> {
+        assert_eq! (CONS_T, cons.tag ());
+        cons.get ("car") .unwrap ()
+    }
+    #+end_src
 
-*** [todo] list_p
+*** cdr
 
-*** [todo] unit_list
+    #+begin_src rust
+    fn cdr (cons: Ptr <Data>) -> Ptr <Obj> {
+        assert_eq! (CONS_T, cons.tag ());
+        cons.get ("cdr") .unwrap ()
+    }
+    #+end_src
+
+*** list_p
+
+    #+begin_src rust
+    fn list_p (x: Ptr <Obj>) -> bool {
+        let tag = x.tag ();
+        (NULL_T == tag ||
+         CONS_T == tag)
+    }
+    #+end_src
+
+*** unit_list
+
+    #+begin_src rust
+    fn unit_list (obj: Ptr <Obj>) -> Ptr <Obj> {
+        cons_c (obj, null_c ())
+    }
+    #+end_src
 
 * [todo] vect
 

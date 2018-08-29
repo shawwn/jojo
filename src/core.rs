@@ -345,7 +345,11 @@
     }
 
     impl DataCons {
-
+        // [TODO]
+        // DataCons::make (CONS_T, ["car", "cdr"])
+        //     .set ("car", car)
+        //     .set ("cdr", cdr)
+        //     .to_data ()
     }
     impl Obj for DataCons {
         fn tag (&self) -> Tag { DATA_CONS_T }
@@ -479,10 +483,22 @@
             ("car", car),
             ("cdr", cdr),
         ])
-        // DataCons::make (CONS_T, ["car", "cdr"])
-        //     .set ("car", car)
-        //     .set ("cdr", cdr)
-        //     .to_data ()
+    }
+    fn car (cons: Ptr <Data>) -> Ptr <Obj> {
+        assert_eq! (CONS_T, cons.tag ());
+        cons.get ("car") .unwrap ()
+    }
+    fn cdr (cons: Ptr <Data>) -> Ptr <Obj> {
+        assert_eq! (CONS_T, cons.tag ());
+        cons.get ("cdr") .unwrap ()
+    }
+    fn list_p (x: Ptr <Obj>) -> bool {
+        let tag = x.tag ();
+        (NULL_T == tag ||
+         CONS_T == tag)
+    }
+    fn unit_list (obj: Ptr <Obj>) -> Ptr <Obj> {
+        cons_c (obj, null_c ())
     }
     #[test]
     fn test_step () {

@@ -1,6 +1,6 @@
 #+property: tangle jojo.cpp
 #+title: jojo
-- all eq no `env_t &env`
+
 * prolog
 
 *** include
@@ -89,7 +89,7 @@
         virtual ~obj_t ();
         virtual string repr (env_t &env);
         virtual void print (env_t &env);
-        virtual bool eq (env_t &env, shared_ptr <obj_t> obj);
+        virtual bool eq (shared_ptr <obj_t> obj);
         virtual void apply (env_t &env, size_t arity);
         virtual void apply_to_arg_dict (env_t &env);
     };
@@ -268,12 +268,11 @@
       #+begin_src cpp
       bool
       bind_eq (
-          env_t &env,
           bind_t &lhs,
           bind_t &rhs)
       {
           if (lhs.first != rhs.first) return false;
-          return lhs.second->eq (env, rhs.second);
+          return lhs.second->eq (rhs.second);
       }
       #+end_src
 
@@ -432,7 +431,6 @@
       #+begin_src cpp
       bool
       bind_vector_eq (
-          env_t &env,
           bind_vector_t &lhs,
           bind_vector_t &rhs)
       {
@@ -440,7 +438,7 @@
           auto size = lhs.size ();
           size_t index = 0;
           while (index < size) {
-              if (! bind_eq (env, lhs [index], rhs [index]))
+              if (! bind_eq (lhs [index], rhs [index]))
                   return false;
               index++;
           }
@@ -476,7 +474,6 @@
       #+begin_src cpp
       bool
       local_scope_eq (
-          env_t &env,
           local_scope_t &lhs,
           local_scope_t &rhs)
       {
@@ -484,7 +481,7 @@
           auto size = lhs.size ();
           size_t index = 0;
           while (index < size) {
-              if (! bind_vector_eq (env, lhs [index], rhs [index]))
+              if (! bind_vector_eq (lhs [index], rhs [index]))
                   return false;
               index++;
           }
@@ -537,14 +534,14 @@
 
       #+begin_src cpp
       bool
-      obj_map_eq (env_t &env, obj_map_t &lhs, obj_map_t &rhs)
+      obj_map_eq (obj_map_t &lhs, obj_map_t &rhs)
       {
           if (lhs.size () != rhs.size ()) return false;
           for (auto &kv: lhs) {
               auto name = kv.first;
               auto it = rhs.find (name);
               if (it == rhs.end ()) return false;
-              if (! kv.second->eq (env, it->second)) return false;
+              if (! kv.second->eq (it->second)) return false;
           }
           return true;
       }
@@ -824,7 +821,7 @@
       assert_pop_eq (env_t &env, shared_ptr <obj_t> obj)
       {
           auto that = env.obj_stack.top ();
-          assert (obj->eq (env, that));
+          assert (obj->eq (that));
           env.obj_stack.pop ();
       }
       #+end_src
@@ -836,7 +833,7 @@
       assert_tos_eq (env_t &env, shared_ptr <obj_t> obj)
       {
           auto that = env.obj_stack.top ();
-          assert (obj->eq (env, that));
+          assert (obj->eq (that));
       }
       #+end_src
 
@@ -902,7 +899,7 @@
 
     #+begin_src cpp
     bool
-    obj_t::eq (env_t &env, shared_ptr <obj_t> obj)
+    obj_t::eq (shared_ptr <obj_t> obj)
     {
         if (this->tag != obj->tag)
             return false;
@@ -966,11 +963,10 @@
     #+begin_src cpp
     bool
     obj_eq (
-        env_t &env,
         shared_ptr <obj_t> &lhs,
         shared_ptr <obj_t> &rhs)
     {
-        return lhs->eq (env, rhs);
+        return lhs->eq (rhs);
     }
     #+end_src
 
@@ -1542,7 +1538,7 @@
                    shared_ptr <jojo_t> jojo,
                    bind_vector_t bind_vector,
                    local_scope_t local_scope);
-        bool eq (env_t &env, shared_ptr <obj_t> obj);
+        bool eq (shared_ptr <obj_t> obj);
         void apply (env_t &env, size_t arity);
         void apply_to_arg_dict (env_t &env);
         string repr (env_t &env);
@@ -1629,21 +1625,19 @@
 
     #+begin_src cpp
     bool
-    closure_o::eq (env_t &env, shared_ptr <obj_t> obj)
+    closure_o::eq (shared_ptr <obj_t> obj)
     {
         // raw pointers must be eq first
         if (this != obj.get ()) return false;
         auto that = static_pointer_cast <closure_o> (obj);
         // then scopes
-        if (local_scope_eq
-            (env,
-             this->local_scope,
-             that->local_scope)) return false;
+        if (local_scope_eq (
+                this->local_scope,
+                that->local_scope)) return false;
         // then bindings
-        if (bind_vector_eq
-            (env,
-             this->bind_vector,
-             that->bind_vector)) return false;
+        if (bind_vector_eq (
+                this->bind_vector,
+                that->bind_vector)) return false;
         else return true;
     }
     #+end_src
@@ -1692,7 +1686,7 @@
             tag_t tag_of_type,
             tag_vector_t super_tag_vector,
             obj_map_t obj_map);
-        bool eq (env_t &env, shared_ptr <obj_t> obj);
+        bool eq (shared_ptr <obj_t> obj);
         string repr (env_t &env);
     };
     #+end_src
@@ -1752,7 +1746,7 @@
 
     #+begin_src cpp
     bool
-    type_o::eq (env_t &env, shared_ptr <obj_t> obj)
+    type_o::eq (shared_ptr <obj_t> obj)
     {
         if (this->tag != obj->tag) return false;
         auto that = as_type (obj);
@@ -1878,7 +1872,7 @@
             obj_map_t obj_map);
         void apply (env_t &env, size_t arity);
         void apply_to_arg_dict (env_t &env);
-        bool eq (env_t &env, shared_ptr <obj_t> obj);
+        bool eq (shared_ptr <obj_t> obj);
         string repr (env_t &env);
     };
     #+end_src
@@ -1918,11 +1912,11 @@
 
     #+begin_src cpp
     bool
-    data_o::eq (env_t &env, shared_ptr <obj_t> obj)
+    data_o::eq (shared_ptr <obj_t> obj)
     {
         if (this->tag != obj->tag) return false;
         auto that = static_pointer_cast <data_o> (obj);
-        return obj_map_eq (env, this->obj_map, that->obj_map);
+        return obj_map_eq (this->obj_map, that->obj_map);
     }
     #+end_src
 
@@ -2108,7 +2102,7 @@
             name_vector_t name_vector,
             prim_fn fn,
             obj_map_t obj_map);
-        bool eq (env_t &env, shared_ptr <obj_t> obj);
+        bool eq (shared_ptr <obj_t> obj);
         void apply (env_t &env, size_t arity);
         void apply_to_arg_dict (env_t &env);
         string repr (env_t &env);
@@ -2179,12 +2173,12 @@
 *** prim_o::eq
 
     #+begin_src cpp
-    bool prim_o::eq (env_t &env, shared_ptr <obj_t> obj)
+    bool prim_o::eq (shared_ptr <obj_t> obj)
     {
         if (this->tag != obj->tag) return false;
         auto that = static_pointer_cast <prim_o> (obj);
         if (this != obj.get ()) return false;
-        return obj_map_eq (env, this->obj_map, that->obj_map);
+        return obj_map_eq (this->obj_map, that->obj_map);
     }
     #+end_src
 
@@ -2280,7 +2274,7 @@
     {
         num_t num;
         num_o (num_t num);
-        bool eq (env_t &env, shared_ptr <obj_t> obj);
+        bool eq (shared_ptr <obj_t> obj);
         string repr (env_t &env);
     };
     #+end_src
@@ -2335,7 +2329,7 @@
 
     #+begin_src cpp
     bool
-    num_o::eq (env_t &env, shared_ptr <obj_t> obj)
+    num_o::eq (shared_ptr <obj_t> obj)
     {
         if (this->tag != obj->tag) return false;
         auto that = as_num (obj);
@@ -2362,7 +2356,7 @@
     {
         string str;
         str_o (string str);
-        bool eq (env_t &env, shared_ptr <obj_t> obj);
+        bool eq (shared_ptr <obj_t> obj);
         string repr (env_t &env);
         void print (env_t &env);
     };
@@ -2423,7 +2417,7 @@
 
     #+begin_src cpp
     bool
-    str_o::eq (env_t &env, shared_ptr <obj_t> obj)
+    str_o::eq (shared_ptr <obj_t> obj)
     {
         if (this->tag != obj->tag) return false;
         auto that = as_str (obj);
@@ -2543,7 +2537,7 @@
     {
         symbol sym;
         sym_o (symbol sym);
-        bool eq (env_t &env, shared_ptr <obj_t> obj);
+        bool eq (shared_ptr <obj_t> obj);
         symbol repr (env_t &env);
         void print (env_t &env);
     };
@@ -2604,7 +2598,7 @@
 
     #+begin_src cpp
     bool
-    sym_o::eq (env_t &env, shared_ptr <obj_t> obj)
+    sym_o::eq (shared_ptr <obj_t> obj)
     {
         if (this->tag != obj->tag) return false;
         auto that = as_sym (obj);
@@ -2870,7 +2864,7 @@
 
     #+begin_src cpp
     shared_ptr <obj_t>
-    unit_list (env_t &env, shared_ptr <obj_t> obj)
+    unit_list (shared_ptr <obj_t> obj)
     {
         return cons_c (obj, null_c ());
     }
@@ -2885,7 +2879,7 @@
     {
         obj_vector_t obj_vector;
         vect_o (obj_vector_t obj_vector);
-        bool eq (env_t &env, shared_ptr <obj_t> obj);
+        bool eq (shared_ptr <obj_t> obj);
         string repr (env_t &env);
     };
     #+end_src
@@ -2926,7 +2920,6 @@
     #+begin_src cpp
     bool
     vect_eq (
-        env_t &env,
         obj_vector_t &lhs,
         obj_vector_t &rhs)
     {
@@ -2934,7 +2927,7 @@
         auto size = lhs.size ();
         size_t index = 0;
         while (index < size) {
-            if (! obj_eq (env, lhs [index], rhs [index]))
+            if (! obj_eq (lhs [index], rhs [index]))
                 return false;
             index++;
         }
@@ -2946,11 +2939,11 @@
 
     #+begin_src cpp
     bool
-    vect_o::eq (env_t &env, shared_ptr <obj_t> obj)
+    vect_o::eq (shared_ptr <obj_t> obj)
     {
         if (this->tag != obj->tag) return false;
         auto that = as_vect (obj);
-        return vect_eq (env, this->obj_vector, that->obj_vector);
+        return vect_eq (this->obj_vector, that->obj_vector);
     }
     #+end_src
 
@@ -3224,7 +3217,7 @@
     struct dict_o: obj_t
     {
         dict_o (obj_map_t obj_map);
-        bool eq (env_t &env, shared_ptr <obj_t> obj);
+        bool eq (shared_ptr <obj_t> obj);
         string repr (env_t &env);
     };
     #+end_src
@@ -3264,11 +3257,11 @@
 
     #+begin_src cpp
     bool
-    dict_o::eq (env_t &env, shared_ptr <obj_t> obj)
+    dict_o::eq (shared_ptr <obj_t> obj)
     {
         if (this->tag != obj->tag) return false;
         auto that = as_dict (obj);
-        return obj_map_eq (env, this->obj_map, that->obj_map);
+        return obj_map_eq (this->obj_map, that->obj_map);
     }
     #+end_src
 
@@ -3323,7 +3316,7 @@
         for (auto &kv: dict->obj_map) {
             auto sym = make_sym (kv.first);
             auto obj = kv.second;
-            auto pair = cons_c (sym, unit_list (env, obj));
+            auto pair = cons_c (sym, unit_list (obj));
             result = cons_c (pair, result);
         }
         return result;
@@ -3341,7 +3334,7 @@
             auto sym = make_sym (kv.first);
             auto key = cons_c (
                 make_sym ("quote"),
-                unit_list (env, sym));
+                unit_list (sym));
             auto obj = kv.second;
             result = cons_c (obj, result);
             result = cons_c (key, result);
@@ -3811,7 +3804,7 @@
             return cons_c (
                 head, word_list_head (env, cdr (word_list)));
         else
-            return unit_list (env, head);
+            return unit_list (head);
     }
     #+end_src
 
@@ -3892,7 +3885,7 @@
         auto word = car_rest->str;
         if (null_p (cdr_rest)) {
             assert (word == ket);
-            return unit_list (env, head);
+            return unit_list (head);
         }
         else {
             return cons_c (
@@ -3975,7 +3968,7 @@
         shared_ptr <obj_t> last_sexp)
     {
         if (null_p (sexp_list)) {
-            return unit_list (env, last_sexp);
+            return unit_list (last_sexp);
         }
         else {
             auto head = car (sexp_list);
@@ -3985,7 +3978,7 @@
                 auto new_last_sexp = cons_c (
                     head, cons_c (
                         last_sexp,
-                        unit_list (env, next)));
+                        unit_list (next)));
                 return cons_c (
                     new_last_sexp,
                     sexp_list_prefix_assign (
@@ -4082,16 +4075,16 @@
                     env, word_list_drop_ket (env, rest, "}")));
         else if (word == "'")
             return cons_c (make_sym ("quote"),
-                           unit_list (env, parse_sexp (env, rest)));
+                           unit_list (parse_sexp (env, rest)));
         else if (word == "`")
             return cons_c (make_sym ("quasiquote"),
-                           unit_list (env, parse_sexp (env, rest)));
+                           unit_list (parse_sexp (env, rest)));
         else if (word == "~")
             return cons_c (make_sym ("unquote"),
-                           unit_list (env, parse_sexp (env, rest)));
+                           unit_list (parse_sexp (env, rest)));
         else if (word == "~@")
             return cons_c (make_sym ("unquote-splicing"),
-                           unit_list (env, parse_sexp (env, rest)));
+                           unit_list (parse_sexp (env, rest)));
         else if (num_string_p (word))
             return make_num (s2n (word));
         else if (string_string_p (word))
@@ -4265,7 +4258,7 @@
     {
         env_t module_env;
         module_o (env_t module_env);
-        bool eq (env_t &env, shared_ptr <obj_t> obj);
+        bool eq (shared_ptr <obj_t> obj);
         string repr (env_t &env);
     };
     #+end_src
@@ -4301,7 +4294,7 @@
 
     #+begin_src cpp
     bool
-    module_o::eq (env_t &env, shared_ptr <obj_t> obj)
+    module_o::eq (shared_ptr <obj_t> obj)
     {
         if (this->tag != obj->tag) return false;
         auto that = static_pointer_cast <module_o> (obj);
@@ -4942,7 +4935,7 @@
         {
             keyword_fn fn;
             keyword_o (keyword_fn fn);
-            bool eq (env_t &env, shared_ptr <obj_t> obj);
+            bool eq (shared_ptr <obj_t> obj);
         };
         #+end_src
 
@@ -4961,7 +4954,7 @@
 
         #+begin_src cpp
         bool
-        keyword_o::eq (env_t &env, shared_ptr <obj_t> obj)
+        keyword_o::eq (shared_ptr <obj_t> obj)
         {
             if (this->tag != obj->tag) return false;
             return this != obj.get ();
@@ -5068,7 +5061,7 @@
         {
             shared_ptr <obj_t> obj;
             macro_o (shared_ptr <obj_t> obj);
-            bool eq (env_t &env, shared_ptr <obj_t> obj);
+            bool eq (shared_ptr <obj_t> obj);
         };
         #+end_src
 
@@ -5118,11 +5111,11 @@
 
         #+begin_src cpp
         bool
-        macro_o::eq (env_t &env, shared_ptr <obj_t> obj)
+        macro_o::eq (shared_ptr <obj_t> obj)
         {
             if (this->tag != obj->tag) return false;
             auto that = as_macro (obj);
-            return obj_eq (env, this->obj, that->obj);
+            return obj_eq (this->obj, that->obj);
         }
         #+end_src
 
@@ -5593,7 +5586,7 @@
       {
           top_keyword_fn fn;
           top_keyword_o (top_keyword_fn fn);
-          bool eq (env_t &env, shared_ptr <obj_t> obj);
+          bool eq (shared_ptr <obj_t> obj);
       };
       #+end_src
 
@@ -5612,7 +5605,7 @@
 
       #+begin_src cpp
       bool
-      top_keyword_o::eq (env_t &env, shared_ptr <obj_t> obj)
+      top_keyword_o::eq (shared_ptr <obj_t> obj)
       {
           if (this->tag != obj->tag) return false;
           return this != obj.get ();
@@ -6076,7 +6069,7 @@
           lambda_body = cons_c (
               make_sym ("lambda"),
               lambda_body);
-          lambda_body = unit_list (env, lambda_body);
+          lambda_body = unit_list (lambda_body);
           return cons_c (name, lambda_body);
       }
       #+end_src
@@ -6123,7 +6116,7 @@
           auto this_str = make_sym ("this");
           obj_vector_t obj_vector = { this_str };
           auto vect = make_vect (obj_vector);
-          auto lambda_body = unit_list (env, sexp);
+          auto lambda_body = unit_list (sexp);
           lambda_body = cons_c (vect, lambda_body);
           lambda_body = cons_c (make_sym ("lambda"), lambda_body);
           return lambda_body;
@@ -6227,10 +6220,10 @@
                   cons_c (
                       make_vect (obj_vector),
                       rest));
-              return unit_list (env, let_sexp);
+              return unit_list (let_sexp);
           }
           else {
-              auto drop = unit_list (env, make_sym ("drop"));
+              auto drop = unit_list (make_sym ("drop"));
               body = do_body_trans (env, rest);
               body = cons_c (drop, body);
               body = cons_c (sexp, body);
@@ -6385,10 +6378,10 @@
           for (auto binding: binding_vect->obj_vector) {
               auto name = car (binding);
               auto obj = car (cdr (binding));
-              rest = unit_list (env, rest);
+              rest = unit_list (rest);
               rest = cons_c (unit_vect (env, name), rest);
               rest = cons_c (make_sym ("lambda"), rest);
-              rest = cons_c (rest, unit_list (env, obj));
+              rest = cons_c (rest, unit_list (obj));
           }
           env.obj_stack.push (rest);
       }
@@ -7089,24 +7082,24 @@
           else if (sym_p (sexp)) {
               return cons_c (
                   make_sym ("quote"),
-                  unit_list (env, sexp));
+                  unit_list (sexp));
           }
           else if (null_p (sexp)) {
               return cons_c (
                   make_sym ("quote"),
-                  unit_list (env, sexp));
+                  unit_list (sexp));
           }
           else if (vect_p (sexp)) {
               auto l = vect_to_list (env, as_vect (sexp));
               return cons_c (
                   make_sym ("list-to-vect"),
-                  unit_list (env, sexp_list_quote_and_unquote (env, l)));
+                  unit_list (sexp_list_quote_and_unquote (env, l)));
           }
           else if (dict_p (sexp)) {
               auto l = dict_to_list (env, as_dict (sexp));
               return cons_c (
                   make_sym ("list-to-dict"),
-                  unit_list (env, sexp_list_quote_and_unquote (env, l)));
+                  unit_list (sexp_list_quote_and_unquote (env, l)));
           }
           else {
               assert (cons_p (sexp));
@@ -7137,7 +7130,7 @@
           shared_ptr <obj_t> sexp_list)
       {
           if (null_p (sexp_list)) {
-              return unit_list (env, make_sym ("*"));
+              return unit_list (make_sym ("*"));
           }
           else {
               assert (cons_p (sexp_list));
@@ -7154,11 +7147,11 @@
               else {
                   sexp = cons_c (
                       make_sym ("*"),
-                      unit_list (env, sexp_quote_and_unquote (env, sexp)));
+                      unit_list (sexp_quote_and_unquote (env, sexp)));
               }
               auto result = sexp_list_quote_and_unquote (
                   env, cdr (sexp_list));
-              result = unit_list (env, result);
+              result = unit_list (result);
               result = cons_c (sexp, result);
               result = cons_c (make_sym ("list-append"), result);
               return result;
@@ -7202,8 +7195,8 @@
               auto rest = cdr (sexp_list);
               head = cons_c (
                   make_sym ("not"),
-                  unit_list (env, head));
-              auto result = unit_list (env, sexp_list_and (env, rest));
+                  unit_list (head));
+              auto result = unit_list (sexp_list_and (env, rest));
               result = cons_c (
                   make_sym ("false-c"),
                   result);
@@ -7246,7 +7239,7 @@
           else {
               auto head = car (sexp_list);
               auto rest = cdr (sexp_list);
-              auto result = unit_list (env, sexp_list_or (env, rest));
+              auto result = unit_list (sexp_list_or (env, rest));
               result = cons_c (
                   make_sym ("true-c"),
                   result);
@@ -7303,7 +7296,7 @@
               }
           }
           else {
-              auto result = unit_list (env, vect_list_cond (env, rest));
+              auto result = unit_list (vect_list_cond (env, rest));
               result = cons_c (answer, result);
               result = cons_c (question, result);
               result = cons_c (make_sym ("if"), result);
@@ -8436,7 +8429,7 @@
                 env.obj_stack.push (
                     make_bool (
                         env,
-                        obj_eq (env, lhs, rhs)));
+                        obj_eq (lhs, rhs)));
             });
         define_prim (
             env, { "env-report" },
