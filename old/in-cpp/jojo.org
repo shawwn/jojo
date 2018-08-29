@@ -1,6 +1,15 @@
 #+property: tangle jojo.cpp
 #+title: jojo
 
+* [note]
+
+*** improving point
+
+    - no data_cons -- null fields
+    - non-full type name in method definition -- misleading
+    - `obj.method` should trans to  `(.method obj)`
+    - no class method
+
 * prolog
 
 *** include
@@ -5950,7 +5959,7 @@
     }
     #+end_src
 
-* (=)
+* assign
 
 *** prefix_of_string
 

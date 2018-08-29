@@ -761,9 +761,9 @@
     }
     #+end_src
 
-* [todo] vect
-
 * [todo] maybe
+
+* [todo] vect
 
 * [todo] dict
 
@@ -776,6 +776,12 @@
 * [todo] compile
 
 * [todo] run
+
+* [todo] assign
+
+* [todo] syntax
+
+* [todo] expose
 
 * test
 
