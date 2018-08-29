@@ -2067,15 +2067,13 @@
 *** make_bool
 
     #+begin_src cpp
-    shared_ptr <obj_t>
-    make_bool (env_t &env, bool b)
+    shared_ptr <data_o>
+    make_bool (bool b)
     {
-        if (b) {
+        if (b)
             return true_c ();
-        }
-        else {
+        else
             return false_c ();
-        }
     }
     #+end_src
 
@@ -7360,7 +7358,7 @@
             {
                 auto obj = obj_map ["bool"];
                 assert (bool_p (obj));
-                env.obj_stack.push (make_bool (env, false_p (obj)));
+                env.obj_stack.push (make_bool (false_p (obj)));
             });
     }
     #+end_src
@@ -7379,7 +7377,7 @@
               {
                   auto x = as_num (obj_map ["x"]);
                   auto y = as_num (obj_map ["y"]);
-                  env.obj_stack.push (make_bool (env, x->num < y->num));
+                  env.obj_stack.push (make_bool (x->num < y->num));
               });
           define_prim (
               env, { "gt", "x", "y" },
@@ -7387,7 +7385,7 @@
               {
                   auto x = as_num (obj_map ["x"]);
                   auto y = as_num (obj_map ["y"]);
-                  env.obj_stack.push (make_bool (env, x->num > y->num));
+                  env.obj_stack.push (make_bool (x->num > y->num));
               });
           define_prim (
               env, { "lteq", "x", "y" },
@@ -7395,7 +7393,7 @@
               {
                   auto x = as_num (obj_map ["x"]);
                   auto y = as_num (obj_map ["y"]);
-                  env.obj_stack.push (make_bool (env, x->num <= y->num));
+                  env.obj_stack.push (make_bool (x->num <= y->num));
               });
           define_prim (
               env, { "gteq", "x", "y" },
@@ -7403,21 +7401,21 @@
               {
                   auto x = as_num (obj_map ["x"]);
                   auto y = as_num (obj_map ["y"]);
-                  env.obj_stack.push (make_bool (env, x->num >= y->num));
+                  env.obj_stack.push (make_bool (x->num >= y->num));
               });
           define_prim (
               env, { "even-p", "x" },
               [] (env_t &env, obj_map_t &obj_map)
               {
                   auto x = as_num (obj_map ["x"]);
-                  env.obj_stack.push (make_bool (env, 0 == fmod (x->num, 2)));
+                  env.obj_stack.push (make_bool (0 == fmod (x->num, 2)));
               });
           define_prim (
               env, { "odd-p", "x" },
               [] (env_t &env, obj_map_t &obj_map)
               {
                   auto x = as_num (obj_map ["x"]);
-                  env.obj_stack.push (make_bool (env, 1 == fmod (x->num, 2)));
+                  env.obj_stack.push (make_bool (1 == fmod (x->num, 2)));
               });
       }
       #+end_src

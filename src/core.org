@@ -580,7 +580,36 @@
 *** true_c
 
     #+begin_src rust
+    fn true_c () -> Ptr <Data> {
+        Ptr::new (Data {
+            tag_of_type: TRUE_TAG,
+            obj_dic: ObjDic::new (),
+        })
+    }
+    #+end_src
 
+*** false_c
+
+    #+begin_src rust
+    fn false_c () -> Ptr <Data> {
+        Ptr::new (Data {
+            tag_of_type: FALSE_TAG,
+            obj_dic: ObjDic::new (),
+        })
+    }
+    #+end_src
+
+*** make_bool
+
+    #+begin_src rust
+    fn make_bool (b: bool) -> Ptr <Data> {
+        if b {
+            true_c ()
+        }
+        else {
+            false_c ()
+        }
+    }
     #+end_src
 
 * str

@@ -404,6 +404,26 @@
             }
         }
     }
+    fn true_c () -> Ptr <Data> {
+        Ptr::new (Data {
+            tag_of_type: TRUE_TAG,
+            obj_dic: ObjDic::new (),
+        })
+    }
+    fn false_c () -> Ptr <Data> {
+        Ptr::new (Data {
+            tag_of_type: FALSE_TAG,
+            obj_dic: ObjDic::new (),
+        })
+    }
+    fn make_bool (b: bool) -> Ptr <Data> {
+        if b {
+            true_c ()
+        }
+        else {
+            false_c ()
+        }
+    }
     pub struct Str (pub String);
     impl Obj for Str {
         fn tag (&self) -> Tag { STR_TAG }
