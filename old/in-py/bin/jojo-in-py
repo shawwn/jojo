@@ -1,0 +1,14 @@
+#!/usr/bin/env python3
+
+import jojo
+import sys
+import readline
+
+if __name__ == '__main__':
+    if len(sys.argv) == 1:
+        print ("")
+        print ("  welcome to jojo's programming adventure in python ^-^/")
+        jojo.repl()
+    else:
+        path = sys.argv[1]
+        module = jojo.load("jojo-script", path)

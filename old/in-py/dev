@@ -1,0 +1,7 @@
+#!/bin/sh
+
+cd jojo
+emacs --script tangle.el
+cd ..
+
+pip install . --user --upgrade
