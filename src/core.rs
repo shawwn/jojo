@@ -405,12 +405,7 @@
     #[test]
     fn test_step () {
         let mut env = Env::new ();
-        let id = env.define ("t1", Ptr::new (Type {
-            obj_dic: ObjDic::new (),
-            tag_of_type: TYPE_TAG,
-            super_tag_vec: TagVec::new (),
-        }));
-
+        let id = env.define ("s1", Ptr::new (Str ("bye".to_string ())));
         let jo_vec: JoVec = vec! [
             Ptr::new (RefJo {id}),
             Ptr::new (RefJo {id}),
@@ -425,4 +420,10 @@
 
         env.run ();
         assert_eq! (2, env.obj_stack.len ());
+        assert_eq! (env.obj_stack.pop () .unwrap () .repr (&env),
+                    "#<str-t>");
+        assert_eq! (1, env.obj_stack.len ());
+        assert_eq! (env.obj_stack.pop () .unwrap () .repr (&env),
+                    "#<str-t>");
+        assert_eq! (0, env.obj_stack.len ());
     }

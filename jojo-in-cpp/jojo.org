@@ -1332,22 +1332,21 @@
       tag_t type_tag         = 1;
       tag_t true_tag         = 2;
       tag_t false_tag        = 3;
-      // tag_t data_pred_tag    = 4;
-      // tag_t data_cons_tag    = 5;
-      tag_t prim_tag         = 6;
-      tag_t num_tag          = 7;
-      tag_t str_tag          = 8;
-      tag_t null_tag         = 9;
-      tag_t cons_tag         = 10;
-      tag_t vect_tag         = 12;
-      tag_t dict_tag         = 13;
-      tag_t module_tag       = 14;
-      tag_t keyword_tag      = 15;
-      tag_t macro_tag        = 16;
-      tag_t top_keyword_tag  = 17;
-      tag_t sym_tag          = 18;
-      tag_t nothing_tag      = 19;
-      tag_t just_tag         = 20;
+      tag_t data_cons_tag    = 4;
+      tag_t prim_tag         = 5;
+      tag_t num_tag          = 6;
+      tag_t str_tag          = 7;
+      tag_t null_tag         = 8;
+      tag_t cons_tag         = 9;
+      tag_t vect_tag         = 10;
+      tag_t dict_tag         = 11;
+      tag_t module_tag       = 12;
+      tag_t keyword_tag      = 13;
+      tag_t macro_tag        = 14;
+      tag_t top_keyword_tag  = 15;
+      tag_t sym_tag          = 16;
+      tag_t nothing_tag      = 17;
+      tag_t just_tag         = 18;
       #+end_src
 
 ***** init_tagged_box_vector
@@ -1360,6 +1359,7 @@
           preserve_tag (env, type_tag         , "type-t");
           preserve_tag (env, true_tag         , "true-t");
           preserve_tag (env, false_tag        , "false-t");
+          preserve_tag (env, data_cons_tag    , "data-cons-t");
           preserve_tag (env, prim_tag         , "prim-t");
           preserve_tag (env, num_tag          , "num-t");
           preserve_tag (env, str_tag          , "str-t");
