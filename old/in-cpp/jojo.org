@@ -1,6 +1,6 @@
 #+property: tangle jojo.cpp
 #+title: jojo
-- [old/in-cpp] add data_cons back -- for test
+- all eq no `env_t &env`
 * prolog
 
 *** include

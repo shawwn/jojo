@@ -74,53 +74,48 @@
           tag: Tag,
           name: &str,
       ) {
-          let typ = Ptr::new (Type {
-              obj_dic: ObjDic::new (),
-              tag_of_type: tag,
-              super_tag_vec: TagVec::new (),
-          });
-          let index = env.type_dic.ins (name, Some (typ));
+          let index = env.type_dic.ins (name, None);
           assert_eq! (tag, index);
       }
-      pub const CLOSURE_TAG      : Tag = 0;
-      pub const TYPE_TAG         : Tag = 1;
-      pub const TRUE_TAG         : Tag = 2;
-      pub const FALSE_TAG        : Tag = 3;
-      pub const DATA_CONS_TAG    : Tag = 4;
-      pub const PRIM_TAG         : Tag = 5;
-      pub const NUM_TAG          : Tag = 6;
-      pub const STR_TAG          : Tag = 7;
-      pub const SYM_TAG          : Tag = 8;
-      pub const NULL_TAG         : Tag = 9;
-      pub const CONS_TAG         : Tag = 10;
-      pub const VECT_TAG         : Tag = 11;
-      pub const DICT_TAG         : Tag = 12;
-      pub const MODULE_TAG       : Tag = 13;
-      pub const KEYWORD_TAG      : Tag = 14;
-      pub const MACRO_TAG        : Tag = 15;
-      pub const TOP_KEYWORD_TAG  : Tag = 16;
-      pub const NOTHING_TAG      : Tag = 17;
-      pub const JUST_TAG         : Tag = 18;
+      pub const CLOSURE_T      : Tag = 0;
+      pub const TYPE_T         : Tag = 1;
+      pub const TRUE_T         : Tag = 2;
+      pub const FALSE_T        : Tag = 3;
+      pub const DATA_CONS_T    : Tag = 4;
+      pub const PRIM_T         : Tag = 5;
+      pub const NUM_T          : Tag = 6;
+      pub const STR_T          : Tag = 7;
+      pub const SYM_T          : Tag = 8;
+      pub const NULL_T         : Tag = 9;
+      pub const CONS_T         : Tag = 10;
+      pub const VECT_T         : Tag = 11;
+      pub const DICT_T         : Tag = 12;
+      pub const MODULE_T       : Tag = 13;
+      pub const KEYWORD_T      : Tag = 14;
+      pub const MACRO_T        : Tag = 15;
+      pub const TOP_KEYWORD_T  : Tag = 16;
+      pub const NOTHING_T      : Tag = 17;
+      pub const JUST_T         : Tag = 18;
       fn init_type_dic (env: &mut Env) {
-          preserve_tag (env, CLOSURE_TAG      , "closure-t");
-          preserve_tag (env, TYPE_TAG         , "type-t");
-          preserve_tag (env, TRUE_TAG         , "true-t");
-          preserve_tag (env, FALSE_TAG        , "false-t");
-          preserve_tag (env, DATA_CONS_TAG    , "data-cons-t");
-          preserve_tag (env, PRIM_TAG         , "prim-t");
-          preserve_tag (env, NUM_TAG          , "num-t");
-          preserve_tag (env, STR_TAG          , "str-t");
-          preserve_tag (env, SYM_TAG          , "sym-t");
-          preserve_tag (env, NULL_TAG         , "null-t");
-          preserve_tag (env, CONS_TAG         , "cons-t");
-          preserve_tag (env, VECT_TAG         , "vect-t");
-          preserve_tag (env, DICT_TAG         , "dict-t");
-          preserve_tag (env, MODULE_TAG       , "module-t");
-          preserve_tag (env, KEYWORD_TAG      , "keyword-t");
-          preserve_tag (env, MACRO_TAG        , "macro-t");
-          preserve_tag (env, TOP_KEYWORD_TAG  , "top-keyword-t");
-          preserve_tag (env, NOTHING_TAG      , "nothing-t");
-          preserve_tag (env, JUST_TAG         , "just-t");
+          preserve_tag (env, CLOSURE_T      , "closure-t");
+          preserve_tag (env, TYPE_T         , "type-t");
+          preserve_tag (env, TRUE_T         , "true-t");
+          preserve_tag (env, FALSE_T        , "false-t");
+          preserve_tag (env, DATA_CONS_T    , "data-cons-t");
+          preserve_tag (env, PRIM_T         , "prim-t");
+          preserve_tag (env, NUM_T          , "num-t");
+          preserve_tag (env, STR_T          , "str-t");
+          preserve_tag (env, SYM_T          , "sym-t");
+          preserve_tag (env, NULL_T         , "null-t");
+          preserve_tag (env, CONS_T         , "cons-t");
+          preserve_tag (env, VECT_T         , "vect-t");
+          preserve_tag (env, DICT_T         , "dict-t");
+          preserve_tag (env, MODULE_T       , "module-t");
+          preserve_tag (env, KEYWORD_T      , "keyword-t");
+          preserve_tag (env, MACRO_T        , "macro-t");
+          preserve_tag (env, TOP_KEYWORD_T  , "top-keyword-t");
+          preserve_tag (env, NOTHING_T      , "nothing-t");
+          preserve_tag (env, JUST_T         , "just-t");
       }
     pub trait Obj {
         fn tag (&self) -> Tag;
@@ -139,10 +134,6 @@
 
         fn print (&self, env: &Env) {
             println! ("{}", self.repr (&env));
-        }
-
-        fn eq (&self, _env: &Env, _obj: Ptr <Obj>) -> bool {
-            false
         }
 
         fn apply (&self, env: &mut Env, arity: usize) {
@@ -240,9 +231,10 @@
 
         pub fn step (&mut self) {
             if let Some (mut frame) = self.frame_stack.pop () {
+                let index = frame.index;
                 let jo = frame.jojo [frame.index] .clone ();
                 frame.index += 1;
-                if frame.index < frame.jojo.len () {
+                if index + 1 < frame.jojo.len () {
                     let local_scope = frame.local_scope.clone ();
                     self.frame_stack.push (frame);
                     jo.exe (self, local_scope);
@@ -285,18 +277,36 @@
         pub jojo: Ptr <JoVec>,
         pub local_scope: Ptr <LocalScope>,
     }
+
+    impl Frame {
+        fn make (jo_vec: JoVec) -> Box <Frame> {
+            Box::new (Frame {
+                index: 0,
+                jojo: Ptr::new (jo_vec),
+                local_scope: Ptr::new (LocalScope::new ()),
+            })
+        }
+    }
     pub struct Type {
         obj_dic: ObjDic,
         tag_of_type: Tag,
         super_tag_vec: TagVec,
     }
     impl Obj for Type {
-        fn tag (&self) -> Tag { TYPE_TAG }
+        fn tag (&self) -> Tag { TYPE_T }
         fn obj_dic (&self) -> ObjDic { self.obj_dic.clone () }
     }
     pub struct Data {
         tag_of_type: Tag,
         obj_dic: ObjDic,
+    }
+    impl Data {
+        fn unit (tag: Tag) -> Ptr <Data> {
+            Ptr::new (Data {
+                tag_of_type: tag,
+                obj_dic: ObjDic::new (),
+            })
+        }
     }
     impl Obj for Data {
         fn tag (&self) -> Tag { self.tag_of_type }
@@ -307,7 +317,7 @@
         obj_dic: ObjDic,
     }
     impl Obj for DataCons {
-        fn tag (&self) -> Tag { DATA_CONS_TAG }
+        fn tag (&self) -> Tag { DATA_CONS_T }
         fn obj_dic (&self) -> ObjDic { self.obj_dic.clone () }
 
         fn apply (&self, env: &mut Env, arity: usize) {
@@ -341,7 +351,7 @@
         local_scope: Ptr <LocalScope>,
     }
     impl Obj for Closure {
-        fn tag (&self) -> Tag { CLOSURE_TAG }
+        fn tag (&self) -> Tag { CLOSURE_T }
         fn obj_dic (&self) -> ObjDic { self.obj_dic.clone () }
 
         fn apply (&self, env: &mut Env, arity: usize) {
@@ -373,13 +383,13 @@
             }
         }
     }
-    type PrimFn = fn (env: &mut Env, obj_dic: &ObjDic);
+    pub type PrimFn = fn (env: &mut Env, obj_dic: &ObjDic);
     pub struct Prim {
         obj_dic: ObjDic,
         fun: PrimFn,
     }
     impl Obj for Prim {
-        fn tag (&self) -> Tag { PRIM_TAG }
+        fn tag (&self) -> Tag { PRIM_T }
         fn obj_dic (&self) -> ObjDic { self.obj_dic.clone () }
 
         fn apply (&self, env: &mut Env, arity: usize) {
@@ -404,19 +414,13 @@
             }
         }
     }
-    fn true_c () -> Ptr <Data> {
-        Ptr::new (Data {
-            tag_of_type: TRUE_TAG,
-            obj_dic: ObjDic::new (),
-        })
+    pub fn true_c () -> Ptr <Data> {
+        Data::unit (TRUE_T)
     }
-    fn false_c () -> Ptr <Data> {
-        Ptr::new (Data {
-            tag_of_type: FALSE_TAG,
-            obj_dic: ObjDic::new (),
-        })
+    pub fn false_c () -> Ptr <Data> {
+        Data::unit (FALSE_T)
     }
-    fn make_bool (b: bool) -> Ptr <Data> {
+    pub fn make_bool (b: bool) -> Ptr <Data> {
         if b {
             true_c ()
         }
@@ -426,19 +430,27 @@
     }
     pub struct Str (pub String);
     impl Obj for Str {
-        fn tag (&self) -> Tag { STR_TAG }
+        fn tag (&self) -> Tag { STR_T }
         fn obj_dic (&self) -> ObjDic { ObjDic::new () }
     }
     pub struct Sym (pub String);
     impl Obj for Sym {
-        fn tag (&self) -> Tag { SYM_TAG }
+        fn tag (&self) -> Tag { SYM_T }
         fn obj_dic (&self) -> ObjDic { ObjDic::new () }
     }
     pub struct Num (pub f64);
     impl Obj for Num {
-        fn tag (&self) -> Tag { NUM_TAG }
+        fn tag (&self) -> Tag { NUM_T }
         fn obj_dic (&self) -> ObjDic { ObjDic::new () }
     }
+    pub fn null_c () -> Ptr <Data> {
+       Data::unit (NULL_T)
+    }
+    // pub fn cons_c () -> Ptr <Data> {
+    //     Data::make (cons_t ())
+    //         .set ()
+    //         .set ()
+    // }
     #[test]
     fn test_step () {
         let mut env = Env::new ();
@@ -451,12 +463,7 @@
             Ptr::new (RefJo {id}),
         ];
 
-        let frame = Box::new (Frame {
-            index: 0,
-            jojo: Ptr::new (jo_vec),
-            local_scope: Ptr::new (LocalScope::new ()),
-        });
-        // frame_from_jo_vec (jo_vec);
+        let frame = Frame::make (jo_vec);
         env.frame_stack.push (frame);
 
         env.run ();
