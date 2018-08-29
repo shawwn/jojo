@@ -6,6 +6,10 @@
     we must mark the points where a re-design is needed
     and what might be improved in the a rust imp
 
+  - (.field <obj>)
+
+  - (::field <type>)
+
 * not yet implemented in c++
 
   - (= ((f x) y) ...)

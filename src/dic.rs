@@ -140,3 +140,28 @@ fn test_dic () {
     assert_eq! (dic.get ("key1"), Some (&vec! [6, 6, 6]));
     assert_eq! (dic.get ("key2"), Some (&vec! [7, 7, 7]));
 }
+
+impl <'a, T> From <Vec <(&'a str, T)>> for Dic <T> {
+    fn from (vec: Vec <(&'a str, T)>) -> Dic <T> {
+        let mut dic = Dic::new ();
+        for x in vec {
+            let name = x.0;
+            let value = x.1;
+            dic.ins (name, Some (value));
+        }
+        dic
+    }
+}
+
+#[test]
+fn test_from () {
+    let dic = Dic::from (vec! [
+        ("x", 0),
+        ("y", 1),
+        ("z", 2),
+    ]);
+    assert_eq! (dic.get ("x"), Some (&0));
+    assert_eq! (dic.get ("y"), Some (&1));
+    assert_eq! (dic.get ("z"), Some (&2));
+    assert_eq! (dic.get ("_"), None);
+}

@@ -121,7 +121,7 @@
         fn tag (&self) -> Tag;
         fn obj_dic (&self) -> Option <&ObjDic> { None }
 
-        fn dot (&self, name: &str) -> Option <Ptr <Obj>> {
+        fn get (&self, name: &str) -> Option <Ptr <Obj>> {
             if let Some (obj_dic) = self.obj_dic () {
                 if let Some (obj) = obj_dic.get (name) {
                     Some (obj.clone ())
@@ -299,10 +299,10 @@
     }
 
     impl Type {
-       fn make (tag_of_type: Tag) -> Ptr <Type> {
+       fn make (tag: Tag) -> Ptr <Type> {
           Ptr::new (Type {
              method_dic: ObjDic::new (),
-             tag_of_type,
+             tag_of_type: tag,
              super_tag_vec: TagVec::new (),
           })
        }
@@ -314,6 +314,18 @@
     pub struct Data {
         tag_of_type: Tag,
         field_dic: ObjDic,
+    }
+
+    impl Data {
+        fn make (
+            tag: Tag,
+            vec: Vec <(&str, Ptr <Obj>)>,
+        ) -> Ptr <Data> {
+            Ptr::new (Data {
+                tag_of_type: tag,
+                field_dic: Dic::from (vec),
+            })
+        }
     }
     impl Data {
         fn unit (tag: Tag) -> Ptr <Data> {
@@ -330,6 +342,10 @@
     pub struct DataCons {
         tag_of_type: Tag,
         field_dic: ObjDic,
+    }
+
+    impl DataCons {
+
     }
     impl Obj for DataCons {
         fn tag (&self) -> Tag { DATA_CONS_T }
@@ -458,11 +474,16 @@
     pub fn null_c () -> Ptr <Data> {
        Data::unit (NULL_T)
     }
-    // pub fn cons_c () -> Ptr <Data> {
-    //     Data::make (cons_t ())
-    //         .set ()
-    //         .set ()
-    // }
+    pub fn cons_c (car: Ptr <Obj>, cdr: Ptr <Obj>) -> Ptr <Data> {
+        Data::make (CONS_T, vec! [
+            ("car", car),
+            ("cdr", cdr),
+        ])
+        // DataCons::make (CONS_T, ["car", "cdr"])
+        //     .set ("car", car)
+        //     .set ("cdr", cdr)
+        //     .to_data ()
+    }
     #[test]
     fn test_step () {
         let mut env = Env::new ();
