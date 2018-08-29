@@ -1,0 +1,3 @@
+(assert (eq nothing-t (type-of nothing-c)))
+(assert (eq just-t (type-of (just-c nothing-c))))
+(assert (eq (just 1).value 1))
