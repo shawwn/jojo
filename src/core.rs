@@ -1,24 +1,25 @@
+    use std::mem;
     use std::rc::Rc;
     use dic::Dic;
     // use scan::scan_word_vec;
-  pub type Ptr <T> = Rc <T>;
+    pub type Ptr <T> = Rc <T>;
 
-  pub type Name = String;
+    pub type Name = String;
 
-  pub type Id = usize; // index in to ObjDic
-  pub type ObjDic = Dic <Ptr <Obj>>;
+    pub type Id = usize; // index in to ObjDic
+    pub type ObjDic = Dic <Ptr <Obj>>;
 
-  pub type Tag = usize; // index in to TypeDic
-  pub type TypeDic = Dic <Ptr <Type>>;
+    pub type Tag = usize; // index in to TypeDic
+    pub type TypeDic = Dic <Ptr <Type>>;
 
-  pub type ObjStack = Vec <Ptr <Obj>>;
-  pub type FrameStack = Vec <Box <Frame>>;
+    pub type ObjStack = Vec <Ptr <Obj>>;
+    pub type FrameStack = Vec <Box <Frame>>;
 
-  pub type LocalScope = Vec <ObjDic>; // index from end
+    pub type LocalScope = Vec <ObjDic>; // index from end
 
-  pub type TagVec = Vec <Tag>;
-  pub type JoVec = Vec <Ptr <Jo>>;
-  pub type ObjVec = Vec <Ptr <Obj>>;
+    pub type TagVec = Vec <Tag>;
+    pub type JoVec = Vec <Ptr <Jo>>;
+    pub type ObjVec = Vec <Ptr <Obj>>;
       pub fn obj_stack_pop_to_vec (
           env: &mut Env,
           len: usize,
@@ -50,6 +51,12 @@
               obj_dic,
               obj_stack_pop_to_vec (env, arity))
       }
+      fn obj_dic_eq (
+          lhs: &ObjDic,
+          rhs: &ObjDic,
+      ) -> bool {
+          false
+      }
       pub fn local_scope_extend (
           local_scope: Ptr <LocalScope>,
           obj_dic: ObjDic,
@@ -57,6 +64,18 @@
           let mut obj_dic_vec = (*local_scope).clone ();
           obj_dic_vec.push (obj_dic);
           Ptr::new (obj_dic_vec)
+      }
+      fn local_scope_eq (
+          lhs: Ptr <LocalScope>,
+          rhs: Ptr <LocalScope>,
+      ) -> bool {
+          false
+      }
+      fn jojo_eq (
+          lhs: Ptr <JoVec>,
+          rhs: Ptr <JoVec>,
+      ) -> bool {
+          false
       }
       pub fn name_of_tag (
           env: &Env,
@@ -120,6 +139,8 @@
     pub trait Obj {
         fn tag (&self) -> Tag;
         fn obj_dic (&self) -> Option <&ObjDic> { None }
+
+        fn eq (&self, other: Ptr <Obj>) -> bool;
 
         fn get (&self, name: &str) -> Option <Ptr <Obj>> {
             if let Some (obj_dic) = self.obj_dic () {
@@ -310,6 +331,19 @@
     impl Obj for Type {
         fn tag (&self) -> Tag { TYPE_T }
         fn obj_dic (&self) -> Option <&ObjDic> { Some (&self.method_dic) }
+
+        fn eq (&self, other: Ptr <Obj>) -> bool {
+            if self.tag () != other.tag () {
+                false
+            } else {
+                unsafe {
+                    let other = mem::transmute::<Ptr <Obj>, Ptr <Type>> (other);
+                    (self.tag_of_type == other.tag_of_type &&
+                     self.super_tag_vec == other.super_tag_vec)
+                }
+
+            }
+        }
     }
     pub struct Data {
         tag_of_type: Tag,
@@ -338,6 +372,18 @@
     impl Obj for Data {
         fn tag (&self) -> Tag { self.tag_of_type }
         fn obj_dic (&self) -> Option <&ObjDic> { Some (&self.field_dic) }
+
+        fn eq (&self, other: Ptr <Obj>) -> bool {
+            if self.tag () != other.tag () {
+                false
+            } else {
+                unsafe {
+                    let other = mem::transmute::<Ptr <Obj>, Ptr <Data>> (other);
+                    (self.tag_of_type == other.tag_of_type &&
+                     obj_dic_eq (&self.field_dic, &other.field_dic))
+                }
+            }
+        }
     }
     pub struct DataCons {
         tag_of_type: Tag,
@@ -354,6 +400,18 @@
     impl Obj for DataCons {
         fn tag (&self) -> Tag { DATA_CONS_T }
         fn obj_dic (&self) -> Option <&ObjDic> { Some (&self.field_dic) }
+
+        fn eq (&self, other: Ptr <Obj>) -> bool {
+            if self.tag () != other.tag () {
+                false
+            } else {
+                unsafe {
+                    let other = mem::transmute::<Ptr <Obj>, Ptr <DataCons>> (other);
+                    (self.tag_of_type == other.tag_of_type &&
+                     obj_dic_eq (&self.field_dic, &other.field_dic))
+                }
+            }
+        }
 
         fn apply (&self, env: &mut Env, arity: usize) {
             let lack = self.field_dic.lack ();
@@ -389,6 +447,19 @@
     impl Obj for Closure {
         fn tag (&self) -> Tag { CLOSURE_T }
         fn obj_dic (&self) -> Option <&ObjDic> { Some (&self.arg_dic) }
+
+        fn eq (&self, other: Ptr <Obj>) -> bool {
+            if self.tag () != other.tag () {
+                false
+            } else {
+                unsafe {
+                    let other = mem::transmute::<Ptr <Obj>, Ptr <Closure>> (other);
+                    (jojo_eq (self.jojo, other.jojo) &&
+                     local_scope_eq (self.local_scope, other.local_scope) &&
+                     obj_dic_eq (&self.arg_dic, &other.arg_dic))
+                }
+            }
+        }
 
         fn apply (&self, env: &mut Env, arity: usize) {
             let lack = self.arg_dic.lack ();
@@ -426,6 +497,19 @@
     }
     impl Obj for Prim {
         fn tag (&self) -> Tag { PRIM_T }
+
+        fn eq (&self, other: Ptr <Obj>) -> bool {
+            if self.tag () != other.tag () {
+                false
+            } else {
+                unsafe {
+                    let other = mem::transmute::<Ptr <Obj>, Ptr <Prim>> (other);
+                    // (obj_dic_eq (&self.arg_dic, &other.arg_dic) &&
+                    //  self.fun == other.fun)
+                    (obj_dic_eq (&self.arg_dic, &other.arg_dic))
+                }
+            }
+        }
 
         fn apply (&self, env: &mut Env, arity: usize) {
             let lack = self.arg_dic.lack ();
@@ -466,14 +550,47 @@
     pub struct Str (pub String);
     impl Obj for Str {
         fn tag (&self) -> Tag { STR_T }
+
+        fn eq (&self, other: Ptr <Obj>) -> bool {
+            if self.tag () != other.tag () {
+                false
+            } else {
+                unsafe {
+                    let other = mem::transmute::<Ptr <Obj>, Ptr <Str>> (other);
+                    (self.0 == other.0)
+                }
+            }
+        }
     }
     pub struct Sym (pub String);
     impl Obj for Sym {
         fn tag (&self) -> Tag { SYM_T }
+
+        fn eq (&self, other: Ptr <Obj>) -> bool {
+            if self.tag () != other.tag () {
+                false
+            } else {
+                unsafe {
+                    let other = mem::transmute::<Ptr <Obj>, Ptr <Sym>> (other);
+                    (self.0 == other.0)
+                }
+            }
+        }
     }
     pub struct Num (pub f64);
     impl Obj for Num {
         fn tag (&self) -> Tag { NUM_T }
+
+        fn eq (&self, other: Ptr <Obj>) -> bool {
+            if self.tag () != other.tag () {
+                false
+            } else {
+                unsafe {
+                    let other = mem::transmute::<Ptr <Obj>, Ptr <Num>> (other);
+                    (self.0 == other.0)
+                }
+            }
+        }
     }
     pub fn null_c () -> Ptr <Data> {
        Data::unit (NULL_T)
