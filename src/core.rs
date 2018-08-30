@@ -1,4 +1,3 @@
-    use std::mem;
     use std::rc::Rc;
     use dic::Dic;
     // use scan::scan_word_vec;
@@ -66,14 +65,14 @@
           Ptr::new (obj_dic_vec)
       }
       fn local_scope_eq (
-          lhs: Ptr <LocalScope>,
-          rhs: Ptr <LocalScope>,
+          lhs: &LocalScope,
+          rhs: &LocalScope,
       ) -> bool {
           false
       }
       fn jojo_eq (
-          lhs: Ptr <JoVec>,
-          rhs: Ptr <JoVec>,
+          lhs: &JoVec,
+          rhs: &JoVec,
       ) -> bool {
           false
       }
@@ -178,6 +177,13 @@
         //     eprintln! ("  obj : {}", self.repr (&env));
         //     panic! ("jojo fatal error!");
         // }
+    }
+    fn obj_to <T: Obj> (obj: Ptr <Obj>) -> Ptr <T> {
+        let obj_ptr = Ptr::into_raw (obj);
+        unsafe {
+            let obj_ptr = obj_ptr as *const Obj as *const T;
+            Ptr::from_raw (obj_ptr)
+        }
     }
     pub trait Jo {
         fn exe (&self, env: &mut Env, local_scope: Ptr <LocalScope>);
@@ -336,12 +342,9 @@
             if self.tag () != other.tag () {
                 false
             } else {
-                unsafe {
-                    let other = mem::transmute::<Ptr <Obj>, Ptr <Type>> (other);
-                    (self.tag_of_type == other.tag_of_type &&
-                     self.super_tag_vec == other.super_tag_vec)
-                }
-
+                let other = obj_to::<Type> (other);
+                (self.tag_of_type == other.tag_of_type &&
+                 self.super_tag_vec == other.super_tag_vec)
             }
         }
     }
@@ -377,11 +380,9 @@
             if self.tag () != other.tag () {
                 false
             } else {
-                unsafe {
-                    let other = mem::transmute::<Ptr <Obj>, Ptr <Data>> (other);
-                    (self.tag_of_type == other.tag_of_type &&
-                     obj_dic_eq (&self.field_dic, &other.field_dic))
-                }
+                let other = obj_to::<Data> (other);
+                (self.tag_of_type == other.tag_of_type &&
+                 obj_dic_eq (&self.field_dic, &other.field_dic))
             }
         }
     }
@@ -405,11 +406,9 @@
             if self.tag () != other.tag () {
                 false
             } else {
-                unsafe {
-                    let other = mem::transmute::<Ptr <Obj>, Ptr <DataCons>> (other);
-                    (self.tag_of_type == other.tag_of_type &&
-                     obj_dic_eq (&self.field_dic, &other.field_dic))
-                }
+                let other = obj_to::<DataCons> (other);
+                (self.tag_of_type == other.tag_of_type &&
+                 obj_dic_eq (&self.field_dic, &other.field_dic))
             }
         }
 
@@ -452,12 +451,10 @@
             if self.tag () != other.tag () {
                 false
             } else {
-                unsafe {
-                    let other = mem::transmute::<Ptr <Obj>, Ptr <Closure>> (other);
-                    (jojo_eq (self.jojo, other.jojo) &&
-                     local_scope_eq (self.local_scope, other.local_scope) &&
-                     obj_dic_eq (&self.arg_dic, &other.arg_dic))
-                }
+                let other = obj_to::<Closure> (other);
+                (jojo_eq (&self.jojo, &other.jojo) &&
+                 local_scope_eq (&self.local_scope, &other.local_scope) &&
+                 obj_dic_eq (&self.arg_dic, &other.arg_dic))
             }
         }
 
@@ -502,12 +499,10 @@
             if self.tag () != other.tag () {
                 false
             } else {
-                unsafe {
-                    let other = mem::transmute::<Ptr <Obj>, Ptr <Prim>> (other);
-                    // (obj_dic_eq (&self.arg_dic, &other.arg_dic) &&
-                    //  self.fun == other.fun)
-                    (obj_dic_eq (&self.arg_dic, &other.arg_dic))
-                }
+                let other = obj_to::<Prim> (other);
+                (obj_dic_eq (&self.arg_dic, &other.arg_dic))
+                // [todo]
+                // self.fun == other.fun
             }
         }
 
@@ -555,10 +550,8 @@
             if self.tag () != other.tag () {
                 false
             } else {
-                unsafe {
-                    let other = mem::transmute::<Ptr <Obj>, Ptr <Str>> (other);
-                    (self.0 == other.0)
-                }
+                let other = obj_to::<Str> (other);
+                (self.0 == other.0)
             }
         }
     }
@@ -570,10 +563,8 @@
             if self.tag () != other.tag () {
                 false
             } else {
-                unsafe {
-                    let other = mem::transmute::<Ptr <Obj>, Ptr <Sym>> (other);
-                    (self.0 == other.0)
-                }
+                let other = obj_to::<Sym> (other);
+                (self.0 == other.0)
             }
         }
     }
@@ -585,10 +576,8 @@
             if self.tag () != other.tag () {
                 false
             } else {
-                unsafe {
-                    let other = mem::transmute::<Ptr <Obj>, Ptr <Num>> (other);
-                    (self.0 == other.0)
-                }
+                let other = obj_to::<Num> (other);
+                (self.0 == other.0)
             }
         }
     }
