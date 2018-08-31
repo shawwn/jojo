@@ -55,6 +55,10 @@
           rhs: &ObjDic,
       ) -> bool {
           false
+          // (lhs.len () == rhs.len () &&
+          //  lhs.iter ()
+          //  .zip (rhs.iter ())
+          //  .all (|p| obj_dic_eq (p.0, p.1)))
       }
       pub fn local_scope_extend (
           local_scope: Ptr <LocalScope>,
@@ -68,13 +72,19 @@
           lhs: &LocalScope,
           rhs: &LocalScope,
       ) -> bool {
-          false
+          (lhs.len () == rhs.len () &&
+           lhs.iter ()
+           .zip (rhs.iter ())
+           .all (|p| obj_dic_eq (p.0, p.1)))
       }
       fn jojo_eq (
           lhs: &JoVec,
           rhs: &JoVec,
       ) -> bool {
-          false
+          (lhs.len () == rhs.len () &&
+           lhs.iter ()
+           .zip (rhs.iter ())
+           .all (|p| jo_eq (p.0.clone (), p.1.clone ())))
       }
       pub fn name_of_tag (
           env: &Env,
@@ -185,12 +195,26 @@
             Ptr::from_raw (obj_ptr)
         }
     }
+    fn obj_eq (
+        lhs: Ptr <Obj>,
+        rhs: Ptr <Obj>,
+    ) -> bool {
+        lhs.eq (rhs)
+    }
     pub trait Jo {
         fn exe (&self, env: &mut Env, local_scope: Ptr <LocalScope>);
 
         fn repr (&self, _env: &Env) -> String {
             "#<unknown-jo>".to_string ()
         }
+    }
+    fn jo_eq (
+        lhs: Ptr <Jo>,
+        rhs: Ptr <Jo>,
+    ) -> bool {
+        let lhs_ptr = Ptr::into_raw (lhs);
+        let rhs_ptr = Ptr::into_raw (rhs);
+        lhs_ptr == rhs_ptr
     }
     struct RefJo {
         id: Id,
@@ -229,7 +253,6 @@
                 eprintln! ("  index : {}", self.index);
                 panic! ("jojo fatal error!");
             }
-
         }
     }
     struct ApplyJo {
@@ -488,6 +511,12 @@
         }
     }
     pub type PrimFn = fn (env: &mut Env, arg_dic: &ObjDic);
+    fn prim_fn_eq (
+        lhs: &PrimFn,
+        rhs: &PrimFn,
+    ) -> bool {
+        (*lhs) as usize == (*rhs) as usize
+    }
     pub struct Prim {
         arg_dic: ObjDic,
         fun: PrimFn,
@@ -500,9 +529,8 @@
                 false
             } else {
                 let other = obj_to::<Prim> (other);
-                (obj_dic_eq (&self.arg_dic, &other.arg_dic))
-                // [todo]
-                // self.fun == other.fun
+                (obj_dic_eq (&self.arg_dic, &other.arg_dic) &&
+                 prim_fn_eq (&self.fun, &other.fun))
             }
         }
 

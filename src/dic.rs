@@ -1,4 +1,6 @@
 use std::collections::HashMap;
+use std::slice;
+use std::vec;
 
 #[derive(Clone)]
 pub struct Entry <T> {
@@ -164,4 +166,107 @@ fn test_from () {
     assert_eq! (dic.get ("y"), Some (&1));
     assert_eq! (dic.get ("z"), Some (&2));
     assert_eq! (dic.get ("_"), None);
+}
+
+pub struct Iter <'a, T: 'a> {
+    slice_iter: slice::Iter <'a, Entry <T>>,
+}
+
+impl <'a, T: 'a> Iterator for Iter <'a, T> {
+    type Item = (&'a str, &'a T);
+
+    fn next (&mut self) -> Option <Self::Item> {
+        while let Some (entry) = self.slice_iter.next () {
+            if let Some (value) = &entry.value {
+                return Some((&entry.name, value));
+            }
+        }
+        None
+    }
+}
+
+impl <T> Dic <T> {
+    pub fn iter (&self) -> Iter <T> {
+        Iter {
+            slice_iter: self.entry_vector[..].iter ()
+        }
+    }
+}
+
+#[test]
+fn test_iter () {
+    let dic = Dic::from (vec! [
+        ("x", 0),
+        ("y", 1),
+        ("z", 2),
+    ]);
+    let mut iter = dic.iter ();
+    assert_eq! (Some (("x", &0)), iter.next ());
+    assert_eq! (Some (("y", &1)), iter.next ());
+    assert_eq! (Some (("z", &2)), iter.next ());
+    assert_eq! (None, iter.next ());
+
+    // skip None
+    let mut dic = Dic::from (vec! [
+        ("x", 0),
+        ("y", 1),
+        ("z", 2),
+    ]);
+    dic.set ("y", None);
+    let mut iter = dic.iter ();
+    assert_eq! (Some (("x", &0)), iter.next ());
+    assert_eq! (Some (("z", &2)), iter.next ());
+    assert_eq! (None, iter.next ());
+}
+
+pub struct IntoIter <T> {
+    vec_into_iter: vec::IntoIter <Entry <T>>,
+}
+
+impl <T> Iterator for IntoIter <T> {
+    type Item = (String, T);
+
+    fn next (&mut self) -> Option <Self::Item> {
+        while let Some (entry) = self.vec_into_iter.next () {
+            if let Some (value) = entry.value {
+                return Some((entry.name, value));
+            }
+        }
+        None
+    }
+}
+
+impl <T> Dic <T> {
+    pub fn into_iter (self) -> IntoIter <T> {
+        IntoIter {
+            vec_into_iter: self.entry_vector.into_iter ()
+        }
+    }
+}
+
+
+#[test]
+fn test_into_iter () {
+    let dic = Dic::from (vec! [
+        ("x", 0),
+        ("y", 1),
+        ("z", 2),
+    ]);
+    let mut into_iter = dic.into_iter ();
+    assert_eq! (Some ((String::from ("x"), 0)), into_iter.next ());
+    assert_eq! (Some ((String::from ("y"), 1)), into_iter.next ());
+    assert_eq! (Some ((String::from ("z"), 2)), into_iter.next ());
+    assert_eq! (None, into_iter.next ());
+
+    // skip None
+    let mut dic = Dic::from (vec! [
+        ("x", 0),
+        ("y", 1),
+        ("z", 2),
+    ]);
+    dic.set ("y", None);
+    let mut into_iter = dic.into_iter ();
+    assert_eq! (Some ((String::from ("x"), 0)), into_iter.next ());
+    assert_eq! (Some ((String::from ("z"), 2)), into_iter.next ());
+    assert_eq! (None, into_iter.next ());
 }

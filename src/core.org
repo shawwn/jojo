@@ -1,6 +1,9 @@
 #+property: tangle core.rs
 #+title: core
-- Iter for Dic
+- utility about eq
+- basic object types
+- sexp
+- use Rc::clone () and Obj::dup ()
 - new story-map
 - macro for ffi
 * prolog
@@ -96,6 +99,10 @@
           rhs: &ObjDic,
       ) -> bool {
           false
+          // (lhs.len () == rhs.len () &&
+          //  lhs.iter ()
+          //  .zip (rhs.iter ())
+          //  .all (|p| obj_dic_eq (p.0, p.1)))
       }
       #+end_src
 
@@ -114,27 +121,33 @@
       }
       #+end_src
 
-***** [todo] local_scope_eq
+***** local_scope_eq
 
       #+begin_src rust
       fn local_scope_eq (
           lhs: &LocalScope,
           rhs: &LocalScope,
       ) -> bool {
-          false
+          (lhs.len () == rhs.len () &&
+           lhs.iter ()
+           .zip (rhs.iter ())
+           .all (|p| obj_dic_eq (p.0, p.1)))
       }
       #+end_src
 
 *** jojo
 
-***** [todo] jojo_eq
+***** jojo_eq
 
       #+begin_src rust
       fn jojo_eq (
           lhs: &JoVec,
           rhs: &JoVec,
       ) -> bool {
-          false
+          (lhs.len () == rhs.len () &&
+           lhs.iter ()
+           .zip (rhs.iter ())
+           .all (|p| jo_eq (p.0.clone (), p.1.clone ())))
       }
       #+end_src
 
@@ -281,6 +294,17 @@
     }
     #+end_src
 
+*** obj_eq
+
+    #+begin_src rust
+    fn obj_eq (
+        lhs: Ptr <Obj>,
+        rhs: Ptr <Obj>,
+    ) -> bool {
+        lhs.eq (rhs)
+    }
+    #+end_src
+
 * jo
 
 *** Jo
@@ -292,6 +316,19 @@
         fn repr (&self, _env: &Env) -> String {
             "#<unknown-jo>".to_string ()
         }
+    }
+    #+end_src
+
+*** jo_eq
+
+    #+begin_src rust
+    fn jo_eq (
+        lhs: Ptr <Jo>,
+        rhs: Ptr <Jo>,
+    ) -> bool {
+        let lhs_ptr = Ptr::into_raw (lhs);
+        let rhs_ptr = Ptr::into_raw (rhs);
+        lhs_ptr == rhs_ptr
     }
     #+end_src
 
@@ -340,7 +377,6 @@
                 eprintln! ("  index : {}", self.index);
                 panic! ("jojo fatal error!");
             }
-
         }
     }
     #+end_src
@@ -678,6 +714,17 @@
     pub type PrimFn = fn (env: &mut Env, arg_dic: &ObjDic);
     #+end_src
 
+*** prim_fn_eq
+
+    #+begin_src rust
+    fn prim_fn_eq (
+        lhs: &PrimFn,
+        rhs: &PrimFn,
+    ) -> bool {
+        (*lhs) as usize == (*rhs) as usize
+    }
+    #+end_src
+
 *** Prim
 
     #+begin_src rust
@@ -698,9 +745,8 @@
                 false
             } else {
                 let other = obj_to::<Prim> (other);
-                (obj_dic_eq (&self.arg_dic, &other.arg_dic))
-                // [todo]
-                // self.fun == other.fun
+                (obj_dic_eq (&self.arg_dic, &other.arg_dic) &&
+                 prim_fn_eq (&self.fun, &other.fun))
             }
         }
 
