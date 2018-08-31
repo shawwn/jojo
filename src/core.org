@@ -1,8 +1,8 @@
 #+property: tangle core.rs
 #+title: core
+- use Rc::clone () and Obj::dup ()
 - basic object types
 - sexp
-- use Rc::clone () and Obj::dup ()
 - new story-map
 - macro for ffi
 * prolog
