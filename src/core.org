@@ -1,6 +1,5 @@
 #+property: tangle core.rs
 #+title: core
-- utility about eq
 - basic object types
 - sexp
 - use Rc::clone () and Obj::dup ()
@@ -91,18 +90,20 @@
       }
       #+end_src
 
-***** [todo] obj_dic_eq
+***** obj_dic_eq
 
       #+begin_src rust
       fn obj_dic_eq (
           lhs: &ObjDic,
           rhs: &ObjDic,
       ) -> bool {
-          false
-          // (lhs.len () == rhs.len () &&
-          //  lhs.iter ()
-          //  .zip (rhs.iter ())
-          //  .all (|p| obj_dic_eq (p.0, p.1)))
+          (lhs.len () == rhs.len () &&
+           lhs.iter ()
+           .zip (rhs.iter ())
+           .all (|p|
+                 ((p.0).0 == (p.1).0 &&
+                  obj_eq ((p.0).1.clone (),
+                          (p.1).1.clone ()))))
       }
       #+end_src
 
@@ -968,30 +969,33 @@
     fn test_step () {
         let mut env = Env::new ();
 
-        let id = env.define (
+        let bye = env.define (
             "s1", Ptr::new (Str ("bye".to_string ())));
+        let world = env.define (
+            "s2", Ptr::new (Str ("world".to_string ())));
 
         let jo_vec: JoVec = vec! [
-            Ptr::new (RefJo {id}),
-            Ptr::new (RefJo {id}),
+            Ptr::new (RefJo { id: world }),
+            Ptr::new (RefJo { id: bye }),
+            Ptr::new (RefJo { id: world }),
         ];
 
         let frame = Frame::make (jo_vec);
         env.frame_stack.push (frame);
 
         env.run ();
+        assert_eq! (3, env.obj_stack.len ());
+        assert! (obj_eq (
+            Ptr::new (Str ("world".to_string ())),
+            env.obj_stack.pop () .unwrap ()));
         assert_eq! (2, env.obj_stack.len ());
-        assert_eq! (
-            "#<str-t>",
-            env.obj_stack.pop ()
-                .unwrap ()
-                .repr (&env));
+        assert! (obj_eq (
+            Ptr::new (Str ("bye".to_string ())),
+            env.obj_stack.pop () .unwrap ()));
         assert_eq! (1, env.obj_stack.len ());
-        assert_eq! (
-            "#<str-t>",
-            env.obj_stack.pop ()
-                .unwrap ()
-                .repr (&env));
+        assert! (obj_eq (
+            Ptr::new (Str ("world".to_string ())),
+            env.obj_stack.pop () .unwrap ()));
         assert_eq! (0, env.obj_stack.len ());
     }
     #+end_src
