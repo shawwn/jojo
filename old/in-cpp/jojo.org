@@ -9,6 +9,7 @@
     - non-full type name in method definition -- misleading
     - `obj.method` should trans to  `(.method obj)`
     - no class method
+    - no letrec
 
 * prolog
 

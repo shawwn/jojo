@@ -155,6 +155,16 @@ impl <'a, T> From <Vec <(&'a str, T)>> for Dic <T> {
     }
 }
 
+impl <'a, T> From <Vec <&'a str>> for Dic <T> {
+    fn from (vec: Vec <&'a str>) -> Dic <T> {
+        let mut dic = Dic::new ();
+        for name in vec {
+            dic.ins (name, None);
+        }
+        dic
+    }
+}
+
 #[test]
 fn test_from () {
     let dic = Dic::from (vec! [
@@ -243,7 +253,6 @@ impl <T> Dic <T> {
         }
     }
 }
-
 
 #[test]
 fn test_into_iter () {

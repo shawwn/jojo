@@ -1,6 +1,5 @@
 #+property: tangle core.rs
 #+title: core
-- basic object types
 - sexp
 - new story-map
 - macro for ffi
@@ -38,6 +37,17 @@
     #+end_src
 
 * utility
+
+*** vec
+
+***** vec_peek
+
+      #+begin_src rust
+      fn vec_peek <T> (vec: &Vec <T>, index: usize) -> &T {
+            let back_index = vec.len () - index - 1;
+            &vec [back_index]
+      }
+      #+end_src
 
 *** obj_stack
 
@@ -97,12 +107,26 @@
           rhs: &ObjDic,
       ) -> bool {
           (lhs.len () == rhs.len () &&
-           lhs.iter ()
-           .zip (rhs.iter ())
-           .all (|p|
-                 ((p.0).0 == (p.1).0 &&
-                  obj_eq ((p.0).1.dup (),
-                          (p.1).1.dup ()))))
+           lhs.iter () .zip (rhs.iter ())
+           .all (|p| ((p.0).0 == (p.1).0 &&
+                      obj_eq ((p.0).1.dup (),
+                              (p.1).1.dup ()))))
+      }
+      #+end_src
+
+*** obj_vec
+
+***** obj_vec_eq
+
+      #+begin_src rust
+      pub fn obj_vec_eq (
+          lhs: &ObjVec,
+          rhs: &ObjVec,
+      ) -> bool {
+          (lhs.len () == rhs.len () &&
+           lhs.iter () .zip (rhs.iter ())
+           .all (|p| obj_eq (p.0.dup (),
+                             p.1.dup ())))
       }
       #+end_src
 
@@ -124,13 +148,12 @@
 ***** local_scope_eq
 
       #+begin_src rust
-      fn local_scope_eq (
+      pub fn local_scope_eq (
           lhs: &LocalScope,
           rhs: &LocalScope,
       ) -> bool {
           (lhs.len () == rhs.len () &&
-           lhs.iter ()
-           .zip (rhs.iter ())
+           lhs.iter () .zip (rhs.iter ())
            .all (|p| obj_dic_eq (p.0, p.1)))
       }
       #+end_src
@@ -140,14 +163,42 @@
 ***** jojo_eq
 
       #+begin_src rust
-      fn jojo_eq (
+      pub fn jojo_eq (
           lhs: &JoVec,
           rhs: &JoVec,
       ) -> bool {
           (lhs.len () == rhs.len () &&
-           lhs.iter ()
-           .zip (rhs.iter ())
-           .all (|p| jo_eq (p.0.dup (), p.1.dup ())))
+           lhs.iter () .zip (rhs.iter ())
+           .all (|p| jo_eq (p.0.dup (),
+                            p.1.dup ())))
+      }
+      #+end_src
+
+***** jojo!
+
+      #+begin_src rust
+      macro_rules! jojo {
+          ( $( $x:expr ),* ) => {{
+              let jo_vec: JoVec = vec! [
+                  $( Ptr::new ($x) ),*
+              ];
+              Ptr::new (jo_vec)
+          }};
+      }
+      #+end_src
+
+*** frame
+
+***** frame!
+
+      #+begin_src rust
+      macro_rules! frame {
+          ( $( $x:expr ),* ) => {{
+              let jo_vec: JoVec = vec! [
+                  $( Ptr::new ($x) ),*
+              ];
+              Frame::make (jo_vec)
+          }};
       }
       #+end_src
 
@@ -293,7 +344,10 @@
 
         fn eq (&self, other: Ptr <Obj>) -> bool;
 
-        fn get (&self, name: &str) -> Option <Ptr <Obj>> {
+        fn get (
+            &self,
+            name: &str,
+        ) -> Option <Ptr <Obj>> {
             if let Some (obj_dic) = self.obj_dic () {
                 if let Some (obj) = obj_dic.get (name) {
                     Some (obj.dup ())
@@ -302,6 +356,32 @@
                 }
             } else {
                 None
+            }
+        }
+
+        fn get_method (
+            &self,
+            env: &Env,
+            name: &str,
+        ) -> Option <Ptr <Obj>> {
+            let tag = self.tag ();
+            let entry = env.type_dic.idx (tag);
+            if let Some (typ) = &entry.value {
+                typ.get (name)
+            } else {
+                None
+            }
+        }
+
+        fn dot (
+            &self,
+            env: &Env,
+            name: &str,
+        ) -> Option <Ptr <Obj>> {
+            if let Some (obj) = self.get (name) {
+                Some (obj)
+            } else {
+                self.get_method (env, name)
             }
         }
 
@@ -335,7 +415,7 @@
 *** obj_to
 
     #+begin_src rust
-    fn obj_to <T: Obj> (obj: Ptr <Obj>) -> Ptr <T> {
+    pub fn obj_to <T: Obj> (obj: Ptr <Obj>) -> Ptr <T> {
         let obj_ptr = Ptr::into_raw (obj);
         unsafe {
             let obj_ptr = obj_ptr as *const Obj as *const T;
@@ -347,7 +427,7 @@
 *** obj_eq
 
     #+begin_src rust
-    fn obj_eq (
+    pub fn obj_eq (
         lhs: Ptr <Obj>,
         rhs: Ptr <Obj>,
     ) -> bool {
@@ -372,7 +452,7 @@
 *** jo_eq
 
     #+begin_src rust
-    fn jo_eq (
+    pub fn jo_eq (
         lhs: Ptr <Jo>,
         rhs: Ptr <Jo>,
     ) -> bool {
@@ -385,12 +465,12 @@
 *** RefJo
 
     #+begin_src rust
-    struct RefJo {
+    pub struct RefJo {
         id: Id,
     }
 
     impl Jo for RefJo {
-        fn exe (&self, env: &mut Env, _local_scope: Ptr <LocalScope>) {
+        fn exe (&self, env: &mut Env, _: Ptr <LocalScope>) {
             let entry = env.obj_dic.idx (self.id);
             if let Some (obj) = &entry.value {
                 env.obj_stack.push (obj.dup ());
@@ -404,20 +484,24 @@
     }
     #+end_src
 
+*** TypeRefJo
+
+    #+begin_src rust
+
+    #+end_src
+
 *** LocalRefJo
 
     #+begin_src rust
-    struct LocalRefJo {
+    pub struct LocalRefJo {
         level: usize,
         index: usize,
     }
 
     impl Jo for LocalRefJo {
         fn exe (&self, env: &mut Env, local_scope: Ptr <LocalScope>) {
-            let i = local_scope.len () - self.level - 1;
-            let obj_dic = &local_scope [i];
-            let i = obj_dic.len () - self.index - 1;
-            let entry = obj_dic.idx (i);
+            let obj_dic = vec_peek (&local_scope, self.level);
+            let entry = obj_dic.idx (self.index);
             if let Some (obj) = &entry.value {
                 env.obj_stack.push (obj.dup ());
             } else {
@@ -434,14 +518,49 @@
 *** ApplyJo
 
     #+begin_src rust
-    struct ApplyJo {
+    pub struct ApplyJo {
         arity: usize,
     }
 
     impl Jo for ApplyJo {
-        fn exe (&self, env: &mut Env, _local_scope: Ptr <LocalScope>) {
+        fn exe (&self, env: &mut Env, _: Ptr <LocalScope>) {
             let obj = env.obj_stack.pop () .unwrap ();
             obj.apply (env, self.arity);
+        }
+    }
+    #+end_src
+
+*** DotJo
+
+    #+begin_src rust
+    pub struct DotJo {
+        name: String,
+    }
+
+    impl Jo for DotJo {
+        fn exe (&self, env: &mut Env, _: Ptr <LocalScope>) {
+            let obj = env.obj_stack.pop () .unwrap ();
+            let dot = obj.dot (env, &self.name) .unwrap ();
+            env.obj_stack.push (dot);
+        }
+    }
+    #+end_src
+
+*** LambdaJo
+
+    #+begin_src rust
+    pub struct LambdaJo {
+        arg_dic: ObjDic,
+        jojo: Ptr <JoVec>,
+    }
+
+    impl Jo for LambdaJo {
+        fn exe (&self, env: &mut Env, local_scope: Ptr <LocalScope>) {
+            env.obj_stack.push (Ptr::new (Closure {
+                arg_dic: self.arg_dic.clone (),
+                jojo: self.jojo.dup (),
+                local_scope: local_scope.dup (),
+            }));
         }
     }
     #+end_src
@@ -525,7 +644,7 @@
     }
 
     impl Frame {
-        fn make (jo_vec: JoVec) -> Box <Frame> {
+        pub fn make (jo_vec: JoVec) -> Box <Frame> {
             Box::new (Frame {
                 index: 0,
                 jojo: Ptr::new (jo_vec),
@@ -585,7 +704,11 @@
         tag_of_type: Tag,
         field_dic: ObjDic,
     }
+    #+end_src
 
+*** Data::make
+
+    #+begin_src rust
     impl Data {
         fn make (
             tag: Tag,
@@ -599,7 +722,7 @@
     }
     #+end_src
 
-*** unit
+*** Data::unit
 
     #+begin_src rust
     impl Data {
@@ -640,13 +763,21 @@
         tag_of_type: Tag,
         field_dic: ObjDic,
     }
+    #+end_src
 
+*** DataCons::make
+
+    #+begin_src rust
     impl DataCons {
-        // [TODO]
-        // DataCons::make (CONS_T, ["car", "cdr"])
-        //     .set ("car", car)
-        //     .set ("cdr", cdr)
-        //     .to_data ()
+        pub fn make (
+            tag: Tag,
+            vec: Vec <&str>,
+        ) -> Ptr <DataCons> {
+            Ptr::new (DataCons {
+                tag_of_type: tag,
+                field_dic: Dic::from (vec),
+            })
+        }
     }
     #+end_src
 
@@ -765,7 +896,7 @@
 *** prim_fn_eq
 
     #+begin_src rust
-    fn prim_fn_eq (
+    pub fn prim_fn_eq (
         lhs: &PrimFn,
         rhs: &PrimFn,
     ) -> bool {
@@ -952,7 +1083,7 @@
 *** car
 
     #+begin_src rust
-    fn car (cons: Ptr <Data>) -> Ptr <Obj> {
+    pub fn car (cons: Ptr <Obj>) -> Ptr <Obj> {
         assert_eq! (CONS_T, cons.tag ());
         cons.get ("car") .unwrap ()
     }
@@ -961,7 +1092,7 @@
 *** cdr
 
     #+begin_src rust
-    fn cdr (cons: Ptr <Data>) -> Ptr <Obj> {
+    pub fn cdr (cons: Ptr <Obj>) -> Ptr <Obj> {
         assert_eq! (CONS_T, cons.tag ());
         cons.get ("cdr") .unwrap ()
     }
@@ -970,7 +1101,7 @@
 *** list_p
 
     #+begin_src rust
-    fn list_p (x: Ptr <Obj>) -> bool {
+    pub fn list_p (x: Ptr <Obj>) -> bool {
         let tag = x.tag ();
         (NULL_T == tag ||
          CONS_T == tag)
@@ -980,16 +1111,99 @@
 *** unit_list
 
     #+begin_src rust
-    fn unit_list (obj: Ptr <Obj>) -> Ptr <Obj> {
+    pub fn unit_list (obj: Ptr <Obj>) -> Ptr <Obj> {
         cons_c (obj, null_c ())
     }
     #+end_src
 
-* [todo] maybe
+* maybe
 
-* [todo] vect
+*** nothing_c
 
-* [todo] dict
+    #+begin_src rust
+    pub fn nothing_c () -> Ptr <Data> {
+       Data::unit (NOTHING_T)
+    }
+    #+end_src
+
+*** just_c
+
+    #+begin_src rust
+    pub fn just_c (value: Ptr <Obj>) -> Ptr <Data> {
+        Data::make (JUST_T, vec! [
+            ("value", value),
+        ])
+    }
+    #+end_src
+
+*** value_of_just
+
+    #+begin_src rust
+    pub fn value_of_just (just: Ptr <Obj>) -> Ptr <Obj> {
+        assert_eq! (JUST_T, just.tag ());
+        just.get ("value") .unwrap ()
+    }
+    #+end_src
+
+*** maybe_p
+
+    #+begin_src rust
+    pub fn maybe_p (x: Ptr <Obj>) -> bool {
+        let tag = x.tag ();
+        (NOTHING_T == tag ||
+         JUST_T == tag)
+    }
+    #+end_src
+
+* vect
+
+*** Vect
+
+    #+begin_src rust
+    pub struct Vect (ObjVec);
+    #+end_src
+
+*** Obj for Vect
+
+    #+begin_src rust
+    impl Obj for Vect {
+        fn tag (&self) -> Tag { VECT_T }
+
+        fn eq (&self, other: Ptr <Obj>) -> bool {
+            if self.tag () != other.tag () {
+                false
+            } else {
+                let other = obj_to::<Vect> (other);
+                (obj_vec_eq (&self.0, &other.0))
+            }
+        }
+    }
+    #+end_src
+
+* dict
+
+*** Dict
+
+    #+begin_src rust
+    pub struct Dict (ObjDic);
+    #+end_src
+
+*** Obj for Dict
+
+    #+begin_src rust
+    impl Obj for Dict {
+        fn tag (&self) -> Tag { DICT_T }
+
+        fn eq (&self, other: Ptr <Obj>) -> bool {
+            if self.tag () != other.tag () {
+                false
+            } else {
+                let other = obj_to::<Dict> (other);
+                (obj_dic_eq (&self.0, &other.0))
+            }
+        }
+    }
+    #+end_src
 
 * [todo] sexp
 
@@ -1017,32 +1231,241 @@
         let mut env = Env::new ();
 
         let bye = env.define (
-            "s1", Ptr::new (Str ("bye".to_string ())));
+            "bye", Ptr::new (Str (String::from ("bye"))));
         let world = env.define (
-            "s2", Ptr::new (Str ("world".to_string ())));
+            "world", Ptr::new (Str (String::from ("world"))));
 
-        let jo_vec: JoVec = vec! [
-            Ptr::new (RefJo { id: world }),
-            Ptr::new (RefJo { id: bye }),
-            Ptr::new (RefJo { id: world }),
-        ];
+        env.frame_stack.push (frame! [
+            RefJo { id: world },
+            RefJo { id: bye },
+            RefJo { id: world }
+        ]);
 
-        let frame = Frame::make (jo_vec);
-        env.frame_stack.push (frame);
+        env.run ();
+
+        assert_eq! (3, env.obj_stack.len ());
+        assert! (obj_eq (
+            env.obj_stack.pop () .unwrap (),
+            Ptr::new (Str (String::from ("world")))));
+        assert_eq! (2, env.obj_stack.len ());
+        assert! (obj_eq (
+            env.obj_stack.pop () .unwrap (),
+            Ptr::new (Str (String::from ("bye")))));
+        assert_eq! (1, env.obj_stack.len ());
+        assert! (obj_eq (
+            env.obj_stack.pop () .unwrap (),
+            Ptr::new (Str (String::from ("world")))));
+        assert_eq! (0, env.obj_stack.len ());
+    }
+    #+end_src
+
+*** test_apply
+
+    #+begin_src rust
+    #[test]
+    fn test_apply () {
+        let mut env = Env::new ();
+
+        let bye = env.define (
+            "bye", Ptr::new (Str (String::from ("bye"))));
+        let world = env.define (
+            "world", Ptr::new (Str (String::from ("world"))));
+
+        env.frame_stack.push (frame! [
+            RefJo { id: bye },
+            RefJo { id: world },
+            LambdaJo { arg_dic: Dic::from (vec! [ "x", "y" ]),
+                       jojo: jojo! [
+                           LocalRefJo { level: 0, index: 1 },
+                           LocalRefJo { level: 0, index: 0 }
+                       ] },
+            ApplyJo { arity: 2 }
+        ]);
+
+        env.run ();
+        assert_eq! (2, env.obj_stack.len ());
+        assert! (obj_eq (
+            env.obj_stack.pop () .unwrap (),
+            Ptr::new (Str (String::from ("bye")))));
+        assert_eq! (1, env.obj_stack.len ());
+        assert! (obj_eq (
+            env.obj_stack.pop () .unwrap (),
+            Ptr::new (Str (String::from ("world")))));
+        assert_eq! (0, env.obj_stack.len ());
+
+        // curry
+
+        env.frame_stack.push (frame! [
+            RefJo { id: bye },
+            RefJo { id: world },
+            LambdaJo { arg_dic: Dic::from (vec! [ "x", "y" ]),
+                       jojo: jojo! [
+                           LocalRefJo { level: 0, index: 1 },
+                           LocalRefJo { level: 0, index: 0 }
+                       ] },
+            ApplyJo { arity: 1 },
+            ApplyJo { arity: 1 }
+        ]);
+
+        env.run ();
+        assert_eq! (2, env.obj_stack.len ());
+        assert! (obj_eq (
+            env.obj_stack.pop () .unwrap (),
+            Ptr::new (Str (String::from ("world")))));
+        assert_eq! (1, env.obj_stack.len ());
+        assert! (obj_eq (
+            env.obj_stack.pop () .unwrap (),
+            Ptr::new (Str (String::from ("bye")))));
+        assert_eq! (0, env.obj_stack.len ());
+    }
+    #+end_src
+
+*** test_data
+
+    #+begin_src rust
+    #[test]
+    fn test_data () {
+        let mut env = Env::new ();
+
+        let last_cry = env.define (
+            "last-cry",
+            cons_c (Ptr::new (Str (String::from ("bye"))),
+                    Ptr::new (Str (String::from ("world")))));
+
+        env.frame_stack.push (frame! [
+            RefJo { id: last_cry },
+            DotJo { name: String::from ("cdr") },
+            RefJo { id: last_cry },
+            DotJo { name: String::from ("car") },
+            RefJo { id: last_cry }
+        ]);
 
         env.run ();
         assert_eq! (3, env.obj_stack.len ());
         assert! (obj_eq (
-            Ptr::new (Str ("world".to_string ())),
-            env.obj_stack.pop () .unwrap ()));
+            env.obj_stack.pop () .unwrap (),
+            cons_c (Ptr::new (Str (String::from ("bye"))),
+                    Ptr::new (Str (String::from ("world"))))));
         assert_eq! (2, env.obj_stack.len ());
         assert! (obj_eq (
-            Ptr::new (Str ("bye".to_string ())),
-            env.obj_stack.pop () .unwrap ()));
+            env.obj_stack.pop () .unwrap (),
+            Ptr::new (Str (String::from ("bye")))));
         assert_eq! (1, env.obj_stack.len ());
         assert! (obj_eq (
-            Ptr::new (Str ("world".to_string ())),
-            env.obj_stack.pop () .unwrap ()));
+            env.obj_stack.pop () .unwrap (),
+            Ptr::new (Str (String::from ("world")))));
+        assert_eq! (0, env.obj_stack.len ());
+    }
+    #+end_src
+
+*** test_data_cons
+
+    #+begin_src rust
+    #[test]
+    fn test_data_cons () {
+        let mut env = Env::new ();
+
+        let bye = env.define (
+            "bye", Ptr::new (Str (String::from ("bye"))));
+        let world = env.define (
+            "world", Ptr::new (Str (String::from ("world"))));
+        let cons = env.define (
+            "cons-c", DataCons::make (CONS_T, vec! ["car", "cdr"]));
+
+        env.frame_stack.push (frame! [
+            RefJo { id: bye },
+            RefJo { id: world },
+            RefJo { id: cons },
+            ApplyJo { arity: 2 },
+            DotJo { name: String::from ("car") }
+        ]);
+
+        env.run ();
+        assert_eq! (1, env.obj_stack.len ());
+        assert! (obj_eq (
+            env.obj_stack.pop () .unwrap (),
+            Ptr::new (Str (String::from ("bye")))));
+        assert_eq! (0, env.obj_stack.len ());
+
+        // curry
+
+        env.frame_stack.push (frame! [
+            RefJo { id: bye },
+            RefJo { id: world },
+            RefJo { id: cons },
+            ApplyJo { arity: 1 },
+            ApplyJo { arity: 1 },
+            DotJo { name: String::from ("car") }
+        ]);
+
+        env.run ();
+        assert_eq! (1, env.obj_stack.len ());
+        assert! (obj_eq (
+            env.obj_stack.pop () .unwrap (),
+            Ptr::new (Str (String::from ("world")))));
+        assert_eq! (0, env.obj_stack.len ());
+    }
+    #+end_src
+
+*** test_prim
+
+    #+begin_src rust
+    #[test]
+    fn test_prim () {
+        let mut env = Env::new ();
+
+        let bye = env.define (
+            "bye", Ptr::new (Str (String::from ("bye"))));
+        let world = env.define (
+            "world", Ptr::new (Str (String::from ("world"))));
+        let swap = env.define (
+            "swap", Ptr::new (Prim {
+                arg_dic: Dic::from (vec! [ "x", "y" ]),
+                fun: |env, arg_dic| {
+                    let x = arg_dic.get ("x") .unwrap () .dup ();
+                    let y = arg_dic.get ("y") .unwrap () .dup ();
+                    env.obj_stack.push (y);
+                    env.obj_stack.push (x);
+                },
+            }));
+
+        env.frame_stack.push (frame! [
+            RefJo { id: bye },
+            RefJo { id: world },
+            RefJo { id: swap },
+            ApplyJo { arity: 2 }
+        ]);
+
+        env.run ();
+        assert_eq! (2, env.obj_stack.len ());
+        assert! (obj_eq (
+            env.obj_stack.pop () .unwrap (),
+            Ptr::new (Str (String::from ("bye")))));
+        assert_eq! (1, env.obj_stack.len ());
+        assert! (obj_eq (
+            env.obj_stack.pop () .unwrap (),
+            Ptr::new (Str (String::from ("world")))));
+        assert_eq! (0, env.obj_stack.len ());
+
+        // curry
+
+        env.frame_stack.push (frame! [
+            RefJo { id: bye },
+            RefJo { id: world },
+            RefJo { id: swap },
+            ApplyJo { arity: 1 },
+            ApplyJo { arity: 1 }
+        ]);
+
+        env.run ();
+        assert_eq! (2, env.obj_stack.len ());
+        assert! (obj_eq (
+            env.obj_stack.pop () .unwrap (),
+            Ptr::new (Str (String::from ("world")))));
+        assert_eq! (1, env.obj_stack.len ());
+        assert! (obj_eq (
+            env.obj_stack.pop () .unwrap (),
+            Ptr::new (Str (String::from ("bye")))));
         assert_eq! (0, env.obj_stack.len ());
     }
     #+end_src
