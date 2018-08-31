@@ -3,5 +3,6 @@
 ------
 
 - A Dynamic Programming Language
+  - [travis-ci](https://travis-ci.com/xieyuheng/jojo)
 
 ------
