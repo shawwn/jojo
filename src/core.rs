@@ -59,14 +59,14 @@
            .zip (rhs.iter ())
            .all (|p|
                  ((p.0).0 == (p.1).0 &&
-                  obj_eq ((p.0).1.clone (),
-                          (p.1).1.clone ()))))
+                  obj_eq ((p.0).1.dup (),
+                          (p.1).1.dup ()))))
       }
       pub fn local_scope_extend (
-          local_scope: Ptr <LocalScope>,
+          local_scope: &LocalScope,
           obj_dic: ObjDic,
       ) -> Ptr <LocalScope> {
-          let mut obj_dic_vec = (*local_scope).clone ();
+          let mut obj_dic_vec = local_scope.clone ();
           obj_dic_vec.push (obj_dic);
           Ptr::new (obj_dic_vec)
       }
@@ -86,7 +86,7 @@
           (lhs.len () == rhs.len () &&
            lhs.iter ()
            .zip (rhs.iter ())
-           .all (|p| jo_eq (p.0.clone (), p.1.clone ())))
+           .all (|p| jo_eq (p.0.dup (), p.1.dup ())))
       }
       pub fn name_of_tag (
           env: &Env,
@@ -147,6 +147,29 @@
           preserve_tag (env, NOTHING_T      , "nothing-t");
           preserve_tag (env, JUST_T         , "just-t");
       }
+      pub trait Dup {
+         fn dup (&self) -> Self;
+      }
+      impl Dup for Ptr <Obj> {
+          fn dup (&self) -> Self {
+              Ptr::clone (self)
+          }
+      }
+      impl Dup for Ptr <Jo> {
+          fn dup (&self) -> Self {
+              Ptr::clone (self)
+          }
+      }
+      impl Dup for Ptr <LocalScope> {
+          fn dup (&self) -> Self {
+              Ptr::clone (self)
+          }
+      }
+      impl Dup for Ptr <JoVec> {
+          fn dup (&self) -> Self {
+              Ptr::clone (self)
+          }
+      }
     pub trait Obj {
         fn tag (&self) -> Tag;
         fn obj_dic (&self) -> Option <&ObjDic> { None }
@@ -156,7 +179,7 @@
         fn get (&self, name: &str) -> Option <Ptr <Obj>> {
             if let Some (obj_dic) = self.obj_dic () {
                 if let Some (obj) = obj_dic.get (name) {
-                    Some (obj.clone ())
+                    Some (obj.dup ())
                 } else {
                     None
                 }
@@ -226,7 +249,7 @@
         fn exe (&self, env: &mut Env, _local_scope: Ptr <LocalScope>) {
             let entry = env.obj_dic.idx (self.id);
             if let Some (obj) = &entry.value {
-                env.obj_stack.push (obj.clone ());
+                env.obj_stack.push (obj.dup ());
             } else {
                 eprintln! ("- RefJo::exe");
                 eprintln! ("  undefined name : {}", entry.name);
@@ -247,7 +270,7 @@
             let i = obj_dic.len () - self.index - 1;
             let entry = obj_dic.idx (i);
             if let Some (obj) = &entry.value {
-                env.obj_stack.push (obj.clone ());
+                env.obj_stack.push (obj.dup ());
             } else {
                 eprintln! ("- LocalRefJo::exe");
                 eprintln! ("  undefined name : {}", entry.name);
@@ -289,10 +312,10 @@
         pub fn step (&mut self) {
             if let Some (mut frame) = self.frame_stack.pop () {
                 let index = frame.index;
-                let jo = frame.jojo [frame.index] .clone ();
+                let jo = frame.jojo [frame.index] .dup ();
                 frame.index += 1;
                 if index + 1 < frame.jojo.len () {
-                    let local_scope = frame.local_scope.clone ();
+                    let local_scope = frame.local_scope.dup ();
                     self.frame_stack.push (frame);
                     jo.exe (self, local_scope);
                 } else {
@@ -318,7 +341,7 @@
             name: &str,
             obj: Ptr <Obj>,
         ) -> Id {
-            self.obj_dic.ins (name, Some (obj.clone ()))
+            self.obj_dic.ins (name, Some (obj))
         }
 
         pub fn define_type (
@@ -326,7 +349,7 @@
             name: &str,
             typ: Ptr <Type>,
         ) -> Tag {
-            self.type_dic.ins (name, Some (typ.clone ()))
+            self.type_dic.ins (name, Some (typ))
         }
     }
     pub struct Frame {
@@ -493,21 +516,19 @@
                 eprintln! ("  lack : {}", lack);
                 panic! ("jojo fatal error!");
             }
-            let jojo = self.jojo.clone ();
             let arg_dic = obj_dic_pick_up (env, &self.arg_dic, arity);
-            let local_scope = self.local_scope.clone ();
             if arity == lack {
                 env.frame_stack.push (Box::new (Frame {
                     index: 0,
-                    jojo,
+                    jojo: self.jojo.dup (),
                     local_scope: local_scope_extend (
-                        local_scope, arg_dic),
+                        &self.local_scope, arg_dic),
                 }));
             } else {
                 env.obj_stack.push (Ptr::new (Closure {
                     arg_dic,
-                    jojo,
-                    local_scope,
+                    jojo: self.jojo.dup (),
+                    local_scope: self.local_scope.dup (),
                 }));
             }
         }
@@ -665,7 +686,7 @@
             env.obj_stack.pop () .unwrap ()));
         assert_eq! (1, env.obj_stack.len ());
         assert! (obj_eq (
-            Ptr::new (Str ("world`".to_string ())),
+            Ptr::new (Str ("world".to_string ())),
             env.obj_stack.pop () .unwrap ()));
         assert_eq! (0, env.obj_stack.len ());
     }
