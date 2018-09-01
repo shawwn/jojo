@@ -3622,12 +3622,6 @@
 
 * sexp
 
-*** [note] about literal in quote
-
-    | ( ) | list-t |
-    | [ ] | vect-t |
-    | { } | dict-t |
-
 *** scan_word_list -- drop `,`
 
     #+begin_src cpp
@@ -3993,6 +3987,11 @@
 
     - sexp-t := str-t | sym-t | num-t |
       (list-t sexp-t) | (vect-t sexp-t) | (dict-t sym-t sexp-t)
+
+    - literal in quote
+      ( ) -- list-t
+      [ ] -- vect-t
+      { } -- dict-t
 
 *** parse_sexp
 

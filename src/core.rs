@@ -1,7 +1,9 @@
-    use std::rc::Rc;
+    // use std::rc::Rc;
+    use std::sync::Arc;
     use dic::Dic;
     use scan;
-    pub type Ptr <T> = Rc <T>;
+    // pub type Ptr <T> = Rc <T>;
+    pub type Ptr <T> = Arc <T>;
 
     pub type Name = String;
 
@@ -196,7 +198,7 @@
               Ptr::clone (self)
           }
       }
-      pub trait Make<T> {
+      pub trait Make <T> {
           fn make (T) -> Ptr <Self>;
       }
     pub trait Obj {
@@ -798,7 +800,9 @@
         }
     }
     // fn scan_word_list (code: Ptr <Str>) -> Ptr <Obj> {
-    //     code
+    //     scan::scan_word_vec (code.str)
+    //         .filter ()
+    //         .map ()
     // }
     // fn parse_sexp () -> Ptr <Obj> {
     //

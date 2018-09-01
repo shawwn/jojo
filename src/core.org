@@ -8,7 +8,8 @@
 *** use
 
     #+begin_src rust
-    use std::rc::Rc;
+    // use std::rc::Rc;
+    use std::sync::Arc;
     use dic::Dic;
     use scan;
     #+end_src
@@ -16,7 +17,8 @@
 *** datatype
 
     #+begin_src rust
-    pub type Ptr <T> = Rc <T>;
+    // pub type Ptr <T> = Rc <T>;
+    pub type Ptr <T> = Arc <T>;
 
     pub type Name = String;
 
@@ -1255,11 +1257,13 @@
 
 * sexp
 
-*** scan_word_list
+*** scan_word_list -- drop `,`
 
     #+begin_src rust
     // fn scan_word_list (code: Ptr <Str>) -> Ptr <Obj> {
-    //     code
+    //     scan::scan_word_vec (code.str)
+    //         .filter ()
+    //         .map ()
     // }
     #+end_src
 
@@ -1269,6 +1273,11 @@
       (list-t sexp-t) |
       (vect-t sexp-t) |
       (dict-t sym-t sexp-t)
+
+    - literal in quote
+      ( ) -- list-t
+      [ ] -- vect-t
+      { } -- dict-t
 
 *** parse_sexp
 
