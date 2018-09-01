@@ -1,11 +1,27 @@
+#+property: tangle dic.rs
+#+title: dic
+
+* use
+
+  #+begin_src rust
   use std::collections::HashMap;
   use std::slice;
   use std::vec;
+  #+end_src
+
+* Entry
+
+  #+begin_src rust
   #[derive(Clone)]
   pub struct Entry <T> {
       pub name: String,
       pub value: Option <T>,
   }
+  #+end_src
+
+* Dic
+
+  #+begin_src rust
   #[derive(Clone)]
   pub struct Dic <T> {
       index_map: HashMap <String, usize>,
@@ -88,6 +104,11 @@
           panic! ("Dic::eat fail!");
       }
   }
+  #+end_src
+
+* Dic::from
+
+  #+begin_src rust
   impl <'a, T> From <Vec <(&'a str, T)>> for Dic <T> {
       fn from (vec: Vec <(&'a str, T)>) -> Dic <T> {
           let mut dic = Dic::new ();
@@ -109,6 +130,11 @@
           dic
       }
   }
+  #+end_src
+
+* iter
+
+  #+begin_src rust
   pub struct Iter <'a, T: 'a> {
       slice_iter: slice::Iter <'a, Entry <T>>,
   }
@@ -133,6 +159,11 @@
           }
       }
   }
+  #+end_src
+
+* into_iter
+
+  #+begin_src rust
   pub struct IntoIter <T> {
       vec_into_iter: vec::IntoIter <Entry <T>>,
   }
@@ -157,6 +188,13 @@
           }
       }
   }
+  #+end_src
+
+* test
+
+*** test_dic
+
+    #+begin_src rust
     #[test]
     fn test_dic () {
         let mut dic: Dic <Vec <isize>> = Dic::new ();
@@ -208,6 +246,11 @@
         assert_eq! (dic.get ("key1"), Some (&vec! [6, 6, 6]));
         assert_eq! (dic.get ("key2"), Some (&vec! [7, 7, 7]));
     }
+    #+end_src
+
+*** test_from
+
+    #+begin_src rust
     #[test]
     fn test_from () {
         let dic = Dic::from (vec! [
@@ -220,6 +263,11 @@
         assert_eq! (dic.get ("z"), Some (&2));
         assert_eq! (dic.get ("_"), None);
     }
+    #+end_src
+
+*** test_iter
+
+    #+begin_src rust
     #[test]
     fn test_iter () {
         let dic = Dic::from (vec! [
@@ -245,6 +293,11 @@
         assert_eq! (Some (("z", &2)), iter.next ());
         assert_eq! (None, iter.next ());
     }
+    #+end_src
+
+*** test_into_iter
+
+    #+begin_src rust
     #[test]
     fn test_into_iter () {
         let dic = Dic::from (vec! [
@@ -270,3 +323,4 @@
         assert_eq! (Some ((String::from ("z"), 2)), into_iter.next ());
         assert_eq! (None, into_iter.next ());
     }
+    #+end_src

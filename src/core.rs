@@ -1,28 +1,28 @@
-    // use std::rc::Rc;
-    use std::sync::Arc;
-    use dic::Dic;
+  // use std::rc::Rc;
+  use std::sync::Arc;
+  use dic::Dic;
 
-    use token;
-    use token::Token;
-    // pub type Ptr <T> = Rc <T>;
-    pub type Ptr <T> = Arc <T>;
+  use token;
+  use token::Token;
+  // pub type Ptr <T> = Rc <T>;
+  pub type Ptr <T> = Arc <T>;
 
-    pub type Name = String;
+  pub type Name = String;
 
-    pub type Id = usize; // index in to ObjDic
-    pub type ObjDic = Dic <Ptr <Obj>>;
+  pub type Id = usize; // index in to ObjDic
+  pub type ObjDic = Dic <Ptr <Obj>>;
 
-    pub type Tag = usize; // index in to TypeDic
-    pub type TypeDic = Dic <Ptr <Type>>;
+  pub type Tag = usize; // index in to TypeDic
+  pub type TypeDic = Dic <Ptr <Type>>;
 
-    pub type ObjStack = Vec <Ptr <Obj>>;
-    pub type FrameStack = Vec <Box <Frame>>;
+  pub type ObjStack = Vec <Ptr <Obj>>;
+  pub type FrameStack = Vec <Box <Frame>>;
 
-    pub type LocalScope = Vec <ObjDic>; // index from end
+  pub type LocalScope = Vec <ObjDic>; // index from end
 
-    pub type TagVec = Vec <Tag>;
-    pub type JoVec = Vec <Ptr <Jo>>;
-    pub type ObjVec = Vec <Ptr <Obj>>;
+  pub type TagVec = Vec <Tag>;
+  pub type JoVec = Vec <Ptr <Jo>>;
+  pub type ObjVec = Vec <Ptr <Obj>>;
       fn vec_peek <T> (vec: &Vec <T>, index: usize) -> &T {
             let back_index = vec.len () - index - 1;
             &vec [back_index]

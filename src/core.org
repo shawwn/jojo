@@ -3,42 +3,40 @@
 - sexp
 - new story-map
 - macro for ffi
-* prolog
+* use
 
-*** use
+  #+begin_src rust
+  // use std::rc::Rc;
+  use std::sync::Arc;
+  use dic::Dic;
 
-    #+begin_src rust
-    // use std::rc::Rc;
-    use std::sync::Arc;
-    use dic::Dic;
+  use token;
+  use token::Token;
+  #+end_src
 
-    use token;
-    use token::Token;
-    #+end_src
+* datatype
 
-*** datatype
+  #+begin_src rust
+  // pub type Ptr <T> = Rc <T>;
+  pub type Ptr <T> = Arc <T>;
 
-    #+begin_src rust
-    // pub type Ptr <T> = Rc <T>;
-    pub type Ptr <T> = Arc <T>;
+  pub type Name = String;
 
-    pub type Name = String;
+  pub type Id = usize; // index in to ObjDic
+  pub type ObjDic = Dic <Ptr <Obj>>;
 
-    pub type Id = usize; // index in to ObjDic
-    pub type ObjDic = Dic <Ptr <Obj>>;
+  pub type Tag = usize; // index in to TypeDic
+  pub type TypeDic = Dic <Ptr <Type>>;
 
-    pub type Tag = usize; // index in to TypeDic
-    pub type TypeDic = Dic <Ptr <Type>>;
+  pub type ObjStack = Vec <Ptr <Obj>>;
+  pub type FrameStack = Vec <Box <Frame>>;
 
-    pub type ObjStack = Vec <Ptr <Obj>>;
-    pub type FrameStack = Vec <Box <Frame>>;
+  pub type LocalScope = Vec <ObjDic>; // index from end
 
-    pub type LocalScope = Vec <ObjDic>; // index from end
-
-    pub type TagVec = Vec <Tag>;
-    pub type JoVec = Vec <Ptr <Jo>>;
-    pub type ObjVec = Vec <Ptr <Obj>>;
-    #+end_src
+  pub type TagVec = Vec <Tag>;
+  pub type JoVec = Vec <Ptr <Jo>>;
+  pub type ObjVec = Vec <Ptr <Obj>>;
+  #+end_src
 
 * utility
 
@@ -1586,5 +1584,3 @@
         assert_eq! (0, env.obj_stack.len ());
     }
     #+end_src
-
-* epilog
