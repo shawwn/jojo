@@ -1205,7 +1205,28 @@
     }
     #+end_src
 
-* [todo] sexp
+* sexp
+
+*** [note] about sexp
+
+    - sexp-t := str-t | sym-t | num-t |
+      (list-t sexp-t) |
+      (vect-t sexp-t) |
+      (dict-t sym-t sexp-t)
+
+*** parse_sexp
+
+    #+begin_src rust
+    // fn parse_sexp () -> Ptr <Obj> {
+    //
+    // }
+    #+end_src
+
+*** parse_sexp_list
+
+*** sexp_repr
+
+*** sexp_list_repr
 
 * [todo] system
 

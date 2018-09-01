@@ -2988,7 +2988,7 @@
 
     #+begin_src cpp
     shared_ptr <vect_o>
-    list_to_vect (env_t &env, shared_ptr <obj_t> l)
+    list_to_vect (shared_ptr <obj_t> l)
     {
         auto obj_vector = obj_vector_t ();
         while (cons_p (l)) {
@@ -3302,7 +3302,7 @@
 
     #+begin_src cpp
     shared_ptr <dict_o>
-    list_to_dict (env_t &env, shared_ptr <obj_t> l)
+    list_to_dict (shared_ptr <obj_t> l)
     {
         auto obj_map = obj_map_t ();
         while (! null_p (l)) {
@@ -3759,7 +3759,6 @@
     #+begin_src cpp
     shared_ptr <obj_t>
     word_list_head_with_bar_ket_counter (
-        env_t &env,
         shared_ptr <obj_t> word_list,
         string bar,
         string ket,
@@ -3772,18 +3771,16 @@
         if (word == bar)
             return cons_c (
                 head, word_list_head_with_bar_ket_counter (
-                    env, cdr (word_list),
+                    cdr (word_list),
                     bar, ket, counter + 1));
         if (word == ket)
             return cons_c (
                 head, word_list_head_with_bar_ket_counter (
-                    env,
                     cdr (word_list),
                     bar, ket, counter - 1));
         else
             return cons_c (
                 head, word_list_head_with_bar_ket_counter (
-                    env,
                     cdr (word_list),
                     bar, ket, counter));
     }
@@ -3793,7 +3790,7 @@
 
     #+begin_src cpp
     shared_ptr <obj_t>
-    word_list_head (env_t &env, shared_ptr <obj_t> word_list)
+    word_list_head (shared_ptr <obj_t> word_list)
     {
         assert (cons_p (word_list));
         auto head = as_str (car (word_list));
@@ -3803,16 +3800,15 @@
             auto ket = bar_word_to_ket_word (word);
             return cons_c (
                 head, word_list_head_with_bar_ket_counter (
-                    env,
                     cdr (word_list),
                     bar, ket, 1));
         }
         else if (quote_word_p (word))
             return cons_c (
-                head, word_list_head (env, cdr (word_list)));
+                head, word_list_head (cdr (word_list)));
         else if (unquote_word_p (word))
             return cons_c (
-                head, word_list_head (env, cdr (word_list)));
+                head, word_list_head (cdr (word_list)));
         else
             return unit_list (head);
     }
@@ -3823,7 +3819,6 @@
     #+begin_src cpp
     shared_ptr <obj_t>
     word_list_rest_with_bar_ket_counter (
-        env_t &env,
         shared_ptr <obj_t> word_list,
         string bar,
         string ket,
@@ -3835,17 +3830,14 @@
         auto word = head->str;
         if (word == bar)
             return word_list_rest_with_bar_ket_counter (
-                env,
                 cdr (word_list),
                 bar, ket, counter + 1);
         if (word == ket)
             return word_list_rest_with_bar_ket_counter (
-                env,
                 cdr (word_list),
                 bar, ket, counter - 1);
         else
             return word_list_rest_with_bar_ket_counter (
-                env,
                 cdr (word_list),
                 bar, ket, counter);
     }
@@ -3855,7 +3847,7 @@
 
     #+begin_src cpp
     shared_ptr <obj_t>
-    word_list_rest (env_t &env, shared_ptr <obj_t> word_list)
+    word_list_rest (shared_ptr <obj_t> word_list)
     {
         assert (cons_p (word_list));
         auto head = as_str (car (word_list));
@@ -3863,15 +3855,14 @@
         if (bar_word_p (word)) {
             auto bar = word;
             auto ket = bar_word_to_ket_word (word);
-            return word_list_rest_with_bar_ket_counter
-                (env,
-                 cdr (word_list),
-                 bar, ket, 1);
+            return word_list_rest_with_bar_ket_counter (
+                cdr (word_list),
+                bar, ket, 1);
         }
         else if (quote_word_p (word))
-            return word_list_rest (env, cdr (word_list));
+            return word_list_rest (cdr (word_list));
         else if (unquote_word_p (word))
-            return word_list_rest (env, cdr (word_list));
+            return word_list_rest (cdr (word_list));
         else
             return cdr (word_list);
     }
@@ -3882,7 +3873,6 @@
     #+begin_src cpp
     shared_ptr <obj_t>
     word_list_drop_ket (
-        env_t &env,
         shared_ptr <obj_t> word_list,
         string ket)
     {
@@ -3900,7 +3890,7 @@
         else {
             return cons_c (
                 head,
-                word_list_drop_ket (env, rest, ket));
+                word_list_drop_ket (rest, ket));
         }
     }
     #+end_src
@@ -3957,9 +3947,9 @@
 
     #+begin_src cpp
     shared_ptr <vect_o>
-    sexp_list_to_vect (env_t &env, shared_ptr <obj_t> sexp_list)
+    sexp_list_to_vect (shared_ptr <obj_t> sexp_list)
     {
-        return list_to_vect (env, sexp_list);
+        return list_to_vect (sexp_list);
     }
     #+end_src
 
@@ -3968,12 +3958,10 @@
     #+begin_src cpp
     shared_ptr <obj_t>
     sexp_list_prefix_assign (
-        env_t &env,
         shared_ptr <obj_t> sexp_list);
 
     shared_ptr <obj_t>
     sexp_list_prefix_assign_with_last_sexp (
-        env_t &env,
         shared_ptr <obj_t> sexp_list,
         shared_ptr <obj_t> last_sexp)
     {
@@ -3991,15 +3979,13 @@
                         unit_list (next)));
                 return cons_c (
                     new_last_sexp,
-                    sexp_list_prefix_assign (
-                        env, rest));
+                    sexp_list_prefix_assign (rest));
             }
             else {
                 auto rest = cdr (sexp_list);
                 return cons_c (
                     last_sexp,
-                    sexp_list_prefix_assign_with_last_sexp (
-                        env, rest, head));
+                    sexp_list_prefix_assign_with_last_sexp (rest, head));
             }
         }
     }
@@ -4009,15 +3995,12 @@
 
     #+begin_src cpp
     shared_ptr <obj_t>
-    sexp_list_prefix_assign (
-        env_t &env,
-        shared_ptr <obj_t> sexp_list)
+    sexp_list_prefix_assign (shared_ptr <obj_t> sexp_list)
     {
         if (null_p (sexp_list))
             return sexp_list;
         else {
             return sexp_list_prefix_assign_with_last_sexp (
-                env,
                 cdr (sexp_list),
                 car (sexp_list));
         }
@@ -4028,17 +4011,14 @@
 
     #+begin_src cpp
     shared_ptr <obj_t>
-    sexp_list_assign_to_pair (
-        env_t &env,
-        shared_ptr <obj_t> sexp_list)
+    sexp_list_assign_to_pair (shared_ptr <obj_t> sexp_list)
     {
         if (null_p (sexp_list))
             return sexp_list;
         else
             return cons_c (
                 cdr (car (sexp_list)),
-                sexp_list_assign_to_pair (
-                    env, cdr (sexp_list)));
+                sexp_list_assign_to_pair (cdr (sexp_list)));
     }
     #+end_src
 
@@ -4046,11 +4026,11 @@
 
     #+begin_src cpp
     shared_ptr <dict_o>
-    sexp_list_to_dict (env_t &env, shared_ptr <obj_t> sexp_list)
+    sexp_list_to_dict (shared_ptr <obj_t> sexp_list)
     {
         return list_to_dict (
-            env, sexp_list_assign_to_pair (
-                env, sexp_list_prefix_assign (env, sexp_list)));
+            sexp_list_assign_to_pair (
+                sexp_list_prefix_assign (sexp_list)));
     }
     #+end_src
 
@@ -4063,38 +4043,37 @@
 
     #+begin_src cpp
     shared_ptr <obj_t>
-    parse_sexp_list (env_t &env, shared_ptr <obj_t> word_list);
+    parse_sexp_list (shared_ptr <obj_t> word_list);
 
     shared_ptr <obj_t>
-    parse_sexp (env_t &env, shared_ptr <obj_t> word_list)
+    parse_sexp (shared_ptr <obj_t> word_list)
     {
         auto head = as_str (car (word_list));
         auto word = head->str;
         auto rest = cdr (word_list);
         if (word == "(")
             return parse_sexp_list (
-                env,
-                word_list_drop_ket (env, rest, ")"));
+                word_list_drop_ket (rest, ")"));
         else if (word == "[")
             return sexp_list_to_vect (
-                env, parse_sexp_list (
-                    env, word_list_drop_ket (env, rest, "]")));
+                parse_sexp_list (
+                    word_list_drop_ket (rest, "]")));
         else if (word == "{")
             return sexp_list_to_dict (
-                env, parse_sexp_list (
-                    env, word_list_drop_ket (env, rest, "}")));
+                parse_sexp_list (
+                    word_list_drop_ket (rest, "}")));
         else if (word == "'")
             return cons_c (make_sym ("quote"),
-                           unit_list (parse_sexp (env, rest)));
+                           unit_list (parse_sexp (rest)));
         else if (word == "`")
             return cons_c (make_sym ("quasiquote"),
-                           unit_list (parse_sexp (env, rest)));
+                           unit_list (parse_sexp (rest)));
         else if (word == "~")
             return cons_c (make_sym ("unquote"),
-                           unit_list (parse_sexp (env, rest)));
+                           unit_list (parse_sexp (rest)));
         else if (word == "~@")
             return cons_c (make_sym ("unquote-splicing"),
-                           unit_list (parse_sexp (env, rest)));
+                           unit_list (parse_sexp (rest)));
         else if (num_string_p (word))
             return make_num (s2n (word));
         else if (string_string_p (word))
@@ -4108,14 +4087,14 @@
 
     #+begin_src cpp
     shared_ptr <obj_t>
-    parse_sexp_list (env_t &env, shared_ptr <obj_t> word_list)
+    parse_sexp_list (shared_ptr <obj_t> word_list)
     {
         if (null_p (word_list))
             return word_list;
         else
             return cons_c (
-                parse_sexp (env, word_list_head (env, word_list)),
-                parse_sexp_list (env, word_list_rest (env, word_list)));
+                parse_sexp (word_list_head (word_list)),
+                parse_sexp_list (word_list_rest (word_list)));
     }
     #+end_src
 
@@ -5507,7 +5486,7 @@
           jo_vector.push_back (new apply_to_arg_dict_jo_t ());
           auto jojo = make_shared <jojo_t> (jo_vector);
           auto head_jojo = sexp_compile (env, local_ref_map, head);
-          auto dict = sexp_list_to_dict (env, body);
+          auto dict = sexp_list_to_dict (body);
           auto body_jojo = dict_compile (env, local_ref_map, dict);
           jojo = jojo_append (head_jojo, jojo);
           jojo = jojo_append (body_jojo, jojo);
@@ -5860,8 +5839,7 @@
     top_sexp_list_run (env_t &env, shared_ptr <obj_t> sexp_list)
     {
         top_sexp_list_run_without_infix_assign (
-            env, sexp_list_prefix_assign (
-                env, sexp_list));
+            env, sexp_list_prefix_assign (sexp_list));
     }
     #+end_src
 
@@ -5872,7 +5850,7 @@
     code_run (env_t &env, shared_ptr <str_o> code)
     {
         auto word_list = scan_word_list (env, code);
-        auto sexp_list = parse_sexp_list (env, word_list);
+        auto sexp_list = parse_sexp_list (word_list);
         top_sexp_list_run (env, sexp_list);
     }
     #+end_src
@@ -6035,7 +6013,7 @@
           auto tag_of_type = tagging (env, head->sym);
           auto rest = cdr (body);
           auto data_body = cdr ((car (rest)));
-          auto name_vect = list_to_vect (env, data_body);
+          auto name_vect = list_to_vect (data_body);
           auto name_vector = name_vector_t ();
           for (auto obj: name_vect->obj_vector) {
               auto sym = as_sym (obj);
@@ -6074,7 +6052,7 @@
           auto name = car (head);
           auto lambda_body = cdr (body);
           lambda_body = cons_c (
-              list_to_vect (env, cdr (head)),
+              list_to_vect (cdr (head)),
               lambda_body);
           lambda_body = cons_c (
               make_sym ("lambda"),
@@ -6110,7 +6088,7 @@
       //         auto vect_sexp = as_vect (sexp);
       //         auto list_sexp = vect_to_list (env, vect_sexp);
       //         auto new_list_sexp = sexp_substitute_recur (env, sub, list_sexp);
-      //         return list_to_vect (env, new_list_sexp);
+      //         return list_to_vect (new_list_sexp);
       //     }
       //     else
       //         return sexp;
@@ -6251,7 +6229,7 @@
           local_ref_map_t &local_ref_map,
           shared_ptr <obj_t> body)
       {
-          body = sexp_list_prefix_assign (env, body);
+          body = sexp_list_prefix_assign (body);
           body = do_body_trans (env, body);
           return sexp_list_compile (env, local_ref_map, body);
       }
@@ -7984,7 +7962,6 @@
             {
                 env.obj_stack.push (
                     list_to_vect (
-                        env,
                         obj_map ["list"]));
             });
         define_prim (
@@ -8115,7 +8092,6 @@
             {
                 env.obj_stack.push (
                     list_to_dict (
-                        env,
                         obj_map ["list"]));
             });
         define_prim (
@@ -8209,10 +8185,7 @@
             [] (env_t &env, obj_map_t &obj_map)
             {
                 // -- (list-t str-t) -> sexp-t
-                env.obj_stack.push (
-                    parse_sexp (
-                        env,
-                        obj_map ["word-list"]));
+                env.obj_stack.push (parse_sexp (obj_map ["word-list"]));
             });
         define_prim (
             env, { "parse-sexp-list", "word-list" },
@@ -8220,9 +8193,7 @@
             {
                 // -- (list-t str-t) -> (list-t sexp-t)
                 env.obj_stack.push (
-                    parse_sexp_list (
-                        env,
-                        obj_map ["word-list"]));
+                    parse_sexp_list (obj_map ["word-list"]));
             });
         define_prim (
             env, { "sexp-repr", "sexp" },
