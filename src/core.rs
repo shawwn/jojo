@@ -1,6 +1,6 @@
     use std::rc::Rc;
     use dic::Dic;
-    // use scan::scan_word_vec;
+    use scan;
     pub type Ptr <T> = Rc <T>;
 
     pub type Name = String;
@@ -195,6 +195,9 @@
           fn dup (&self) -> Self {
               Ptr::clone (self)
           }
+      }
+      pub trait Make<T> {
+          fn make (T) -> Ptr <Self>;
       }
     pub trait Obj {
         fn tag (&self) -> Tag;
@@ -436,7 +439,6 @@
         pub jojo: Ptr <JoVec>,
         pub local_scope: Ptr <LocalScope>,
     }
-
     impl Frame {
         pub fn make (jo_vec: JoVec) -> Box <Frame> {
             Box::new (Frame {
@@ -451,15 +453,14 @@
         tag_of_type: Tag,
         super_tag_vec: TagVec,
     }
-
-    impl Type {
-       fn make (tag: Tag) -> Ptr <Type> {
-          Ptr::new (Type {
-             method_dic: ObjDic::new (),
-             tag_of_type: tag,
-             super_tag_vec: TagVec::new (),
-          })
-       }
+    impl Make <Tag> for Type {
+        fn make (tag: Tag) -> Ptr <Type> {
+            Ptr::new (Type {
+                method_dic: ObjDic::new (),
+                tag_of_type: tag,
+                super_tag_vec: TagVec::new (),
+            })
+        }
     }
     impl Obj for Type {
         fn tag (&self) -> Tag { TYPE_T }
@@ -674,7 +675,12 @@
             false_c ()
         }
     }
-    pub struct Str (pub String);
+    pub struct Str { pub str: String }
+    impl <'a> Make <&'a str> for Str {
+        fn make (str: &'a str) -> Ptr <Str> {
+            Ptr::new (Str { str: String::from (str) })
+        }
+    }
     impl Obj for Str {
         fn tag (&self) -> Tag { STR_T }
 
@@ -683,11 +689,16 @@
                 false
             } else {
                 let other = obj_to::<Str> (other);
-                (self.0 == other.0)
+                (self.str == other.str)
             }
         }
     }
-    pub struct Sym (pub String);
+    pub struct Sym { pub sym: String }
+    impl <'a> Make <&'a str> for Sym {
+        fn make (str: &'a str) -> Ptr <Sym> {
+            Ptr::new (Sym { sym: String::from (str) })
+        }
+    }
     impl Obj for Sym {
         fn tag (&self) -> Tag { SYM_T }
 
@@ -696,11 +707,16 @@
                 false
             } else {
                 let other = obj_to::<Sym> (other);
-                (self.0 == other.0)
+                (self.sym == other.sym)
             }
         }
     }
-    pub struct Num (pub f64);
+    pub struct Num { pub num: f64 }
+    impl Make <f64> for Num {
+        fn make (num: f64) -> Ptr <Num> {
+            Ptr::new (Num { num })
+        }
+    }
     impl Obj for Num {
         fn tag (&self) -> Tag { NUM_T }
 
@@ -709,7 +725,7 @@
                 false
             } else {
                 let other = obj_to::<Num> (other);
-                (self.0 == other.0)
+                (self.num == other.num)
             }
         }
     }
@@ -755,7 +771,7 @@
         (NOTHING_T == tag ||
          JUST_T == tag)
     }
-    pub struct Vect (ObjVec);
+    pub struct Vect { pub obj_vec: ObjVec }
     impl Obj for Vect {
         fn tag (&self) -> Tag { VECT_T }
 
@@ -764,11 +780,11 @@
                 false
             } else {
                 let other = obj_to::<Vect> (other);
-                (obj_vec_eq (&self.0, &other.0))
+                (obj_vec_eq (&self.obj_vec, &other.obj_vec))
             }
         }
     }
-    pub struct Dict (ObjDic);
+    pub struct Dict { pub obj_dic: ObjDic }
     impl Obj for Dict {
         fn tag (&self) -> Tag { DICT_T }
 
@@ -777,10 +793,13 @@
                 false
             } else {
                 let other = obj_to::<Dict> (other);
-                (obj_dic_eq (&self.0, &other.0))
+                (obj_dic_eq (&self.obj_dic, &other.obj_dic))
             }
         }
     }
+    // fn scan_word_list (code: Ptr <Str>) -> Ptr <Obj> {
+    //     code
+    // }
     // fn parse_sexp () -> Ptr <Obj> {
     //
     // }
@@ -789,9 +808,9 @@
         let mut env = Env::new ();
 
         let bye = env.define (
-            "bye", Ptr::new (Str (String::from ("bye"))));
+            "bye", Str::make ("bye"));
         let world = env.define (
-            "world", Ptr::new (Str (String::from ("world"))));
+            "world", Str::make ("world"));
 
         env.frame_stack.push (frame! [
             RefJo { id: world },
@@ -804,15 +823,15 @@
         assert_eq! (3, env.obj_stack.len ());
         assert! (obj_eq (
             env.obj_stack.pop () .unwrap (),
-            Ptr::new (Str (String::from ("world")))));
+            Str::make ("world")));
         assert_eq! (2, env.obj_stack.len ());
         assert! (obj_eq (
             env.obj_stack.pop () .unwrap (),
-            Ptr::new (Str (String::from ("bye")))));
+            Str::make ("bye")));
         assert_eq! (1, env.obj_stack.len ());
         assert! (obj_eq (
             env.obj_stack.pop () .unwrap (),
-            Ptr::new (Str (String::from ("world")))));
+            Str::make ("world")));
         assert_eq! (0, env.obj_stack.len ());
     }
     #[test]
@@ -820,9 +839,9 @@
         let mut env = Env::new ();
 
         let bye = env.define (
-            "bye", Ptr::new (Str (String::from ("bye"))));
+            "bye", Str::make ("bye"));
         let world = env.define (
-            "world", Ptr::new (Str (String::from ("world"))));
+            "world", Str::make ("world"));
 
         env.frame_stack.push (frame! [
             RefJo { id: bye },
@@ -839,11 +858,11 @@
         assert_eq! (2, env.obj_stack.len ());
         assert! (obj_eq (
             env.obj_stack.pop () .unwrap (),
-            Ptr::new (Str (String::from ("bye")))));
+            Str::make ("bye")));
         assert_eq! (1, env.obj_stack.len ());
         assert! (obj_eq (
             env.obj_stack.pop () .unwrap (),
-            Ptr::new (Str (String::from ("world")))));
+            Str::make ("world")));
         assert_eq! (0, env.obj_stack.len ());
 
         // curry
@@ -864,11 +883,11 @@
         assert_eq! (2, env.obj_stack.len ());
         assert! (obj_eq (
             env.obj_stack.pop () .unwrap (),
-            Ptr::new (Str (String::from ("world")))));
+            Str::make ("world")));
         assert_eq! (1, env.obj_stack.len ());
         assert! (obj_eq (
             env.obj_stack.pop () .unwrap (),
-            Ptr::new (Str (String::from ("bye")))));
+            Str::make ("bye")));
         assert_eq! (0, env.obj_stack.len ());
     }
     #[test]
@@ -877,8 +896,8 @@
 
         let last_cry = env.define (
             "last-cry",
-            cons_c (Ptr::new (Str (String::from ("bye"))),
-                    Ptr::new (Str (String::from ("world")))));
+            cons_c (Str::make ("bye"),
+                    Str::make ("world")));
 
         env.frame_stack.push (frame! [
             RefJo { id: last_cry },
@@ -892,16 +911,16 @@
         assert_eq! (3, env.obj_stack.len ());
         assert! (obj_eq (
             env.obj_stack.pop () .unwrap (),
-            cons_c (Ptr::new (Str (String::from ("bye"))),
-                    Ptr::new (Str (String::from ("world"))))));
+            cons_c (Str::make ("bye"),
+                    Str::make ("world"))));
         assert_eq! (2, env.obj_stack.len ());
         assert! (obj_eq (
             env.obj_stack.pop () .unwrap (),
-            Ptr::new (Str (String::from ("bye")))));
+            Str::make ("bye")));
         assert_eq! (1, env.obj_stack.len ());
         assert! (obj_eq (
             env.obj_stack.pop () .unwrap (),
-            Ptr::new (Str (String::from ("world")))));
+            Str::make ("world")));
         assert_eq! (0, env.obj_stack.len ());
     }
     #[test]
@@ -909,9 +928,9 @@
         let mut env = Env::new ();
 
         let bye = env.define (
-            "bye", Ptr::new (Str (String::from ("bye"))));
+            "bye", Str::make ("bye"));
         let world = env.define (
-            "world", Ptr::new (Str (String::from ("world"))));
+            "world", Str::make ("world"));
         let cons = env.define (
             "cons-c", DataCons::make (CONS_T, vec! ["car", "cdr"]));
 
@@ -927,7 +946,7 @@
         assert_eq! (1, env.obj_stack.len ());
         assert! (obj_eq (
             env.obj_stack.pop () .unwrap (),
-            Ptr::new (Str (String::from ("bye")))));
+            Str::make ("bye")));
         assert_eq! (0, env.obj_stack.len ());
 
         // curry
@@ -945,7 +964,7 @@
         assert_eq! (1, env.obj_stack.len ());
         assert! (obj_eq (
             env.obj_stack.pop () .unwrap (),
-            Ptr::new (Str (String::from ("world")))));
+            Str::make ("world")));
         assert_eq! (0, env.obj_stack.len ());
     }
     #[test]
@@ -953,9 +972,9 @@
         let mut env = Env::new ();
 
         let bye = env.define (
-            "bye", Ptr::new (Str (String::from ("bye"))));
+            "bye", Str::make ("bye"));
         let world = env.define (
-            "world", Ptr::new (Str (String::from ("world"))));
+            "world", Str::make ("world"));
         let swap = env.define (
             "swap", Ptr::new (Prim {
                 arg_dic: Dic::from (vec! [ "x", "y" ]),
@@ -978,11 +997,11 @@
         assert_eq! (2, env.obj_stack.len ());
         assert! (obj_eq (
             env.obj_stack.pop () .unwrap (),
-            Ptr::new (Str (String::from ("bye")))));
+            Str::make ("bye")));
         assert_eq! (1, env.obj_stack.len ());
         assert! (obj_eq (
             env.obj_stack.pop () .unwrap (),
-            Ptr::new (Str (String::from ("world")))));
+            Str::make ("world")));
         assert_eq! (0, env.obj_stack.len ());
 
         // curry
@@ -999,10 +1018,10 @@
         assert_eq! (2, env.obj_stack.len ());
         assert! (obj_eq (
             env.obj_stack.pop () .unwrap (),
-            Ptr::new (Str (String::from ("world")))));
+            Str::make ("world")));
         assert_eq! (1, env.obj_stack.len ());
         assert! (obj_eq (
             env.obj_stack.pop () .unwrap (),
-            Ptr::new (Str (String::from ("bye")))));
+            Str::make ("bye")));
         assert_eq! (0, env.obj_stack.len ());
     }
