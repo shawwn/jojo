@@ -1,7 +1,9 @@
     // use std::rc::Rc;
     use std::sync::Arc;
     use dic::Dic;
-    use scan;
+
+    use token;
+    use token::Token;
     // pub type Ptr <T> = Rc <T>;
     pub type Ptr <T> = Arc <T>;
 
@@ -731,10 +733,10 @@
             }
         }
     }
-    pub fn null_c () -> Ptr <Data> {
+    pub fn null_c () -> Ptr <Obj> {
        Data::unit (NULL_T)
     }
-    pub fn cons_c (car: Ptr <Obj>, cdr: Ptr <Obj>) -> Ptr <Data> {
+    pub fn cons_c (car: Ptr <Obj>, cdr: Ptr <Obj>) -> Ptr <Obj> {
         Data::make (CONS_T, vec! [
             ("car", car),
             ("cdr", cdr),
@@ -756,10 +758,10 @@
     pub fn unit_list (obj: Ptr <Obj>) -> Ptr <Obj> {
         cons_c (obj, null_c ())
     }
-    pub fn nothing_c () -> Ptr <Data> {
+    pub fn nothing_c () -> Ptr <Obj> {
        Data::unit (NOTHING_T)
     }
-    pub fn just_c (value: Ptr <Obj>) -> Ptr <Data> {
+    pub fn just_c (value: Ptr <Obj>) -> Ptr <Obj> {
         Data::make (JUST_T, vec! [
             ("value", value),
         ])
@@ -799,14 +801,35 @@
             }
         }
     }
-    // fn scan_word_list (code: Ptr <Str>) -> Ptr <Obj> {
-    //     scan::scan_word_vec (code.str)
-    //         .filter ()
-    //         .map ()
-    // }
-    // fn parse_sexp () -> Ptr <Obj> {
-    //
-    // }
+    fn parse_sexp_vect (token_vec: &Vec <Token>) -> Ptr <Obj> {
+        panic! ();
+    }
+    fn parse_sexp_dict (token_vec: &Vec <Token>) -> Ptr <Obj> {
+        panic! ();
+    }
+    fn parse_sexp (token: &Token) -> Ptr <Obj> {
+        match token {
+            Token::List (vec) => parse_sexp_list (vec),
+            Token::Vect (vec) => parse_sexp_vect (vec),
+            Token::Dict (vec) => parse_sexp_dict (vec),
+            Token::QuotationMark (_mark, mark_name, token) =>
+                cons_c (Sym::make (mark_name),
+                        unit_list (parse_sexp (token))),
+            Token::Num (num) => Num::make (*num),
+            Token::Str (str) => Str::make (str),
+        }
+    }
+    fn parse_sexp_list (token_vec: &Vec <Token>) -> Ptr <Obj> {
+        let mut collect = null_c ();
+        token_vec
+            .iter ()
+            .for_each (|token| {
+                collect = cons_c (
+                    parse_sexp (token),
+                    collect.dup ());
+            });
+        collect
+    }
     #[test]
     fn test_step () {
         let mut env = Env::new ();

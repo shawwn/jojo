@@ -5,7 +5,7 @@
 
 
 pub mod dic;
-pub mod scan;
+pub mod token;
 
 mod core;
 pub use core::*;

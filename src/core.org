@@ -11,7 +11,9 @@
     // use std::rc::Rc;
     use std::sync::Arc;
     use dic::Dic;
-    use scan;
+
+    use token;
+    use token::Token;
     #+end_src
 
 *** datatype
@@ -1114,7 +1116,7 @@
 *** null_c
 
     #+begin_src rust
-    pub fn null_c () -> Ptr <Data> {
+    pub fn null_c () -> Ptr <Obj> {
        Data::unit (NULL_T)
     }
     #+end_src
@@ -1122,7 +1124,7 @@
 *** cons_c
 
     #+begin_src rust
-    pub fn cons_c (car: Ptr <Obj>, cdr: Ptr <Obj>) -> Ptr <Data> {
+    pub fn cons_c (car: Ptr <Obj>, cdr: Ptr <Obj>) -> Ptr <Obj> {
         Data::make (CONS_T, vec! [
             ("car", car),
             ("cdr", cdr),
@@ -1171,7 +1173,7 @@
 *** nothing_c
 
     #+begin_src rust
-    pub fn nothing_c () -> Ptr <Data> {
+    pub fn nothing_c () -> Ptr <Obj> {
        Data::unit (NOTHING_T)
     }
     #+end_src
@@ -1179,7 +1181,7 @@
 *** just_c
 
     #+begin_src rust
-    pub fn just_c (value: Ptr <Obj>) -> Ptr <Data> {
+    pub fn just_c (value: Ptr <Obj>) -> Ptr <Obj> {
         Data::make (JUST_T, vec! [
             ("value", value),
         ])
@@ -1257,16 +1259,6 @@
 
 * sexp
 
-*** scan_word_list -- drop `,`
-
-    #+begin_src rust
-    // fn scan_word_list (code: Ptr <Str>) -> Ptr <Obj> {
-    //     scan::scan_word_vec (code.str)
-    //         .filter ()
-    //         .map ()
-    // }
-    #+end_src
-
 *** [note] about sexp
 
     - sexp-t := str-t | sym-t | num-t |
@@ -1279,15 +1271,54 @@
       [ ] -- vect-t
       { } -- dict-t
 
+*** parse_sexp_vect
+
+    #+begin_src rust
+    fn parse_sexp_vect (token_vec: &Vec <Token>) -> Ptr <Obj> {
+        panic! ();
+    }
+    #+end_src
+
+*** parse_sexp_dict
+
+    #+begin_src rust
+    fn parse_sexp_dict (token_vec: &Vec <Token>) -> Ptr <Obj> {
+        panic! ();
+    }
+    #+end_src
+
 *** parse_sexp
 
     #+begin_src rust
-    // fn parse_sexp () -> Ptr <Obj> {
-    //
-    // }
+    fn parse_sexp (token: &Token) -> Ptr <Obj> {
+        match token {
+            Token::List (vec) => parse_sexp_list (vec),
+            Token::Vect (vec) => parse_sexp_vect (vec),
+            Token::Dict (vec) => parse_sexp_dict (vec),
+            Token::QuotationMark (_mark, mark_name, token) =>
+                cons_c (Sym::make (mark_name),
+                        unit_list (parse_sexp (token))),
+            Token::Num (num) => Num::make (*num),
+            Token::Str (str) => Str::make (str),
+        }
+    }
     #+end_src
 
 *** parse_sexp_list
+
+    #+begin_src rust
+    fn parse_sexp_list (token_vec: &Vec <Token>) -> Ptr <Obj> {
+        let mut collect = null_c ();
+        token_vec
+            .iter ()
+            .for_each (|token| {
+                collect = cons_c (
+                    parse_sexp (token),
+                    collect.dup ());
+            });
+        collect
+    }
+    #+end_src
 
 *** sexp_repr
 
