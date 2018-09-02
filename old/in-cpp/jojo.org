@@ -4056,37 +4056,37 @@
 
     #+begin_src cpp
     string
-    sexp_list_repr (env_t &env, shared_ptr <obj_t> a);
+    sexp_list_repr (env_t &env, shared_ptr <obj_t> sexp_list);
 
     string
-    sexp_repr (env_t &env, shared_ptr <obj_t> a)
+    sexp_repr (env_t &env, shared_ptr <obj_t> sexp)
     {
-        if (null_p (a)) {
+        if (null_p (sexp)) {
             return "()";
         }
-        else if (cons_p (a)) {
-            return "(" + sexp_list_repr (env, a) + ")";
+        else if (cons_p (sexp)) {
+            return "(" + sexp_list_repr (env, sexp) + ")";
         }
-        else if (vect_p (a)) {
-            auto v = as_vect (a);
+        else if (vect_p (sexp)) {
+            auto v = as_vect (sexp);
             auto l = vect_to_list (v);
             return "[" + sexp_list_repr (env, l) + "]";
         }
-        else if (dict_p (a)) {
-            auto d = as_dict (a);
+        else if (dict_p (sexp)) {
+            auto d = as_dict (sexp);
             auto l = dict_to_list (d);
             return "{" + sexp_list_repr (env, l) + "}";
         }
-        else if (str_p (a)) {
-            auto str = as_str (a);
+        else if (str_p (sexp)) {
+            auto str = as_str (sexp);
             return '"' + str->str + '"';
         }
-        else if (sym_p (a)) {
-            auto sym = as_sym (a);
+        else if (sym_p (sexp)) {
+            auto sym = as_sym (sexp);
             return sym->sym;
         }
         else {
-            return a->repr (env);
+            return sexp->repr (env);
         }
     }
     #+end_src
@@ -6315,7 +6315,7 @@
           auto head = car (body);
           auto rest = cdr (body);
           auto binding_vect = as_vect (head);
-          binding_vect = vect_reverse (env, binding_vect);
+          binding_vect = vect_reverse (binding_vect);
           rest = cons_c (make_sym ("do"), rest);
           for (auto binding: binding_vect->obj_vector) {
               auto name = car (binding);
@@ -8313,7 +8313,6 @@
                 auto rhs = obj_map ["rhs"];
                 env.obj_stack.push (
                     make_bool (
-                        env,
                         obj_eq (lhs, rhs)));
             });
         define_prim (

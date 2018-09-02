@@ -157,8 +157,8 @@
            word.ends_with ("\""))
       }
       fn sym_word_p (word: &str) -> bool {
-          // not check for sym for now
-          true
+          // not real check for sym for now
+          word.len () > 0
       }
     fn collect_num_token (
         mut iter: WordIter
@@ -406,19 +406,6 @@
                 Token::Sym { sym: String::from ("c") },
             ]},
         ]);
-        assert_eq! (scan ("(\"a\" {(= b -3.14)} c) ;;;; 123"), vec! [
-            Token::List { token_vec: vec! [
-                Token::Str { str: String::from ("a") },
-                Token::Dict { token_vec: vec! [
-                    Token::List { token_vec: vec! [
-                        Token::Sym { sym: String::from ("=") },
-                        Token::Sym { sym: String::from ("b") },
-                        Token::Num { num: Num::from (-3.14) },
-                    ]}
-                ]},
-                Token::Sym { sym: String::from ("c") },
-            ]},
-        ]);
         assert_eq! (scan ("('(a b c))"), vec! [
             Token::List { token_vec: vec! [
                 Token::QuotationMark {
@@ -469,6 +456,19 @@
                         Token::Sym { sym: String::from ("c") },
                     ]}),
                 },
+            ]},
+        ]);
+        assert_eq! (scan ("{a = 1 b = 2 c = 3}"), vec! [
+            Token::Dict { token_vec: vec! [
+                Token::Sym { sym: String::from ("a") },
+                Token::Sym { sym: String::from ("=") },
+                Token::Num { num: 1.0 },
+                Token::Sym { sym: String::from ("b") },
+                Token::Sym { sym: String::from ("=") },
+                Token::Num { num: 2.0 },
+                Token::Sym { sym: String::from ("c") },
+                Token::Sym { sym: String::from ("=") },
+                Token::Num { num: 3.0 },
             ]},
         ]);
     }

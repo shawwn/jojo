@@ -59,7 +59,7 @@
         virtual ~obj_t ();
         virtual string repr (env_t &env);
         virtual void print (env_t &env);
-        virtual bool eq (env_t &env, shared_ptr <obj_t> obj);
+        virtual bool eq (shared_ptr <obj_t> obj);
         virtual void apply (env_t &env, size_t arity);
         virtual void apply_to_arg_dict (env_t &env);
     };
@@ -174,12 +174,11 @@
       }
       bool
       bind_eq (
-          env_t &env,
           bind_t &lhs,
           bind_t &rhs)
       {
           if (lhs.first != rhs.first) return false;
-          return lhs.second->eq (env, rhs.second);
+          return lhs.second->eq (rhs.second);
       }
       string
       bind_vector_repr (
@@ -296,7 +295,6 @@
       }
       bool
       bind_vector_eq (
-          env_t &env,
           bind_vector_t &lhs,
           bind_vector_t &rhs)
       {
@@ -304,7 +302,7 @@
           auto size = lhs.size ();
           size_t index = 0;
           while (index < size) {
-              if (! bind_eq (env, lhs [index], rhs [index]))
+              if (! bind_eq (lhs [index], rhs [index]))
                   return false;
               index++;
           }
@@ -326,7 +324,6 @@
       }
       bool
       local_scope_eq (
-          env_t &env,
           local_scope_t &lhs,
           local_scope_t &rhs)
       {
@@ -334,7 +331,7 @@
           auto size = lhs.size ();
           size_t index = 0;
           while (index < size) {
-              if (! bind_vector_eq (env, lhs [index], rhs [index]))
+              if (! bind_vector_eq (lhs [index], rhs [index]))
                   return false;
               index++;
           }
@@ -370,14 +367,14 @@
           return repr;
       }
       bool
-      obj_map_eq (env_t &env, obj_map_t &lhs, obj_map_t &rhs)
+      obj_map_eq (obj_map_t &lhs, obj_map_t &rhs)
       {
           if (lhs.size () != rhs.size ()) return false;
           for (auto &kv: lhs) {
               auto name = kv.first;
               auto it = rhs.find (name);
               if (it == rhs.end ()) return false;
-              if (! kv.second->eq (env, it->second)) return false;
+              if (! kv.second->eq (it->second)) return false;
           }
           return true;
       }
@@ -579,14 +576,14 @@
       assert_pop_eq (env_t &env, shared_ptr <obj_t> obj)
       {
           auto that = env.obj_stack.top ();
-          assert (obj->eq (env, that));
+          assert (obj->eq (that));
           env.obj_stack.pop ();
       }
       void
       assert_tos_eq (env_t &env, shared_ptr <obj_t> obj)
       {
           auto that = env.obj_stack.top ();
-          assert (obj->eq (env, that));
+          assert (obj->eq (that));
       }
       void
       assert_stack_size (env_t &env, size_t size)
@@ -618,7 +615,7 @@
         cout << this->repr (env) << flush;
     }
     bool
-    obj_t::eq (env_t &env, shared_ptr <obj_t> obj)
+    obj_t::eq (shared_ptr <obj_t> obj)
     {
         if (this->tag != obj->tag)
             return false;
@@ -662,11 +659,10 @@
     }
     bool
     obj_eq (
-        env_t &env,
         shared_ptr <obj_t> &lhs,
         shared_ptr <obj_t> &rhs)
     {
-        return lhs->eq (env, rhs);
+        return lhs->eq (rhs);
     }
     shared_ptr <obj_t>
     find_obj_from_name (env_t &env, name_t name)
@@ -1044,7 +1040,7 @@
                    shared_ptr <jojo_t> jojo,
                    bind_vector_t bind_vector,
                    local_scope_t local_scope);
-        bool eq (env_t &env, shared_ptr <obj_t> obj);
+        bool eq (shared_ptr <obj_t> obj);
         void apply (env_t &env, size_t arity);
         void apply_to_arg_dict (env_t &env);
         string repr (env_t &env);
@@ -1111,25 +1107,23 @@
         }
     }
     bool
-    closure_o::eq (env_t &env, shared_ptr <obj_t> obj)
+    closure_o::eq (shared_ptr <obj_t> obj)
     {
         // raw pointers must be eq first
         if (this != obj.get ()) return false;
         auto that = static_pointer_cast <closure_o> (obj);
         // then scopes
-        if (local_scope_eq
-            (env,
-             this->local_scope,
-             that->local_scope)) return false;
+        if (local_scope_eq (
+                this->local_scope,
+                that->local_scope)) return false;
         // then bindings
-        if (bind_vector_eq
-            (env,
-             this->bind_vector,
-             that->bind_vector)) return false;
+        if (bind_vector_eq (
+                this->bind_vector,
+                that->bind_vector)) return false;
         else return true;
     }
     bool
-    closure_p (env_t &env, shared_ptr <obj_t> a)
+    closure_p (shared_ptr <obj_t> a)
     {
         return a->tag == closure_tag;
     }
@@ -1157,7 +1151,7 @@
             tag_t tag_of_type,
             tag_vector_t super_tag_vector,
             obj_map_t obj_map);
-        bool eq (env_t &env, shared_ptr <obj_t> obj);
+        bool eq (shared_ptr <obj_t> obj);
         string repr (env_t &env);
     };
     type_o::type_o (
@@ -1192,7 +1186,7 @@
         return name_of_tag (env, this->tag_of_type);
     }
     bool
-    type_o::eq (env_t &env, shared_ptr <obj_t> obj)
+    type_o::eq (shared_ptr <obj_t> obj)
     {
         if (this->tag != obj->tag) return false;
         auto that = as_type (obj);
@@ -1286,7 +1280,7 @@
             obj_map_t obj_map);
         void apply (env_t &env, size_t arity);
         void apply_to_arg_dict (env_t &env);
-        bool eq (env_t &env, shared_ptr <obj_t> obj);
+        bool eq (shared_ptr <obj_t> obj);
         string repr (env_t &env);
     };
     data_o::
@@ -1311,11 +1305,11 @@
             obj_map);
     }
     bool
-    data_o::eq (env_t &env, shared_ptr <obj_t> obj)
+    data_o::eq (shared_ptr <obj_t> obj)
     {
         if (this->tag != obj->tag) return false;
         auto that = static_pointer_cast <data_o> (obj);
-        return obj_map_eq (env, this->obj_map, that->obj_map);
+        return obj_map_eq (this->obj_map, that->obj_map);
     }
     string
     sexp_repr (env_t &env, shared_ptr <obj_t> a);
@@ -1393,7 +1387,7 @@
         env.obj_stack.push (data);
     }
     shared_ptr <data_o>
-    true_c (env_t &env)
+    true_c ()
     {
        return make_data (
            true_tag,
@@ -1401,12 +1395,12 @@
            obj_map_t ());
     }
     bool
-    true_p (env_t &env, shared_ptr <obj_t> a)
+    true_p (shared_ptr <obj_t> a)
     {
         return a->tag == true_tag;
     }
     shared_ptr <data_o>
-    false_c (env_t &env)
+    false_c ()
     {
        return make_data (
            false_tag,
@@ -1414,25 +1408,23 @@
            obj_map_t ());
     }
     bool
-    false_p (env_t &env, shared_ptr <obj_t> a)
+    false_p (shared_ptr <obj_t> a)
     {
         return a->tag == false_tag;
     }
-    shared_ptr <obj_t>
-    make_bool (env_t &env, bool b)
+    shared_ptr <data_o>
+    make_bool (bool b)
     {
-        if (b) {
-            return true_c (env);
-        }
-        else {
-            return false_c (env);
-        }
+        if (b)
+            return true_c ();
+        else
+            return false_c ();
     }
     bool
-    bool_p (env_t &env, shared_ptr <obj_t> a)
+    bool_p (shared_ptr <obj_t> a)
     {
-        return true_p (env, a)
-            or false_p (env, a);
+        return true_p (a)
+            or false_p (a);
     }
     using prim_fn = function
         <void (env_t &, obj_map_t &)>;
@@ -1444,7 +1436,7 @@
             name_vector_t name_vector,
             prim_fn fn,
             obj_map_t obj_map);
-        bool eq (env_t &env, shared_ptr <obj_t> obj);
+        bool eq (shared_ptr <obj_t> obj);
         void apply (env_t &env, size_t arity);
         void apply_to_arg_dict (env_t &env);
         string repr (env_t &env);
@@ -1471,7 +1463,7 @@
             obj_map);
     }
     bool
-    prim_p (env_t &env, shared_ptr <obj_t> a)
+    prim_p (shared_ptr <obj_t> a)
     {
         return a->tag == prim_tag;
     }
@@ -1490,12 +1482,12 @@
             return repr;
         }
     }
-    bool prim_o::eq (env_t &env, shared_ptr <obj_t> obj)
+    bool prim_o::eq (shared_ptr <obj_t> obj)
     {
         if (this->tag != obj->tag) return false;
         auto that = static_pointer_cast <prim_o> (obj);
         if (this != obj.get ()) return false;
-        return obj_map_eq (env, this->obj_map, that->obj_map);
+        return obj_map_eq (this->obj_map, that->obj_map);
     }
     void prim_o::apply (env_t &env, size_t arity)
     {
@@ -1559,7 +1551,7 @@
     {
         num_t num;
         num_o (num_t num);
-        bool eq (env_t &env, shared_ptr <obj_t> obj);
+        bool eq (shared_ptr <obj_t> obj);
         string repr (env_t &env);
     };
     num_o::num_o (num_t num)
@@ -1589,14 +1581,14 @@
         return static_pointer_cast <num_o> (obj);
     }
     bool
-    num_o::eq (env_t &env, shared_ptr <obj_t> obj)
+    num_o::eq (shared_ptr <obj_t> obj)
     {
         if (this->tag != obj->tag) return false;
         auto that = as_num (obj);
         return (this->num == that->num);
     }
     bool
-    num_p (env_t &env, shared_ptr <obj_t> a)
+    num_p (shared_ptr <obj_t> a)
     {
         return a->tag == num_tag;
     }
@@ -1604,7 +1596,7 @@
     {
         string str;
         str_o (string str);
-        bool eq (env_t &env, shared_ptr <obj_t> obj);
+        bool eq (shared_ptr <obj_t> obj);
         string repr (env_t &env);
         void print (env_t &env);
     };
@@ -1635,28 +1627,25 @@
         return static_pointer_cast <str_o> (obj);
     }
     bool
-    str_o::eq (env_t &env, shared_ptr <obj_t> obj)
+    str_o::eq (shared_ptr <obj_t> obj)
     {
         if (this->tag != obj->tag) return false;
         auto that = as_str (obj);
         return (this->str == that->str);
     }
     bool
-    str_p (env_t &env, shared_ptr <obj_t> a)
+    str_p (shared_ptr <obj_t> a)
     {
         return a->tag == str_tag;
     }
     shared_ptr <num_o>
-    str_length (
-        env_t &env,
-        shared_ptr <str_o> str)
+    str_length (shared_ptr <str_o> str)
     {
         auto size = str->str.size ();
         return make_num (static_cast <num_t> (size));
     }
     shared_ptr <str_o>
     str_append (
-        env_t &env,
         shared_ptr <str_o> ante,
         shared_ptr <str_o> succ)
     {
@@ -1664,7 +1653,6 @@
     }
     shared_ptr <str_o>
     str_slice (
-        env_t &env,
         shared_ptr <str_o> str,
         shared_ptr <num_o> begin,
         shared_ptr <num_o> end)
@@ -1677,7 +1665,6 @@
     }
     shared_ptr <str_o>
     str_ref (
-        env_t &env,
         shared_ptr <str_o> str,
         shared_ptr <num_o> index)
     {
@@ -1690,9 +1677,7 @@
         return make_str (s);
     }
     shared_ptr <str_o>
-    str_head (
-        env_t &env,
-        shared_ptr <str_o> str)
+    str_head (shared_ptr <str_o> str)
     {
         auto size = str->str.size ();
         assert (size >= 1);
@@ -1702,9 +1687,7 @@
         return make_str (s);
     }
     shared_ptr <str_o>
-    str_rest (
-        env_t &env,
-        shared_ptr <str_o> str)
+    str_rest (shared_ptr <str_o> str)
     {
         auto size = str->str.size ();
         return make_str (str->str.substr (1, size -1));
@@ -1713,7 +1696,7 @@
     {
         symbol sym;
         sym_o (symbol sym);
-        bool eq (env_t &env, shared_ptr <obj_t> obj);
+        bool eq (shared_ptr <obj_t> obj);
         symbol repr (env_t &env);
         void print (env_t &env);
     };
@@ -1744,20 +1727,19 @@
         return static_pointer_cast <sym_o> (obj);
     }
     bool
-    sym_o::eq (env_t &env, shared_ptr <obj_t> obj)
+    sym_o::eq (shared_ptr <obj_t> obj)
     {
         if (this->tag != obj->tag) return false;
         auto that = as_sym (obj);
         return (this->sym == that->sym);
     }
     bool
-    sym_p (env_t &env, shared_ptr <obj_t> a)
+    sym_p (shared_ptr <obj_t> a)
     {
         return a->tag == sym_tag;
     }
     shared_ptr <num_o>
     sym_length (
-        env_t &env,
         shared_ptr <sym_o> sym)
     {
         auto size = sym->sym.size ();
@@ -1765,7 +1747,6 @@
     }
     shared_ptr <sym_o>
     sym_append (
-        env_t &env,
         shared_ptr <sym_o> ante,
         shared_ptr <sym_o> succ)
     {
@@ -1773,7 +1754,6 @@
     }
     shared_ptr <sym_o>
     sym_slice (
-        env_t &env,
         shared_ptr <sym_o> sym,
         shared_ptr <num_o> begin,
         shared_ptr <num_o> end)
@@ -1786,7 +1766,6 @@
     }
     shared_ptr <sym_o>
     sym_ref (
-        env_t &env,
         shared_ptr <sym_o> sym,
         shared_ptr <num_o> index)
     {
@@ -1799,9 +1778,7 @@
         return make_sym (s);
     }
     shared_ptr <sym_o>
-    sym_head (
-        env_t &env,
-        shared_ptr <sym_o> sym)
+    sym_head (shared_ptr <sym_o> sym)
     {
         auto size = sym->sym.size ();
         assert (size >= 1);
@@ -1811,15 +1788,13 @@
         return make_sym (s);
     }
     shared_ptr <sym_o>
-    sym_rest (
-        env_t &env,
-        shared_ptr <sym_o> sym)
+    sym_rest (shared_ptr <sym_o> sym)
     {
         auto size = sym->sym.size ();
         return make_sym (sym->sym.substr (1, size -1));
     }
     shared_ptr <data_o>
-    null_c (env_t &env)
+    null_c ()
     {
        return make_data (
            null_tag,
@@ -1827,13 +1802,12 @@
            obj_map_t ());
     }
     bool
-    null_p (env_t &env, shared_ptr <obj_t> a)
+    null_p (shared_ptr <obj_t> a)
     {
         return a->tag == null_tag;
     }
     shared_ptr <data_o>
     cons_c (
-        env_t &env,
         shared_ptr <obj_t> car,
         shared_ptr <obj_t> cdr)
     {
@@ -1846,83 +1820,82 @@
             obj_map);
     }
     bool
-    cons_p (env_t &env, shared_ptr <obj_t> a)
+    cons_p (shared_ptr <obj_t> a)
     {
         return a->tag == cons_tag;
     }
     shared_ptr <obj_t>
-    car (env_t &env, shared_ptr <obj_t> cons)
+    car (shared_ptr <obj_t> cons)
     {
-        assert (cons_p (env, cons));
+        assert (cons_p (cons));
         return cons->obj_map ["car"];
     }
     shared_ptr <obj_t>
-    cdr (env_t &env, shared_ptr <obj_t> cons)
+    cdr (shared_ptr <obj_t> cons)
     {
-        assert (cons_p (env, cons));
+        assert (cons_p (cons));
         return cons->obj_map ["cdr"];
     }
     bool
-    list_p (env_t &env, shared_ptr <obj_t> a)
+    list_p (shared_ptr <obj_t> a)
     {
-        return null_p (env, a)
-            or cons_p (env, a);
+        return null_p (a)
+            or cons_p (a);
     }
     size_t
-    list_size (env_t &env, shared_ptr <obj_t> l)
+    list_size (shared_ptr <obj_t> l)
     {
-        assert (list_p (env, l));
+        assert (list_p (l));
         auto size = 0;
-        while (! null_p (env, l)) {
+        while (! null_p (l)) {
             size++;
-            l = cdr (env, l);
+            l = cdr (l);
         }
         return size;
     }
     shared_ptr <num_o>
-    list_length (env_t &env, shared_ptr <obj_t> l)
+    list_length (shared_ptr <obj_t> l)
     {
-        auto size = list_size (env, l);
+        auto size = list_size (l);
         auto length = static_cast <num_t> (size);
         return make_num (length);
     }
     shared_ptr <obj_t>
-    list_reverse (env_t &env, shared_ptr <obj_t> l)
+    list_reverse (shared_ptr <obj_t> l)
     {
-        assert (list_p (env, l));
-        auto result = null_c (env);
-        while (! null_p (env, l)) {
-            auto obj = car (env, l);
-            result = cons_c (env, obj, result);
-            l = cdr (env, l);
+        assert (list_p (l));
+        auto result = null_c ();
+        while (! null_p (l)) {
+            auto obj = car (l);
+            result = cons_c (obj, result);
+            l = cdr (l);
         }
         return result;
     }
     shared_ptr <obj_t>
     list_append (
-        env_t &env,
         shared_ptr <obj_t> ante,
         shared_ptr <obj_t> succ)
     {
-        auto l = list_reverse (env, ante);
+        auto l = list_reverse (ante);
         auto result = succ;
-        while (! null_p (env, l)) {
-            auto obj = car (env, l);
-            result = cons_c (env, obj, result);
-            l = cdr (env, l);
+        while (! null_p (l)) {
+            auto obj = car (l);
+            result = cons_c (obj, result);
+            l = cdr (l);
         }
         return result;
     }
     shared_ptr <obj_t>
-    unit_list (env_t &env, shared_ptr <obj_t> obj)
+    unit_list (shared_ptr <obj_t> obj)
     {
-        return cons_c (env, obj, null_c (env));
+        return cons_c (obj, null_c ());
     }
     struct vect_o: obj_t
     {
         obj_vector_t obj_vector;
         vect_o (obj_vector_t obj_vector);
-        bool eq (env_t &env, shared_ptr <obj_t> obj);
+        bool eq (shared_ptr <obj_t> obj);
         string repr (env_t &env);
     };
     vect_o::vect_o (obj_vector_t obj_vector)
@@ -1943,7 +1916,6 @@
     }
     bool
     vect_eq (
-        env_t &env,
         obj_vector_t &lhs,
         obj_vector_t &rhs)
     {
@@ -1951,18 +1923,18 @@
         auto size = lhs.size ();
         size_t index = 0;
         while (index < size) {
-            if (! obj_eq (env, lhs [index], rhs [index]))
+            if (! obj_eq (lhs [index], rhs [index]))
                 return false;
             index++;
         }
         return true;
     }
     bool
-    vect_o::eq (env_t &env, shared_ptr <obj_t> obj)
+    vect_o::eq (shared_ptr <obj_t> obj)
     {
         if (this->tag != obj->tag) return false;
         auto that = as_vect (obj);
-        return vect_eq (env, this->obj_vector, that->obj_vector);
+        return vect_eq (this->obj_vector, that->obj_vector);
     }
     string
     vect_o::repr (env_t &env)
@@ -1977,39 +1949,38 @@
         return repr;
     }
     bool
-    vect_p (env_t &env, shared_ptr <obj_t> a)
+    vect_p (shared_ptr <obj_t> a)
     {
         return a->tag == vect_tag;
     }
     shared_ptr <vect_o>
-    list_to_vect (env_t &env, shared_ptr <obj_t> l)
+    list_to_vect (shared_ptr <obj_t> l)
     {
         auto obj_vector = obj_vector_t ();
-        while (cons_p (env, l)) {
-            obj_vector.push_back (car (env, l));
-            l = cdr (env, l);
+        while (cons_p (l)) {
+            obj_vector.push_back (car (l));
+            l = cdr (l);
         }
         return make_vect (obj_vector);
     }
     shared_ptr <obj_t>
-    vect_to_list (env_t &env, shared_ptr <vect_o> vect)
+    vect_to_list (shared_ptr <vect_o> vect)
     {
         auto obj_vector = vect->obj_vector;
-        auto result = null_c (env);
+        auto result = null_c ();
         auto begin = obj_vector.rbegin ();
         auto end = obj_vector.rend ();
         for (auto it = begin; it != end; it++)
-            result = cons_c (env, *it, result);
+            result = cons_c (*it, result);
         return result;
     }
     shared_ptr <num_o>
-    vect_length (env_t &env, shared_ptr <vect_o> vect)
+    vect_length (shared_ptr <vect_o> vect)
     {
         return make_num (vect->obj_vector.size ());
     }
     shared_ptr <vect_o>
     vect_append (
-        env_t &env,
         shared_ptr <vect_o> ante,
         shared_ptr <vect_o> succ)
     {
@@ -2022,7 +1993,6 @@
     }
     shared_ptr <vect_o>
     vect_slice (
-        env_t &env,
         shared_ptr <vect_o> vect,
         shared_ptr <num_o> begin,
         shared_ptr <num_o> end)
@@ -2041,7 +2011,6 @@
     }
     shared_ptr <obj_t>
     vect_ref (
-        env_t &env,
         shared_ptr <vect_o> vect,
         shared_ptr <num_o> index)
     {
@@ -2051,18 +2020,14 @@
         return vect->obj_vector [index->num];
     }
     shared_ptr <obj_t>
-    vect_head (
-        env_t &env,
-        shared_ptr <vect_o> vect)
+    vect_head (shared_ptr <vect_o> vect)
     {
         auto size = vect->obj_vector.size ();
         assert (size >= 1);
         return vect->obj_vector [0];
     }
     shared_ptr <vect_o>
-    vect_rest (
-        env_t &env,
-        shared_ptr <vect_o> vect)
+    vect_rest (shared_ptr <vect_o> vect)
     {
         auto size = vect->obj_vector.size ();
         assert (size >= 1);
@@ -2076,9 +2041,7 @@
         return make_vect (obj_vector);
     }
     shared_ptr <vect_o>
-    vect_reverse (
-        env_t &env,
-        shared_ptr <vect_o> vect)
+    vect_reverse (shared_ptr <vect_o> vect)
     {
         auto obj_vector = vect->obj_vector;
         reverse (obj_vector.begin (),
@@ -2086,16 +2049,14 @@
         return make_vect (obj_vector);
     }
     shared_ptr <vect_o>
-    unit_vect (
-        env_t &env,
-        shared_ptr <obj_t> obj)
+    unit_vect (shared_ptr <obj_t> obj)
     {
         auto obj_vector = obj_vector_t ();
         obj_vector.push_back (obj);
         return make_vect (obj_vector);
     }
     shared_ptr <data_o>
-    nothing_c (env_t &env)
+    nothing_c ()
     {
        return make_data (
            nothing_tag,
@@ -2103,14 +2064,12 @@
            obj_map_t ());
     }
     bool
-    nothing_p (env_t &env, shared_ptr <obj_t> a)
+    nothing_p (shared_ptr <obj_t> a)
     {
         return a->tag == nothing_tag;
     }
     shared_ptr <data_o>
-    just_c (
-        env_t &env,
-        shared_ptr <obj_t> value)
+    just_c (shared_ptr <obj_t> value)
     {
         auto obj_map = obj_map_t ();
         obj_map ["value"] = value;
@@ -2120,26 +2079,26 @@
             obj_map);
     }
     bool
-    just_p (env_t &env, shared_ptr <obj_t> a)
+    just_p (shared_ptr <obj_t> a)
     {
         return a->tag == just_tag;
     }
     shared_ptr <obj_t>
-    value_of_just (env_t &env, shared_ptr <obj_t> just)
+    value_of_just (shared_ptr <obj_t> just)
     {
-        assert (just_p (env, just));
+        assert (just_p (just));
         return just->obj_map ["value"];
     }
     bool
-    maybe_p (env_t &env, shared_ptr <obj_t> a)
+    maybe_p (shared_ptr <obj_t> a)
     {
-        return nothing_p (env, a)
-            or just_p (env, a);
+        return nothing_p (a)
+            or just_p (a);
     }
     struct dict_o: obj_t
     {
         dict_o (obj_map_t obj_map);
-        bool eq (env_t &env, shared_ptr <obj_t> obj);
+        bool eq (shared_ptr <obj_t> obj);
         string repr (env_t &env);
     };
     dict_o::dict_o (obj_map_t obj_map)
@@ -2159,11 +2118,11 @@
         return static_pointer_cast <dict_o> (obj);
     }
     bool
-    dict_o::eq (env_t &env, shared_ptr <obj_t> obj)
+    dict_o::eq (shared_ptr <obj_t> obj)
     {
         if (this->tag != obj->tag) return false;
         auto that = as_dict (obj);
-        return obj_map_eq (env, this->obj_map, that->obj_map);
+        return obj_map_eq (this->obj_map, that->obj_map);
     }
     string
     dict_o::repr (env_t &env)
@@ -2174,79 +2133,77 @@
         return repr;
     }
     bool
-    dict_p (env_t &env, shared_ptr <obj_t> a)
+    dict_p (shared_ptr <obj_t> a)
     {
         return a->tag == dict_tag;
     }
     shared_ptr <dict_o>
-    list_to_dict (env_t &env, shared_ptr <obj_t> l)
+    list_to_dict (shared_ptr <obj_t> l)
     {
         auto obj_map = obj_map_t ();
-        while (! null_p (env, l)) {
-            auto pair = car (env, l);
-            auto sym = as_sym (car (env, pair));
-            auto obj = car (env, cdr (env, pair));
+        while (! null_p (l)) {
+            auto pair = car (l);
+            auto sym = as_sym (car (pair));
+            auto obj = car (cdr (pair));
             obj_map [sym->sym] = obj;
-            l = cdr (env, l);
+            l = cdr (l);
         }
         return make_dict (obj_map);
     }
     shared_ptr <obj_t>
-    dict_to_list (env_t &env, shared_ptr <dict_o> dict)
+    dict_to_list (shared_ptr <dict_o> dict)
     {
-        auto result = null_c (env);
+        auto result = null_c ();
         for (auto &kv: dict->obj_map) {
             auto sym = make_sym (kv.first);
             auto obj = kv.second;
-            auto pair = cons_c (env, sym, unit_list (env, obj));
-            result = cons_c (env, pair, result);
+            auto pair = cons_c (sym, unit_list (obj));
+            result = cons_c (pair, result);
         }
         return result;
     }
     shared_ptr <obj_t>
-    dict_to_flat_list (env_t &env, shared_ptr <dict_o> dict)
+    dict_to_flat_list (shared_ptr <dict_o> dict)
     {
-        auto result = null_c (env);
+        auto result = null_c ();
         for (auto &kv: dict->obj_map) {
             auto sym = make_sym (kv.first);
             auto key = cons_c (
-                env,
                 make_sym ("quote"),
-                unit_list (env, sym));
+                unit_list (sym));
             auto obj = kv.second;
-            result = cons_c (env, obj, result);
-            result = cons_c (env, key, result);
+            result = cons_c (obj, result);
+            result = cons_c (key, result);
         }
         return result;
     }
     shared_ptr <num_o>
-    dict_length (env_t &env, shared_ptr <dict_o> dict)
+    dict_length (shared_ptr <dict_o> dict)
     {
         return make_num (dict->obj_map.size ());
     }
     shared_ptr <obj_t>
-    dict_key_list (env_t &env, shared_ptr <dict_o> dict)
+    dict_key_list (shared_ptr <dict_o> dict)
     {
-        auto result = null_c (env);
+        auto result = null_c ();
         for (auto &kv: dict->obj_map) {
             auto sym = make_sym (kv.first);
-            result = cons_c (env, sym, result);
+            result = cons_c (sym, result);
         }
         return result;
     }
     shared_ptr <obj_t>
-    dict_value_list (env_t &env, shared_ptr <dict_o> dict)
+    dict_value_list (shared_ptr <dict_o> dict)
     {
-        auto result = null_c (env);
+        auto result = null_c ();
         for (auto &kv: dict->obj_map) {
             auto obj = kv.second;
-            result = cons_c (env, obj, result);
+            result = cons_c (obj, result);
         }
         return result;
     }
     shared_ptr <dict_o>
     dict_insert (
-        env_t &env,
         shared_ptr <dict_o> dict,
         shared_ptr <sym_o> sym,
         shared_ptr <obj_t> value)
@@ -2258,7 +2215,6 @@
     }
     shared_ptr <dict_o>
     dict_merge (
-        env_t &env,
         shared_ptr <dict_o> ante,
         shared_ptr <dict_o> succ)
     {
@@ -2272,7 +2228,6 @@
     }
     shared_ptr <obj_t>
     dict_find (
-        env_t &env,
         shared_ptr <dict_o> dict,
         shared_ptr <sym_o> sym)
     {
@@ -2281,10 +2236,10 @@
         auto it = obj_map.find (key);
         if (it != obj_map.end ()) {
             auto value = it->second;
-            return just_c (env, value);
+            return just_c (value);
         }
         else {
-            return nothing_c (env);
+            return nothing_c ();
         }
     }
     bool
@@ -2432,27 +2387,20 @@
 
     }
     shared_ptr <obj_t>
-    word_vector_to_word_list
-    (env_t &env, string_vector_t &word_vector)
+    scan_word_list (shared_ptr <str_o> code)
     {
+        auto word_vector = scan_word_vector (code->str);
         auto begin = word_vector.rbegin ();
         auto end = word_vector.rend ();
-        auto collect = null_c (env);
+        auto collect = null_c ();
         for (auto it = begin; it != end; it++) {
             auto word = *it;
             if (word != ",") {
                 auto obj = make_str (word);
-                collect = cons_c (env, obj, collect);
+                collect = cons_c (obj, collect);
             }
         }
         return collect;
-    }
-    shared_ptr <obj_t>
-    scan_word_list (env_t &env, shared_ptr <str_o> code)
-    {
-        auto word_vector = scan_word_vector (code->str);
-        return word_vector_to_word_list
-            (env, word_vector);
     }
     bool
     bar_word_p (string word)
@@ -2492,61 +2440,56 @@
     }
     shared_ptr <obj_t>
     word_list_head_with_bar_ket_counter (
-        env_t &env,
         shared_ptr <obj_t> word_list,
         string bar,
         string ket,
         size_t counter)
     {
         if (counter == 0)
-            return null_c (env);
-        auto head = as_str (car (env, word_list));
+            return null_c ();
+        auto head = as_str (car (word_list));
         auto word = head->str;
         if (word == bar)
             return cons_c (
-                env, head, word_list_head_with_bar_ket_counter (
-                    env, cdr (env, word_list),
+                head, word_list_head_with_bar_ket_counter (
+                    cdr (word_list),
                     bar, ket, counter + 1));
         if (word == ket)
             return cons_c (
-                env, head, word_list_head_with_bar_ket_counter (
-                    env,
-                    cdr (env, word_list),
+                head, word_list_head_with_bar_ket_counter (
+                    cdr (word_list),
                     bar, ket, counter - 1));
         else
             return cons_c (
-                env, head, word_list_head_with_bar_ket_counter (
-                    env,
-                    cdr (env, word_list),
+                head, word_list_head_with_bar_ket_counter (
+                    cdr (word_list),
                     bar, ket, counter));
     }
     shared_ptr <obj_t>
-    word_list_head (env_t &env, shared_ptr <obj_t> word_list)
+    word_list_head (shared_ptr <obj_t> word_list)
     {
-        assert (cons_p (env, word_list));
-        auto head = as_str (car (env, word_list));
+        assert (cons_p (word_list));
+        auto head = as_str (car (word_list));
         auto word = head->str;
         if (bar_word_p (word)) {
             auto bar = word;
             auto ket = bar_word_to_ket_word (word);
             return cons_c (
-                env, head, word_list_head_with_bar_ket_counter (
-                    env,
-                    cdr (env, word_list),
+                head, word_list_head_with_bar_ket_counter (
+                    cdr (word_list),
                     bar, ket, 1));
         }
         else if (quote_word_p (word))
             return cons_c (
-                env, head, word_list_head (env, cdr (env, word_list)));
+                head, word_list_head (cdr (word_list)));
         else if (unquote_word_p (word))
             return cons_c (
-                env, head, word_list_head (env, cdr (env, word_list)));
+                head, word_list_head (cdr (word_list)));
         else
-            return unit_list (env, head);
+            return unit_list (head);
     }
     shared_ptr <obj_t>
     word_list_rest_with_bar_ket_counter (
-        env_t &env,
         shared_ptr <obj_t> word_list,
         string bar,
         string ket,
@@ -2554,66 +2497,61 @@
     {
         if (counter == 0)
             return word_list;
-        auto head = as_str (car (env, word_list));
+        auto head = as_str (car (word_list));
         auto word = head->str;
         if (word == bar)
             return word_list_rest_with_bar_ket_counter (
-                env,
-                cdr (env, word_list),
+                cdr (word_list),
                 bar, ket, counter + 1);
         if (word == ket)
             return word_list_rest_with_bar_ket_counter (
-                env,
-                cdr (env, word_list),
+                cdr (word_list),
                 bar, ket, counter - 1);
         else
             return word_list_rest_with_bar_ket_counter (
-                env,
-                cdr (env, word_list),
+                cdr (word_list),
                 bar, ket, counter);
     }
     shared_ptr <obj_t>
-    word_list_rest (env_t &env, shared_ptr <obj_t> word_list)
+    word_list_rest (shared_ptr <obj_t> word_list)
     {
-        assert (cons_p (env, word_list));
-        auto head = as_str (car (env, word_list));
+        assert (cons_p (word_list));
+        auto head = as_str (car (word_list));
         auto word = head->str;
         if (bar_word_p (word)) {
             auto bar = word;
             auto ket = bar_word_to_ket_word (word);
-            return word_list_rest_with_bar_ket_counter
-                (env,
-                 cdr (env, word_list),
-                 bar, ket, 1);
+            return word_list_rest_with_bar_ket_counter (
+                cdr (word_list),
+                bar, ket, 1);
         }
         else if (quote_word_p (word))
-            return word_list_rest (env, cdr (env, word_list));
+            return word_list_rest (cdr (word_list));
         else if (unquote_word_p (word))
-            return word_list_rest (env, cdr (env, word_list));
+            return word_list_rest (cdr (word_list));
         else
-            return cdr (env, word_list);
+            return cdr (word_list);
     }
     shared_ptr <obj_t>
     word_list_drop_ket (
-        env_t &env,
         shared_ptr <obj_t> word_list,
         string ket)
     {
-        auto head = car (env, word_list);
-        auto rest = cdr (env, word_list);
-        if (null_p (env, rest))
-            return null_c (env);
-        auto cdr_rest = cdr (env, rest);
-        auto car_rest = as_str (car (env, rest));
+        auto head = car (word_list);
+        auto rest = cdr (word_list);
+        if (null_p (rest))
+            return null_c ();
+        auto cdr_rest = cdr (rest);
+        auto car_rest = as_str (car (rest));
         auto word = car_rest->str;
-        if (null_p (env, cdr_rest)) {
+        if (null_p (cdr_rest)) {
             assert (word == ket);
-            return unit_list (env, head);
+            return unit_list (head);
         }
         else {
             return cons_c (
-                env, head,
-                word_list_drop_ket (env, rest, ket));
+                head,
+                word_list_drop_ket (rest, ket));
         }
     }
     bool
@@ -2650,115 +2588,102 @@
         }
     }
     shared_ptr <vect_o>
-    sexp_list_to_vect (env_t &env, shared_ptr <obj_t> sexp_list)
+    sexp_list_to_vect (shared_ptr <obj_t> sexp_list)
     {
-        return list_to_vect (env, sexp_list);
+        return list_to_vect (sexp_list);
     }
     shared_ptr <obj_t>
-    sexp_list_prefix_assign (
-        env_t &env,
-        shared_ptr <obj_t> sexp_list);
+    sexp_list_prefix_assign (shared_ptr <obj_t> sexp_list);
 
     shared_ptr <obj_t>
     sexp_list_prefix_assign_with_last_sexp (
-        env_t &env,
         shared_ptr <obj_t> sexp_list,
         shared_ptr <obj_t> last_sexp)
     {
-        if (null_p (env, sexp_list)) {
-            return unit_list (env, last_sexp);
+        if (null_p (sexp_list)) {
+            return unit_list (last_sexp);
         }
         else {
-            auto head = car (env, sexp_list);
-            if (sym_p (env, head) and as_sym (head) ->sym == "=") {
-                auto next = car (env, cdr (env, sexp_list));
-                auto rest = cdr (env, cdr (env, sexp_list));
+            auto head = car (sexp_list);
+            if (sym_p (head) and as_sym (head) ->sym == "=") {
+                auto next = car (cdr (sexp_list));
+                auto rest = cdr (cdr (sexp_list));
                 auto new_last_sexp = cons_c (
-                    env, head, cons_c (
-                        env, last_sexp,
-                        unit_list (env, next)));
+                    head, cons_c (
+                        last_sexp,
+                        unit_list (next)));
                 return cons_c (
-                    env, new_last_sexp,
-                    sexp_list_prefix_assign (
-                        env, rest));
+                    new_last_sexp,
+                    sexp_list_prefix_assign (rest));
             }
             else {
-                auto rest = cdr (env, sexp_list);
+                auto rest = cdr (sexp_list);
                 return cons_c (
-                    env, last_sexp,
-                    sexp_list_prefix_assign_with_last_sexp (
-                        env, rest, head));
+                    last_sexp,
+                    sexp_list_prefix_assign_with_last_sexp (rest, head));
             }
         }
     }
     shared_ptr <obj_t>
-    sexp_list_prefix_assign (
-        env_t &env,
-        shared_ptr <obj_t> sexp_list)
+    sexp_list_prefix_assign (shared_ptr <obj_t> sexp_list)
     {
-        if (null_p (env, sexp_list))
+        if (null_p (sexp_list))
             return sexp_list;
         else {
             return sexp_list_prefix_assign_with_last_sexp (
-                env,
-                cdr (env, sexp_list),
-                car (env, sexp_list));
+                cdr (sexp_list),
+                car (sexp_list));
         }
     }
     shared_ptr <obj_t>
-    sexp_list_assign_to_pair (
-        env_t &env,
-        shared_ptr <obj_t> sexp_list)
+    sexp_list_assign_to_pair (shared_ptr <obj_t> sexp_list)
     {
-        if (null_p (env, sexp_list))
+        if (null_p (sexp_list))
             return sexp_list;
         else
             return cons_c (
-                env,
-                cdr (env, car (env, sexp_list)),
-                sexp_list_assign_to_pair (
-                    env, cdr (env, sexp_list)));
+                cdr (car (sexp_list)),
+                sexp_list_assign_to_pair (cdr (sexp_list)));
     }
     shared_ptr <dict_o>
-    sexp_list_to_dict (env_t &env, shared_ptr <obj_t> sexp_list)
+    sexp_list_to_dict (shared_ptr <obj_t> sexp_list)
     {
         return list_to_dict (
-            env, sexp_list_assign_to_pair (
-                env, sexp_list_prefix_assign (env, sexp_list)));
+            sexp_list_assign_to_pair (
+                sexp_list_prefix_assign (sexp_list)));
     }
     shared_ptr <obj_t>
-    parse_sexp_list (env_t &env, shared_ptr <obj_t> word_list);
+    parse_sexp_list (shared_ptr <obj_t> word_list);
 
     shared_ptr <obj_t>
-    parse_sexp (env_t &env, shared_ptr <obj_t> word_list)
+    parse_sexp (shared_ptr <obj_t> word_list)
     {
-        auto head = as_str (car (env, word_list));
+        auto head = as_str (car (word_list));
         auto word = head->str;
-        auto rest = cdr (env, word_list);
+        auto rest = cdr (word_list);
         if (word == "(")
             return parse_sexp_list (
-                env,
-                word_list_drop_ket (env, rest, ")"));
+                word_list_drop_ket (rest, ")"));
         else if (word == "[")
             return sexp_list_to_vect (
-                env, parse_sexp_list (
-                    env, word_list_drop_ket (env, rest, "]")));
+                parse_sexp_list (
+                    word_list_drop_ket (rest, "]")));
         else if (word == "{")
             return sexp_list_to_dict (
-                env, parse_sexp_list (
-                    env, word_list_drop_ket (env, rest, "}")));
+                parse_sexp_list (
+                    word_list_drop_ket (rest, "}")));
         else if (word == "'")
-            return cons_c (env, make_sym ("quote"),
-                           unit_list (env, parse_sexp (env, rest)));
+            return cons_c (make_sym ("quote"),
+                           unit_list (parse_sexp (rest)));
         else if (word == "`")
-            return cons_c (env, make_sym ("quasiquote"),
-                           unit_list (env, parse_sexp (env, rest)));
+            return cons_c (make_sym ("quasiquote"),
+                           unit_list (parse_sexp (rest)));
         else if (word == "~")
-            return cons_c (env, make_sym ("unquote"),
-                           unit_list (env, parse_sexp (env, rest)));
+            return cons_c (make_sym ("unquote"),
+                           unit_list (parse_sexp (rest)));
         else if (word == "~@")
-            return cons_c (env, make_sym ("unquote-splicing"),
-                           unit_list (env, parse_sexp (env, rest)));
+            return cons_c (make_sym ("unquote-splicing"),
+                           unit_list (parse_sexp (rest)));
         else if (num_string_p (word))
             return make_num (s2n (word));
         else if (string_string_p (word))
@@ -2767,65 +2692,64 @@
             return make_sym (word);
     }
     shared_ptr <obj_t>
-    parse_sexp_list (env_t &env, shared_ptr <obj_t> word_list)
+    parse_sexp_list (shared_ptr <obj_t> word_list)
     {
-        if (null_p (env, word_list))
+        if (null_p (word_list))
             return word_list;
         else
             return cons_c (
-                env,
-                parse_sexp (env, word_list_head (env, word_list)),
-                parse_sexp_list (env, word_list_rest (env, word_list)));
+                parse_sexp (word_list_head (word_list)),
+                parse_sexp_list (word_list_rest (word_list)));
     }
     string
-    sexp_list_repr (env_t &env, shared_ptr <obj_t> a);
+    sexp_list_repr (env_t &env, shared_ptr <obj_t> sexp_list);
 
     string
-    sexp_repr (env_t &env, shared_ptr <obj_t> a)
+    sexp_repr (env_t &env, shared_ptr <obj_t> sexp)
     {
-        if (null_p (env, a)) {
+        if (null_p (sexp)) {
             return "()";
         }
-        else if (cons_p (env, a)) {
-            return "(" + sexp_list_repr (env, a) + ")";
+        else if (cons_p (sexp)) {
+            return "(" + sexp_list_repr (env, sexp) + ")";
         }
-        else if (vect_p (env, a)) {
-            auto v = as_vect (a);
-            auto l = vect_to_list (env, v);
+        else if (vect_p (sexp)) {
+            auto v = as_vect (sexp);
+            auto l = vect_to_list (v);
             return "[" + sexp_list_repr (env, l) + "]";
         }
-        else if (dict_p (env, a)) {
-            auto d = as_dict (a);
-            auto l = dict_to_list (env, d);
+        else if (dict_p (sexp)) {
+            auto d = as_dict (sexp);
+            auto l = dict_to_list (d);
             return "{" + sexp_list_repr (env, l) + "}";
         }
-        else if (str_p (env, a)) {
-            auto str = as_str (a);
+        else if (str_p (sexp)) {
+            auto str = as_str (sexp);
             return '"' + str->str + '"';
         }
-        else if (sym_p (env, a)) {
-            auto sym = as_sym (a);
+        else if (sym_p (sexp)) {
+            auto sym = as_sym (sexp);
             return sym->sym;
         }
         else {
-            return a->repr (env);
+            return sexp->repr (env);
         }
     }
     string
     sexp_list_repr (env_t &env, shared_ptr <obj_t> sexp_list)
     {
-        if (null_p (env, sexp_list))
+        if (null_p (sexp_list))
             return "";
-        else if (null_p (env, cdr (env, sexp_list)))
-            return sexp_repr (env, car (env, sexp_list));
-        else if (! cons_p (env, cdr (env, sexp_list)))
+        else if (null_p (cdr (sexp_list)))
+            return sexp_repr (env, car (sexp_list));
+        else if (! cons_p (cdr (sexp_list)))
             return
-                sexp_repr (env, car (env, sexp_list)) + " . " +
-                sexp_repr (env, cdr (env, sexp_list));
+                sexp_repr (env, car (sexp_list)) + " . " +
+                sexp_repr (env, cdr (sexp_list));
         else {
             return
-                sexp_repr (env, car (env, sexp_list)) + " " +
-                sexp_list_repr (env, cdr (env, sexp_list));
+                sexp_repr (env, car (sexp_list)) + " " +
+                sexp_list_repr (env, cdr (sexp_list));
         }
     }
     string
@@ -2889,7 +2813,7 @@
     {
         env_t module_env;
         module_o (env_t module_env);
-        bool eq (env_t &env, shared_ptr <obj_t> obj);
+        bool eq (shared_ptr <obj_t> obj);
         string repr (env_t &env);
     };
     module_o::module_o (env_t module_env)
@@ -2910,7 +2834,7 @@
         return false;
     }
     bool
-    module_o::eq (env_t &env, shared_ptr <obj_t> obj)
+    module_o::eq (shared_ptr <obj_t> obj)
     {
         if (this->tag != obj->tag) return false;
         auto that = static_pointer_cast <module_o> (obj);
@@ -3228,10 +3152,10 @@
           local_ref_map_t &local_ref_map,
           shared_ptr <vect_o> vect)
       {
-          auto sexp_list = vect_to_list (env, vect);
+          auto sexp_list = vect_to_list (vect);
           auto jojo = sexp_list_compile
               (env, local_ref_map, sexp_list);
-          auto counter = list_size (env, sexp_list);
+          auto counter = list_size (sexp_list);
           jo_vector_t jo_vector = {
               new collect_vect_jo_t (counter),
           };
@@ -3286,10 +3210,10 @@
           local_ref_map_t &local_ref_map,
           shared_ptr <dict_o> dict)
       {
-          auto sexp_list = dict_to_flat_list (env, dict);
+          auto sexp_list = dict_to_flat_list (dict);
           auto jojo = sexp_list_compile
               (env, local_ref_map, sexp_list);
-          auto counter = list_size (env, sexp_list);
+          auto counter = list_size (sexp_list);
           counter = counter / 2;
           jo_vector_t jo_vector = {
               new collect_dict_jo_t (counter),
@@ -3306,7 +3230,7 @@
         {
             keyword_fn fn;
             keyword_o (keyword_fn fn);
-            bool eq (env_t &env, shared_ptr <obj_t> obj);
+            bool eq (shared_ptr <obj_t> obj);
         };
         keyword_o::
         keyword_o (keyword_fn fn)
@@ -3315,13 +3239,13 @@
             this->fn = fn;
         }
         bool
-        keyword_o::eq (env_t &env, shared_ptr <obj_t> obj)
+        keyword_o::eq (shared_ptr <obj_t> obj)
         {
             if (this->tag != obj->tag) return false;
             return this != obj.get ();
         }
         bool
-        keyword_p (env_t &env, shared_ptr <obj_t> a)
+        keyword_p (shared_ptr <obj_t> a)
         {
             return a->tag == keyword_tag;
         }
@@ -3333,15 +3257,15 @@
         bool
         keyword_sexp_p (env_t &env, shared_ptr <obj_t> sexp)
         {
-            if (! cons_p (env, sexp)) return false;
-            if (! sym_p (env, (car (env, sexp)))) return false;
-            auto head = as_sym (car (env, sexp));
+            if (! cons_p (sexp)) return false;
+            if (! sym_p ((car (sexp)))) return false;
+            auto head = as_sym (car (sexp));
             auto name = head->sym;
             auto it = env.box_map.find (name);
             if (it != env.box_map.end ()) {
                 auto box = it->second;
                 if (box->empty_p) return false;
-                if (keyword_p (env, box->obj)) return true;
+                if (keyword_p (box->obj)) return true;
                 else return false;
             }
             else {
@@ -3358,7 +3282,7 @@
                     cout << "- fatal error: keyword_fn_from_name fail\n";
                     exit (1);
                 }
-                if (keyword_p (env, box->obj)) {
+                if (keyword_p (box->obj)) {
                     auto keyword = static_pointer_cast <keyword_o>
                         (box->obj);
                     return keyword->fn;
@@ -3379,8 +3303,8 @@
           local_ref_map_t &local_ref_map,
           shared_ptr <obj_t> sexp)
       {
-          auto head = as_sym (car (env, sexp));
-          auto body = cdr (env, sexp);
+          auto head = as_sym (car (sexp));
+          auto body = cdr (sexp);
           auto name = head->sym;
           auto fn = keyword_fn_from_name (env, name);
           return fn (env, local_ref_map, body);
@@ -3389,7 +3313,7 @@
         {
             shared_ptr <obj_t> obj;
             macro_o (shared_ptr <obj_t> obj);
-            bool eq (env_t &env, shared_ptr <obj_t> obj);
+            bool eq (shared_ptr <obj_t> obj);
         };
         macro_o::
         macro_o (shared_ptr <obj_t> obj)
@@ -3403,7 +3327,7 @@
             return make_shared <macro_o> (obj);
         }
         bool
-        macro_p (env_t &env, shared_ptr <obj_t> a)
+        macro_p (shared_ptr <obj_t> a)
         {
             return a->tag == macro_tag;
         }
@@ -3414,33 +3338,33 @@
             return static_pointer_cast <macro_o> (obj);
         }
         bool
-        macro_o::eq (env_t &env, shared_ptr <obj_t> obj)
+        macro_o::eq (shared_ptr <obj_t> obj)
         {
             if (this->tag != obj->tag) return false;
             auto that = as_macro (obj);
-            return obj_eq (env, this->obj, that->obj);
+            return obj_eq (this->obj, that->obj);
         }
         shared_ptr <obj_t>
         sexp_eval (env_t &env, shared_ptr <obj_t> sexp);
         bool
         macro_sexp_p (env_t &env, shared_ptr <obj_t> sexp)
         {
-            if (! cons_p (env, sexp)) return false;;
-            auto head = car (env, sexp);
-            if (! sym_p (env, head)) return false;
+            if (! cons_p (sexp)) return false;;
+            auto head = car (sexp);
+            if (! sym_p (head)) return false;
             auto sym = as_sym (head);
             auto name = sym->sym;
             auto found = find_obj_from_name (env, name);
             if (! found) return false;
             auto obj = sexp_eval (env, head);
-            return macro_p (env, obj);
+            return macro_p (obj);
         }
         shared_ptr <obj_t>
         macro_eval (env_t &env, shared_ptr <obj_t> sexp)
         {
-            assert (cons_p (env, sexp));
-            auto head = car (env, sexp);
-            auto rest = cdr (env, sexp);
+            assert (cons_p (sexp));
+            auto head = car (sexp);
+            auto rest = cdr (sexp);
             auto obj = sexp_eval (env, head);
             auto macro = as_macro (obj);
             env.obj_stack.push (rest);
@@ -3506,11 +3430,11 @@
       size_t
       arity_of_body (env_t &env, shared_ptr <obj_t> body)
       {
-          assert (list_p (env, body));
+          assert (list_p (body));
           auto arity = 0;
-          while (! null_p (env, body)) {
-              auto head = car (env, body);
-              if (! sym_p (env, head)) {
+          while (! null_p (body)) {
+              auto head = car (body);
+              if (! sym_p (head)) {
                   arity++;
               }
               else {
@@ -3537,7 +3461,7 @@
                       arity++;
                   }
               }
-              body = cdr (env, body);
+              body = cdr (body);
           }
           return arity;
       }
@@ -3547,8 +3471,8 @@
           local_ref_map_t &local_ref_map,
           shared_ptr <obj_t> sexp)
       {
-          auto head = car (env, sexp);
-          auto body = cdr (env, sexp);
+          auto head = car (sexp);
+          auto body = cdr (sexp);
           auto jo_vector = jo_vector_t ();
           auto arity = arity_of_body (env, body);
           jo_vector.push_back (new apply_jo_t (arity));
@@ -3652,22 +3576,22 @@
           env_t &env,
           shared_ptr <obj_t> sexp)
       {
-          if (! cons_p (env, sexp)) return false;
-          auto l = cdr (env, sexp);
-          while (! null_p (env, l)) {
-              auto head = car (env, l);
-              if (sym_p (env, head) and as_sym (head) ->sym == "=") {
+          if (! cons_p (sexp)) return false;
+          auto l = cdr (sexp);
+          while (! null_p (l)) {
+              auto head = car (l);
+              if (sym_p (head) and as_sym (head) ->sym == "=") {
                   return true;
               }
-              if (cons_p (env, head)) {
-                  auto head_head = car (env, head);
-                  if (sym_p (env, head_head) and
+              if (cons_p (head)) {
+                  auto head_head = car (head);
+                  if (sym_p (head_head) and
                       as_sym (head_head) ->sym == "=")
                   {
                       return true;
                   }
               }
-              l = cdr (env, l);
+              l = cdr (l);
           }
           return false;
       }
@@ -3677,13 +3601,13 @@
           local_ref_map_t &local_ref_map,
           shared_ptr <obj_t> sexp)
       {
-          auto head = car (env, sexp);
-          auto body = cdr (env, sexp);
+          auto head = car (sexp);
+          auto body = cdr (sexp);
           auto jo_vector = jo_vector_t ();
           jo_vector.push_back (new apply_to_arg_dict_jo_t ());
           auto jojo = make_shared <jojo_t> (jo_vector);
           auto head_jojo = sexp_compile (env, local_ref_map, head);
-          auto dict = sexp_list_to_dict (env, body);
+          auto dict = sexp_list_to_dict (body);
           auto body_jojo = dict_compile (env, local_ref_map, dict);
           jojo = jojo_append (head_jojo, jojo);
           jojo = jojo_append (body_jojo, jojo);
@@ -3695,19 +3619,19 @@
         local_ref_map_t &local_ref_map,
         shared_ptr <obj_t> sexp)
     {
-        if (str_p (env, sexp) or
-            num_p (env, sexp))
+        if (str_p (sexp) or
+            num_p (sexp))
         {
             return lit_compile (env, local_ref_map, sexp);
         }
-        else if (sym_p (env, sexp)) {
+        else if (sym_p (sexp)) {
             auto sym = as_sym (sexp);
             return symbol_compile (env, local_ref_map, sym->sym);
         }
-        else if (vect_p (env, sexp)) {
+        else if (vect_p (sexp)) {
             return vect_compile (env, local_ref_map, as_vect (sexp));
         }
-        else if (dict_p (env, sexp)) {
+        else if (dict_p (sexp)) {
             return dict_compile (env, local_ref_map, as_dict (sexp));
         }
         else if (keyword_sexp_p (env, sexp)) {
@@ -3720,7 +3644,7 @@
             return call_with_arg_dict_compile (env, local_ref_map, sexp);
         }
         else {
-            assert (cons_p (env, sexp));
+            assert (cons_p (sexp));
             return call_compile (env, local_ref_map, sexp);
         }
     }
@@ -3731,14 +3655,14 @@
         shared_ptr <obj_t> sexp_list)
     {
         auto jojo = make_shared <jojo_t> (jo_vector_t ());
-        if (null_p (env, sexp_list))
+        if (null_p (sexp_list))
             return jojo;
         else {
-            assert (cons_p (env, sexp_list));
+            assert (cons_p (sexp_list));
             auto head_jojo = sexp_compile
-                (env, local_ref_map, car (env, sexp_list));
+                (env, local_ref_map, car (sexp_list));
             auto body_jojo = sexp_list_compile
-                (env, local_ref_map, cdr (env, sexp_list));
+                (env, local_ref_map, cdr (sexp_list));
             return jojo_append (head_jojo, body_jojo);
         }
     }
@@ -3748,7 +3672,7 @@
       {
           top_keyword_fn fn;
           top_keyword_o (top_keyword_fn fn);
-          bool eq (env_t &env, shared_ptr <obj_t> obj);
+          bool eq (shared_ptr <obj_t> obj);
       };
       top_keyword_o::
       top_keyword_o (top_keyword_fn fn)
@@ -3757,13 +3681,13 @@
           this->fn = fn;
       }
       bool
-      top_keyword_o::eq (env_t &env, shared_ptr <obj_t> obj)
+      top_keyword_o::eq (shared_ptr <obj_t> obj)
       {
           if (this->tag != obj->tag) return false;
           return this != obj.get ();
       }
       bool
-      top_keyword_p (env_t &env, shared_ptr <obj_t> a)
+      top_keyword_p (shared_ptr <obj_t> a)
       {
           return a->tag == top_keyword_tag;
       }
@@ -3775,15 +3699,15 @@
       bool
       top_keyword_sexp_p (env_t &env, shared_ptr <obj_t> sexp)
       {
-          if (! cons_p (env, sexp)) return false;
-          if (! sym_p (env, (car (env, sexp)))) return false;
-          auto head = as_sym (car (env, sexp));
+          if (! cons_p (sexp)) return false;
+          if (! sym_p ((car (sexp)))) return false;
+          auto head = as_sym (car (sexp));
           auto name = head->sym;
           auto it = env.box_map.find (name);
           if (it != env.box_map.end ()) {
               auto box = it->second;
               if (box->empty_p) return false;
-              if (top_keyword_p (env, box->obj)) return true;
+              if (top_keyword_p (box->obj)) return true;
               else return false;
           }
           else {
@@ -3800,7 +3724,7 @@
                   cout << "- fatal error: top_keyword_fn_from_name fail\n";
                   exit (1);
               }
-              if (top_keyword_p (env, box->obj)) {
+              if (top_keyword_p (box->obj)) {
                   auto top_keyword = static_pointer_cast <top_keyword_o>
                       (box->obj);
                   return top_keyword->fn;
@@ -3869,11 +3793,11 @@
     void
     sexp_list_run (env_t &env, shared_ptr <obj_t> sexp_list)
     {
-        if (null_p (env, sexp_list))
+        if (null_p (sexp_list))
             return;
         else {
-            sexp_run (env, car (env, sexp_list));
-            sexp_list_run (env, cdr (env, sexp_list));
+            sexp_run (env, car (sexp_list));
+            sexp_list_run (env, cdr (sexp_list));
         }
     }
     shared_ptr <obj_t>
@@ -3900,8 +3824,8 @@
     top_sexp_run (env_t &env, shared_ptr <obj_t> sexp)
     {
         if (top_keyword_sexp_p (env, sexp)) {
-            auto head = as_sym (car (env, sexp));
-            auto body = cdr (env, sexp);
+            auto head = as_sym (car (sexp));
+            auto body = cdr (sexp);
             auto name = head->sym;
             auto fn = top_keyword_fn_from_name (env, name);
             fn (env, body);
@@ -3919,27 +3843,26 @@
         env_t &env,
         shared_ptr <obj_t> sexp_list)
     {
-        if (null_p (env, sexp_list))
+        if (null_p (sexp_list))
             return;
         else {
-            top_sexp_run (env, car (env, sexp_list));
+            top_sexp_run (env, car (sexp_list));
             top_sexp_list_run_without_infix_assign (
                 env,
-                cdr (env, sexp_list));
+                cdr (sexp_list));
         }
     }
     void
     top_sexp_list_run (env_t &env, shared_ptr <obj_t> sexp_list)
     {
         top_sexp_list_run_without_infix_assign (
-            env, sexp_list_prefix_assign (
-                env, sexp_list));
+            env, sexp_list_prefix_assign (sexp_list));
     }
     void
     code_run (env_t &env, shared_ptr <str_o> code)
     {
-        auto word_list = scan_word_list (env, code);
-        auto sexp_list = parse_sexp_list (env, word_list);
+        auto word_list = scan_word_list (code);
+        auto sexp_list = parse_sexp_list (word_list);
         top_sexp_list_run (env, sexp_list);
     }
     shared_ptr <str_o>
@@ -4027,22 +3950,22 @@
       bool
       assign_data_p (env_t &env, shared_ptr <obj_t> body)
       {
-          if (! cons_p (env, body))
+          if (! cons_p (body))
               return false;
-          if (! sym_p (env, car (env, body)))
+          if (! sym_p (car (body)))
               return false;
-          if (! cons_p (env, cdr (env, body)))
+          if (! cons_p (cdr (body)))
               return false;
-          if (! cons_p (env, car (env, cdr (env, body))))
+          if (! cons_p (car (cdr (body))))
               return false;
-          if (! sym_p (env, car (env, car (env, cdr (env, body)))))
+          if (! sym_p (car (car (cdr (body)))))
               return false;
-          auto sym = as_sym (car (env, car (env, cdr (env, body))));
+          auto sym = as_sym (car (car (cdr (body))));
           if (sym->sym != "data")
               return false;
-          if (null_p (env, cdr (env, car (env, cdr (env, body)))))
+          if (null_p (cdr (car (cdr (body)))))
               return true;
-          if (! sym_p (env, car (env, cdr (env, car (env, cdr (env, body))))))
+          if (! sym_p (car (cdr (car (cdr (body))))))
               return true;
           else
               return true;
@@ -4050,15 +3973,15 @@
       void
       tk_assign_data (env_t &env, shared_ptr <obj_t> body)
       {
-          auto head = as_sym (car (env, body));
+          auto head = as_sym (car (body));
           auto prefix = prefix_of_string (head->sym);
           auto type_name = name_of_string (head->sym);
           auto data_name = name_t2c (type_name);
           auto pred_name = name_t2p (type_name);
           auto tag_of_type = tagging (env, head->sym);
-          auto rest = cdr (env, body);
-          auto data_body = cdr (env, (car (env, rest)));
-          auto name_vect = list_to_vect (env, data_body);
+          auto rest = cdr (body);
+          auto data_body = cdr ((car (rest)));
+          auto name_vect = list_to_vect (data_body);
           auto name_vector = name_vector_t ();
           for (auto obj: name_vect->obj_vector) {
               auto sym = as_sym (obj);
@@ -4072,28 +3995,26 @@
       bool
       assign_lambda_sugar_p (env_t &env, shared_ptr <obj_t> body)
       {
-          if (! cons_p (env, body))
+          if (! cons_p (body))
               return false;
-          if (! cons_p (env, car (env, body)))
+          if (! cons_p (car (body)))
               return false;
           return true;
       }
       shared_ptr <obj_t>
       assign_lambda_desugar (env_t &env, shared_ptr <obj_t> body)
       {
-          auto head = car (env, body);
-          auto name = car (env, head);
-          auto lambda_body = cdr (env, body);
-          lambda_body = cons_c
-              (env,
-               list_to_vect (env, cdr (env, head)),
-               lambda_body);
-          lambda_body = cons_c
-              (env,
-               make_sym ("lambda"),
-               lambda_body);
-          lambda_body = unit_list (env, lambda_body);
-          return cons_c (env, name, lambda_body);
+          auto head = car (body);
+          auto name = car (head);
+          auto lambda_body = cdr (body);
+          lambda_body = cons_c (
+              list_to_vect (cdr (head)),
+              lambda_body);
+          lambda_body = cons_c (
+              make_sym ("lambda"),
+              lambda_body);
+          lambda_body = unit_list (lambda_body);
+          return cons_c (name, lambda_body);
       }
       // shared_ptr <obj_t>
       // sexp_substitute_recur (
@@ -4101,23 +4022,22 @@
       //     shared_ptr <obj_t> sub,
       //     shared_ptr <obj_t> sexp)
       // {
-      //     if (sym_p (env, sexp)) {
+      //     if (sym_p (sexp)) {
       //         auto sym = as_sym (sexp);
       //         if (sym->sym == "recur")
       //             return sub;
       //         else
       //             return sexp;
       //     }
-      //     if (cons_p (env, sexp))
-      //         return cons_c
-      //             (env,
-      //              sexp_substitute_recur (env, sub, car (env, sexp)),
-      //              sexp_substitute_recur (env, sub, cdr (env, sexp)));
-      //     if (vect_p (env, sexp)) {
+      //     if (cons_p (sexp))
+      //         return cons_c (
+      //             sexp_substitute_recur (env, sub, car (sexp)),
+      //             sexp_substitute_recur (env, sub, cdr (sexp)));
+      //     if (vect_p (sexp)) {
       //         auto vect_sexp = as_vect (sexp);
-      //         auto list_sexp = vect_to_list (env, vect_sexp);
+      //         auto list_sexp = vect_to_list (vect_sexp);
       //         auto new_list_sexp = sexp_substitute_recur (env, sub, list_sexp);
-      //         return list_to_vect (env, new_list_sexp);
+      //         return list_to_vect (new_list_sexp);
       //     }
       //     else
       //         return sexp;
@@ -4128,21 +4048,18 @@
           auto this_str = make_sym ("this");
           obj_vector_t obj_vector = { this_str };
           auto vect = make_vect (obj_vector);
-          auto lambda_body = unit_list (env, sexp);
-          lambda_body = cons_c (env, vect, lambda_body);
-          lambda_body = cons_c (
-              env,
-              make_sym ("lambda"),
-              lambda_body);
+          auto lambda_body = unit_list (sexp);
+          lambda_body = cons_c (vect, lambda_body);
+          lambda_body = cons_c (make_sym ("lambda"), lambda_body);
           return lambda_body;
       }
       void
       tk_assign_value (env_t &env, shared_ptr <obj_t> body)
       {
-          auto head = as_sym (car (env, body));
-          auto rest = cdr (env, body);
-          assert (null_p (env, cdr (env, rest)));
-          auto sexp = car (env, rest);
+          auto head = as_sym (car (body));
+          auto rest = cdr (body);
+          assert (null_p (cdr (rest)));
+          auto sexp = car (rest);
           auto name = name_of_string (head->sym);
           auto prefix = prefix_of_string (head->sym);
           if (prefix != "")
@@ -4166,9 +4083,9 @@
           env_t &env,
           shared_ptr <obj_t> sexp)
       {
-          if (! cons_p (env, sexp)) return false;
-          auto head = car (env, sexp);
-          if (! sym_p (env, head)) return false;
+          if (! cons_p (sexp)) return false;
+          auto head = car (sexp);
+          if (! sym_p (head)) return false;
           auto sym = as_sym (head);
           if (sym->sym != "=") return false;
           return true;
@@ -4178,11 +4095,11 @@
           env_t &env,
           shared_ptr <obj_t> sexp)
       {
-          auto head = car (env, sexp);
-          auto body = cdr (env, sexp);
+          auto head = car (sexp);
+          auto body = cdr (sexp);
           if (assign_lambda_sugar_p (env, body))
               return cons_c (
-                  env, head,
+                  head,
                   assign_lambda_desugar (env, body));
           else
               return sexp;
@@ -4192,27 +4109,27 @@
         env_t &env,
         shared_ptr <obj_t> body)
       {
-          if (null_p (env, body)) return body;
-          auto sexp = car (env, body);
-          auto rest = cdr (env, body);
-          if (null_p (env, rest))
+          if (null_p (body)) return body;
+          auto sexp = car (body);
+          auto rest = cdr (body);
+          if (null_p (rest))
               return body;
           else if (assign_sexp_p (env, sexp)) {
               sexp = assign_sexp_normalize (env, sexp);
               auto obj_vector = obj_vector_t ();
-              obj_vector.push_back (cdr (env, sexp));
+              obj_vector.push_back (cdr (sexp));
               auto let_sexp = cons_c (
-                  env, make_sym ("let"),
+                  make_sym ("let"),
                   cons_c (
-                      env, make_vect (obj_vector),
+                      make_vect (obj_vector),
                       rest));
-              return unit_list (env, let_sexp);
+              return unit_list (let_sexp);
           }
           else {
-              auto drop = unit_list (env, make_sym ("drop"));
+              auto drop = unit_list (make_sym ("drop"));
               body = do_body_trans (env, rest);
-              body = cons_c (env, drop, body);
-              body = cons_c (env, sexp, body);
+              body = cons_c (drop, body);
+              body = cons_c (sexp, body);
               return body;
           }
       }
@@ -4222,7 +4139,7 @@
           local_ref_map_t &local_ref_map,
           shared_ptr <obj_t> body)
       {
-          body = sexp_list_prefix_assign (env, body);
+          body = sexp_list_prefix_assign (body);
           body = do_body_trans (env, body);
           return sexp_list_compile (env, local_ref_map, body);
       }
@@ -4285,8 +4202,8 @@
           local_ref_map_t &old_local_ref_map,
           shared_ptr <obj_t> body)
       {
-          auto name_vect = as_vect (car (env, body));
-          auto rest = cdr (env, body);
+          auto name_vect = as_vect (car (body));
+          auto rest = cdr (body);
           auto name_vector = obj_vector_to_name_vector (
               env, name_vect->obj_vector);
           auto local_ref_map = local_ref_map_extend (
@@ -4294,7 +4211,6 @@
           auto rest_jojo = sexp_compile (
               env, local_ref_map,
               cons_c (
-                  env,
                   make_sym ("do"),
                   rest));
           jo_vector_t jo_vector = {
@@ -4306,18 +4222,18 @@
       m_let (env_t &env, obj_map_t &obj_map)
       {
           auto body = obj_map ["body"];
-          auto head = car (env, body);
-          auto rest = cdr (env, body);
+          auto head = car (body);
+          auto rest = cdr (body);
           auto binding_vect = as_vect (head);
-          binding_vect = vect_reverse (env, binding_vect);
-          rest = cons_c (env, make_sym ("do"), rest);
+          binding_vect = vect_reverse (binding_vect);
+          rest = cons_c (make_sym ("do"), rest);
           for (auto binding: binding_vect->obj_vector) {
-              auto name = car (env, binding);
-              auto obj = car (env, cdr (env, binding));
-              rest = unit_list (env, rest);
-              rest = cons_c (env, unit_vect (env, name), rest);
-              rest = cons_c (env, make_sym ("lambda"), rest);
-              rest = cons_c (env, rest, unit_list (env, obj));
+              auto name = car (binding);
+              auto obj = car (cdr (binding));
+              rest = unit_list (rest);
+              rest = cons_c (unit_vect (name), rest);
+              rest = cons_c (make_sym ("lambda"), rest);
+              rest = cons_c (rest, unit_list (obj));
           }
           env.obj_stack.push (rest);
       }
@@ -4337,7 +4253,7 @@
         {
             auto obj = env.obj_stack.top ();
             env.obj_stack.pop ();
-            if (closure_p (env, obj)) {
+            if (closure_p (obj)) {
                 auto macro = make_macro (obj);
                 env.obj_stack.push (macro);
             }
@@ -4438,21 +4354,21 @@
       {
           auto jojo_map = jojo_map_t ();
           shared_ptr <jojo_t> default_jojo = nullptr;
-          while (! null_p (env, body)) {
-              auto one = car (env, body);
-              auto head = as_sym (car (env, one));
-              auto rest = cdr (env, one);
+          while (! null_p (body)) {
+              auto one = car (body);
+              auto head = as_sym (car (one));
+              auto rest = cdr (one);
               auto name = head->sym;
               if (name == "_") {
                   auto jojo = sexp_list_compile (env, local_ref_map, rest);
-                  body = cdr (env, body);
+                  body = cdr (body);
                   default_jojo = jojo;
               }
               else {
                   auto tag = tagging (env, name);
                   auto jojo = sexp_list_compile (env, local_ref_map, rest);
                   jojo_map [tag] = jojo;
-                  body = cdr (env, body);
+                  body = cdr (body);
               }
           }
           jo_vector_t jo_vector = {
@@ -4466,8 +4382,8 @@
           local_ref_map_t &local_ref_map,
           shared_ptr <obj_t> body)
       {
-          auto head = car (env, body);
-          auto rest = cdr (env, body);
+          auto head = car (body);
+          auto rest = cdr (body);
           auto head_jojo = sexp_compile (env, local_ref_map, head);
           auto rest_jojo = case_compile (env, local_ref_map, rest);
           return jojo_append (head_jojo, rest_jojo);
@@ -4489,9 +4405,9 @@
           local_ref_map_t &local_ref_map,
           shared_ptr <obj_t> body)
       {
-          assert (cons_p (env, body));
-          assert (null_p (env, cdr (env, body)));
-          auto sexp = car (env, body);
+          assert (cons_p (body));
+          assert (null_p (cdr (body)));
+          auto sexp = car (body);
           return sexp_qoute_compile (env, sexp);
       }
         struct collect_list_jo_t: jo_t
@@ -4516,11 +4432,11 @@
         collect_list_jo_t::exe (env_t &env, local_scope_t &local_scope)
         {
             size_t index = 0;
-            auto collection = null_c (env);
+            auto collection = null_c ();
             while (index < this->counter) {
                 auto obj = env.obj_stack.top ();
                 env.obj_stack.pop ();
-                collection = cons_c (env, obj, collection);
+                collection = cons_c (obj, collection);
                 index++;
             }
             env.obj_stack.push (collection);
@@ -4539,7 +4455,7 @@
           auto sexp_list = body;
           auto jojo = sexp_list_compile
               (env, local_ref_map, sexp_list);
-          auto counter = list_size (env, sexp_list);
+          auto counter = list_size (sexp_list);
           jo_vector_t jo_vector = {
               new collect_list_jo_t (counter),
           };
@@ -4552,8 +4468,7 @@
           local_ref_map_t &local_ref_map,
           shared_ptr <obj_t> body)
       {
-          body = cons_c (env, make_sym ("note"),
-                         body);
+          body = cons_c (make_sym ("note"), body);
           jo_vector_t jo_vector = {
               new lit_jo_t (body),
           };
@@ -4596,7 +4511,7 @@
                     local_scope));
             env.run_with_base (base);
             auto result = env.obj_stack.top ();
-            if (true_p (env, result)) {
+            if (true_p (result)) {
                 return;
             }
             else {
@@ -4659,13 +4574,13 @@
         if_jo_t::exe (env_t &env, local_scope_t &local_scope)
         {
             auto result = jojo_eval (env, local_scope, pred_jojo);
-            if (true_p (env, result)) {
+            if (true_p (result)) {
                 env.frame_stack.push (
                     make_shared <frame_t> (
                         this->then_jojo,
                         local_scope));
             }
-            else if (false_p (env, result)) {
+            else if (false_p (result)) {
                 env.frame_stack.push (
                     make_shared <frame_t> (
                         this->else_jojo,
@@ -4688,11 +4603,11 @@
           local_ref_map_t &local_ref_map,
           shared_ptr <obj_t> body)
       {
-          auto size = list_size (env, body);
+          auto size = list_size (body);
           assert (size == 3);
-          auto pred_sexp = car (env, body);
-          auto then_sexp = car (env, cdr (env, body));
-          auto else_sexp = car (env, cdr (env, cdr (env, body)));
+          auto pred_sexp = car (body);
+          auto then_sexp = car (cdr (body));
+          auto else_sexp = car (cdr (cdr (body)));
           auto pred_jojo = sexp_compile (env, local_ref_map, pred_sexp);
           auto then_jojo = sexp_compile (env, local_ref_map, then_sexp);
           auto else_jojo = sexp_compile (env, local_ref_map, else_sexp);
@@ -4731,13 +4646,13 @@
         when_jo_t::exe (env_t &env, local_scope_t &local_scope)
         {
             auto result = jojo_eval (env, local_scope, pred_jojo);
-            if (true_p (env, result)) {
+            if (true_p (result)) {
                 env.frame_stack.push (
                     make_shared <frame_t> (
                         this->then_jojo,
                         local_scope));
             }
-            else if (false_p (env, result)) {
+            else if (false_p (result)) {
                 env.obj_stack.push (result);
             }
             else {
@@ -4757,10 +4672,10 @@
           local_ref_map_t &local_ref_map,
           shared_ptr <obj_t> body)
       {
-          auto size = list_size (env, body);
+          auto size = list_size (body);
           assert (size == 2);
-          auto pred_sexp = car (env, body);
-          auto then_sexp = car (env, cdr (env, body));
+          auto pred_sexp = car (body);
+          auto then_sexp = car (cdr (body));
           auto pred_jojo = sexp_compile (env, local_ref_map, pred_sexp);
           auto then_jojo = sexp_compile (env, local_ref_map, then_sexp);
           jo_vector_t jo_vector = {
@@ -4778,45 +4693,41 @@
           env_t &env,
           shared_ptr <obj_t> sexp)
       {
-          if (str_p (env, sexp) or num_p (env, sexp)) {
+          if (str_p (sexp) or num_p (sexp)) {
               return sexp;
           }
-          else if (sym_p (env, sexp)) {
+          else if (sym_p (sexp)) {
               return cons_c (
-                  env,
                   make_sym ("quote"),
-                  unit_list (env, sexp));
+                  unit_list (sexp));
           }
-          else if (null_p (env, sexp)) {
+          else if (null_p (sexp)) {
               return cons_c (
-                  env,
                   make_sym ("quote"),
-                  unit_list (env, sexp));
+                  unit_list (sexp));
           }
-          else if (vect_p (env, sexp)) {
-              auto l = vect_to_list (env, as_vect (sexp));
+          else if (vect_p (sexp)) {
+              auto l = vect_to_list (as_vect (sexp));
               return cons_c (
-                  env,
                   make_sym ("list-to-vect"),
-                  unit_list (env, sexp_list_quote_and_unquote (env, l)));
+                  unit_list (sexp_list_quote_and_unquote (env, l)));
           }
-          else if (dict_p (env, sexp)) {
-              auto l = dict_to_list (env, as_dict (sexp));
+          else if (dict_p (sexp)) {
+              auto l = dict_to_list (as_dict (sexp));
               return cons_c (
-                  env,
                   make_sym ("list-to-dict"),
-                  unit_list (env, sexp_list_quote_and_unquote (env, l)));
+                  unit_list (sexp_list_quote_and_unquote (env, l)));
           }
           else {
-              assert (cons_p (env, sexp));
-              auto head = car (env, sexp);
-              if (sym_p (env, head) and
+              assert (cons_p (sexp));
+              auto head = car (sexp);
+              if (sym_p (head) and
                   as_sym (head) ->sym == "unquote")
               {
-                  auto rest = cdr (env, sexp);
-                  assert (cons_p (env, rest));
-                  assert (null_p (env, cdr (env, rest)));
-                  return car (env, rest);
+                  auto rest = cdr (sexp);
+                  assert (cons_p (rest));
+                  assert (null_p (cdr (rest)));
+                  return car (rest);
               }
               else {
                   return sexp_list_quote_and_unquote (
@@ -4830,32 +4741,31 @@
           env_t &env,
           shared_ptr <obj_t> sexp_list)
       {
-          if (null_p (env, sexp_list)) {
-              return unit_list (env, make_sym ("*"));
+          if (null_p (sexp_list)) {
+              return unit_list (make_sym ("*"));
           }
           else {
-              assert (cons_p (env, sexp_list));
-              auto sexp = car (env, sexp_list);
-              if (cons_p (env, sexp) and
-                  sym_p (env, car (env, sexp)) and
-                  as_sym (car (env, sexp)) ->sym == "unquote-splicing")
+              assert (cons_p (sexp_list));
+              auto sexp = car (sexp_list);
+              if (cons_p (sexp) and
+                  sym_p (car (sexp)) and
+                  as_sym (car (sexp)) ->sym == "unquote-splicing")
               {
-                  auto rest = cdr (env, sexp);
-                  assert (cons_p (env, rest));
-                  assert (null_p (env, cdr (env, rest)));
-                  sexp = car (env, rest);
+                  auto rest = cdr (sexp);
+                  assert (cons_p (rest));
+                  assert (null_p (cdr (rest)));
+                  sexp = car (rest);
               }
               else {
                   sexp = cons_c (
-                      env,
                       make_sym ("*"),
-                      unit_list (env, sexp_quote_and_unquote (env, sexp)));
+                      unit_list (sexp_quote_and_unquote (env, sexp)));
               }
               auto result = sexp_list_quote_and_unquote (
-                  env, cdr (env, sexp_list));
-              result = unit_list (env, result);
-              result = cons_c (env, sexp, result);
-              result = cons_c (env, make_sym ("list-append"), result);
+                  env, cdr (sexp_list));
+              result = unit_list (result);
+              result = cons_c (sexp, result);
+              result = cons_c (make_sym ("list-append"), result);
               return result;
           }
       }
@@ -4865,39 +4775,35 @@
           obj_map_t &obj_map)
       {
           auto body = obj_map ["body"];
-          assert (cons_p (env, body));
-          assert (null_p (env, cdr (env, body)));
-          auto sexp = car (env, body);
+          assert (cons_p (body));
+          assert (null_p (cdr (body)));
+          auto sexp = car (body);
           auto new_sexp = sexp_quote_and_unquote (env, sexp);
           env.obj_stack.push (new_sexp);
       }
       shared_ptr <obj_t>
       sexp_list_and (env_t &env, shared_ptr <obj_t> sexp_list)
       {
-          if (null_p (env, sexp_list)) {
+          if (null_p (sexp_list)) {
               return make_sym ("true-c");
           }
-          else if (null_p (env, cdr (env, sexp_list))) {
-              return car (env, sexp_list);
+          else if (null_p (cdr (sexp_list))) {
+              return car (sexp_list);
           }
           else {
-              auto head = car (env, sexp_list);
-              auto rest = cdr (env, sexp_list);
+              auto head = car (sexp_list);
+              auto rest = cdr (sexp_list);
               head = cons_c (
-                  env,
                   make_sym ("not"),
-                  unit_list (env, head));
-              auto result = unit_list (env, sexp_list_and (env, rest));
+                  unit_list (head));
+              auto result = unit_list (sexp_list_and (env, rest));
               result = cons_c (
-                  env,
                   make_sym ("false-c"),
                   result);
               result = cons_c (
-                  env,
                   head,
                   result);
               result = cons_c (
-                  env,
                   make_sym ("if"),
                   result);
               return result;
@@ -4912,26 +4818,23 @@
       shared_ptr <obj_t>
       sexp_list_or (env_t &env, shared_ptr <obj_t> sexp_list)
       {
-          if (null_p (env, sexp_list)) {
+          if (null_p (sexp_list)) {
               return make_sym ("false-c");
           }
-          else if (null_p (env, cdr (env, sexp_list))) {
-              return car (env, sexp_list);
+          else if (null_p (cdr (sexp_list))) {
+              return car (sexp_list);
           }
           else {
-              auto head = car (env, sexp_list);
-              auto rest = cdr (env, sexp_list);
-              auto result = unit_list (env, sexp_list_or (env, rest));
+              auto head = car (sexp_list);
+              auto rest = cdr (sexp_list);
+              auto result = unit_list (sexp_list_or (env, rest));
               result = cons_c (
-                  env,
                   make_sym ("true-c"),
                   result);
               result = cons_c (
-                  env,
                   head,
                   result);
               result = cons_c (
-                  env,
                   make_sym ("if"),
                   result);
               return result;
@@ -4946,34 +4849,33 @@
       shared_ptr <obj_t>
       vect_list_cond (env_t &env, shared_ptr <obj_t> vect_list)
       {
-          assert (! null_p (env, vect_list));
-          auto head = car (env, vect_list);
-          auto rest = cdr (env, vect_list);
-          auto l = vect_to_list (env, as_vect (head));
-          auto question = car (env, l);
+          assert (! null_p (vect_list));
+          auto head = car (vect_list);
+          auto rest = cdr (vect_list);
+          auto l = vect_to_list (as_vect (head));
+          auto question = car (l);
           auto answer = cons_c (
-              env,
               make_sym ("do"),
-              cdr (env, l));
-          if (null_p (env, rest)) {
-              if (sym_p (env, question) and
+              cdr (l));
+          if (null_p (rest)) {
+              if (sym_p (question) and
                   as_sym (question) ->sym == "else")
               {
                   return answer;
               }
               else {
-                  auto result = null_c (env);
-                  result = cons_c (env, answer, result);
-                  result = cons_c (env, question, result);
-                  result = cons_c (env, make_sym ("when"), result);
+                  auto result = null_c ();
+                  result = cons_c (answer, result);
+                  result = cons_c (question, result);
+                  result = cons_c (make_sym ("when"), result);
                   return result;
               }
           }
           else {
-              auto result = unit_list (env, vect_list_cond (env, rest));
-              result = cons_c (env, answer, result);
-              result = cons_c (env, question, result);
-              result = cons_c (env, make_sym ("if"), result);
+              auto result = unit_list (vect_list_cond (env, rest));
+              result = cons_c (answer, result);
+              result = cons_c (question, result);
+              result = cons_c (make_sym ("if"), result);
               return result;
           }
       }
@@ -4998,17 +4900,17 @@
     void
     expose_bool (env_t &env)
     {
-        define (env, "true-c", true_c (env));
-        define (env, "true", true_c (env));
-        define (env, "false-c", false_c (env));
-        define (env, "false", false_c (env));
+        define (env, "true-c", true_c ());
+        define (env, "true", true_c ());
+        define (env, "false-c", false_c ());
+        define (env, "false", false_c ());
         define_prim (
             env, { "not", "bool" },
             [] (env_t &env, obj_map_t &obj_map)
             {
                 auto obj = obj_map ["bool"];
-                assert (bool_p (env, obj));
-                env.obj_stack.push (make_bool (env, false_p (env, obj)));
+                assert (bool_p (obj));
+                env.obj_stack.push (make_bool (false_p (obj)));
             });
     }
       void
@@ -5020,7 +4922,7 @@
               {
                   auto x = as_num (obj_map ["x"]);
                   auto y = as_num (obj_map ["y"]);
-                  env.obj_stack.push (make_bool (env, x->num < y->num));
+                  env.obj_stack.push (make_bool (x->num < y->num));
               });
           define_prim (
               env, { "gt", "x", "y" },
@@ -5028,7 +4930,7 @@
               {
                   auto x = as_num (obj_map ["x"]);
                   auto y = as_num (obj_map ["y"]);
-                  env.obj_stack.push (make_bool (env, x->num > y->num));
+                  env.obj_stack.push (make_bool (x->num > y->num));
               });
           define_prim (
               env, { "lteq", "x", "y" },
@@ -5036,7 +4938,7 @@
               {
                   auto x = as_num (obj_map ["x"]);
                   auto y = as_num (obj_map ["y"]);
-                  env.obj_stack.push (make_bool (env, x->num <= y->num));
+                  env.obj_stack.push (make_bool (x->num <= y->num));
               });
           define_prim (
               env, { "gteq", "x", "y" },
@@ -5044,21 +4946,21 @@
               {
                   auto x = as_num (obj_map ["x"]);
                   auto y = as_num (obj_map ["y"]);
-                  env.obj_stack.push (make_bool (env, x->num >= y->num));
+                  env.obj_stack.push (make_bool (x->num >= y->num));
               });
           define_prim (
               env, { "even-p", "x" },
               [] (env_t &env, obj_map_t &obj_map)
               {
                   auto x = as_num (obj_map ["x"]);
-                  env.obj_stack.push (make_bool (env, 0 == fmod (x->num, 2)));
+                  env.obj_stack.push (make_bool (0 == fmod (x->num, 2)));
               });
           define_prim (
               env, { "odd-p", "x" },
               [] (env_t &env, obj_map_t &obj_map)
               {
                   auto x = as_num (obj_map ["x"]);
-                  env.obj_stack.push (make_bool (env, 1 == fmod (x->num, 2)));
+                  env.obj_stack.push (make_bool (1 == fmod (x->num, 2)));
               });
       }
       void
@@ -5393,9 +5295,7 @@
             [] (env_t &env, obj_map_t &obj_map)
             {
             env.obj_stack.push (
-                str_length (
-                    env,
-                    as_str (obj_map ["str"])));
+                str_length (as_str (obj_map ["str"])));
             });
         define_prim (
             env, { "str-append", "ante", "succ" },
@@ -5403,7 +5303,6 @@
             {
                 env.obj_stack.push (
                     str_append (
-                        env,
                         as_str (obj_map ["ante"]),
                         as_str (obj_map ["succ"])));
             });
@@ -5413,7 +5312,6 @@
             {
                 env.obj_stack.push (
                     str_slice (
-                        env,
                         as_str (obj_map ["str"]),
                         as_num (obj_map ["begin"]),
                         as_num (obj_map ["end"])));
@@ -5424,7 +5322,6 @@
             {
                 env.obj_stack.push (
                     str_ref (
-                        env,
                         as_str (obj_map ["str"]),
                         as_num (obj_map ["index"])));
             });
@@ -5433,18 +5330,14 @@
             [] (env_t &env, obj_map_t &obj_map)
             {
                 env.obj_stack.push (
-                    str_head (
-                        env,
-                        as_str (obj_map ["str"])));
+                    str_head (as_str (obj_map ["str"])));
             });
         define_prim (
             env, { "str-rest", "str" },
             [] (env_t &env, obj_map_t &obj_map)
             {
                 env.obj_stack.push (
-                    str_rest (
-                        env,
-                        as_str (obj_map ["str"])));
+                    str_rest (as_str (obj_map ["str"])));
             });
     }
     void
@@ -5455,7 +5348,7 @@
             [] (env_t &env, obj_map_t &obj_map)
             {
                 auto obj = obj_map ["sym"];
-                assert (sym_p (env, obj));
+                assert (sym_p (obj));
                 auto sym = as_sym (obj);
                 cout << sym->sym;
                 env.obj_stack.push (sym);
@@ -5466,7 +5359,6 @@
             {
             env.obj_stack.push (
                 sym_length (
-                    env,
                     as_sym (obj_map ["sym"])));
             });
         define_prim (
@@ -5475,7 +5367,6 @@
             {
                 env.obj_stack.push (
                     sym_append (
-                        env,
                         as_sym (obj_map ["ante"]),
                         as_sym (obj_map ["succ"])));
             });
@@ -5485,7 +5376,6 @@
             {
                 env.obj_stack.push (
                     sym_slice (
-                        env,
                         as_sym (obj_map ["sym"]),
                         as_num (obj_map ["begin"]),
                         as_num (obj_map ["end"])));
@@ -5496,7 +5386,6 @@
             {
                 env.obj_stack.push (
                     sym_ref (
-                        env,
                         as_sym (obj_map ["sym"]),
                         as_num (obj_map ["index"])));
             });
@@ -5505,22 +5394,18 @@
             [] (env_t &env, obj_map_t &obj_map)
             {
                 env.obj_stack.push (
-                    sym_head (
-                        env,
-                        as_sym (obj_map ["sym"])));
+                    sym_head (as_sym (obj_map ["sym"])));
             });
         define_prim (
             env, { "sym-rest", "sym" },
             [] (env_t &env, obj_map_t &obj_map)
             {
                 env.obj_stack.push (
-                    sym_rest (
-                        env,
-                        as_sym (obj_map ["sym"])));
+                    sym_rest (as_sym (obj_map ["sym"])));
             });
     }
       shared_ptr <data_o>
-      jj_cons_c (env_t &env)
+      jj_cons_c ()
       {
           return make_data (
               cons_tag,
@@ -5530,27 +5415,23 @@
       void
       expose_list (env_t &env)
       {
-          define (env, "null-c", null_c (env));
-          define (env, "null", null_c (env));
-          define (env, "cons-c", jj_cons_c (env));
-          define (env, "cons", jj_cons_c (env));
+          define (env, "null-c", null_c ());
+          define (env, "null", null_c ());
+          define (env, "cons-c", jj_cons_c ());
+          define (env, "cons", jj_cons_c ());
           define_prim (
               env, { "list-length", "list" },
               [] (env_t &env, obj_map_t &obj_map)
               {
                   env.obj_stack.push (
-                      list_length (
-                          env,
-                          obj_map ["list"]));
+                      list_length (obj_map ["list"]));
               });
           define_prim (
               env, { "list-reverse", "list" },
               [] (env_t &env, obj_map_t &obj_map)
               {
                   env.obj_stack.push (
-                      list_reverse (
-                          env,
-                          obj_map ["list"]));
+                      list_reverse (obj_map ["list"]));
               });
           define_prim (
               env, { "list-append", "ante", "succ" },
@@ -5558,7 +5439,6 @@
               {
                   env.obj_stack.push (
                       list_append (
-                          env,
                           obj_map ["ante"],
                           obj_map ["succ"]));
               });
@@ -5572,7 +5452,6 @@
             {
                 env.obj_stack.push (
                     list_to_vect (
-                        env,
                         obj_map ["list"]));
             });
         define_prim (
@@ -5580,18 +5459,14 @@
             [] (env_t &env, obj_map_t &obj_map)
             {
                 env.obj_stack.push (
-                    vect_to_list (
-                        env,
-                        as_vect (obj_map ["vect"])));
+                    vect_to_list (as_vect (obj_map ["vect"])));
             });
         define_prim (
             env, { "vect-length", "vect" },
             [] (env_t &env, obj_map_t &obj_map)
             {
                 env.obj_stack.push (
-                    vect_length (
-                        env,
-                        as_vect (obj_map ["vect"])));
+                    vect_length (as_vect (obj_map ["vect"])));
             });
         define_prim (
             env, { "vect-append", "ante", "succ" },
@@ -5599,7 +5474,6 @@
             {
                 env.obj_stack.push (
                     vect_append (
-                        env,
                         as_vect (obj_map ["ante"]),
                         as_vect (obj_map ["succ"])));
             });
@@ -5609,7 +5483,6 @@
             {
                 env.obj_stack.push (
                     vect_slice (
-                        env,
                         as_vect (obj_map ["vect"]),
                         as_num (obj_map ["begin"]),
                         as_num (obj_map ["end"])));
@@ -5620,7 +5493,6 @@
             {
                 env.obj_stack.push (
                     vect_ref (
-                        env,
                         as_vect (obj_map ["vect"]),
                         as_num (obj_map ["index"])));
             });
@@ -5629,40 +5501,32 @@
             [] (env_t &env, obj_map_t &obj_map)
             {
                 env.obj_stack.push (
-                    vect_head (
-                        env,
-                        as_vect (obj_map ["vect"])));
+                    vect_head (as_vect (obj_map ["vect"])));
             });
         define_prim (
             env, { "vect-rest", "vect" },
             [] (env_t &env, obj_map_t &obj_map)
             {
                 env.obj_stack.push (
-                    vect_rest (
-                        env,
-                        as_vect (obj_map ["vect"])));
+                    vect_rest (as_vect (obj_map ["vect"])));
             });
         define_prim (
             env, { "unit-vect", "obj" },
             [] (env_t &env, obj_map_t &obj_map)
             {
                 env.obj_stack.push (
-                    unit_vect (
-                        env,
-                        obj_map ["obj"]));
+                    unit_vect (obj_map ["obj"]));
             });
         define_prim (
             env, { "vect-reverse", "vect" },
             [] (env_t &env, obj_map_t &obj_map)
             {
                 env.obj_stack.push (
-                    vect_reverse (
-                        env,
-                        as_vect (obj_map ["vect"])));
+                    vect_reverse (as_vect (obj_map ["vect"])));
             });
     }
       shared_ptr <data_o>
-      jj_just_c (env_t &env)
+      jj_just_c ()
       {
           return make_data (
               just_tag,
@@ -5672,10 +5536,10 @@
       void
       expose_maybe (env_t &env)
       {
-          define (env, "nothing-c", nothing_c (env));
-          define (env, "nothing", nothing_c (env));
-          define (env, "just-c", jj_just_c (env));
-          define (env, "just", jj_just_c (env));
+          define (env, "nothing-c", nothing_c ());
+          define (env, "nothing", nothing_c ());
+          define (env, "just-c", jj_just_c ());
+          define (env, "just", jj_just_c ());
       }
     void
     expose_dict (env_t &env)
@@ -5686,7 +5550,6 @@
             {
                 env.obj_stack.push (
                     list_to_dict (
-                        env,
                         obj_map ["list"]));
             });
         define_prim (
@@ -5694,36 +5557,28 @@
             [] (env_t &env, obj_map_t &obj_map)
             {
                 env.obj_stack.push (
-                    dict_to_list (
-                        env,
-                        as_dict (obj_map ["dict"])));
+                    dict_to_list (as_dict (obj_map ["dict"])));
             });
         define_prim (
             env, { "dict-length", "dict" },
             [] (env_t &env, obj_map_t &obj_map)
             {
                 env.obj_stack.push (
-                    dict_length (
-                        env,
-                        as_dict (obj_map ["dict"])));
+                    dict_length (as_dict (obj_map ["dict"])));
             });
         define_prim (
             env, { "dict-key-list", "dict" },
             [] (env_t &env, obj_map_t &obj_map)
             {
                 env.obj_stack.push (
-                    dict_key_list (
-                        env,
-                        as_dict (obj_map ["dict"])));
+                    dict_key_list (as_dict (obj_map ["dict"])));
             });
         define_prim (
             env, { "dict-value-list", "dict" },
             [] (env_t &env, obj_map_t &obj_map)
             {
                 env.obj_stack.push (
-                    dict_value_list (
-                        env,
-                        as_dict (obj_map ["dict"])));
+                    dict_value_list (as_dict (obj_map ["dict"])));
             });
         define_prim (
             env, { "dict-insert", "dict", "key", "value" },
@@ -5731,7 +5586,6 @@
             {
                 env.obj_stack.push (
                     dict_insert (
-                        env,
                         as_dict (obj_map ["dict"]),
                         as_sym (obj_map ["key"]),
                         obj_map ["value"]));
@@ -5742,7 +5596,6 @@
             {
                 env.obj_stack.push (
                     dict_merge (
-                        env,
                         as_dict (obj_map ["ante"]),
                         as_dict (obj_map ["succ"])));
             });
@@ -5752,7 +5605,6 @@
             {
                 env.obj_stack.push (
                     dict_find (
-                        env,
                         as_dict (obj_map ["dict"]),
                         as_sym (obj_map ["key"])));
             });
@@ -5766,19 +5618,14 @@
             {
                 // -- str-t -> (list-t str-t)
                 env.obj_stack.push (
-                    scan_word_list (
-                        env,
-                        as_str (obj_map ["code"])));
+                    scan_word_list (as_str (obj_map ["code"])));
             });
         define_prim (
             env, { "parse-sexp", "word-list" },
             [] (env_t &env, obj_map_t &obj_map)
             {
                 // -- (list-t str-t) -> sexp-t
-                env.obj_stack.push (
-                    parse_sexp (
-                        env,
-                        obj_map ["word-list"]));
+                env.obj_stack.push (parse_sexp (obj_map ["word-list"]));
             });
         define_prim (
             env, { "parse-sexp-list", "word-list" },
@@ -5786,9 +5633,7 @@
             {
                 // -- (list-t str-t) -> (list-t sexp-t)
                 env.obj_stack.push (
-                    parse_sexp_list (
-                        env,
-                        obj_map ["word-list"]));
+                    parse_sexp_list (obj_map ["word-list"]));
             });
         define_prim (
             env, { "sexp-repr", "sexp" },
@@ -5962,29 +5807,28 @@
                 auto rhs = obj_map ["rhs"];
                 env.obj_stack.push (
                     make_bool (
-                        env,
-                        obj_eq (env, lhs, rhs)));
+                        obj_eq (lhs, rhs)));
             });
         define_prim (
             env, { "env-report" },
             [] (env_t &env, obj_map_t &obj_map)
             {
                 env.report ();
-                env.obj_stack.push (true_c (env));
+                env.obj_stack.push (true_c ());
             });
         define_prim (
             env, { "env-stack-report" },
             [] (env_t &env, obj_map_t &obj_map)
             {
                 env.obj_stack_report ();
-                env.obj_stack.push (true_c (env));
+                env.obj_stack.push (true_c ());
             });
         define_prim (
             env, { "env-frame-report" },
             [] (env_t &env, obj_map_t &obj_map)
             {
                 env.frame_stack_report ();
-                env.obj_stack.push (true_c (env));
+                env.obj_stack.push (true_c ());
             });
     }
     void

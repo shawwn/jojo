@@ -17,18 +17,21 @@ tangle ()
 
 b () # build
 {
+    tangle
     clean
     time $C -o jojo jojo.cpp $W $L
 }
 
 bo () # build with optimization
 {
+    tangle
     clean
     time $C -o jojo jojo.cpp $W $L $O
 }
 
 bd () # build with debug info
 {
+    tangle
     clean
     time $C -o jojo jojo.cpp $W $L $D
 }

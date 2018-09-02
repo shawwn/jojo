@@ -2,11 +2,15 @@
   use std::slice;
   use std::vec;
   #[derive(Clone)]
+  #[derive(Debug)]
+  #[derive(PartialEq)]
   pub struct Entry <T> {
       pub name: String,
       pub value: Option <T>,
   }
   #[derive(Clone)]
+  #[derive(Debug)]
+  #[derive(PartialEq)]
   pub struct Dic <T> {
       index_map: HashMap <String, usize>,
       entry_vector: Vec <Entry <T>>,
@@ -91,10 +95,8 @@
   impl <'a, T> From <Vec <(&'a str, T)>> for Dic <T> {
       fn from (vec: Vec <(&'a str, T)>) -> Dic <T> {
           let mut dic = Dic::new ();
-          for x in vec {
-              let name = x.0;
-              let value = x.1;
-              dic.ins (name, Some (value));
+          for kv in vec {
+              dic.ins (kv.0, Some (kv.1));
           }
           dic
       }

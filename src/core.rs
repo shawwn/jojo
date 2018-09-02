@@ -1,9 +1,9 @@
   // use std::rc::Rc;
   use std::sync::Arc;
+
   use dic::Dic;
 
   use token;
-  use token::Token;
   // pub type Ptr <T> = Rc <T>;
   pub type Ptr <T> = Arc <T>;
 
@@ -134,7 +134,7 @@
           tag: Tag,
           name: &str,
       ) {
-          let index = env.type_dic.ins (name, Some (Type::make (tag)));
+          let index = env.type_dic.ins (name, Some (Type::obj (tag)));
           assert_eq! (tag, index);
       }
       pub const CLOSURE_T      : Tag = 0;
@@ -200,9 +200,9 @@
               Ptr::clone (self)
           }
       }
-      pub trait Make <T> {
-          fn make (T) -> Ptr <Self>;
-      }
+    pub trait ObjFrom <T> {
+        fn obj (T) -> Ptr <Self>;
+    }
     pub trait Obj {
         fn tag (&self) -> Tag;
         fn obj_dic (&self) -> Option <&ObjDic> { None }
@@ -457,8 +457,8 @@
         tag_of_type: Tag,
         super_tag_vec: TagVec,
     }
-    impl Make <Tag> for Type {
-        fn make (tag: Tag) -> Ptr <Type> {
+    impl ObjFrom <Tag> for Type {
+        fn obj (tag: Tag) -> Ptr <Type> {
             Ptr::new (Type {
                 method_dic: ObjDic::new (),
                 tag_of_type: tag,
@@ -680,8 +680,12 @@
         }
     }
     pub struct Str { pub str: String }
-    impl <'a> Make <&'a str> for Str {
-        fn make (str: &'a str) -> Ptr <Str> {
+    pub fn str_p (x: &Ptr <Obj>) -> bool {
+        let tag = x.tag ();
+        (STR_T == tag)
+    }
+    impl <'a> ObjFrom <&'a str> for Str {
+        fn obj (str: &'a str) -> Ptr <Str> {
             Ptr::new (Str { str: String::from (str) })
         }
     }
@@ -698,8 +702,12 @@
         }
     }
     pub struct Sym { pub sym: String }
-    impl <'a> Make <&'a str> for Sym {
-        fn make (str: &'a str) -> Ptr <Sym> {
+    pub fn sym_p (x: &Ptr <Obj>) -> bool {
+        let tag = x.tag ();
+        (SYM_T == tag)
+    }
+    impl <'a> ObjFrom <&'a str> for Sym {
+        fn obj (str: &'a str) -> Ptr <Sym> {
             Ptr::new (Sym { sym: String::from (str) })
         }
     }
@@ -716,8 +724,12 @@
         }
     }
     pub struct Num { pub num: f64 }
-    impl Make <f64> for Num {
-        fn make (num: f64) -> Ptr <Num> {
+    pub fn num_p (x: &Ptr <Obj>) -> bool {
+        let tag = x.tag ();
+        (NUM_T == tag)
+    }
+    impl ObjFrom <f64> for Num {
+        fn obj (num: f64) -> Ptr <Num> {
             Ptr::new (Num { num })
         }
     }
@@ -732,15 +744,27 @@
                 (self.num == other.num)
             }
         }
+
+        fn repr (&self, _env: &Env) -> String {
+            format! ("{}", self.num)
+        }
     }
     pub fn null_c () -> Ptr <Obj> {
        Data::unit (NULL_T)
+    }
+    pub fn null_p (x: &Ptr <Obj>) -> bool {
+        let tag = x.tag ();
+        (NULL_T == tag)
     }
     pub fn cons_c (car: Ptr <Obj>, cdr: Ptr <Obj>) -> Ptr <Obj> {
         Data::make (CONS_T, vec! [
             ("car", car),
             ("cdr", cdr),
         ])
+    }
+    pub fn cons_p (x: &Ptr <Obj>) -> bool {
+        let tag = x.tag ();
+        (CONS_T == tag)
     }
     pub fn car (cons: Ptr <Obj>) -> Ptr <Obj> {
         assert_eq! (CONS_T, cons.tag ());
@@ -750,10 +774,9 @@
         assert_eq! (CONS_T, cons.tag ());
         cons.get ("cdr") .unwrap ()
     }
-    pub fn list_p (x: Ptr <Obj>) -> bool {
-        let tag = x.tag ();
-        (NULL_T == tag ||
-         CONS_T == tag)
+    pub fn list_p (x: &Ptr <Obj>) -> bool {
+        (null_p (x) ||
+         cons_p (x))
     }
     pub fn unit_list (obj: Ptr <Obj>) -> Ptr <Obj> {
         cons_c (obj, null_c ())
@@ -770,12 +793,21 @@
         assert_eq! (JUST_T, just.tag ());
         just.get ("value") .unwrap ()
     }
-    pub fn maybe_p (x: Ptr <Obj>) -> bool {
+    pub fn maybe_p (x: &Ptr <Obj>) -> bool {
         let tag = x.tag ();
         (NOTHING_T == tag ||
          JUST_T == tag)
     }
     pub struct Vect { pub obj_vec: ObjVec }
+    pub fn vect_p (x: &Ptr <Obj>) -> bool {
+        let tag = x.tag ();
+        (VECT_T == tag)
+    }
+    impl <'a> ObjFrom <&'a ObjVec> for Vect {
+        fn obj (obj_vec: &'a ObjVec) -> Ptr <Vect> {
+            Ptr::new (Vect { obj_vec: obj_vec.clone () })
+        }
+    }
     impl Obj for Vect {
         fn tag (&self) -> Tag { VECT_T }
 
@@ -788,7 +820,24 @@
             }
         }
     }
+    pub fn vect_to_list (vect: Ptr <Vect>) -> Ptr <Obj> {
+        let obj_vec = &vect.obj_vec;
+        let mut result = null_c ();
+        for x in obj_vec .iter () .rev () {
+            result = cons_c (x.dup (), result);
+        }
+        result
+    }
     pub struct Dict { pub obj_dic: ObjDic }
+    pub fn dict_p (x: &Ptr <Obj>) -> bool {
+        let tag = x.tag ();
+        (DICT_T == tag)
+    }
+    impl <'a> ObjFrom <&'a ObjDic> for Dict {
+        fn obj (obj_dic: &'a ObjDic) -> Ptr <Dict> {
+            Ptr::new (Dict { obj_dic: obj_dic.clone () })
+        }
+    }
     impl Obj for Dict {
         fn tag (&self) -> Tag { DICT_T }
 
@@ -801,44 +850,149 @@
             }
         }
     }
-    fn parse_sexp_vect (token_vec: &Vec <Token>) -> Ptr <Obj> {
-        panic! ();
+    pub fn dict_to_list (dict: Ptr <Dict>) -> Ptr <Obj> {
+        let mut result = null_c ();
+        let obj_dic = &dict.obj_dic;
+        for kv in obj_dic.iter () {
+            let sym = Sym::obj (kv.0);
+            let obj = kv.1;
+            let pair = cons_c (sym, unit_list (obj.dup ()));
+            result = cons_c (pair, result);
+        }
+        result
     }
-    fn parse_sexp_dict (token_vec: &Vec <Token>) -> Ptr <Obj> {
-        panic! ();
-    }
-    fn parse_sexp (token: &Token) -> Ptr <Obj> {
+    pub fn parse_sexp (token: &token::Token) -> Ptr <Obj> {
         match token {
-            Token::List { token_vec, .. } => parse_sexp_list (token_vec),
-            Token::Vect { token_vec, .. } => parse_sexp_vect (token_vec),
-            Token::Dict { token_vec, .. } => parse_sexp_dict (token_vec),
-            Token::QuotationMark { mark_name, token, .. } =>
-                cons_c (Sym::make (mark_name),
+            token::Token::List { token_vec, .. } => parse_sexp_list (token_vec),
+            token::Token::Vect { token_vec, .. } => parse_sexp_vect (token_vec),
+            token::Token::Dict { token_vec, .. } => parse_sexp_dict (token_vec),
+            token::Token::QuotationMark { mark_name, token, .. } =>
+                cons_c (Sym::obj (mark_name),
                         unit_list (parse_sexp (token))),
-            Token::Num { num, .. } => Num::make (*num),
-            Token::Str { str, .. } => Str::make (str),
-            Token::Sym { sym, .. } => Sym::make (sym),
+            token::Token::Num { num, .. } => Num::obj (*num),
+            token::Token::Str { str, .. } => Str::obj (str),
+            token::Token::Sym { sym, .. } => Sym::obj (sym),
         }
     }
-    fn parse_sexp_list (token_vec: &Vec <Token>) -> Ptr <Obj> {
-        let mut collect = null_c ();
+    pub fn parse_sexp_list (token_vec: &token::TokenVec) -> Ptr <Obj> {
+        let mut list = null_c ();
         token_vec
             .iter ()
-            .for_each (|token| {
-                collect = cons_c (
-                    parse_sexp (token),
-                    collect.dup ());
+            .rev ()
+            .map (parse_sexp)
+            .for_each (|obj| {
+                list = cons_c (obj, list.dup ());
             });
-        collect
+        list
+    }
+    pub fn parse_sexp_vect (token_vec: &token::TokenVec) -> Ptr <Obj> {
+        let obj_vec = token_vec
+            .iter ()
+            .map (parse_sexp)
+            .collect::<ObjVec> ();
+        Vect::obj (&obj_vec)
+    }
+    fn sexp_list_prefix_assign_with_last_sexp (
+        sexp_list: Ptr <Obj>,
+        last_sexp: Ptr <Obj>,
+    ) -> Ptr <Obj> {
+        if null_p (&sexp_list) {
+            unit_list (last_sexp)
+        } else {
+            let head = car (sexp_list.dup ());
+            if (sym_p (&head) &&
+                obj_to::<Sym> (head.dup ())
+                .sym .as_str () == "=")
+            {
+                let next = car (cdr (sexp_list.dup ()));
+                let rest = cdr (cdr (sexp_list));
+                let new_last_sexp = cons_c (
+                    head, cons_c (
+                        last_sexp,
+                        unit_list (next)));
+                cons_c (
+                    new_last_sexp,
+                    sexp_list_prefix_assign (rest))
+            }
+            else
+            {
+                let rest = cdr (sexp_list);
+                cons_c (
+                    last_sexp,
+                    sexp_list_prefix_assign_with_last_sexp (rest, head))
+            }
+        }
+    }
+    pub fn sexp_list_prefix_assign (sexp_list: Ptr <Obj>) -> Ptr <Obj> {
+        if null_p (&sexp_list) {
+            sexp_list
+        } else {
+            sexp_list_prefix_assign_with_last_sexp (
+                cdr (sexp_list.dup ()),
+                car (sexp_list))
+        }
+    }
+    pub fn parse_sexp_dict (token_vec: &token::TokenVec) -> Ptr <Obj> {
+        let mut sexp_list = parse_sexp_list (token_vec);
+        sexp_list = sexp_list_prefix_assign (sexp_list);
+        let mut obj_dic = ObjDic::new ();
+        while (cons_p (&sexp_list)) {
+            let sexp = car (sexp_list.dup ());
+            let name = car (cdr (sexp.dup ()));
+            assert! (sym_p (&name));
+            let name = obj_to::<Sym> (name);
+            let value = car (cdr (cdr (sexp.dup ())));
+            obj_dic.ins (&name.sym, Some (value));
+            sexp_list = cdr (sexp_list.dup ())
+        }
+        Dict::obj (&obj_dic)
+    }
+    pub fn sexp_repr (env: &Env, sexp: Ptr <Obj>) -> String {
+        if (null_p (&sexp)) {
+            format! ("()")
+        } else if (cons_p (&sexp)) {
+            format! ("({})", sexp_list_repr (env, sexp))
+        } else if (vect_p (&sexp)) {
+            let v = obj_to::<Vect> (sexp);
+            let l = vect_to_list (v);
+            format! ("[{}]", sexp_list_repr (env, l))
+        } else if (dict_p (&sexp)) {
+            let d = obj_to::<Dict> (sexp);
+            let l = dict_to_list (d);
+            format! ("{{{}}}", sexp_list_repr (env, l))
+        } else if (str_p (&sexp)) {
+            let str = obj_to::<Str> (sexp);
+            format! ("\"{}\"", str.str)
+        } else if (sym_p (&sexp)) {
+            let sym = obj_to::<Sym> (sexp);
+            sym.sym.clone ()
+        } else {
+            sexp.repr (env)
+        }
+    }
+    pub fn sexp_list_repr (env: &Env, sexp_list: Ptr <Obj>) -> String {
+        if null_p (&sexp_list) {
+            format! ("")
+        } else if null_p (&cdr (sexp_list.dup ())) {
+            sexp_repr (env, car (sexp_list))
+        } else if (! cons_p (&cdr (sexp_list.dup ()))) {
+            format! ("{} . {}",
+                     sexp_repr (env, car (sexp_list.dup ())),
+                     sexp_repr (env, cdr (sexp_list)))
+        } else {
+            format! ("{} {}",
+                     sexp_repr (env, car (sexp_list.dup ())),
+                     sexp_list_repr (env, cdr (sexp_list)))
+        }
     }
     #[test]
     fn test_step () {
         let mut env = Env::new ();
 
         let bye = env.define (
-            "bye", Str::make ("bye"));
+            "bye", Str::obj ("bye"));
         let world = env.define (
-            "world", Str::make ("world"));
+            "world", Str::obj ("world"));
 
         env.frame_stack.push (frame! [
             RefJo { id: world },
@@ -851,15 +1005,15 @@
         assert_eq! (3, env.obj_stack.len ());
         assert! (obj_eq (
             env.obj_stack.pop () .unwrap (),
-            Str::make ("world")));
+            Str::obj ("world")));
         assert_eq! (2, env.obj_stack.len ());
         assert! (obj_eq (
             env.obj_stack.pop () .unwrap (),
-            Str::make ("bye")));
+            Str::obj ("bye")));
         assert_eq! (1, env.obj_stack.len ());
         assert! (obj_eq (
             env.obj_stack.pop () .unwrap (),
-            Str::make ("world")));
+            Str::obj ("world")));
         assert_eq! (0, env.obj_stack.len ());
     }
     #[test]
@@ -867,9 +1021,9 @@
         let mut env = Env::new ();
 
         let bye = env.define (
-            "bye", Str::make ("bye"));
+            "bye", Str::obj ("bye"));
         let world = env.define (
-            "world", Str::make ("world"));
+            "world", Str::obj ("world"));
 
         env.frame_stack.push (frame! [
             RefJo { id: bye },
@@ -886,11 +1040,11 @@
         assert_eq! (2, env.obj_stack.len ());
         assert! (obj_eq (
             env.obj_stack.pop () .unwrap (),
-            Str::make ("bye")));
+            Str::obj ("bye")));
         assert_eq! (1, env.obj_stack.len ());
         assert! (obj_eq (
             env.obj_stack.pop () .unwrap (),
-            Str::make ("world")));
+            Str::obj ("world")));
         assert_eq! (0, env.obj_stack.len ());
 
         // curry
@@ -911,11 +1065,11 @@
         assert_eq! (2, env.obj_stack.len ());
         assert! (obj_eq (
             env.obj_stack.pop () .unwrap (),
-            Str::make ("world")));
+            Str::obj ("world")));
         assert_eq! (1, env.obj_stack.len ());
         assert! (obj_eq (
             env.obj_stack.pop () .unwrap (),
-            Str::make ("bye")));
+            Str::obj ("bye")));
         assert_eq! (0, env.obj_stack.len ());
     }
     #[test]
@@ -924,8 +1078,8 @@
 
         let last_cry = env.define (
             "last-cry",
-            cons_c (Str::make ("bye"),
-                    Str::make ("world")));
+            cons_c (Str::obj ("bye"),
+                    Str::obj ("world")));
 
         env.frame_stack.push (frame! [
             RefJo { id: last_cry },
@@ -939,16 +1093,16 @@
         assert_eq! (3, env.obj_stack.len ());
         assert! (obj_eq (
             env.obj_stack.pop () .unwrap (),
-            cons_c (Str::make ("bye"),
-                    Str::make ("world"))));
+            cons_c (Str::obj ("bye"),
+                    Str::obj ("world"))));
         assert_eq! (2, env.obj_stack.len ());
         assert! (obj_eq (
             env.obj_stack.pop () .unwrap (),
-            Str::make ("bye")));
+            Str::obj ("bye")));
         assert_eq! (1, env.obj_stack.len ());
         assert! (obj_eq (
             env.obj_stack.pop () .unwrap (),
-            Str::make ("world")));
+            Str::obj ("world")));
         assert_eq! (0, env.obj_stack.len ());
     }
     #[test]
@@ -956,9 +1110,9 @@
         let mut env = Env::new ();
 
         let bye = env.define (
-            "bye", Str::make ("bye"));
+            "bye", Str::obj ("bye"));
         let world = env.define (
-            "world", Str::make ("world"));
+            "world", Str::obj ("world"));
         let cons = env.define (
             "cons-c", DataCons::make (CONS_T, vec! ["car", "cdr"]));
 
@@ -974,7 +1128,7 @@
         assert_eq! (1, env.obj_stack.len ());
         assert! (obj_eq (
             env.obj_stack.pop () .unwrap (),
-            Str::make ("bye")));
+            Str::obj ("bye")));
         assert_eq! (0, env.obj_stack.len ());
 
         // curry
@@ -992,7 +1146,7 @@
         assert_eq! (1, env.obj_stack.len ());
         assert! (obj_eq (
             env.obj_stack.pop () .unwrap (),
-            Str::make ("world")));
+            Str::obj ("world")));
         assert_eq! (0, env.obj_stack.len ());
     }
     #[test]
@@ -1000,9 +1154,9 @@
         let mut env = Env::new ();
 
         let bye = env.define (
-            "bye", Str::make ("bye"));
+            "bye", Str::obj ("bye"));
         let world = env.define (
-            "world", Str::make ("world"));
+            "world", Str::obj ("world"));
         let swap = env.define (
             "swap", Ptr::new (Prim {
                 arg_dic: Dic::from (vec! [ "x", "y" ]),
@@ -1025,11 +1179,11 @@
         assert_eq! (2, env.obj_stack.len ());
         assert! (obj_eq (
             env.obj_stack.pop () .unwrap (),
-            Str::make ("bye")));
+            Str::obj ("bye")));
         assert_eq! (1, env.obj_stack.len ());
         assert! (obj_eq (
             env.obj_stack.pop () .unwrap (),
-            Str::make ("world")));
+            Str::obj ("world")));
         assert_eq! (0, env.obj_stack.len ());
 
         // curry
@@ -1046,10 +1200,33 @@
         assert_eq! (2, env.obj_stack.len ());
         assert! (obj_eq (
             env.obj_stack.pop () .unwrap (),
-            Str::make ("world")));
+            Str::obj ("world")));
         assert_eq! (1, env.obj_stack.len ());
         assert! (obj_eq (
             env.obj_stack.pop () .unwrap (),
-            Str::make ("bye")));
+            Str::obj ("bye")));
         assert_eq! (0, env.obj_stack.len ());
+    }
+    #[test]
+    fn test_sexp () {
+        println! ("\n<test_sexp>");
+        let env = Env::new ();
+        let p = |code| {
+            let token_vec = token::scan (code);
+            let sexp_list = parse_sexp_list (&token_vec);
+            println! ("{} -> {}",
+                      code,
+                      sexp_list_repr (&env, sexp_list));
+        };
+        p ("()");
+        p ("[]");
+        p ("{}");
+        p ("a b c");
+        p ("a (b) c");
+        p ("(a (b) c)");
+        p ("[a b c]");
+        p ("a [b] c");
+        p ("[a [b] c]");
+        p ("{(= a 1) (= b 2) (= c 3)}");
+        println! ("</test_sexp>");
     }
