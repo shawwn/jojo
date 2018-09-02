@@ -809,14 +809,15 @@
     }
     fn parse_sexp (token: &Token) -> Ptr <Obj> {
         match token {
-            Token::List (vec) => parse_sexp_list (vec),
-            Token::Vect (vec) => parse_sexp_vect (vec),
-            Token::Dict (vec) => parse_sexp_dict (vec),
-            Token::QuotationMark (_mark, mark_name, token) =>
+            Token::List { token_vec, .. } => parse_sexp_list (token_vec),
+            Token::Vect { token_vec, .. } => parse_sexp_vect (token_vec),
+            Token::Dict { token_vec, .. } => parse_sexp_dict (token_vec),
+            Token::QuotationMark { mark_name, token, .. } =>
                 cons_c (Sym::make (mark_name),
                         unit_list (parse_sexp (token))),
-            Token::Num (num) => Num::make (*num),
-            Token::Str (str) => Str::make (str),
+            Token::Num { num, .. } => Num::make (*num),
+            Token::Str { str, .. } => Str::make (str),
+            Token::Sym { sym, .. } => Sym::make (sym),
         }
     }
     fn parse_sexp_list (token_vec: &Vec <Token>) -> Ptr <Obj> {
