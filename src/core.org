@@ -1,6 +1,9 @@
 #+property: tangle core.rs
 #+title: core
-- different orders in trans
+- Vect and Dict without struct
+- Str and Num without struct
+- native List
+- call_compile handle (.method ...)
 * use
 
   #+begin_src rust
@@ -1252,6 +1255,21 @@
     }
     #+end_src
 
+*** list_rev
+
+    #+begin_src rust
+    fn list_rev (mut list: Ptr <Obj>) -> Ptr <Obj> {
+        assert! (list_p (&list));
+        let mut rev = null_c ();
+        while ! null_p (&list) {
+            let obj = car (list.dup ());
+            rev = cons_c (obj, rev);
+            list = cdr (list);
+        }
+        rev
+    }
+    #+end_src
+
 *** unit_list
 
     #+begin_src rust
@@ -1356,6 +1374,19 @@
     }
     #+end_src
 
+*** list_to_vect
+
+    #+begin_src rust
+    fn list_to_vect (mut list: Ptr <Obj>) -> Ptr <Vect> {
+        let mut obj_vec = ObjVec::new ();
+        while cons_p (&list) {
+            obj_vec.push (car (list.dup ()));
+            list = cdr (list);
+        }
+        Vect::obj (&obj_vec)
+    }
+    #+end_src
+
 *** CollectVectJo
 
     #+begin_src rust
@@ -1438,10 +1469,10 @@
     }
     #+end_src
 
-*** dict_to_list
+*** dict_to_list_rev
 
     #+begin_src rust
-    pub fn dict_to_list (dict: Ptr <Dict>) -> Ptr <Obj> {
+    pub fn dict_to_list_rev (dict: Ptr <Dict>) -> Ptr <Obj> {
         let mut list = null_c ();
         let obj_dic = &dict.obj_dic;
         for kv in obj_dic.iter () {
@@ -1454,10 +1485,19 @@
     }
     #+end_src
 
-*** dict_to_flat_reversed_list
+*** dict_to_list
 
     #+begin_src rust
-    fn dict_to_flat_reversed_list (dict: Ptr <Dict>) -> Ptr <Obj> {
+    pub fn dict_to_list (dict: Ptr <Dict>) -> Ptr <Obj> {
+        let list = dict_to_list_rev (dict);
+        list_rev (list)
+    }
+    #+end_src
+
+*** dict_to_flat_list_rev
+
+    #+begin_src rust
+    fn dict_to_flat_list_rev (dict: Ptr <Dict>) -> Ptr <Obj> {
         let mut list = null_c ();
         for kv in dict.obj_dic.iter () {
             let key = cons_c (
@@ -1502,7 +1542,7 @@
         static_scope: &StaticScope,
         dict: Ptr <Dict>,
     ) -> Ptr <JoVec> {
-        let sexp_list = dict_to_flat_reversed_list (dict);
+        let sexp_list = dict_to_flat_list_rev (dict);
         let counter = list_size (sexp_list.dup ());
         let counter = counter / 2;
         let jojo = sexp_list_compile (
@@ -1659,6 +1699,13 @@
         } else if (dict_p (&sexp)) {
             let d = obj_to::<Dict> (sexp);
             let l = dict_to_list (d);
+            let v = list_to_vect (l);
+            let obj_vec = v.obj_vec
+                .iter ()
+                .map (|x| cons_c (Sym::obj ("="), x.dup ()))
+                .collect ();
+            let v = Vect::obj (&obj_vec);
+            let l = vect_to_list (v);
             format! ("{{{}}}", sexp_list_repr (env, l))
         } else if (str_p (&sexp)) {
             let str = obj_to::<Str> (sexp);
@@ -1718,10 +1765,19 @@
 
 * compile
 
-*** [todo] StaticScope
+*** StaticRef
 
     #+begin_src rust
-    type StaticScope = HashMap <Name, (usize, usize)>;
+    pub struct StaticRef {
+        level: usize,
+        index: usize,
+    }
+    #+end_src
+
+*** StaticScope
+
+    #+begin_src rust
+    pub type StaticScope = HashMap <Name, StaticRef>;
     #+end_src
 
 *** [todo] static_scope_extend
@@ -1746,90 +1802,164 @@
 
 *** sym_compile
 
+***** dot_in_word_p
+
+      #+begin_src rust
+      fn dot_in_word_p (word: &str) -> bool {
+          ((! token::str_word_p (word)) &&
+           (word.find (".") != None))
+      }
+      #+end_src
+
+***** dot_in_word_compile
+
+      #+begin_src rust
+      fn dot_in_word_compile (
+          env: &mut Env,
+          static_scope: &StaticScope,
+          word: &str,
+      ) -> Ptr <JoVec> {
+          let mut iter = word.split ('.');
+          let name = iter.next () .unwrap ();
+          let head_jojo = if name == "" {
+              jojo! []
+          } else {
+              let sym = Sym::obj (name);
+              sym_compile (env, static_scope, sym)
+          };
+          let mut jo_vec = JoVec::new ();
+          for name in iter {
+              let jo = Ptr::new (DotJo { name: String::from (name) });
+              jo_vec.push (jo);
+          }
+          jojo_append (&head_jojo, &jo_vec)
+      }
+      #+end_src
+
+***** ref_compile
+
+      #+begin_src rust
+      fn ref_compile (
+          env: &mut Env,
+          static_scope: &StaticScope,
+          name: &str,
+      ) -> Ptr <JoVec> {
+          if let Some (static_ref) = static_scope.get (name) {
+              jojo! [
+                  LocalRefJo {
+                      level: static_ref.level,
+                      index: static_ref.index,
+                  }
+              ]
+          } else {
+              if let Some (id) = env.obj_dic.get_index (name) {
+                  jojo! [ RefJo { id } ]
+              } else {
+                  jojo! [
+                      RefJo { id: env.obj_dic.ins (name, None) }
+                  ]
+              }
+          }
+      }
+      #+end_src
+
 ***** sym_compile
 
       #+begin_src rust
-
+      fn sym_compile (
+          env: &mut Env,
+          static_scope: &StaticScope,
+          sym: Ptr <Sym>,
+      ) -> Ptr <JoVec> {
+          let word = &sym.sym;
+          if dot_in_word_p (word) {
+              dot_in_word_compile (env, static_scope, word)
+          } else {
+              ref_compile (env, static_scope, word)
+          }
+      }
       #+end_src
 
 *** [todo] call_with_arg_dict_compile
 
-*** dot_symbol_p
-
-    #+begin_src rust
-    fn dot_symbol_p (word: &str) -> bool {
-        (word.len () >= 1 &&
-         word.starts_with ("."))
-    }
-    #+end_src
-
-*** arity_of_body
-
-    #+begin_src rust
-    fn arity_of_body (
-        env: &Env,
-        mut body: Ptr <Obj>,
-    ) -> usize {
-        assert! (list_p (&body));
-        let mut arity = 0;
-        while ! null_p (&body) {
-            let head = car (body.dup ());
-            if ! sym_p (&head) {
-                arity += 1;
-            } else {
-                let sym = obj_to::<Sym> (head.dup ());
-                let word = sym.sym .as_str ();
-                match word {
-                    "drop" => arity -= 1,
-                    "dup" | "over" | "tuck" => arity += 1,
-                    "swap" => {}
-                    _ if dot_symbol_p (word) => {}
-                    _ => arity += 1,
-                }
-            }
-            body = cdr (body);
-        }
-        arity
-    }
-    #+end_src
-
 *** call_compile
 
-    - the head still must be one word.
+***** dot_word_p
+
+      #+begin_src rust
+      fn dot_word_p (word: &str) -> bool {
+          (word.len () >= 1 &&
+           word.starts_with ("."))
+      }
+      #+end_src
+
+***** arity_of_body
+
+      #+begin_src rust
+      fn arity_of_body (
+          env: &Env,
+          mut body: Ptr <Obj>,
+      ) -> usize {
+          assert! (list_p (&body));
+          let mut arity = 0;
+          while ! null_p (&body) {
+              let head = car (body.dup ());
+              if ! sym_p (&head) {
+                  arity += 1;
+              } else {
+                  let sym = obj_to::<Sym> (head.dup ());
+                  let word = sym.sym .as_str ();
+                  match word {
+                      "drop" => arity -= 1,
+                      "dup" | "over" | "tuck" => arity += 1,
+                      "swap" => {}
+                      _ if dot_word_p (word) => {}
+                      _ => arity += 1,
+                  }
+              }
+              body = cdr (body);
+          }
+          arity
+      }
+      #+end_src
+
+***** call_compile
+
+      - the head still must be one word.
+
+      #+begin_src rust
+      pub fn call_compile (
+          env: &mut Env,
+          static_scope: &StaticScope,
+          sexp: Ptr <Obj>,
+      ) -> Ptr <JoVec> {
+          let head = car (sexp.dup ());
+          let body = cdr (sexp);
+          let arity = arity_of_body (env, body.dup ());
+          let jojo = jojo! [
+              ApplyJo { arity },
+          ];
+          let head_jojo = sexp_compile (env, static_scope, head);
+          let body_jojo = sexp_list_compile (env, static_scope, body);
+          let jojo = jojo_append (&head_jojo, &jojo);
+          let jojo = jojo_append (&body_jojo, &jojo);
+          jojo
+      }
+      #+end_src
+
+*** [todo] sexp_compile
 
     #+begin_src rust
-    pub fn call_compile (
-        env: &mut Env,
-        static_scope: &StaticScope,
-        sexp: Ptr <Obj>,
-    ) -> Ptr <JoVec> {
-        let head = car (sexp.dup ());
-        let body = cdr (sexp);
-        let arity = arity_of_body (env, body.dup ());
-        let jojo = jojo! [
-            ApplyJo { arity },
-        ];
-        let head_jojo = sexp_compile (env, static_scope, head);
-        let body_jojo = sexp_list_compile (env, static_scope, body);
-        let jojo = jojo_append (&head_jojo, &jojo);
-        let jojo = jojo_append (&body_jojo, &jojo);
-        jojo
-    }
-    #+end_src
-
-*** sexp_compile
-
-    #+begin_src rust
-    fn sexp_compile (
+    pub fn sexp_compile (
         env: &mut Env,
         static_scope: &StaticScope,
         sexp: Ptr <Obj>,
     ) -> Ptr <JoVec> {
         if str_p (&sexp) || num_p (&sexp) {
             lit_compile (env, static_scope, sexp)
-        // } else if sym_p (&sexp) {
-        //     let sym = obj_to::<Sym> (sexp);
-        //     sym_compile (env, static_scope, sym.sym)
+        } else if sym_p (&sexp) {
+            let sym = obj_to::<Sym> (sexp);
+            sym_compile (env, static_scope, sym)
         } else if vect_p (&sexp) {
             let vect = obj_to::<Vect> (sexp);
             vect_compile (env, static_scope, vect)
@@ -1852,7 +1982,7 @@
 *** sexp_list_compile
 
     #+begin_src rust
-    fn sexp_list_compile (
+    pub fn sexp_list_compile (
         env: &mut Env,
         static_scope: &StaticScope,
         sexp_list: Ptr <Obj>,
@@ -1882,6 +2012,10 @@
 * [todo] syntax
 
 * [todo] expose
+
+* [todo] interface
+
+*** ><
 
 * test
 
@@ -2137,25 +2271,56 @@
     #+begin_src rust
     #[test]
     fn test_sexp () {
-        println! ("\n<test_sexp>");
-        let env = Env::new ();
-        let p = |code| {
+        fn pr (code: &str) -> String {
+            // parse and repr
+            let env = Env::new ();
             let token_vec = token::scan (code);
             let sexp_list = parse_sexp_list (&token_vec);
-            println! ("{} -> {}",
-                      code,
-                      sexp_list_repr (&env, sexp_list));
-        };
-        p ("()");
-        p ("[]");
-        p ("{}");
-        p ("a b c");
-        p ("a (b) c");
-        p ("(a (b) c)");
-        p ("[a b c]");
-        p ("a [b] c");
-        p ("[a [b] c]");
-        p ("{(= a 1) (= b 2) (= c 3)}");
+            sexp_list_repr (&env, sexp_list)
+        }
+
+        fn pr_eq (lhs: &str, rhs: &str) -> bool {
+            let lhs_pr = pr (lhs);
+            rhs == &lhs_pr
+        }
+
+        fn pr_same (code: &str) -> bool {
+            pr_eq (code, code)
+        }
+
+        assert! (pr_same ("()"));
+        assert! (pr_same ("[]"));
+        assert! (pr_same ("{}"));
+        assert! (pr_same ("a b c"));
+        assert! (pr_same ("a (b) c"));
+        assert! (pr_same ("(a (b) c)"));
+        assert! (pr_same ("[a b c]"));
+        assert! (pr_same ("a [b] c"));
+        assert! (pr_same ("[a [b] c]"));
+        assert! (pr_same ("{(= a 1) (= b 2) (= c 3)}"));
+        assert! (pr_eq ("{a = 1, b = 2, c = 3}",
+                        "{(= a 1) (= b 2) (= c 3)}"));
+
+        println! ("\n<test_sexp>"); {
+            fn p (code: &str) {
+                let env = Env::new ();
+                let token_vec = token::scan (code);
+                let sexp_list = parse_sexp_list (&token_vec);
+                println! ("{} -> {}",
+                          code,
+                          sexp_list_repr (&env, sexp_list));
+            };
+            p ("()");
+            p ("[]");
+            p ("{}");
+            p ("a b c");
+            p ("a (b) c");
+            p ("(a (b) c)");
+            p ("[a b c]");
+            p ("a [b] c");
+            p ("[a [b] c]");
+            p ("{(= a 1) (= b 2) (= c 3)}");
+        }
         println! ("</test_sexp>");
     }
     #+end_src

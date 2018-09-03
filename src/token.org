@@ -214,7 +214,7 @@
 ***** num_word_p
 
       #+begin_src rust
-      fn num_word_p (word: &str) -> bool {
+      pub fn num_word_p (word: &str) -> bool {
           word.parse::<Num> () .is_ok ()
       }
       #+end_src
@@ -222,7 +222,7 @@
 ***** str_word_p
 
       #+begin_src rust
-      fn str_word_p (word: &str) -> bool {
+      pub fn str_word_p (word: &str) -> bool {
           let len = word.len ();
           (len >= 2 &&
            word.starts_with ("\"") &&
@@ -233,7 +233,7 @@
 ***** sym_word_p
 
       #+begin_src rust
-      fn sym_word_p (word: &str) -> bool {
+      pub fn sym_word_p (word: &str) -> bool {
           // not real check for sym for now
           word.len () > 0
       }

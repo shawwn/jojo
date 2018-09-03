@@ -147,16 +147,16 @@
           };
           (token, next_iter)
       }
-      fn num_word_p (word: &str) -> bool {
+      pub fn num_word_p (word: &str) -> bool {
           word.parse::<Num> () .is_ok ()
       }
-      fn str_word_p (word: &str) -> bool {
+      pub fn str_word_p (word: &str) -> bool {
           let len = word.len ();
           (len >= 2 &&
            word.starts_with ("\"") &&
            word.ends_with ("\""))
       }
-      fn sym_word_p (word: &str) -> bool {
+      pub fn sym_word_p (word: &str) -> bool {
           // not real check for sym for now
           word.len () > 0
       }

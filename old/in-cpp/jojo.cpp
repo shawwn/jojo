@@ -194,10 +194,11 @@
               repr += it->first;
               repr += " = ";
               auto obj = it->second;
-              if (obj == nullptr)
+              if (obj == nullptr) {
                   repr += "_";
-              else
+              } else {
                   repr += obj->repr (env);
+              }
               repr += ") ";
           }
           return repr;
@@ -616,9 +617,9 @@
     bool
     obj_t::eq (shared_ptr <obj_t> obj)
     {
-        if (this->tag != obj->tag)
+        if (this->tag != obj->tag) {
             return false;
-        else {
+        } else {
             cout << "- fatal error : obj_t::eq" << "\n";
             cout << "  eq is not implemented for  : ";
             cout << obj->tag << "\n";
@@ -960,10 +961,11 @@
         for (auto &kv: env.box_map) {
             cout << "  " << kv.first << " = ";
             auto box = kv.second;
-            if (box->empty_p)
+            if (box->empty_p) {
                 cout << "_";
-            else
+            } else {
                 cout << box->obj->repr (env);
+            }
             cout << "\n";
         }
     }
@@ -1101,17 +1103,20 @@
     closure_o::eq (shared_ptr <obj_t> obj)
     {
         // raw pointers must be eq first
-        if (this != obj.get ()) return false;
+        if (this != obj.get ()) {
+            return false;
+        }
         auto that = static_pointer_cast <closure_o> (obj);
-        // then scopes
-        if (scope_eq (
-                this->scope,
-                that->scope)) return false;
-        // then bindings
+        if (scope_eq (this->scope, that->scope)) {
+            return false;
+        }
         if (bind_vector_eq (
                 this->bind_vector,
-                that->bind_vector)) return false;
-        else return true;
+                that->bind_vector)) {
+            return false;
+        } else {
+            return true;
+        }
     }
     bool
     closure_p (shared_ptr <obj_t> a)
@@ -1401,10 +1406,11 @@
     shared_ptr <data_o>
     make_bool (bool b)
     {
-        if (b)
+        if (b) {
             return true_c ();
-        else
+        } else {
             return false_c ();
+        }
     }
     bool
     bool_p (shared_ptr <obj_t> a)
@@ -2424,25 +2430,27 @@
         string ket,
         size_t counter)
     {
-        if (counter == 0)
+        if (counter == 0) {
             return null_c ();
+        }
         auto head = as_str (car (word_list));
         auto word = head->str;
-        if (word == bar)
+        if (word == bar) {
             return cons_c (
                 head, word_list_head_with_bar_ket_counter (
                     cdr (word_list),
                     bar, ket, counter + 1));
-        if (word == ket)
+        } else if (word == ket) {
             return cons_c (
                 head, word_list_head_with_bar_ket_counter (
                     cdr (word_list),
                     bar, ket, counter - 1));
-        else
+        } else {
             return cons_c (
                 head, word_list_head_with_bar_ket_counter (
                     cdr (word_list),
                     bar, ket, counter));
+        }
     }
     shared_ptr <obj_t>
     word_list_head (shared_ptr <obj_t> word_list)
@@ -2533,7 +2541,7 @@
         }
     }
     bool
-    string_string_p (string str)
+    str_word_p (string str)
     {
         auto size = str.size ();
         if (size < 2) return false;
@@ -2548,12 +2556,12 @@
         return str.substr (1, size);
     }
     bool
-    num_string_p (string str)
+    num_word_p (string str)
     {
         auto size = str.size ();
         if (size < 1) return false;
         if (str [0] == '-')
-            return num_string_p (str.substr (1, size - 1));
+            return num_word_p (str.substr (1, size - 1));
         auto string_vector = string_split (str, '.');
         if (string_vector.size () == 0) return false;
         if (string_vector.size () >= 3) return false;
@@ -2659,9 +2667,9 @@
         else if (word == "~@")
             return cons_c (make_sym ("unquote-splicing"),
                            unit_list (parse_sexp (rest)));
-        else if (num_string_p (word))
+        else if (num_word_p (word))
             return make_num (s2n (word));
-        else if (string_string_p (word))
+        else if (str_word_p (word))
             return make_str (string_string_to_string (word));
         else
             return make_sym (word);
@@ -2868,25 +2876,25 @@
           auto jojo = make_shared <jojo_t> (jo_vector);
           return jojo;
       }
-        struct field_jo_t: jo_t
+        struct dot_jo_t: jo_t
         {
             name_t name;
             jo_t * copy ();
-            field_jo_t (name_t name);
+            dot_jo_t (name_t name);
             void exe (env_t &env, scope_t &scope);
             string repr (env_t &env);
         };
-        field_jo_t::field_jo_t (name_t name)
+        dot_jo_t::dot_jo_t (name_t name)
         {
             this->name = name;
         }
         jo_t *
-        field_jo_t::copy ()
+        dot_jo_t::copy ()
         {
-            return new field_jo_t (this->name);
+            return new dot_jo_t (this->name);
         }
         void
-        field_jo_t::exe (env_t &env, scope_t &scope)
+        dot_jo_t::exe (env_t &env, scope_t &scope)
         {
             auto obj = env.obj_stack.top ();
             env.obj_stack.pop ();
@@ -2907,7 +2915,7 @@
                         env.obj_stack.push (it->second);
                     }
                 } else {
-                    cout << "- fatal error : field_jo_t::exe" << "\n";
+                    cout << "- fatal error : dot_jo_t::exe" << "\n";
                     cout << "  unknown field : " << this->name << "\n";
                     cout << "  fail to find it in both object and type" << "\n";
                     exit (1);
@@ -2915,56 +2923,45 @@
             }
         }
         string
-        field_jo_t::repr (env_t &env)
+        dot_jo_t::repr (env_t &env)
         {
             return "." + this->name;
         }
       bool
-      field_word_p (string str)
+      dot_in_word_p (string str)
       {
-          if (string_string_p (str)) return false;
+          if (str_word_p (str)) return false;
           auto pos = str.find (".");
           return (pos != string::npos);
       }
       shared_ptr <jojo_t>
-      field_word_compile (
+      dot_in_word_compile (
           env_t &env,
           static_scope_t &static_scope,
           string str)
       {
           auto string_vector = string_split (str, '.');
-          auto sym = make_sym (string_vector [0]);
-          auto jojo = sym_compile (env, static_scope, sym);
+          auto jojo = make_shared <jojo_t> (jo_vector_t ());
+          auto name = string_vector [0];
+          if (name != "") {
+              auto sym = make_sym (name);
+              jojo = sym_compile (env, static_scope, sym);
+          }
           auto begin = string_vector.begin () + 1;
           auto end = string_vector.end ();
           auto jo_vector = jo_vector_t ();
           for (auto it = begin; it != end; it++) {
-              jo_vector.push_back (new field_jo_t (*it));
+              jo_vector.push_back (new dot_jo_t (*it));
           }
           return jojo_append (jojo, make_shared <jojo_t> (jo_vector));
       }
-      bool
-      dot_word_p (string str)
-      {
-          auto size = str.size ();
-          if (size < 1) return false;
-          return (str [0] == '.');
-      }
-      shared_ptr <jojo_t>
-      dot_word_compile (
-          env_t &env,
-          static_scope_t &static_scope,
-          string str)
-      {
-          auto string_vector = string_split (str, '.');
-          auto begin = string_vector.begin () + 1;
-          auto end = string_vector.end ();
-          auto jo_vector = jo_vector_t ();
-          for (auto it = begin; it != end; it++) {
-              jo_vector.push_back (new field_jo_t (*it));
-          }
-          return make_shared <jojo_t> (jo_vector);
-      }
+    bool
+    dot_word_p (string str)
+    {
+        auto size = str.size ();
+        if (size < 1) return false;
+        return (str [0] == '.');
+    }
         struct ref_jo_t: jo_t
         {
             box_t *box;
@@ -3064,10 +3061,8 @@
         shared_ptr <sym_o> sym)
     {
         auto word = sym->sym;
-        if (dot_word_p (word))
-            return dot_word_compile (env, static_scope, word);
-        else if (field_word_p (word))
-            return field_word_compile (env, static_scope, word);
+        if (dot_in_word_p (word))
+             return dot_in_word_compile (env, static_scope, word);
         else
             return ref_compile (env, static_scope, word);
     }
@@ -5775,9 +5770,9 @@
 
           jo_vector_t jo_vector = {
               new ref_jo_t (boxing (env, "last-cry")),
-              new field_jo_t ("car"),
+              new dot_jo_t ("car"),
               new ref_jo_t (boxing (env, "last-cry")),
-              new field_jo_t ("cdr"),
+              new dot_jo_t ("cdr"),
               new ref_jo_t (boxing (env, "last-cry")),
           };
 
@@ -5891,7 +5886,7 @@
               new ref_jo_t (boxing (env, "s2")),
               new ref_jo_t (boxing (env, "cons-c")),
               new apply_jo_t (2),
-              new field_jo_t ("cdr"),
+              new dot_jo_t ("cdr"),
           };
 
           env.frame_stack.push (new_frame_from_jo_vector (jo_vector));
@@ -5924,7 +5919,7 @@
               new ref_jo_t (boxing (env, "cons-c")),
               new apply_jo_t (1),
               new apply_jo_t (1),
-              new field_jo_t ("car"),
+              new dot_jo_t ("car"),
           };
 
           env.frame_stack.push (new_frame_from_jo_vector (jo_vector));

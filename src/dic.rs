@@ -69,6 +69,14 @@
           }
       }
 
+      pub fn get_index (&self, name: &str) -> Option <usize> {
+          if let Some (index) = self.index_map.get (name) {
+              Some (*index)
+          } else {
+              None
+          }
+      }
+
       pub fn get (&self, name: &str) -> Option <&T> {
           if let Some (index) = self.index_map.get (name) {
               let entry = self.idx (*index);
@@ -166,6 +174,7 @@
 
         let index = dic.ins ("key1", Some (vec! [1, 1, 1]));
         assert_eq! (0, index);
+        assert_eq! (index, dic.get_index ("key1") .unwrap ());
         assert_eq! (1, dic.len ());
         assert! (dic.has_name ("key1"));
         assert! (! dic.has_name ("non-key"));
@@ -175,6 +184,7 @@
 
         let index = dic.ins ("key2", Some (vec! [2, 2, 2]));
         assert_eq! (1, index);
+        assert_eq! (index, dic.get_index ("key2") .unwrap ());
         assert_eq! (2, dic.len ());
         assert! (dic.has_name ("key2"));
         let entry = dic.idx (1);
