@@ -34,7 +34,7 @@
 
     using bind_t = pair <name_t, shared_ptr <obj_t>>;
     using bind_vector_t = vector <bind_t>; // index from end
-    using local_scope_t = vector <bind_vector_t>; // index from end
+    using scope_t = vector <bind_vector_t>; // index from end
 
     using jo_vector_t = vector <jo_t *>;
     using obj_map_t = map <name_t, shared_ptr <obj_t>>;
@@ -45,7 +45,7 @@
     using jojo_map_t = map <tag_t, shared_ptr <jojo_t>>;
     using string_vector_t = vector <string> ;
     using local_ref_t = pair <size_t, size_t>;
-    using local_ref_map_t = map <name_t, local_ref_t>;
+    using static_scope_t = map <name_t, local_ref_t>;
     using path_t = fs::path;
     using num_t = double;
     using tagged_box_t = pair <name_t, box_t *>;
@@ -67,7 +67,7 @@
     {
         virtual jo_t * copy ();
         virtual ~jo_t ();
-        virtual void exe (env_t &env, local_scope_t &local_scope);
+        virtual void exe (env_t &env, scope_t &scope);
         virtual string repr (env_t &env);
     };
     struct env_t
@@ -106,8 +106,8 @@
     {
         size_t index;
         shared_ptr <jojo_t> jojo;
-        local_scope_t local_scope;
-        frame_t (shared_ptr <jojo_t> jojo, local_scope_t local_scope);
+        scope_t scope;
+        frame_t (shared_ptr <jojo_t> jojo, scope_t scope);
     };
       template <typename Out>
       void
@@ -160,8 +160,7 @@
               string repr = "[";
               repr += "]";
               return repr;
-          }
-          else {
+          } else {
               string repr = "[";
               for (auto name: name_vector) {
                   repr += name;
@@ -323,9 +322,9 @@
           return obj_vector;
       }
       bool
-      local_scope_eq (
-          local_scope_t &lhs,
-          local_scope_t &rhs)
+      scope_eq (
+          scope_t &lhs,
+          scope_t &rhs)
       {
           if (lhs.size () != rhs.size ()) return false;
           auto size = lhs.size ();
@@ -337,29 +336,29 @@
           }
           return true;
       }
-      local_scope_t
-      local_scope_extend (
-          local_scope_t old_local_scope,
+      scope_t
+      scope_extend (
+          scope_t old_scope,
           bind_vector_t bind_vector)
       {
-          auto local_scope = old_local_scope;
-          local_scope.push_back (bind_vector);
-          return local_scope;
+          auto scope = old_scope;
+          scope.push_back (bind_vector);
+          return scope;
       }
       string
-      local_scope_repr (env_t &env, local_scope_t local_scope)
+      scope_repr (env_t &env, scope_t scope)
       {
           string repr = "";
           repr += "  - [";
-          repr += to_string (local_scope.size ());
+          repr += to_string (scope.size ());
           repr += "] ";
-          repr += "local_scope - ";
+          repr += "scope - ";
           repr += "\n";
-          for (auto it = local_scope.rbegin ();
-               it != local_scope.rend ();
+          for (auto it = scope.rbegin ();
+               it != scope.rend ();
                it++) {
               repr += "    ";
-              repr += to_string (distance (local_scope.rbegin (), it));
+              repr += to_string (distance (scope.rbegin (), it));
               repr += " ";
               repr += bind_vector_repr (env, *it);
               repr += "\n";
@@ -536,29 +535,29 @@
       new_frame_from_jojo (shared_ptr <jojo_t> jojo)
       {
           return make_shared <frame_t>
-              (jojo, local_scope_t ());
+              (jojo, scope_t ());
       }
       shared_ptr <frame_t>
       new_frame_from_jo_vector (jo_vector_t jo_vector)
       {
           auto jojo = make_shared <jojo_t> (jo_vector);
           return make_shared <frame_t>
-              (jojo, local_scope_t ());
+              (jojo, scope_t ());
       }
-      local_ref_map_t
-      local_ref_map_extend (
+      static_scope_t
+      static_scope_extend (
           env_t &env,
-          local_ref_map_t &old_local_ref_map,
+          static_scope_t &old_static_scope,
           name_vector_t &name_vector)
       {
-          auto local_ref_map = local_ref_map_t ();
-          for (auto &kv: old_local_ref_map) {
+          auto static_scope = static_scope_t ();
+          for (auto &kv: old_static_scope) {
               auto name = kv.first;
               auto old_local_ref = kv.second;
               auto local_ref = local_ref_t ();
               local_ref.first = old_local_ref.first + 1;
               local_ref.second = old_local_ref.second;
-              local_ref_map [name] = local_ref;
+              static_scope [name] = local_ref;
           }
           size_t index = 0;
           auto size = name_vector.size ();
@@ -567,10 +566,10 @@
               auto local_ref = local_ref_t ();
               local_ref.first = 0;
               local_ref.second = index;
-              local_ref_map [name] = local_ref;
+              static_scope [name] = local_ref;
               index++;
           }
-          return local_ref_map;
+          return static_scope;
       }
       void
       assert_pop_eq (env_t &env, shared_ptr <obj_t> obj)
@@ -678,14 +677,12 @@
                 auto it = obj->obj_map.find (sub_name);
                 if (it != obj->obj_map.end ()) {
                     obj = it->second;
-                }
-                else {
+                } else {
                     return nullptr;
                 }
             }
             return obj;
-        }
-        else {
+        } else {
             return nullptr;
         }
     }
@@ -703,7 +700,7 @@
         // to a base class results in undefined behavior.
     }
     void
-    jo_t::exe (env_t &env, local_scope_t &local_scope)
+    jo_t::exe (env_t &env, scope_t &scope)
     {
         cout << "- fatal error : unknown jo" << "\n";
         exit (1);
@@ -724,8 +721,7 @@
           if (it != env.box_map.end ()) {
               auto box = it->second;
               return box;
-          }
-          else {
+          } else {
               auto box = new box_t ();
               env.box_map [name] = box;
               return box;
@@ -780,11 +776,11 @@
       frame_t::
       frame_t (
           shared_ptr <jojo_t> jojo,
-          local_scope_t local_scope)
+          scope_t scope)
       {
           this->index = 0;
           this->jojo = jojo;
-          this->local_scope = local_scope;
+          this->scope = scope;
       }
       void
       jojo_print (env_t &env, shared_ptr <jojo_t> jojo)
@@ -806,8 +802,7 @@
               jo_t *jo = *it;
               if (index == it_index) {
                   cout << "->> " << jo->repr (env) << " ";
-              }
-              else {
+              } else {
                   cout << jo->repr (env) << " ";
               }
           }
@@ -820,7 +815,7 @@
                << "] ";
           jojo_print_with_index (env, frame->jojo, frame->index);
           cout << "\n";
-          cout << local_scope_repr (env, frame->local_scope);
+          cout << scope_repr (env, frame->scope);
       }
       bool
       tag_name_p (name_t name)
@@ -839,8 +834,7 @@
           if (it != env.tag_map.end ()) {
               auto tag = it->second;
               return tag;
-          }
-          else {
+          } else {
               auto tag = env.tagged_box_vector.size ();
               env.tag_map [name] = tag;
               auto box = boxing (env, name);
@@ -855,8 +849,7 @@
               cout << "- fatal error : box_of_tag" << "\n"
                    << "  unknown tag : " << tag << "\n";
               exit (1);
-          }
-          else {
+          } else {
               return env.tagged_box_vector [tag] .second;
           }
       }
@@ -865,8 +858,7 @@
       {
           if (tag >= env.tagged_box_vector.size ()) {
               return "#<unknown-tag:" + to_string (tag) + ">";
-          }
-          else {
+          } else {
               return env.tagged_box_vector [tag] .first;
           }
       }
@@ -949,8 +941,8 @@
         // handle proper tail call
         if (index+1 == size) this->frame_stack.pop ();
         // since the last frame might be drop,
-        //   we pass last local_scope as an extra argument.
-        frame->jojo->jo_vector[index]->exe (*this, frame->local_scope);
+        //   we pass last scope as an extra argument.
+        frame->jojo->jo_vector[index]->exe (*this, frame->scope);
     }
     void
     env_t::run ()
@@ -1035,11 +1027,11 @@
         name_vector_t name_vector;
         shared_ptr <jojo_t> jojo;
         bind_vector_t bind_vector;
-        local_scope_t local_scope;
+        scope_t scope;
         closure_o (name_vector_t name_vector,
                    shared_ptr <jojo_t> jojo,
                    bind_vector_t bind_vector,
-                   local_scope_t local_scope);
+                   scope_t scope);
         bool eq (shared_ptr <obj_t> obj);
         void apply (env_t &env, size_t arity);
         void apply_to_arg_dict (env_t &env);
@@ -1050,26 +1042,26 @@
         name_vector_t name_vector,
         shared_ptr <jojo_t> jojo,
         bind_vector_t bind_vector,
-        local_scope_t local_scope)
+        scope_t scope)
     {
         this->tag = closure_tag;
         this->name_vector = name_vector;
         this->jojo = jojo;
         this->bind_vector = bind_vector;
-        this->local_scope = local_scope;
+        this->scope = scope;
     }
     shared_ptr <closure_o>
     make_closure (
         name_vector_t name_vector,
         shared_ptr <jojo_t> jojo,
         bind_vector_t bind_vector,
-        local_scope_t local_scope)
+        scope_t scope)
     {
         return make_shared <closure_o> (
             name_vector,
             jojo,
             bind_vector,
-            local_scope);
+            scope);
     }
     void
     closure_o::apply (env_t &env, size_t arity)
@@ -1090,19 +1082,18 @@
         auto bind_vector = bind_vector_merge_obj_vector (
             env, this->bind_vector, obj_vector);
         if (lack == arity) {
-            auto local_scope = local_scope_extend (
-                this->local_scope, bind_vector);
+            auto scope = scope_extend (
+                this->scope, bind_vector);
             auto frame = make_shared <frame_t> (
-                this->jojo, local_scope);
+                this->jojo, scope);
             env.frame_stack.push (frame);
-        }
-        else {
+        } else {
             assert (arity < lack);
             auto closure = make_closure (
                 this->name_vector,
                 this->jojo,
                 bind_vector,
-                this->local_scope);
+                this->scope);
             env.obj_stack.push (closure);
         }
     }
@@ -1113,9 +1104,9 @@
         if (this != obj.get ()) return false;
         auto that = static_pointer_cast <closure_o> (obj);
         // then scopes
-        if (local_scope_eq (
-                this->local_scope,
-                that->local_scope)) return false;
+        if (scope_eq (
+                this->scope,
+                that->scope)) return false;
         // then bindings
         if (bind_vector_eq (
                 this->bind_vector,
@@ -1135,9 +1126,9 @@
         repr += " ";
         repr += jojo_repr (env, this->jojo);
         repr += "\n";
-        auto local_scope = this->local_scope;
-        local_scope.push_back (this->bind_vector);
-        repr += local_scope_repr (env, local_scope);
+        auto scope = this->scope;
+        scope.push_back (this->bind_vector);
+        repr += scope_repr (env, scope);
         if (! repr.empty ()) repr.pop_back ();
         if (! repr.empty ()) repr.pop_back ();
         repr += ")";
@@ -1233,8 +1224,7 @@
         auto type = find_type_from_prefix (env, prefix);
         if (type) {
             type->obj_map [name] = obj;
-        }
-        else {
+        } else {
             cout << "- fatal error : assign fail" << "\n";
             cout << "  unknown prefix : " << prefix << "\n";
             exit (1);
@@ -1321,16 +1311,14 @@
             this->tag == cons_tag)
         {
             return sexp_repr (env, shared_from_this ());
-        }
-        else if (this->obj_map.size () == 0) {
+        } else if (this->obj_map.size () == 0) {
             string repr = "";
             repr += name_of_tag (env, this->tag);
             repr.pop_back ();
             repr.pop_back ();
             repr += "-c";
             return repr;
-        }
-        else {
+        } else {
             string repr = "(";
             repr += name_of_tag (env, this->tag);
             repr.pop_back ();
@@ -1365,12 +1353,10 @@
         if (lack == arity) {
             lack_name_vector = name_vector_obj_map_lack (
                 this->name_vector, this->obj_map);
-        }
-        else if (arity < lack) {
+        } else if (arity < lack) {
             lack_name_vector = name_vector_obj_map_arity_lack (
                 this->name_vector, this->obj_map, arity);
-        }
-        else {
+        } else {
             cout << "- fatal error : data_o::apply" << "\n";
             cout << "  over-arity apply" << "\n";
             cout << "  arity > lack" << "\n";
@@ -1473,8 +1459,7 @@
         if (this->name_vector.size () == 0) {
             string repr = "(prim)";
             return repr;
-        }
-        else {
+        } else {
             string repr = "(prim ";
             repr += name_vector_and_obj_map_repr
                 (env, this->name_vector, this->obj_map);
@@ -1500,8 +1485,7 @@
             auto obj_map = pick_up_obj_map_and_merge (
                 env, lack_name_vector, this->obj_map);
             this->fn (env, obj_map);
-        }
-        else if (arity < lack) {
+        } else if (arity < lack) {
             auto lack_name_vector = name_vector_obj_map_arity_lack (
                 this->name_vector, this->obj_map, arity);
             auto obj_map = pick_up_obj_map_and_merge (
@@ -1511,8 +1495,7 @@
                 this->fn,
                 obj_map);
             env.obj_stack.push (prim);
-        }
-        else {
+        } else {
             cout << "- fatal error : prim_o::apply" << "\n";
             cout << "  over-arity apply" << "\n";
             cout << "  arity > lack" << "\n";
@@ -1569,8 +1552,7 @@
     {
         if (this->num == floor (this->num)) {
             return to_string (static_cast <long long int> (this->num));
-        }
-        else {
+        } else {
             return to_string (this->num);
         }
     }
@@ -2237,8 +2219,7 @@
         if (it != obj_map.end ()) {
             auto value = it->second;
             return just_c (value);
-        }
-        else {
+        } else {
             return nothing_c ();
         }
     }
@@ -2335,37 +2316,35 @@
             index++;
         }
     }
-    string_vector_t
-    scan_word_vector (string code)
-    {
-        auto string_vector = string_vector_t ();
-        size_t i = 0;
-        while (i < code.length ()) {
-            char c = code [i];
-            if (space_char_p (c)) i++;
-            else if (delimiter_char_p (c)) {
-                string_vector.push_back (string_from_char (c));
-                i++;
-            }
-            else if (semicolon_char_p (c)) {
-                auto length = find_comment_length (code, i);
-                i += length;
-            }
-            else if (doublequote_char_p (c)) {
-                auto length = find_string_length (code, i);
-                string str = code.substr (i, length);
-                string_vector.push_back (str);
-                i += length;
-            }
-            else {
-                auto length = find_word_length (code, i);
-                string word = code.substr (i, length);
-                string_vector.push_back (word);
-                i += length;
-            }
-        }
-        return string_vector;
-    }
+       string_vector_t
+       scan_word_vector (string code)
+       {
+           auto string_vector = string_vector_t ();
+           size_t i = 0;
+           while (i < code.length ()) {
+               char c = code [i];
+               if (space_char_p (c)) {
+                   i++;
+               } else if (delimiter_char_p (c)) {
+                   string_vector.push_back (string_from_char (c));
+                   i++;
+               } else if (semicolon_char_p (c)) {
+                   auto length = find_comment_length (code, i);
+                   i += length;
+               } else if (doublequote_char_p (c)) {
+                   auto length = find_string_length (code, i);
+                   string str = code.substr (i, length);
+                   string_vector.push_back (str);
+                   i += length;
+               } else {
+                   auto length = find_word_length (code, i);
+                   string word = code.substr (i, length);
+                   string_vector.push_back (word);
+                   i += length;
+               }
+           }
+           return string_vector;
+       }
     void
     test_scan ()
     {
@@ -2478,15 +2457,15 @@
                 head, word_list_head_with_bar_ket_counter (
                     cdr (word_list),
                     bar, ket, 1));
-        }
-        else if (quote_word_p (word))
+        } else if (quote_word_p (word)) {
             return cons_c (
                 head, word_list_head (cdr (word_list)));
-        else if (unquote_word_p (word))
+        } else if (unquote_word_p (word)) {
             return cons_c (
                 head, word_list_head (cdr (word_list)));
-        else
+        } else {
             return unit_list (head);
+        }
     }
     shared_ptr <obj_t>
     word_list_rest_with_bar_ket_counter (
@@ -2547,8 +2526,7 @@
         if (null_p (cdr_rest)) {
             assert (word == ket);
             return unit_list (head);
-        }
-        else {
+        } else {
             return cons_c (
                 head,
                 word_list_drop_ket (rest, ket));
@@ -2582,8 +2560,7 @@
         auto pos = str.find_first_not_of ("0123456789.");
         if (pos != string::npos) {
             return false;
-        }
-        else {
+        } else {
             return true;
         }
     }
@@ -2602,8 +2579,7 @@
     {
         if (null_p (sexp_list)) {
             return unit_list (last_sexp);
-        }
-        else {
+        } else {
             auto head = car (sexp_list);
             if (sym_p (head) and as_sym (head) ->sym == "=") {
                 auto next = car (cdr (sexp_list));
@@ -2615,8 +2591,7 @@
                 return cons_c (
                     new_last_sexp,
                     sexp_list_prefix_assign (rest));
-            }
-            else {
+            } else {
                 auto rest = cdr (sexp_list);
                 return cons_c (
                     last_sexp,
@@ -2709,29 +2684,23 @@
     {
         if (null_p (sexp)) {
             return "()";
-        }
-        else if (cons_p (sexp)) {
+        } else if (cons_p (sexp)) {
             return "(" + sexp_list_repr (env, sexp) + ")";
-        }
-        else if (vect_p (sexp)) {
+        } else if (vect_p (sexp)) {
             auto v = as_vect (sexp);
             auto l = vect_to_list (v);
             return "[" + sexp_list_repr (env, l) + "]";
-        }
-        else if (dict_p (sexp)) {
+        } else if (dict_p (sexp)) {
             auto d = as_dict (sexp);
             auto l = dict_to_list (d);
             return "{" + sexp_list_repr (env, l) + "}";
-        }
-        else if (str_p (sexp)) {
+        } else if (str_p (sexp)) {
             auto str = as_str (sexp);
             return '"' + str->str + '"';
-        }
-        else if (sym_p (sexp)) {
+        } else if (sym_p (sexp)) {
             auto sym = as_sym (sexp);
             return sym->sym;
-        }
-        else {
+        } else {
             return sexp->repr (env);
         }
     }
@@ -2759,8 +2728,7 @@
         const char* env_p = getenv (env_var);
         if (env_p) {
             return string (env_p);
-        }
-        else {
+        } else {
             return string ();
         }
     }
@@ -2802,8 +2770,7 @@
                     exit (1);
                 }
                 result_vector.push_back (result);
-            }
-            else {
+            } else {
                 result_vector.push_back (str);
             }
         }
@@ -2848,26 +2815,26 @@
     shared_ptr <jojo_t>
     symbol_compile (
         env_t &env,
-        local_ref_map_t &local_ref_map,
+        static_scope_t &static_scope,
         symbol sym);
 
     shared_ptr <jojo_t>
     sexp_compile (
         env_t &env,
-        local_ref_map_t &local_ref_map,
+        static_scope_t &static_scope,
         shared_ptr <obj_t> sexp);
 
     shared_ptr <jojo_t>
     sexp_list_compile (
         env_t &env,
-        local_ref_map_t &local_ref_map,
+        static_scope_t &static_scope,
         shared_ptr <obj_t> sexp_list);
         struct lit_jo_t: jo_t
         {
             shared_ptr <obj_t> obj;
             lit_jo_t (shared_ptr <obj_t> obj);
             jo_t * copy ();
-            void exe (env_t &env, local_scope_t &local_scope);
+            void exe (env_t &env, scope_t &scope);
             string repr (env_t &env);
         };
         lit_jo_t::
@@ -2881,7 +2848,7 @@
             return new lit_jo_t (this->obj);
         }
         void
-        lit_jo_t::exe (env_t &env, local_scope_t &local_scope)
+        lit_jo_t::exe (env_t &env, scope_t &scope)
         {
             env.obj_stack.push (this->obj);
         }
@@ -2893,7 +2860,7 @@
       shared_ptr <jojo_t>
       lit_compile (
           env_t &env,
-          local_ref_map_t &local_ref_map,
+          static_scope_t &static_scope,
           shared_ptr <obj_t> sexp)
       {
           auto jo_vector = jo_vector_t ();
@@ -2906,7 +2873,7 @@
             name_t name;
             jo_t * copy ();
             field_jo_t (name_t name);
-            void exe (env_t &env, local_scope_t &local_scope);
+            void exe (env_t &env, scope_t &scope);
             string repr (env_t &env);
         };
         field_jo_t::field_jo_t (name_t name)
@@ -2919,15 +2886,14 @@
             return new field_jo_t (this->name);
         }
         void
-        field_jo_t::exe (env_t &env, local_scope_t &local_scope)
+        field_jo_t::exe (env_t &env, scope_t &scope)
         {
             auto obj = env.obj_stack.top ();
             env.obj_stack.pop ();
             auto it = obj->obj_map.find (this->name);
             if (it != obj->obj_map.end ()) {
                 env.obj_stack.push (it->second);
-            }
-            else {
+            } else {
                 auto type = type_of (env, obj);
                 auto it = type->obj_map.find (this->name);
                 if (it != type->obj_map.end ()) {
@@ -2937,12 +2903,10 @@
                         assert (method->name_vector.size () == 1);
                         env.obj_stack.push (obj);
                         method->apply (env, 1);
-                    }
-                    else {
+                    } else {
                         env.obj_stack.push (it->second);
                     }
-                }
-                else {
+                } else {
                     cout << "- fatal error : field_jo_t::exe" << "\n";
                     cout << "  unknown field : " << this->name << "\n";
                     cout << "  fail to find it in both object and type" << "\n";
@@ -2965,12 +2929,12 @@
       shared_ptr <jojo_t>
       field_symbol_compile (
           env_t &env,
-          local_ref_map_t &local_ref_map,
+          static_scope_t &static_scope,
           string str)
       {
           auto string_vector = string_split (str, '.');
           auto jojo = symbol_compile
-              (env, local_ref_map, string_vector [0]);
+              (env, static_scope, string_vector [0]);
           auto begin = string_vector.begin () + 1;
           auto end = string_vector.end ();
           auto jo_vector = jo_vector_t ();
@@ -2989,7 +2953,7 @@
       shared_ptr <jojo_t>
       dot_symbol_compile (
           env_t &env,
-          local_ref_map_t &local_ref_map,
+          static_scope_t &static_scope,
           string str)
       {
           auto string_vector = string_split (str, '.');
@@ -3006,7 +2970,7 @@
             box_t *box;
             ref_jo_t (box_t *);
             jo_t * copy ();
-            void exe (env_t &env, local_scope_t &local_scope);
+            void exe (env_t &env, scope_t &scope);
             string repr (env_t &env);
         };
         ref_jo_t::ref_jo_t (box_t *box)
@@ -3019,15 +2983,14 @@
             return new ref_jo_t (this->box);
         }
         void
-        ref_jo_t::exe (env_t &env, local_scope_t &local_scope)
+        ref_jo_t::exe (env_t &env, scope_t &scope)
         {
             if (this->box->empty_p) {
                 cout << "- fatal error : ref_jo_t::exe fail" << "\n";
                 cout << "  undefined name : "
                      << name_of_box (env, box) << "\n";
                 exit (1);
-            }
-            else {
+            } else {
                 env.obj_stack.push (this->box->obj);
             }
         }
@@ -3042,7 +3005,7 @@
             size_t index;
             local_ref_jo_t (size_t level, size_t index);
             jo_t * copy ();
-            void exe (env_t &env, local_scope_t &local_scope);
+            void exe (env_t &env, scope_t &scope);
             string repr (env_t &env);
         };
         local_ref_jo_t::
@@ -3057,12 +3020,12 @@
             return new local_ref_jo_t (this->level, this->index);
         }
         void
-        local_ref_jo_t::exe (env_t &env, local_scope_t &local_scope)
+        local_ref_jo_t::exe (env_t &env, scope_t &scope)
         {
             // this is the only place where
-            //   the local_scope in the arg of exe is uesd.
+            //   the scope in the arg of exe is uesd.
             auto bind_vector =
-                local_scope [local_scope.size () - this->level - 1];
+                scope [scope.size () - this->level - 1];
             auto bind =
                 bind_vector [bind_vector.size () - this->index - 1];
             auto obj = bind.second;
@@ -3078,12 +3041,12 @@
       shared_ptr <jojo_t>
       ref_compile (
           env_t &env,
-          local_ref_map_t &local_ref_map,
+          static_scope_t &static_scope,
           name_t name)
       {
           auto jo_vector = jo_vector_t ();
-          auto it = local_ref_map.find (name);
-          if (it != local_ref_map.end ()) {
+          auto it = static_scope.find (name);
+          if (it != static_scope.end ()) {
               auto local_ref = it->second;
               auto local_ref_jo = new local_ref_jo_t
                   (local_ref.first,
@@ -3097,22 +3060,22 @@
     shared_ptr <jojo_t>
     symbol_compile (
         env_t &env,
-        local_ref_map_t &local_ref_map,
+        static_scope_t &static_scope,
         symbol sym)
     {
         if (dot_symbol_p (sym))
-            return dot_symbol_compile (env, local_ref_map, sym);
+            return dot_symbol_compile (env, static_scope, sym);
         else if (field_symbol_p (sym))
-            return field_symbol_compile (env, local_ref_map, sym);
+            return field_symbol_compile (env, static_scope, sym);
         else
-            return ref_compile (env, local_ref_map, sym);
+            return ref_compile (env, static_scope, sym);
     }
         struct collect_vect_jo_t: jo_t
         {
             size_t counter;
             collect_vect_jo_t (size_t counter);
             jo_t * copy ();
-            void exe (env_t &env, local_scope_t &local_scope);
+            void exe (env_t &env, scope_t &scope);
             string repr (env_t &env);
         };
         collect_vect_jo_t::
@@ -3126,7 +3089,7 @@
             return new collect_vect_jo_t (this->counter);
         }
         void
-        collect_vect_jo_t::exe (env_t &env, local_scope_t &local_scope)
+        collect_vect_jo_t::exe (env_t &env, scope_t &scope)
         {
             size_t index = 0;
             auto obj_vector = obj_vector_t ();
@@ -3149,12 +3112,12 @@
       shared_ptr <jojo_t>
       vect_compile (
           env_t &env,
-          local_ref_map_t &local_ref_map,
+          static_scope_t &static_scope,
           shared_ptr <vect_o> vect)
       {
           auto sexp_list = vect_to_list (vect);
           auto jojo = sexp_list_compile
-              (env, local_ref_map, sexp_list);
+              (env, static_scope, sexp_list);
           auto counter = list_size (sexp_list);
           jo_vector_t jo_vector = {
               new collect_vect_jo_t (counter),
@@ -3167,7 +3130,7 @@
             size_t counter;
             collect_dict_jo_t (size_t counter);
             jo_t * copy ();
-            void exe (env_t &env, local_scope_t &local_scope);
+            void exe (env_t &env, scope_t &scope);
             string repr (env_t &env);
         };
         collect_dict_jo_t::
@@ -3183,7 +3146,7 @@
         void
         collect_dict_jo_t::exe (
             env_t &env,
-            local_scope_t &local_scope)
+            scope_t &scope)
         {
             size_t index = 0;
             auto obj_map = obj_map_t ();
@@ -3207,12 +3170,12 @@
       shared_ptr <jojo_t>
       dict_compile (
           env_t &env,
-          local_ref_map_t &local_ref_map,
+          static_scope_t &static_scope,
           shared_ptr <dict_o> dict)
       {
           auto sexp_list = dict_to_flat_list (dict);
           auto jojo = sexp_list_compile
-              (env, local_ref_map, sexp_list);
+              (env, static_scope, sexp_list);
           auto counter = list_size (sexp_list);
           counter = counter / 2;
           jo_vector_t jo_vector = {
@@ -3224,7 +3187,7 @@
         using keyword_fn = function
             <shared_ptr <jojo_t> (
                  env_t &,
-                 local_ref_map_t &,
+                 static_scope_t &,
                  shared_ptr <obj_t>)>;
         struct keyword_o: obj_t
         {
@@ -3267,8 +3230,7 @@
                 if (box->empty_p) return false;
                 if (keyword_p (box->obj)) return true;
                 else return false;
-            }
-            else {
+            } else {
                 return false;
             }
         }
@@ -3286,13 +3248,11 @@
                     auto keyword = static_pointer_cast <keyword_o>
                         (box->obj);
                     return keyword->fn;
-                }
-                else {
+                } else {
                     cout << "- fatal error: keyword_fn_from_name fail\n";
                     exit (1);
                 };
-            }
-            else {
+            } else {
                 cout << "- fatal error: keyword_fn_from_name fail\n";
                 exit (1);
             }
@@ -3300,14 +3260,14 @@
       shared_ptr <jojo_t>
       keyword_compile (
           env_t &env,
-          local_ref_map_t &local_ref_map,
+          static_scope_t &static_scope,
           shared_ptr <obj_t> sexp)
       {
           auto head = as_sym (car (sexp));
           auto body = cdr (sexp);
           auto name = head->sym;
           auto fn = keyword_fn_from_name (env, name);
-          return fn (env, local_ref_map, body);
+          return fn (env, static_scope, body);
       }
         struct macro_o: obj_t
         {
@@ -3388,12 +3348,12 @@
       shared_ptr <jojo_t>
       macro_compile (
           env_t &env,
-          local_ref_map_t &local_ref_map,
+          static_scope_t &static_scope,
           shared_ptr <obj_t> sexp)
       {
           return sexp_compile (
               env,
-              local_ref_map,
+              static_scope,
               macro_eval (env, sexp));
       }
         struct apply_jo_t: jo_t
@@ -3401,7 +3361,7 @@
             size_t arity;
             apply_jo_t (size_t arity);
             jo_t * copy ();
-            void exe (env_t &env, local_scope_t &local_scope);
+            void exe (env_t &env, scope_t &scope);
             string repr (env_t &env);
         };
         apply_jo_t::
@@ -3415,7 +3375,7 @@
             return new apply_jo_t (this->arity);
         }
         void
-        apply_jo_t::exe (env_t &env, local_scope_t &local_scope)
+        apply_jo_t::exe (env_t &env, scope_t &scope)
         {
             auto obj = env.obj_stack.top ();
             env.obj_stack.pop ();
@@ -3436,28 +3396,21 @@
               auto head = car (body);
               if (! sym_p (head)) {
                   arity++;
-              }
-              else {
+              } else {
                   auto sym = as_sym (head) ->sym;
                   if (dot_symbol_p (sym)) {
                       // arity = arity;
-                  }
-                  else if (sym == "drop") {
+                  } else if (sym == "drop") {
                       arity--;
-                  }
-                  else if (sym == "dup") {
+                  } else if (sym == "dup") {
                       arity++;
-                  }
-                  else if (sym == "over") {
+                  } else if (sym == "over") {
                       arity++;
-                  }
-                  else if (sym == "tuck") {
+                  } else if (sym == "tuck") {
                       arity++;
-                  }
-                  else if (sym == "swap") {
+                  } else if (sym == "swap") {
                       // arity = arity;
-                  }
-                  else {
+                  } else {
                       arity++;
                   }
               }
@@ -3468,7 +3421,7 @@
       shared_ptr <jojo_t>
       call_compile (
           env_t &env,
-          local_ref_map_t &local_ref_map,
+          static_scope_t &static_scope,
           shared_ptr <obj_t> sexp)
       {
           auto head = car (sexp);
@@ -3477,8 +3430,8 @@
           auto arity = arity_of_body (env, body);
           jo_vector.push_back (new apply_jo_t (arity));
           auto jojo = make_shared <jojo_t> (jo_vector);
-          auto head_jojo = sexp_compile (env, local_ref_map, head);
-          auto body_jojo = sexp_list_compile (env, local_ref_map, body);
+          auto head_jojo = sexp_compile (env, static_scope, head);
+          auto body_jojo = sexp_list_compile (env, static_scope, body);
           jojo = jojo_append (head_jojo, jojo);
           jojo = jojo_append (body_jojo, jojo);
           return jojo;
@@ -3486,7 +3439,7 @@
         struct apply_to_arg_dict_jo_t: jo_t
         {
             jo_t * copy ();
-            void exe (env_t &env, local_scope_t &local_scope);
+            void exe (env_t &env, scope_t &scope);
             string repr (env_t &env);
         };
         jo_t *
@@ -3497,7 +3450,7 @@
         void
         apply_to_arg_dict_jo_t::exe (
             env_t &env,
-            local_scope_t &local_scope)
+            scope_t &scope)
         {
             auto obj = env.obj_stack.top ();
             env.obj_stack.pop ();
@@ -3519,18 +3472,17 @@
             auto size = this->name_vector.size ();
             auto have = number_of_obj_in_bind_vector (bind_vector);
             if (size == have) {
-                auto local_scope = local_scope_extend (
-                    this->local_scope, bind_vector);
+                auto scope = scope_extend (
+                    this->scope, bind_vector);
                 auto frame = make_shared <frame_t> (
-                    this->jojo, local_scope);
+                    this->jojo, scope);
                 env.frame_stack.push (frame);
-            }
-            else {
+            } else {
                 auto closure = make_closure (
                     this->name_vector,
                     this->jojo,
                     bind_vector,
-                    this->local_scope);
+                    this->scope);
                 env.obj_stack.push (closure);
             }
         }
@@ -3546,8 +3498,7 @@
             auto have = obj_map.size ();
             if (size == have) {
                 this->fn (env, obj_map);
-            }
-            else {
+            } else {
                 auto prim = make_prim (
                     this->name_vector,
                     this->fn,
@@ -3598,7 +3549,7 @@
       shared_ptr <jojo_t>
       call_with_arg_dict_compile (
           env_t &env,
-          local_ref_map_t &local_ref_map,
+          static_scope_t &static_scope,
           shared_ptr <obj_t> sexp)
       {
           auto head = car (sexp);
@@ -3606,9 +3557,9 @@
           auto jo_vector = jo_vector_t ();
           jo_vector.push_back (new apply_to_arg_dict_jo_t ());
           auto jojo = make_shared <jojo_t> (jo_vector);
-          auto head_jojo = sexp_compile (env, local_ref_map, head);
+          auto head_jojo = sexp_compile (env, static_scope, head);
           auto dict = sexp_list_to_dict (body);
-          auto body_jojo = dict_compile (env, local_ref_map, dict);
+          auto body_jojo = dict_compile (env, static_scope, dict);
           jojo = jojo_append (head_jojo, jojo);
           jojo = jojo_append (body_jojo, jojo);
           return jojo;
@@ -3616,42 +3567,33 @@
     shared_ptr <jojo_t>
     sexp_compile (
         env_t &env,
-        local_ref_map_t &local_ref_map,
+        static_scope_t &static_scope,
         shared_ptr <obj_t> sexp)
     {
-        if (str_p (sexp) or
-            num_p (sexp))
-        {
-            return lit_compile (env, local_ref_map, sexp);
-        }
-        else if (sym_p (sexp)) {
+        if (str_p (sexp) or num_p (sexp)) {
+            return lit_compile (env, static_scope, sexp);
+        } else if (sym_p (sexp)) {
             auto sym = as_sym (sexp);
-            return symbol_compile (env, local_ref_map, sym->sym);
-        }
-        else if (vect_p (sexp)) {
-            return vect_compile (env, local_ref_map, as_vect (sexp));
-        }
-        else if (dict_p (sexp)) {
-            return dict_compile (env, local_ref_map, as_dict (sexp));
-        }
-        else if (keyword_sexp_p (env, sexp)) {
-            return keyword_compile (env, local_ref_map, sexp);
-        }
-        else if (macro_sexp_p (env, sexp)) {
-            return macro_compile (env, local_ref_map, sexp);
-        }
-        else if (call_with_arg_dict_sexp_p (env, sexp)) {
-            return call_with_arg_dict_compile (env, local_ref_map, sexp);
-        }
-        else {
+            return symbol_compile (env, static_scope, sym->sym);
+        } else if (vect_p (sexp)) {
+            return vect_compile (env, static_scope, as_vect (sexp));
+        } else if (dict_p (sexp)) {
+            return dict_compile (env, static_scope, as_dict (sexp));
+        } else if (keyword_sexp_p (env, sexp)) {
+            return keyword_compile (env, static_scope, sexp);
+        } else if (macro_sexp_p (env, sexp)) {
+            return macro_compile (env, static_scope, sexp);
+        } else if (call_with_arg_dict_sexp_p (env, sexp)) {
+            return call_with_arg_dict_compile (env, static_scope, sexp);
+        } else {
             assert (cons_p (sexp));
-            return call_compile (env, local_ref_map, sexp);
+            return call_compile (env, static_scope, sexp);
         }
     }
     shared_ptr <jojo_t>
     sexp_list_compile (
         env_t &env,
-        local_ref_map_t &local_ref_map,
+        static_scope_t &static_scope,
         shared_ptr <obj_t> sexp_list)
     {
         auto jojo = make_shared <jojo_t> (jo_vector_t ());
@@ -3659,10 +3601,10 @@
             return jojo;
         else {
             assert (cons_p (sexp_list));
-            auto head_jojo = sexp_compile
-                (env, local_ref_map, car (sexp_list));
-            auto body_jojo = sexp_list_compile
-                (env, local_ref_map, cdr (sexp_list));
+            auto head_jojo = sexp_compile (
+                env, static_scope, car (sexp_list));
+            auto body_jojo = sexp_list_compile (
+                env, static_scope, cdr (sexp_list));
             return jojo_append (head_jojo, body_jojo);
         }
     }
@@ -3709,8 +3651,7 @@
               if (box->empty_p) return false;
               if (top_keyword_p (box->obj)) return true;
               else return false;
-          }
-          else {
+          } else {
               return false;
           }
       }
@@ -3728,13 +3669,11 @@
                   auto top_keyword = static_pointer_cast <top_keyword_o>
                       (box->obj);
                   return top_keyword->fn;
-              }
-              else {
+              } else {
                   cout << "- fatal error: top_keyword_fn_from_name fail\n";
                   exit (1);
               };
-          }
-          else {
+          } else {
               cout << "- fatal error: top_keyword_fn_from_name fail\n";
               exit (1);
           }
@@ -3742,20 +3681,20 @@
     void
     jojo_run (
         env_t &env,
-        local_scope_t &local_scope,
+        scope_t &scope,
         shared_ptr <jojo_t> jojo)
     {
         auto base = env.frame_stack.size ();
-        env.frame_stack.push (make_shared <frame_t> (jojo, local_scope));
+        env.frame_stack.push (make_shared <frame_t> (jojo, scope));
         env.run_with_base (base);
     }
     shared_ptr <obj_t>
     jojo_eval (
         env_t &env,
-        local_scope_t &local_scope,
+        scope_t &scope,
         shared_ptr <jojo_t> jojo)
     {
-        jojo_run (env, local_scope, jojo);
+        jojo_run (env, scope, jojo);
         auto result = env.obj_stack.top ();
         env.obj_stack.pop ();
         return result;
@@ -3783,10 +3722,9 @@
             cout << "  can not handle top_keyword_sexp" << "\n";
             cout << "  sexp : " << sexp_repr (env, sexp) << "\n";
             exit (1);
-        }
-        else {
-            auto local_ref_map = local_ref_map_t ();
-            auto jojo = sexp_compile (env, local_ref_map, sexp);
+        } else {
+            auto static_scope = static_scope_t ();
+            auto jojo = sexp_compile (env, static_scope, sexp);
             jojo_run_in_new_frame (env, jojo);
         }
     }
@@ -3810,8 +3748,7 @@
             auto obj = env.obj_stack.top ();
             env.obj_stack.pop ();
             return obj;
-        }
-        else {
+        } else {
             cout << "- fatal error : sexp_eval mismatch" << "\n";
             cout << "  sexp must eval to one value" << "\n";
             cout << "  sexp : " << sexp_repr (env, sexp) << "\n";
@@ -3829,10 +3766,9 @@
             auto name = head->sym;
             auto fn = top_keyword_fn_from_name (env, name);
             fn (env, body);
-        }
-        else {
-            auto local_ref_map = local_ref_map_t ();
-            auto jojo = sexp_compile (env, local_ref_map, sexp);
+        } else {
+            auto static_scope = static_scope_t ();
+            auto jojo = sexp_compile (env, static_scope, sexp);
             jojo_run_in_new_frame (env, jojo);
             if (! env.obj_stack.empty ())
                 env.obj_stack.pop ();
@@ -3881,8 +3817,7 @@
         auto normal_path = path_t ();
         if (p.is_absolute ()) {
             normal_path = p;
-        }
-        else {
+        } else {
             assert (p.is_relative ());
             normal_path = env.current_dir / p;
         }
@@ -3896,8 +3831,7 @@
         auto normal_path = path_t ();
         if (p.is_absolute ()) {
             normal_path = p;
-        }
-        else {
+        } else {
             assert (p.is_relative ());
             normal_path = env.module_path.parent_path () / p;
         }
@@ -4016,32 +3950,6 @@
           lambda_body = unit_list (lambda_body);
           return cons_c (name, lambda_body);
       }
-      // shared_ptr <obj_t>
-      // sexp_substitute_recur (
-      //     env_t &env,
-      //     shared_ptr <obj_t> sub,
-      //     shared_ptr <obj_t> sexp)
-      // {
-      //     if (sym_p (sexp)) {
-      //         auto sym = as_sym (sexp);
-      //         if (sym->sym == "recur")
-      //             return sub;
-      //         else
-      //             return sexp;
-      //     }
-      //     if (cons_p (sexp))
-      //         return cons_c (
-      //             sexp_substitute_recur (env, sub, car (sexp)),
-      //             sexp_substitute_recur (env, sub, cdr (sexp)));
-      //     if (vect_p (sexp)) {
-      //         auto vect_sexp = as_vect (sexp);
-      //         auto list_sexp = vect_to_list (vect_sexp);
-      //         auto new_list_sexp = sexp_substitute_recur (env, sub, list_sexp);
-      //         return list_to_vect (new_list_sexp);
-      //     }
-      //     else
-      //         return sexp;
-      // }
       shared_ptr <obj_t>
       sexp_patch_this (env_t &env, shared_ptr <obj_t> sexp)
       {
@@ -4064,7 +3972,6 @@
           auto prefix = prefix_of_string (head->sym);
           if (prefix != "")
               sexp = sexp_patch_this (env, sexp);
-          // sexp = sexp_substitute_recur (env, head, sexp);
           auto obj = sexp_eval (env, sexp);
           assign (env, prefix, name, obj);
       }
@@ -4124,8 +4031,7 @@
                       make_vect (obj_vector),
                       rest));
               return unit_list (let_sexp);
-          }
-          else {
+          } else {
               auto drop = unit_list (make_sym ("drop"));
               body = do_body_trans (env, rest);
               body = cons_c (drop, body);
@@ -4136,12 +4042,12 @@
       shared_ptr <jojo_t>
       k_do (
           env_t &env,
-          local_ref_map_t &local_ref_map,
+          static_scope_t &static_scope,
           shared_ptr <obj_t> body)
       {
           body = sexp_list_prefix_assign (body);
           body = do_body_trans (env, body);
-          return sexp_list_compile (env, local_ref_map, body);
+          return sexp_list_compile (env, static_scope, body);
       }
         struct lambda_jo_t: jo_t
         {
@@ -4151,7 +4057,7 @@
                 name_vector_t name_vector,
                 shared_ptr <jojo_t> jojo);
             jo_t * copy ();
-            void exe (env_t &env, local_scope_t &local_scope);
+            void exe (env_t &env, scope_t &scope);
             string repr (env_t &env);
         };
         lambda_jo_t::
@@ -4168,13 +4074,13 @@
             return new lambda_jo_t (this->name_vector, this->jojo);
         }
         void
-        lambda_jo_t::exe (env_t &env, local_scope_t &local_scope)
+        lambda_jo_t::exe (env_t &env, scope_t &scope)
         {
             auto closure = make_closure (
                 this->name_vector,
                 this->jojo,
                 bind_vector_from_name_vector (this->name_vector),
-                local_scope);
+                scope);
             env.obj_stack.push (closure);
         }
         string
@@ -4199,17 +4105,17 @@
       shared_ptr <jojo_t>
       k_lambda (
           env_t &env,
-          local_ref_map_t &old_local_ref_map,
+          static_scope_t &old_static_scope,
           shared_ptr <obj_t> body)
       {
           auto name_vect = as_vect (car (body));
           auto rest = cdr (body);
           auto name_vector = obj_vector_to_name_vector (
               env, name_vect->obj_vector);
-          auto local_ref_map = local_ref_map_extend (
-              env, old_local_ref_map, name_vector);
+          auto static_scope = static_scope_extend (
+              env, old_static_scope, name_vector);
           auto rest_jojo = sexp_compile (
-              env, local_ref_map,
+              env, static_scope,
               cons_c (
                   make_sym ("do"),
                   rest));
@@ -4240,7 +4146,7 @@
         struct macro_maker_jo_t: jo_t
         {
             jo_t * copy ();
-            void exe (env_t &env, local_scope_t &local_scope);
+            void exe (env_t &env, scope_t &scope);
             string repr (env_t &env);
         };
         jo_t *
@@ -4249,15 +4155,14 @@
             return new macro_maker_jo_t ();
         }
         void
-        macro_maker_jo_t::exe (env_t &env, local_scope_t &local_scope)
+        macro_maker_jo_t::exe (env_t &env, scope_t &scope)
         {
             auto obj = env.obj_stack.top ();
             env.obj_stack.pop ();
             if (closure_p (obj)) {
                 auto macro = make_macro (obj);
                 env.obj_stack.push (macro);
-            }
-            else {
+            } else {
                 cout << "- fatal error : macro_maker_jo_t::exe" << "\n";
                 cout << "  can only make macro from closure" << "\n";
                 exit (1);
@@ -4271,12 +4176,12 @@
       shared_ptr <jojo_t>
       k_macro (
           env_t &env,
-          local_ref_map_t &local_ref_map,
+          static_scope_t &static_scope,
           shared_ptr <obj_t> body)
       {
           auto jo_vector = jo_vector_t ();
           jo_vector.push_back (new macro_maker_jo_t ());
-          auto lambda_jojo = k_lambda (env, local_ref_map, body);
+          auto lambda_jojo = k_lambda (env, static_scope, body);
           auto jojo = make_shared <jojo_t> (jo_vector);
           return jojo_append (lambda_jojo, jojo);
       }
@@ -4290,7 +4195,7 @@
                 shared_ptr <jojo_t> default_jojo);
             bool has_default_jojo_p ();
             jo_t * copy ();
-            void exe (env_t &env, local_scope_t &local_scope);
+            void exe (env_t &env, scope_t &scope);
             string repr (env_t &env);
         };
         case_jo_t::
@@ -4320,22 +4225,20 @@
                  this->default_jojo);
         }
         void
-        case_jo_t::exe (env_t &env, local_scope_t &local_scope)
+        case_jo_t::exe (env_t &env, scope_t &scope)
         {
             auto obj = env.obj_stack.top ();
             env.obj_stack.pop ();
             auto it = this->jojo_map.find (obj->tag);
             if (it != this->jojo_map.end ()) {
                 auto jojo = it->second;
-                auto frame = make_shared <frame_t> (jojo, local_scope);
+                auto frame = make_shared <frame_t> (jojo, scope);
                 env.frame_stack.push (frame);
-            }
-            else if (this->has_default_jojo_p ()) {
+            } else if (this->has_default_jojo_p ()) {
                 auto jojo = this->default_jojo;
-                auto frame = make_shared <frame_t> (jojo, local_scope);
+                auto frame = make_shared <frame_t> (jojo, scope);
                 env.frame_stack.push (frame);
-            }
-            else {
+            } else {
                 cout << "- fatal error : case_jo_t::exe mismatch" << "\n";
                 cout << "  tag : " << obj->tag << "\n";
                 exit (1);
@@ -4349,7 +4252,7 @@
       shared_ptr <jojo_t>
       case_compile (
           env_t &env,
-          local_ref_map_t &local_ref_map,
+          static_scope_t &static_scope,
           shared_ptr <obj_t> body)
       {
           auto jojo_map = jojo_map_t ();
@@ -4360,13 +4263,12 @@
               auto rest = cdr (one);
               auto name = head->sym;
               if (name == "_") {
-                  auto jojo = sexp_list_compile (env, local_ref_map, rest);
+                  auto jojo = sexp_list_compile (env, static_scope, rest);
                   body = cdr (body);
                   default_jojo = jojo;
-              }
-              else {
+              } else {
                   auto tag = tagging (env, name);
-                  auto jojo = sexp_list_compile (env, local_ref_map, rest);
+                  auto jojo = sexp_list_compile (env, static_scope, rest);
                   jojo_map [tag] = jojo;
                   body = cdr (body);
               }
@@ -4379,13 +4281,13 @@
       shared_ptr <jojo_t>
       k_case (
           env_t &env,
-          local_ref_map_t &local_ref_map,
+          static_scope_t &static_scope,
           shared_ptr <obj_t> body)
       {
           auto head = car (body);
           auto rest = cdr (body);
-          auto head_jojo = sexp_compile (env, local_ref_map, head);
-          auto rest_jojo = case_compile (env, local_ref_map, rest);
+          auto head_jojo = sexp_compile (env, static_scope, head);
+          auto rest_jojo = case_compile (env, static_scope, rest);
           return jojo_append (head_jojo, rest_jojo);
       }
       shared_ptr <jojo_t>
@@ -4402,7 +4304,7 @@
       shared_ptr <jojo_t>
       k_quote (
           env_t &env,
-          local_ref_map_t &local_ref_map,
+          static_scope_t &static_scope,
           shared_ptr <obj_t> body)
       {
           assert (cons_p (body));
@@ -4415,7 +4317,7 @@
             size_t counter;
             collect_list_jo_t (size_t counter);
             jo_t * copy ();
-            void exe (env_t &env, local_scope_t &local_scope);
+            void exe (env_t &env, scope_t &scope);
             string repr (env_t &env);
         };
         collect_list_jo_t::
@@ -4429,7 +4331,7 @@
             return new collect_list_jo_t (this->counter);
         }
         void
-        collect_list_jo_t::exe (env_t &env, local_scope_t &local_scope)
+        collect_list_jo_t::exe (env_t &env, scope_t &scope)
         {
             size_t index = 0;
             auto collection = null_c ();
@@ -4449,12 +4351,12 @@
       shared_ptr <jojo_t>
       k_list (
           env_t &env,
-          local_ref_map_t &local_ref_map,
+          static_scope_t &static_scope,
           shared_ptr <obj_t> body)
       {
           auto sexp_list = body;
           auto jojo = sexp_list_compile
-              (env, local_ref_map, sexp_list);
+              (env, static_scope, sexp_list);
           auto counter = list_size (sexp_list);
           jo_vector_t jo_vector = {
               new collect_list_jo_t (counter),
@@ -4465,7 +4367,7 @@
       shared_ptr <jojo_t>
       k_note (
           env_t &env,
-          local_ref_map_t &local_ref_map,
+          static_scope_t &static_scope,
           shared_ptr <obj_t> body)
       {
           body = cons_c (make_sym ("note"), body);
@@ -4483,7 +4385,7 @@
                 shared_ptr <obj_t> body,
                 shared_ptr <jojo_t> jojo);
             jo_t * copy ();
-            void exe (env_t &env, local_scope_t &local_scope);
+            void exe (env_t &env, scope_t &scope);
             string repr (env_t &env);
         };
         assert_jo_t::
@@ -4502,19 +4404,18 @@
                  this->jojo);
         }
         void
-        assert_jo_t::exe (env_t &env, local_scope_t &local_scope)
+        assert_jo_t::exe (env_t &env, scope_t &scope)
         {
             auto base = env.frame_stack.size ();
             env.frame_stack.push (
                 make_shared <frame_t> (
                     this->jojo,
-                    local_scope));
+                    scope));
             env.run_with_base (base);
             auto result = env.obj_stack.top ();
             if (true_p (result)) {
                 return;
-            }
-            else {
+            } else {
                 env.frame_stack_report ();
                 env.obj_stack_report ();
                 cout << "- assert fail : " << "\n";
@@ -4530,10 +4431,10 @@
       shared_ptr <jojo_t>
       k_assert (
           env_t &env,
-          local_ref_map_t &local_ref_map,
+          static_scope_t &static_scope,
           shared_ptr <obj_t> body)
       {
-          auto jojo = sexp_list_compile (env, local_ref_map, body);
+          auto jojo = sexp_list_compile (env, static_scope, body);
           jo_vector_t jo_vector = {
               new assert_jo_t (body, jojo),
           };
@@ -4549,7 +4450,7 @@
                 shared_ptr <jojo_t> then_jojo,
                 shared_ptr <jojo_t> else_jojo);
             jo_t * copy ();
-            void exe (env_t &env, local_scope_t &local_scope);
+            void exe (env_t &env, scope_t &scope);
             string repr (env_t &env);
         };
         if_jo_t::
@@ -4571,22 +4472,20 @@
                  this->else_jojo);
         }
         void
-        if_jo_t::exe (env_t &env, local_scope_t &local_scope)
+        if_jo_t::exe (env_t &env, scope_t &scope)
         {
-            auto result = jojo_eval (env, local_scope, pred_jojo);
+            auto result = jojo_eval (env, scope, pred_jojo);
             if (true_p (result)) {
                 env.frame_stack.push (
                     make_shared <frame_t> (
                         this->then_jojo,
-                        local_scope));
-            }
-            else if (false_p (result)) {
+                        scope));
+            } else if (false_p (result)) {
                 env.frame_stack.push (
                     make_shared <frame_t> (
                         this->else_jojo,
-                        local_scope));
-            }
-            else {
+                        scope));
+            } else {
                 cout << "- fatal error : if_jo_t::exe" << "\n";
                 cout << "  pred_jojo run to non bool value" << "\n";
                 exit (1);
@@ -4600,7 +4499,7 @@
       shared_ptr <jojo_t>
       k_if (
           env_t &env,
-          local_ref_map_t &local_ref_map,
+          static_scope_t &static_scope,
           shared_ptr <obj_t> body)
       {
           auto size = list_size (body);
@@ -4608,9 +4507,9 @@
           auto pred_sexp = car (body);
           auto then_sexp = car (cdr (body));
           auto else_sexp = car (cdr (cdr (body)));
-          auto pred_jojo = sexp_compile (env, local_ref_map, pred_sexp);
-          auto then_jojo = sexp_compile (env, local_ref_map, then_sexp);
-          auto else_jojo = sexp_compile (env, local_ref_map, else_sexp);
+          auto pred_jojo = sexp_compile (env, static_scope, pred_sexp);
+          auto then_jojo = sexp_compile (env, static_scope, then_sexp);
+          auto else_jojo = sexp_compile (env, static_scope, else_sexp);
           jo_vector_t jo_vector = {
               new if_jo_t (pred_jojo, then_jojo, else_jojo),
           };
@@ -4624,7 +4523,7 @@
                 shared_ptr <jojo_t> pred_jojo,
                 shared_ptr <jojo_t> then_jojo);
             jo_t * copy ();
-            void exe (env_t &env, local_scope_t &local_scope);
+            void exe (env_t &env, scope_t &scope);
             string repr (env_t &env);
         };
         when_jo_t::
@@ -4643,19 +4542,17 @@
                  this->then_jojo);
         }
         void
-        when_jo_t::exe (env_t &env, local_scope_t &local_scope)
+        when_jo_t::exe (env_t &env, scope_t &scope)
         {
-            auto result = jojo_eval (env, local_scope, pred_jojo);
+            auto result = jojo_eval (env, scope, pred_jojo);
             if (true_p (result)) {
                 env.frame_stack.push (
                     make_shared <frame_t> (
                         this->then_jojo,
-                        local_scope));
-            }
-            else if (false_p (result)) {
+                        scope));
+            } else if (false_p (result)) {
                 env.obj_stack.push (result);
-            }
-            else {
+            } else {
                 cout << "- fatal error : when_jo_t::exe" << "\n";
                 cout << "  pred_jojo run to non bool value" << "\n";
                 exit (1);
@@ -4669,15 +4566,15 @@
       shared_ptr <jojo_t>
       k_when (
           env_t &env,
-          local_ref_map_t &local_ref_map,
+          static_scope_t &static_scope,
           shared_ptr <obj_t> body)
       {
           auto size = list_size (body);
           assert (size == 2);
           auto pred_sexp = car (body);
           auto then_sexp = car (cdr (body));
-          auto pred_jojo = sexp_compile (env, local_ref_map, pred_sexp);
-          auto then_jojo = sexp_compile (env, local_ref_map, then_sexp);
+          auto pred_jojo = sexp_compile (env, static_scope, pred_sexp);
+          auto then_jojo = sexp_compile (env, static_scope, then_sexp);
           jo_vector_t jo_vector = {
               new when_jo_t (pred_jojo, then_jojo),
           };
@@ -4695,41 +4592,33 @@
       {
           if (str_p (sexp) or num_p (sexp)) {
               return sexp;
-          }
-          else if (sym_p (sexp)) {
+          } else if (sym_p (sexp)) {
               return cons_c (
                   make_sym ("quote"),
                   unit_list (sexp));
-          }
-          else if (null_p (sexp)) {
+          } else if (null_p (sexp)) {
               return cons_c (
                   make_sym ("quote"),
                   unit_list (sexp));
-          }
-          else if (vect_p (sexp)) {
+          } else if (vect_p (sexp)) {
               auto l = vect_to_list (as_vect (sexp));
               return cons_c (
                   make_sym ("list-to-vect"),
                   unit_list (sexp_list_quote_and_unquote (env, l)));
-          }
-          else if (dict_p (sexp)) {
+          } else if (dict_p (sexp)) {
               auto l = dict_to_list (as_dict (sexp));
               return cons_c (
                   make_sym ("list-to-dict"),
                   unit_list (sexp_list_quote_and_unquote (env, l)));
-          }
-          else {
+          } else {
               assert (cons_p (sexp));
               auto head = car (sexp);
-              if (sym_p (head) and
-                  as_sym (head) ->sym == "unquote")
-              {
+              if (sym_p (head) and as_sym (head) ->sym == "unquote") {
                   auto rest = cdr (sexp);
                   assert (cons_p (rest));
                   assert (null_p (cdr (rest)));
                   return car (rest);
-              }
-              else {
+              } else {
                   return sexp_list_quote_and_unquote (
                       env,
                       sexp);
@@ -4743,8 +4632,7 @@
       {
           if (null_p (sexp_list)) {
               return unit_list (make_sym ("*"));
-          }
-          else {
+          } else {
               assert (cons_p (sexp_list));
               auto sexp = car (sexp_list);
               if (cons_p (sexp) and
@@ -4755,8 +4643,7 @@
                   assert (cons_p (rest));
                   assert (null_p (cdr (rest)));
                   sexp = car (rest);
-              }
-              else {
+              } else {
                   sexp = cons_c (
                       make_sym ("*"),
                       unit_list (sexp_quote_and_unquote (env, sexp)));
@@ -4786,11 +4673,9 @@
       {
           if (null_p (sexp_list)) {
               return make_sym ("true-c");
-          }
-          else if (null_p (cdr (sexp_list))) {
+          } else if (null_p (cdr (sexp_list))) {
               return car (sexp_list);
-          }
-          else {
+          } else {
               auto head = car (sexp_list);
               auto rest = cdr (sexp_list);
               head = cons_c (
@@ -4820,11 +4705,9 @@
       {
           if (null_p (sexp_list)) {
               return make_sym ("false-c");
-          }
-          else if (null_p (cdr (sexp_list))) {
+          } else if (null_p (cdr (sexp_list))) {
               return car (sexp_list);
-          }
-          else {
+          } else {
               auto head = car (sexp_list);
               auto rest = cdr (sexp_list);
               auto result = unit_list (sexp_list_or (env, rest));
@@ -4862,16 +4745,14 @@
                   as_sym (question) ->sym == "else")
               {
                   return answer;
-              }
-              else {
+              } else {
                   auto result = null_c ();
                   result = cons_c (answer, result);
                   result = cons_c (question, result);
                   result = cons_c (make_sym ("when"), result);
                   return result;
               }
-          }
-          else {
+          } else {
               auto result = unit_list (vect_list_cond (env, rest));
               result = cons_c (answer, result);
               result = cons_c (question, result);

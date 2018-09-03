@@ -1,8 +1,8 @@
   // use std::rc::Rc;
   use std::sync::Arc;
+  use std::collections::HashMap;
 
   use dic::Dic;
-
   use token;
   // pub type Ptr <T> = Rc <T>;
   pub type Ptr <T> = Arc <T>;
@@ -18,11 +18,11 @@
   pub type ObjStack = Vec <Ptr <Obj>>;
   pub type FrameStack = Vec <Box <Frame>>;
 
-  pub type LocalScope = Vec <ObjDic>; // index from end
+  pub type Scope = Vec <ObjDic>; // index from end
 
   pub type TagVec = Vec <Tag>;
-  pub type JoVec = Vec <Ptr <Jo>>;
   pub type ObjVec = Vec <Ptr <Obj>>;
+  pub type JoVec = Vec <Ptr <Jo>>;
       fn vec_peek <T> (vec: &Vec <T>, index: usize) -> &T {
             let back_index = vec.len () - index - 1;
             &vec [back_index]
@@ -77,21 +77,33 @@
            .all (|p| obj_eq (p.0.dup (),
                              p.1.dup ())))
       }
-      pub fn local_scope_extend (
-          local_scope: &LocalScope,
+      pub fn scope_extend (
+          scope: &Scope,
           obj_dic: ObjDic,
-      ) -> Ptr <LocalScope> {
-          let mut obj_dic_vec = local_scope.clone ();
+      ) -> Ptr <Scope> {
+          let mut obj_dic_vec = scope.clone ();
           obj_dic_vec.push (obj_dic);
           Ptr::new (obj_dic_vec)
       }
-      pub fn local_scope_eq (
-          lhs: &LocalScope,
-          rhs: &LocalScope,
+      pub fn scope_eq (
+          lhs: &Scope,
+          rhs: &Scope,
       ) -> bool {
           (lhs.len () == rhs.len () &&
            lhs.iter () .zip (rhs.iter ())
            .all (|p| obj_dic_eq (p.0, p.1)))
+      }
+      fn new_jojo () -> Ptr <JoVec> {
+          let jo_vec = JoVec::new ();
+          Ptr::new (jo_vec)
+      }
+      fn jojo_append (
+          ante: &JoVec,
+          succ: &JoVec,
+      ) -> Ptr <JoVec> {
+          let mut jo_vec = ante.clone ();
+          jo_vec.append (&mut succ.clone ());
+          Ptr::new (jo_vec)
       }
       pub fn jojo_eq (
           lhs: &JoVec,
@@ -190,7 +202,7 @@
               Ptr::clone (self)
           }
       }
-      impl Dup for Ptr <LocalScope> {
+      impl Dup for Ptr <Scope> {
           fn dup (&self) -> Self {
               Ptr::clone (self)
           }
@@ -289,7 +301,7 @@
         lhs.eq (rhs)
     }
     pub trait Jo {
-        fn exe (&self, env: &mut Env, local_scope: Ptr <LocalScope>);
+        fn exe (&self, env: &mut Env, scope: Ptr <Scope>);
 
         fn repr (&self, _env: &Env) -> String {
             "#<unknown-jo>".to_string ()
@@ -308,7 +320,7 @@
     }
 
     impl Jo for RefJo {
-        fn exe (&self, env: &mut Env, _: Ptr <LocalScope>) {
+        fn exe (&self, env: &mut Env, _: Ptr <Scope>) {
             let entry = env.obj_dic.idx (self.id);
             if let Some (obj) = &entry.value {
                 env.obj_stack.push (obj.dup ());
@@ -327,8 +339,8 @@
     }
 
     impl Jo for LocalRefJo {
-        fn exe (&self, env: &mut Env, local_scope: Ptr <LocalScope>) {
-            let obj_dic = vec_peek (&local_scope, self.level);
+        fn exe (&self, env: &mut Env, scope: Ptr <Scope>) {
+            let obj_dic = vec_peek (&scope, self.level);
             let entry = obj_dic.idx (self.index);
             if let Some (obj) = &entry.value {
                 env.obj_stack.push (obj.dup ());
@@ -346,7 +358,7 @@
     }
 
     impl Jo for ApplyJo {
-        fn exe (&self, env: &mut Env, _: Ptr <LocalScope>) {
+        fn exe (&self, env: &mut Env, _: Ptr <Scope>) {
             let obj = env.obj_stack.pop () .unwrap ();
             obj.apply (env, self.arity);
         }
@@ -356,7 +368,7 @@
     }
 
     impl Jo for DotJo {
-        fn exe (&self, env: &mut Env, _: Ptr <LocalScope>) {
+        fn exe (&self, env: &mut Env, _: Ptr <Scope>) {
             let obj = env.obj_stack.pop () .unwrap ();
             let dot = obj.dot (env, &self.name) .unwrap ();
             env.obj_stack.push (dot);
@@ -368,11 +380,11 @@
     }
 
     impl Jo for LambdaJo {
-        fn exe (&self, env: &mut Env, local_scope: Ptr <LocalScope>) {
+        fn exe (&self, env: &mut Env, scope: Ptr <Scope>) {
             env.obj_stack.push (Ptr::new (Closure {
                 arg_dic: self.arg_dic.clone (),
                 jojo: self.jojo.dup (),
-                local_scope: local_scope.dup (),
+                scope: scope.dup (),
             }));
         }
     }
@@ -401,11 +413,11 @@
                 let jo = frame.jojo [frame.index] .dup ();
                 frame.index += 1;
                 if index + 1 < frame.jojo.len () {
-                    let local_scope = frame.local_scope.dup ();
+                    let scope = frame.scope.dup ();
                     self.frame_stack.push (frame);
-                    jo.exe (self, local_scope);
+                    jo.exe (self, scope);
                 } else {
-                    jo.exe (self, frame.local_scope);
+                    jo.exe (self, frame.scope);
                 }
             }
         }
@@ -441,14 +453,14 @@
     pub struct Frame {
         pub index: usize,
         pub jojo: Ptr <JoVec>,
-        pub local_scope: Ptr <LocalScope>,
+        pub scope: Ptr <Scope>,
     }
     impl Frame {
         pub fn make (jo_vec: JoVec) -> Box <Frame> {
             Box::new (Frame {
                 index: 0,
                 jojo: Ptr::new (jo_vec),
-                local_scope: Ptr::new (LocalScope::new ()),
+                scope: Ptr::new (Scope::new ()),
             })
         }
     }
@@ -575,7 +587,7 @@
     pub struct Closure {
         arg_dic: ObjDic,
         jojo: Ptr <JoVec>,
-        local_scope: Ptr <LocalScope>,
+        scope: Ptr <Scope>,
     }
     impl Obj for Closure {
         fn tag (&self) -> Tag { CLOSURE_T }
@@ -587,7 +599,7 @@
             } else {
                 let other = obj_to::<Closure> (other);
                 (jojo_eq (&self.jojo, &other.jojo) &&
-                 local_scope_eq (&self.local_scope, &other.local_scope) &&
+                 scope_eq (&self.scope, &other.scope) &&
                  obj_dic_eq (&self.arg_dic, &other.arg_dic))
             }
         }
@@ -607,14 +619,14 @@
                 env.frame_stack.push (Box::new (Frame {
                     index: 0,
                     jojo: self.jojo.dup (),
-                    local_scope: local_scope_extend (
-                        &self.local_scope, arg_dic),
+                    scope: scope_extend (
+                        &self.scope, arg_dic),
                 }));
             } else {
                 env.obj_stack.push (Ptr::new (Closure {
                     arg_dic,
                     jojo: self.jojo.dup (),
-                    local_scope: self.local_scope.dup (),
+                    scope: self.scope.dup (),
                 }));
             }
         }
@@ -983,6 +995,50 @@
             format! ("{} {}",
                      sexp_repr (env, car (sexp_list.dup ())),
                      sexp_list_repr (env, cdr (sexp_list)))
+        }
+    }
+    type StaticScope = HashMap <Name, (usize, usize)>;
+    fn sexp_compile (
+        env: &mut Env,
+        static_scope: &StaticScope,
+        sexp: Ptr <Obj>,
+    ) -> Ptr <JoVec> {
+        unimplemented! ();
+    //     if str_p (sexp) || num_p (sexp) {
+    //         lit_compile (env, static_scope, sexp)
+    //     } else if sym_p (sexp) {
+    //         let sym = as_sym (sexp);
+    //         symbol_compile (env, static_scope, sym->sym)
+    //     } else if vect_p (sexp) {
+    //         vect_compile (env, static_scope, as_vect (sexp))
+    //     } else if dict_p (sexp) {
+    //         dict_compile (env, static_scope, as_dict (sexp))
+    //     } else if keyword_sexp_p (env, sexp) {
+    //         keyword_compile (env, static_scope, sexp)
+    //     } else if macro_sexp_p (env, sexp) {
+    //         macro_compile (env, static_scope, sexp)
+    //     } else if call_with_arg_dict_sexp_p (env, sexp) {
+    //         call_with_arg_dict_compile (env, static_scope, sexp)
+    //     } else {
+    //         assert! (cons_p (&sexp));
+    //         call_compile (env, static_scope, sexp)
+    //     }
+    }
+    fn sexp_list_compile (
+        env: &mut Env,
+        static_scope: &StaticScope,
+        sexp_list: Ptr <Obj>,
+    ) -> Ptr <JoVec> {
+        let jojo = new_jojo ();
+        if null_p (&sexp_list) {
+            jojo
+        } else {
+            assert! (cons_p (&sexp_list));
+            let head_jojo = sexp_compile (
+                env, static_scope, car (sexp_list.dup ()));
+            let body_jojo = sexp_list_compile (
+                env, static_scope, cdr (sexp_list));
+            jojo_append (&head_jojo, &body_jojo)
         }
     }
     #[test]
