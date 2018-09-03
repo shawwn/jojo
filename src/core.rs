@@ -115,7 +115,7 @@
                             p.1.dup ())))
       }
       macro_rules! jojo {
-          ( $( $x:expr ),* ) => {{
+          ( $( $x:expr ),* $(,)* ) => {{
               let jo_vec: JoVec = vec! [
                   $( Ptr::new ($x) ),*
               ];
@@ -123,7 +123,7 @@
           }};
       }
       macro_rules! frame {
-          ( $( $x:expr ),* ) => {{
+          ( $( $x:expr ),* $(,)* ) => {{
               let jo_vec: JoVec = vec! [
                   $( Ptr::new ($x) ),*
               ];
@@ -166,8 +166,8 @@
       pub const KEYWORD_T      : Tag = 14;
       pub const MACRO_T        : Tag = 15;
       pub const TOP_KEYWORD_T  : Tag = 16;
-      pub const NOTHING_T      : Tag = 17;
-      pub const JUST_T         : Tag = 18;
+      pub const NONE_T      : Tag = 17;
+      pub const SOME_T         : Tag = 18;
       fn init_type_dic (env: &mut Env) {
           preserve_tag (env, CLOSURE_T      , "closure-t");
           preserve_tag (env, TYPE_T         , "type-t");
@@ -186,8 +186,8 @@
           preserve_tag (env, KEYWORD_T      , "keyword-t");
           preserve_tag (env, MACRO_T        , "macro-t");
           preserve_tag (env, TOP_KEYWORD_T  , "top-keyword-t");
-          preserve_tag (env, NOTHING_T      , "nothing-t");
-          preserve_tag (env, JUST_T         , "just-t");
+          preserve_tag (env, NONE_T         , "none-t");
+          preserve_tag (env, SOME_T         , "some-t");
       }
       pub trait Dup {
          fn dup (&self) -> Self;
@@ -213,7 +213,7 @@
           }
       }
     pub trait ObjFrom <T> {
-        fn obj (T) -> Ptr <Self>;
+        fn obj (x: T) -> Ptr <Self>;
     }
     pub trait Obj {
         fn tag (&self) -> Tag;
@@ -386,6 +386,15 @@
                 jojo: self.jojo.dup (),
                 scope: scope.dup (),
             }));
+        }
+    }
+    pub struct LitJo {
+        obj: Ptr <Obj>,
+    }
+
+    impl Jo for LitJo {
+        fn exe (&self, env: &mut Env, _: Ptr <Scope>) {
+            env.obj_stack.push (self.obj.dup ());
         }
     }
     pub struct Env {
@@ -790,25 +799,34 @@
         (null_p (x) ||
          cons_p (x))
     }
+    fn list_size (mut list: Ptr <Obj>) -> usize {
+        assert! (list_p (&list));
+        let mut size = 0;
+        while ! null_p (&list) {
+            size += 1;
+            list = cdr (list);
+        }
+        size
+    }
     pub fn unit_list (obj: Ptr <Obj>) -> Ptr <Obj> {
         cons_c (obj, null_c ())
     }
-    pub fn nothing_c () -> Ptr <Obj> {
-       Data::unit (NOTHING_T)
+    pub fn none_c () -> Ptr <Obj> {
+       Data::unit (NONE_T)
     }
-    pub fn just_c (value: Ptr <Obj>) -> Ptr <Obj> {
-        Data::make (JUST_T, vec! [
+    pub fn some_c (value: Ptr <Obj>) -> Ptr <Obj> {
+        Data::make (SOME_T, vec! [
             ("value", value),
         ])
     }
-    pub fn value_of_just (just: Ptr <Obj>) -> Ptr <Obj> {
-        assert_eq! (JUST_T, just.tag ());
-        just.get ("value") .unwrap ()
+    pub fn value_of_some (some: Ptr <Obj>) -> Ptr <Obj> {
+        assert_eq! (SOME_T, some.tag ());
+        some.get ("value") .unwrap ()
     }
-    pub fn maybe_p (x: &Ptr <Obj>) -> bool {
+    pub fn option_p (x: &Ptr <Obj>) -> bool {
         let tag = x.tag ();
-        (NOTHING_T == tag ||
-         JUST_T == tag)
+        (NONE_T == tag ||
+         SOME_T == tag)
     }
     pub struct Vect { pub obj_vec: ObjVec }
     pub fn vect_p (x: &Ptr <Obj>) -> bool {
@@ -840,6 +858,34 @@
         }
         result
     }
+    struct CollectVectJo {
+        counter: usize,
+    }
+
+    impl Jo for CollectVectJo {
+        fn exe (&self, env: &mut Env, _: Ptr <Scope>) {
+            let obj_vec = (0..self.counter)
+                .into_iter ()
+                .map (|_| env.obj_stack.pop () .unwrap ())
+                .rev ()
+                .collect::<ObjVec> ();
+            env.obj_stack.push (Vect::obj (&obj_vec));
+        }
+    }
+    fn vect_compile (
+        env: &mut Env,
+        static_scope: &StaticScope,
+        vect: Ptr <Vect>,
+    ) -> Ptr <JoVec> {
+        let sexp_list = vect_to_list (vect);
+        let counter = list_size (sexp_list.dup ());
+        let jojo = sexp_list_compile (
+            env, static_scope, sexp_list);
+        let ending_jojo = jojo! [
+            CollectVectJo { counter },
+        ];
+        jojo_append (&jojo, &ending_jojo)
+    }
     pub struct Dict { pub obj_dic: ObjDic }
     pub fn dict_p (x: &Ptr <Obj>) -> bool {
         let tag = x.tag ();
@@ -863,15 +909,60 @@
         }
     }
     pub fn dict_to_list (dict: Ptr <Dict>) -> Ptr <Obj> {
-        let mut result = null_c ();
+        let mut list = null_c ();
         let obj_dic = &dict.obj_dic;
         for kv in obj_dic.iter () {
             let sym = Sym::obj (kv.0);
             let obj = kv.1;
             let pair = cons_c (sym, unit_list (obj.dup ()));
-            result = cons_c (pair, result);
+            list = cons_c (pair, list);
         }
-        result
+        list
+    }
+    fn dict_to_flat_reversed_list (dict: Ptr <Dict>) -> Ptr <Obj> {
+        let mut list = null_c ();
+        for kv in dict.obj_dic.iter () {
+            let key = cons_c (
+                Sym::obj ("quote"),
+                unit_list (Sym::obj (kv.0)));
+            let obj = kv.1.dup ();
+            list = cons_c (obj, list);
+            list = cons_c (key, list);
+        }
+        list
+    }
+    struct CollectDictJo {
+        counter: usize,
+    }
+
+    impl Jo for CollectDictJo {
+        fn exe (&self, env: &mut Env, _: Ptr <Scope>) {
+            let mut obj_dic = ObjDic::new ();
+            for _ in 0..self.counter {
+                let key = env.obj_stack.pop () .unwrap ();
+                let obj = env.obj_stack.pop () .unwrap ();
+                assert! (sym_p (&key));
+                let sym = obj_to::<Sym> (key);
+                let name = sym.sym .as_str ();
+                obj_dic.ins (name, Some (obj));
+            }
+            env.obj_stack.push (Dict::obj (&obj_dic));
+        }
+    }
+    fn dict_compile (
+        env: &mut Env,
+        static_scope: &StaticScope,
+        dict: Ptr <Dict>,
+    ) -> Ptr <JoVec> {
+        let sexp_list = dict_to_flat_reversed_list (dict);
+        let counter = list_size (sexp_list.dup ());
+        let counter = counter / 2;
+        let jojo = sexp_list_compile (
+            env, static_scope, sexp_list);
+        let ending_jojo = jojo! [
+            CollectDictJo { counter },
+        ];
+        jojo_append (&jojo, &ending_jojo)
     }
     pub fn parse_sexp (token: &token::Token) -> Ptr <Obj> {
         match token {
@@ -997,32 +1088,96 @@
                      sexp_list_repr (env, cdr (sexp_list)))
         }
     }
+    fn keyword_sexp_p (env: &Env, sexp: &Ptr <Obj>) -> bool {
+        unimplemented! ();
+    }
+    fn macro_sexp_p (env: &Env, sexp: &Ptr <Obj>) -> bool {
+        unimplemented! ();
+    }
     type StaticScope = HashMap <Name, (usize, usize)>;
+
+    fn lit_compile (
+        _env: &Env,
+        _static_scope: &StaticScope,
+        sexp: Ptr <Obj>,
+    ) -> Ptr <JoVec> {
+        jojo! [
+            LitJo { obj: sexp },
+        ]
+    }
+
+    fn dot_symbol_p (word: &str) -> bool {
+        (word.len () >= 1 &&
+         word.starts_with ("."))
+    }
+    fn arity_of_body (
+        env: &Env,
+        mut body: Ptr <Obj>,
+    ) -> usize {
+        assert! (list_p (&body));
+        let mut arity = 0;
+        while ! null_p (&body) {
+            let head = car (body.dup ());
+            if ! sym_p (&head) {
+                arity += 1;
+            } else {
+                let sym = obj_to::<Sym> (head.dup ());
+                let word = sym.sym .as_str ();
+                match word {
+                    "drop" => arity -= 1,
+                    "dup" | "over" | "tuck" => arity += 1,
+                    "swap" => {}
+                    _ if dot_symbol_p (word) => {}
+                    _ => arity += 1,
+                }
+            }
+            body = cdr (body);
+        }
+        arity
+    }
+    pub fn call_compile (
+        env: &mut Env,
+        static_scope: &StaticScope,
+        sexp: Ptr <Obj>,
+    ) -> Ptr <JoVec> {
+        let head = car (sexp.dup ());
+        let body = cdr (sexp);
+        let arity = arity_of_body (env, body.dup ());
+        let jojo = jojo! [
+            ApplyJo { arity },
+        ];
+        let head_jojo = sexp_compile (env, static_scope, head);
+        let body_jojo = sexp_list_compile (env, static_scope, body);
+        let jojo = jojo_append (&head_jojo, &jojo);
+        let jojo = jojo_append (&body_jojo, &jojo);
+        jojo
+    }
     fn sexp_compile (
         env: &mut Env,
         static_scope: &StaticScope,
         sexp: Ptr <Obj>,
     ) -> Ptr <JoVec> {
-        unimplemented! ();
-    //     if str_p (sexp) || num_p (sexp) {
-    //         lit_compile (env, static_scope, sexp)
-    //     } else if sym_p (sexp) {
-    //         let sym = as_sym (sexp);
-    //         symbol_compile (env, static_scope, sym->sym)
-    //     } else if vect_p (sexp) {
-    //         vect_compile (env, static_scope, as_vect (sexp))
-    //     } else if dict_p (sexp) {
-    //         dict_compile (env, static_scope, as_dict (sexp))
-    //     } else if keyword_sexp_p (env, sexp) {
-    //         keyword_compile (env, static_scope, sexp)
-    //     } else if macro_sexp_p (env, sexp) {
-    //         macro_compile (env, static_scope, sexp)
-    //     } else if call_with_arg_dict_sexp_p (env, sexp) {
-    //         call_with_arg_dict_compile (env, static_scope, sexp)
-    //     } else {
-    //         assert! (cons_p (&sexp));
-    //         call_compile (env, static_scope, sexp)
-    //     }
+        if str_p (&sexp) || num_p (&sexp) {
+            lit_compile (env, static_scope, sexp)
+        // } else if sym_p (&sexp) {
+        //     let sym = obj_to::<Sym> (sexp);
+        //     sym_compile (env, static_scope, sym.sym)
+        } else if vect_p (&sexp) {
+            let vect = obj_to::<Vect> (sexp);
+            vect_compile (env, static_scope, vect)
+        } else if dict_p (&sexp) {
+            let dict = obj_to::<Dict> (sexp);
+            dict_compile (env, static_scope, dict)
+        // } else if keyword_sexp_p (env, &sexp) {
+        //     keyword_compile (env, static_scope, sexp)
+        // } else if macro_sexp_p (env, &sexp) {
+        //     macro_compile (env, static_scope, sexp)
+        // } else if call_with_arg_dict_sexp_p (env, sexp) {
+        //     call_with_arg_dict_compile (env, static_scope, sexp)
+        } else {
+            assert! (cons_p (&sexp));
+            call_compile (env, static_scope, sexp)
+        }
     }
     fn sexp_list_compile (
         env: &mut Env,
@@ -1053,7 +1208,7 @@
         env.frame_stack.push (frame! [
             RefJo { id: world },
             RefJo { id: bye },
-            RefJo { id: world }
+            RefJo { id: world },
         ]);
 
         env.run ();
@@ -1087,9 +1242,9 @@
             LambdaJo { arg_dic: Dic::from (vec! [ "x", "y" ]),
                        jojo: jojo! [
                            LocalRefJo { level: 0, index: 1 },
-                           LocalRefJo { level: 0, index: 0 }
+                           LocalRefJo { level: 0, index: 0 },
                        ] },
-            ApplyJo { arity: 2 }
+            ApplyJo { arity: 2 },
         ]);
 
         env.run ();
@@ -1111,10 +1266,10 @@
             LambdaJo { arg_dic: Dic::from (vec! [ "x", "y" ]),
                        jojo: jojo! [
                            LocalRefJo { level: 0, index: 1 },
-                           LocalRefJo { level: 0, index: 0 }
+                           LocalRefJo { level: 0, index: 0 },
                        ] },
             ApplyJo { arity: 1 },
-            ApplyJo { arity: 1 }
+            ApplyJo { arity: 1 },
         ]);
 
         env.run ();
@@ -1142,7 +1297,7 @@
             DotJo { name: String::from ("cdr") },
             RefJo { id: last_cry },
             DotJo { name: String::from ("car") },
-            RefJo { id: last_cry }
+            RefJo { id: last_cry },
         ]);
 
         env.run ();
@@ -1177,7 +1332,7 @@
             RefJo { id: world },
             RefJo { id: cons },
             ApplyJo { arity: 2 },
-            DotJo { name: String::from ("car") }
+            DotJo { name: String::from ("car") },
         ]);
 
         env.run ();

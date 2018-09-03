@@ -2145,7 +2145,7 @@
         return result;
     }
     shared_ptr <obj_t>
-    dict_to_flat_list (shared_ptr <dict_o> dict)
+    dict_to_flat_reversed_list (shared_ptr <dict_o> dict)
     {
         auto result = null_c ();
         for (auto &kv: dict->obj_map) {
@@ -2813,10 +2813,10 @@
         return "(module)";
     }
     shared_ptr <jojo_t>
-    symbol_compile (
+    sym_compile (
         env_t &env,
         static_scope_t &static_scope,
-        symbol sym);
+        shared_ptr <sym_o> sym);
 
     shared_ptr <jojo_t>
     sexp_compile (
@@ -2920,21 +2920,21 @@
             return "." + this->name;
         }
       bool
-      field_symbol_p (string str)
+      field_word_p (string str)
       {
           if (string_string_p (str)) return false;
           auto pos = str.find (".");
           return (pos != string::npos);
       }
       shared_ptr <jojo_t>
-      field_symbol_compile (
+      field_word_compile (
           env_t &env,
           static_scope_t &static_scope,
           string str)
       {
           auto string_vector = string_split (str, '.');
-          auto jojo = symbol_compile
-              (env, static_scope, string_vector [0]);
+          auto sym = make_sym (string_vector [0]);
+          auto jojo = sym_compile (env, static_scope, sym);
           auto begin = string_vector.begin () + 1;
           auto end = string_vector.end ();
           auto jo_vector = jo_vector_t ();
@@ -2944,14 +2944,14 @@
           return jojo_append (jojo, make_shared <jojo_t> (jo_vector));
       }
       bool
-      dot_symbol_p (string str)
+      dot_word_p (string str)
       {
           auto size = str.size ();
           if (size < 1) return false;
           return (str [0] == '.');
       }
       shared_ptr <jojo_t>
-      dot_symbol_compile (
+      dot_word_compile (
           env_t &env,
           static_scope_t &static_scope,
           string str)
@@ -3058,17 +3058,18 @@
           return make_shared <jojo_t> (jo_vector);
       }
     shared_ptr <jojo_t>
-    symbol_compile (
+    sym_compile (
         env_t &env,
         static_scope_t &static_scope,
-        symbol sym)
+        shared_ptr <sym_o> sym)
     {
-        if (dot_symbol_p (sym))
-            return dot_symbol_compile (env, static_scope, sym);
-        else if (field_symbol_p (sym))
-            return field_symbol_compile (env, static_scope, sym);
+        auto word = sym->sym;
+        if (dot_word_p (word))
+            return dot_word_compile (env, static_scope, word);
+        else if (field_word_p (word))
+            return field_word_compile (env, static_scope, word);
         else
-            return ref_compile (env, static_scope, sym);
+            return ref_compile (env, static_scope, word);
     }
         struct collect_vect_jo_t: jo_t
         {
@@ -3173,7 +3174,7 @@
           static_scope_t &static_scope,
           shared_ptr <dict_o> dict)
       {
-          auto sexp_list = dict_to_flat_list (dict);
+          auto sexp_list = dict_to_flat_reversed_list (dict);
           auto jojo = sexp_list_compile
               (env, static_scope, sexp_list);
           auto counter = list_size (sexp_list);
@@ -3398,7 +3399,7 @@
                   arity++;
               } else {
                   auto sym = as_sym (head) ->sym;
-                  if (dot_symbol_p (sym)) {
+                  if (dot_word_p (sym)) {
                       // arity = arity;
                   } else if (sym == "drop") {
                       arity--;
@@ -3574,7 +3575,7 @@
             return lit_compile (env, static_scope, sexp);
         } else if (sym_p (sexp)) {
             auto sym = as_sym (sexp);
-            return symbol_compile (env, static_scope, sym->sym);
+            return sym_compile (env, static_scope, sym);
         } else if (vect_p (sexp)) {
             return vect_compile (env, static_scope, as_vect (sexp));
         } else if (dict_p (sexp)) {
