@@ -5,7 +5,7 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 
 [[package]]
 name = "jojo"
-version = "0.1.0"
+version = "0.1.1"
 dependencies = [
  "dic 0.1.0 (registry+https://github.com/rust-lang/crates.io-index)",
 ]
