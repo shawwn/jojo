@@ -19,6 +19,7 @@
 
   pub type Scope = Vec <ObjDic>; // index from end
 
+  pub type NameVec = Vec <Name>;
   pub type TagVec = Vec <Tag>;
   pub type ObjVec = Vec <Ptr <Obj>>;
   pub type JoVec = Vec <Ptr <Jo>>;
@@ -276,13 +277,13 @@
             panic! ("jojo fatal error!");
         }
 
-        // fn apply_to_arg_dict (&self, env: &mut Env) {
-        //     eprintln! ("- Obj::apply_to_arg_dict");
-        //     eprintln! ("  applying non applicable object");
-        //     eprintln! ("  tag : {}", name_of_tag (&env, self.tag ()));
-        //     eprintln! ("  obj : {}", self.repr (&env));
-        //     panic! ("jojo fatal error!");
-        // }
+        fn apply_to_arg_dict (&self, env: &mut Env) {
+            eprintln! ("- Obj::apply_to_arg_dict");
+            eprintln! ("  applying non applicable object");
+            eprintln! ("  tag : {}", name_of_tag (&env, self.tag ()));
+            eprintln! ("  obj : {}", self.repr (&env));
+            panic! ("jojo fatal error!");
+        }
     }
     pub fn obj_to <T: Obj> (obj: Ptr <Obj>) -> Ptr <T> {
         let obj_ptr = Ptr::into_raw (obj);
@@ -1269,8 +1270,27 @@
         level: usize,
         index: usize,
     }
+    fn static_ref_level_up (static_ref: &StaticRef) -> StaticRef {
+        StaticRef {
+          level: static_ref.level + 1,
+          index: static_ref.index,
+        }
+    }
     pub type StaticScope = HashMap <Name, StaticRef>;
-
+    fn static_scope_extend (
+        old_static_scope: &StaticScope,
+        name_vec: &NameVec,
+    ) -> StaticScope {
+        let mut static_scope: StaticScope = old_static_scope
+            .iter ()
+            .map (|kv| (kv.0.clone (), static_ref_level_up (kv.1)))
+            .collect ();
+        for (index, name) in name_vec .iter () .enumerate () {
+            let static_ref = StaticRef { level: 0, index: index };
+            static_scope.insert (name.clone (), static_ref);
+        }
+        static_scope
+    }
     fn lit_compile (
         _env: &Env,
         _static_scope: &StaticScope,
@@ -1338,14 +1358,13 @@
               ref_compile (env, static_scope, word)
           }
       }
+
+
       fn dot_word_p (word: &str) -> bool {
           (word.len () >= 1 &&
            word.starts_with ("."))
       }
-      fn arity_of_body (
-          env: &Env,
-          mut body: Ptr <Obj>,
-      ) -> usize {
+      fn arity_of_body (mut body: Ptr <Obj>) -> usize {
           assert! (list_p (&body));
           let mut arity = 0;
           while ! null_p (&body) {
@@ -1367,14 +1386,14 @@
           }
           arity
       }
-      pub fn call_compile (
+      pub fn apply_compile (
           env: &mut Env,
           static_scope: &StaticScope,
           sexp: Ptr <Obj>,
       ) -> Ptr <JoVec> {
           let head = car (sexp.dup ());
           let body = cdr (sexp);
-          let arity = arity_of_body (env, body.dup ());
+          let arity = arity_of_body (body.dup ());
           let jojo = jojo! [
               ApplyJo { arity },
           ];
@@ -1404,11 +1423,11 @@
             keyword_compile (env, static_scope, sexp)
         } else if macro_sexp_p (env, &sexp) {
             macro_compile (env, static_scope, sexp)
-        // } else if call_with_arg_dict_sexp_p (env, sexp) {
-        //     call_with_arg_dict_compile (env, static_scope, sexp)
+        // } else if apply_to_arg_dict_sexp_p (env, sexp) {
+        //     apply_to_arg_dict_compile (env, static_scope, sexp)
         } else {
             assert! (cons_p (&sexp));
-            call_compile (env, static_scope, sexp)
+            apply_compile (env, static_scope, sexp)
         }
     }
     pub fn sexp_list_compile (

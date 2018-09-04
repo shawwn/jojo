@@ -547,7 +547,6 @@
       }
       static_scope_t
       static_scope_extend (
-          env_t &env,
           static_scope_t &old_static_scope,
           name_vector_t &name_vector)
       {
@@ -3217,7 +3216,7 @@
         keyword_sexp_p (env_t &env, shared_ptr <obj_t> sexp)
         {
             if (! cons_p (sexp)) return false;
-            if (! sym_p ((car (sexp)))) return false;
+            if (! sym_p (car (sexp))) return false;
             auto head = as_sym (car (sexp));
             auto name = head->sym;
             auto it = env.box_map.find (name);
@@ -3415,7 +3414,7 @@
           return arity;
       }
       shared_ptr <jojo_t>
-      call_compile (
+      apply_compile (
           env_t &env,
           static_scope_t &static_scope,
           shared_ptr <obj_t> sexp)
@@ -3519,7 +3518,7 @@
             env.obj_stack.push (data);
         }
       bool
-      call_with_arg_dict_sexp_p (
+      apply_to_arg_dict_sexp_p (
           env_t &env,
           shared_ptr <obj_t> sexp)
       {
@@ -3543,7 +3542,7 @@
           return false;
       }
       shared_ptr <jojo_t>
-      call_with_arg_dict_compile (
+      apply_to_arg_dict_compile (
           env_t &env,
           static_scope_t &static_scope,
           shared_ptr <obj_t> sexp)
@@ -3579,11 +3578,11 @@
             return keyword_compile (env, static_scope, sexp);
         } else if (macro_sexp_p (env, sexp)) {
             return macro_compile (env, static_scope, sexp);
-        } else if (call_with_arg_dict_sexp_p (env, sexp)) {
-            return call_with_arg_dict_compile (env, static_scope, sexp);
+        } else if (apply_to_arg_dict_sexp_p (env, sexp)) {
+            return apply_to_arg_dict_compile (env, static_scope, sexp);
         } else {
             assert (cons_p (sexp));
-            return call_compile (env, static_scope, sexp);
+            return apply_compile (env, static_scope, sexp);
         }
     }
     shared_ptr <jojo_t>
@@ -4109,7 +4108,7 @@
           auto name_vector = obj_vector_to_name_vector (
               env, name_vect->obj_vector);
           auto static_scope = static_scope_extend (
-              env, old_static_scope, name_vector);
+              old_static_scope, name_vector);
           auto rest_jojo = sexp_compile (
               env, static_scope,
               cons_c (

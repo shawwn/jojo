@@ -1,7 +1,8 @@
 #+property: tangle core.rs
 #+title: core
 - native List
-- call_compile handle (.method ...)
+- maybe not everything as Ptr
+- apply_compile handle (.method ...)
 * use
 
 *** std
@@ -43,6 +44,7 @@
 
   pub type Scope = Vec <ObjDic>; // index from end
 
+  pub type NameVec = Vec <Name>;
   pub type TagVec = Vec <Tag>;
   pub type ObjVec = Vec <Ptr <Obj>>;
   pub type JoVec = Vec <Ptr <Jo>>;
@@ -442,13 +444,13 @@
             panic! ("jojo fatal error!");
         }
 
-        // fn apply_to_arg_dict (&self, env: &mut Env) {
-        //     eprintln! ("- Obj::apply_to_arg_dict");
-        //     eprintln! ("  applying non applicable object");
-        //     eprintln! ("  tag : {}", name_of_tag (&env, self.tag ()));
-        //     eprintln! ("  obj : {}", self.repr (&env));
-        //     panic! ("jojo fatal error!");
-        // }
+        fn apply_to_arg_dict (&self, env: &mut Env) {
+            eprintln! ("- Obj::apply_to_arg_dict");
+            eprintln! ("  applying non applicable object");
+            eprintln! ("  tag : {}", name_of_tag (&env, self.tag ()));
+            eprintln! ("  obj : {}", self.repr (&env));
+            panic! ("jojo fatal error!");
+        }
     }
     #+end_src
 
@@ -1987,16 +1989,40 @@
     }
     #+end_src
 
+*** static_ref_level_up
+
+    #+begin_src rust
+    fn static_ref_level_up (static_ref: &StaticRef) -> StaticRef {
+        StaticRef {
+          level: static_ref.level + 1,
+          index: static_ref.index,
+        }
+    }
+    #+end_src
+
 *** StaticScope
 
     #+begin_src rust
     pub type StaticScope = HashMap <Name, StaticRef>;
     #+end_src
 
-*** [todo] static_scope_extend
+*** static_scope_extend
 
     #+begin_src rust
-
+    fn static_scope_extend (
+        old_static_scope: &StaticScope,
+        name_vec: &NameVec,
+    ) -> StaticScope {
+        let mut static_scope: StaticScope = old_static_scope
+            .iter ()
+            .map (|kv| (kv.0.clone (), static_ref_level_up (kv.1)))
+            .collect ();
+        for (index, name) in name_vec .iter () .enumerate () {
+            let static_ref = StaticRef { level: 0, index: index };
+            static_scope.insert (name.clone (), static_ref);
+        }
+        static_scope
+    }
     #+end_src
 
 *** lit_compile
@@ -2093,9 +2119,21 @@
       }
       #+end_src
 
-*** [todo] call_with_arg_dict_compile
+*** apply_to_arg_dict_compile
 
-*** call_compile
+***** apply_to_arg_dict_sexp_p
+
+      #+begin_src rust
+
+      #+end_src
+
+***** apply_to_arg_dict_compile
+
+      #+begin_src rust
+
+      #+end_src
+
+*** apply_compile
 
 ***** dot_word_p
 
@@ -2109,10 +2147,7 @@
 ***** arity_of_body
 
       #+begin_src rust
-      fn arity_of_body (
-          env: &Env,
-          mut body: Ptr <Obj>,
-      ) -> usize {
+      fn arity_of_body (mut body: Ptr <Obj>) -> usize {
           assert! (list_p (&body));
           let mut arity = 0;
           while ! null_p (&body) {
@@ -2136,19 +2171,19 @@
       }
       #+end_src
 
-***** call_compile
+***** apply_compile
 
       - the head still must be one word.
 
       #+begin_src rust
-      pub fn call_compile (
+      pub fn apply_compile (
           env: &mut Env,
           static_scope: &StaticScope,
           sexp: Ptr <Obj>,
       ) -> Ptr <JoVec> {
           let head = car (sexp.dup ());
           let body = cdr (sexp);
-          let arity = arity_of_body (env, body.dup ());
+          let arity = arity_of_body (body.dup ());
           let jojo = jojo! [
               ApplyJo { arity },
           ];
@@ -2183,11 +2218,11 @@
             keyword_compile (env, static_scope, sexp)
         } else if macro_sexp_p (env, &sexp) {
             macro_compile (env, static_scope, sexp)
-        // } else if call_with_arg_dict_sexp_p (env, sexp) {
-        //     call_with_arg_dict_compile (env, static_scope, sexp)
+        // } else if apply_to_arg_dict_sexp_p (env, sexp) {
+        //     apply_to_arg_dict_compile (env, static_scope, sexp)
         } else {
             assert! (cons_p (&sexp));
-            call_compile (env, static_scope, sexp)
+            apply_compile (env, static_scope, sexp)
         }
     }
     #+end_src
@@ -2217,6 +2252,8 @@
 * [todo] system
 
 * [todo] module
+
+* [todo] top_keyword
 
 * [todo] run
 
