@@ -3,6 +3,6 @@ name = "jojo"
 version = "0.1.0"
 authors = ["Xie Yuheng <xyheme@gmail.com>"]
 description = "JOJO's Bizarre Programming Adventure."
-license = "GPLv3"
+license = "GPL-3.0"
 
 [dependencies]
