@@ -3530,9 +3530,9 @@
                   return true;
               }
               if (cons_p (head)) {
-                  auto head_head = car (head);
-                  if (sym_p (head_head) and
-                      as_sym (head_head) ->sym == "=")
+                  auto head_car = car (head);
+                  if (sym_p (head_car) and
+                      as_sym (head_car) ->sym == "=")
                   {
                       return true;
                   }

@@ -361,6 +361,14 @@
             obj.apply (env, self.arity);
         }
     }
+    pub struct ApplyToArgDictJo;
+
+    impl Jo for ApplyToArgDictJo {
+        fn exe (&self, env: &mut Env, _: Ptr <Scope>) {
+            let obj = env.obj_stack.pop () .unwrap ();
+            obj.apply_to_arg_dict (env);
+        }
+    }
     pub struct DotJo {
         name: String,
     }
@@ -942,6 +950,25 @@
         let list = dict_to_list_rev (dict);
         list_rev (list)
     }
+    fn list_to_dict (mut list: Ptr <Obj>) -> Ptr <Dict> {
+        let mut obj_dic = ObjDic::new ();
+        while ! null_p (&list) {
+            let pair = car (list.dup ());
+            let key = car (pair.dup ());
+            let rest = cdr (pair.dup ());
+            assert! (sym_p (& key));
+            let sym = obj_to::<Sym> (key);
+            let name = &sym.sym;
+            if cons_p (&rest) {
+                let obj = car (rest);
+                obj_dic.set (name, Some (obj));
+            } else {
+                obj_dic.set (name, None);
+            }
+            list = cdr (list);
+        }
+        Dict::obj (&obj_dic)
+    }
     fn dict_to_flat_list_rev (dict: Ptr <Dict>) -> Ptr <Obj> {
         let mut list = null_c ();
         for kv in dict.obj_dic.iter () {
@@ -1026,10 +1053,7 @@
             unit_list (last_sexp)
         } else {
             let head = car (sexp_list.dup ());
-            if (sym_p (&head) &&
-                obj_to::<Sym> (head.dup ())
-                .sym .as_str () == "=")
-            {
+            if sym_sexp_as_str_p (&head, "=") {
                 let next = car (cdr (sexp_list.dup ()));
                 let rest = cdr (cdr (sexp_list));
                 let new_last_sexp = cons_c (
@@ -1116,6 +1140,14 @@
             format! ("{} {}",
                      sexp_repr (env, car (sexp_list.dup ())),
                      sexp_list_repr (env, cdr (sexp_list)))
+        }
+    }
+    fn sym_sexp_as_str_p (sexp: &Ptr <Obj>, str: &str) -> bool {
+        if ! sym_p (&sexp) {
+            false
+        } else {
+            let sym = obj_to::<Sym> (sexp.dup ());
+            (sym.sym .as_str () == str)
         }
     }
     pub type KeywordFn = fn (
@@ -1358,8 +1390,58 @@
               ref_compile (env, static_scope, word)
           }
       }
-
-
+      fn apply_to_arg_dict_sexp_p (
+          _env: &Env,
+          sexp: &Ptr <Obj>,
+      ) -> bool {
+          if ! cons_p (sexp) {
+              return false;
+          }
+          let mut body = sexp_list_prefix_assign (cdr (sexp.dup ()));
+          while ! null_p (&body) {
+              let head = car (body.dup ());
+              if cons_p (&head) {
+                  let head_car = car (head);
+                  if sym_sexp_as_str_p (&head_car, "=") {
+                      return true;
+                  }
+              } else {
+                  return false;
+              }
+              body = cdr (body);
+          }
+          return false;
+      }
+      fn sexp_list_assign_to_pair (sexp_list: Ptr <Obj>) -> Ptr <Obj> {
+          if null_p (& sexp_list) {
+              sexp_list
+          } else {
+              cons_c (cdr (car (sexp_list.dup ())),
+                      sexp_list_assign_to_pair (cdr (sexp_list)))
+          }
+      }
+      fn sexp_list_to_dict (sexp_list: Ptr <Obj>) -> Ptr <Dict> {
+          list_to_dict (
+              sexp_list_assign_to_pair (
+                  sexp_list_prefix_assign (sexp_list)))
+      }
+      pub fn apply_to_arg_dict_compile (
+          env: &mut Env,
+          static_scope: &StaticScope,
+          sexp: Ptr <Obj>,
+      ) -> Ptr <JoVec> {
+          let head = car (sexp.dup ());
+          let body = cdr (sexp);
+          let jojo = jojo! [
+              ApplyToArgDictJo {},
+          ];
+          let head_jojo = sexp_compile (env, static_scope, head);
+          let dict = sexp_list_to_dict (body);
+          let body_jojo = dict_compile (env, static_scope, dict);
+          let jojo = jojo_append (&head_jojo, &jojo);
+          let jojo = jojo_append (&body_jojo, &jojo);
+          jojo
+      }
       fn dot_word_p (word: &str) -> bool {
           (word.len () >= 1 &&
            word.starts_with ("."))
@@ -1385,6 +1467,12 @@
               body = cdr (body);
           }
           arity
+      }
+      fn apply_sexp_p (
+          _env: &Env,
+          sexp: &Ptr <Obj>,
+      ) -> bool {
+          cons_p (sexp)
       }
       pub fn apply_compile (
           env: &mut Env,
@@ -1423,11 +1511,14 @@
             keyword_compile (env, static_scope, sexp)
         } else if macro_sexp_p (env, &sexp) {
             macro_compile (env, static_scope, sexp)
-        // } else if apply_to_arg_dict_sexp_p (env, sexp) {
-        //     apply_to_arg_dict_compile (env, static_scope, sexp)
-        } else {
-            assert! (cons_p (&sexp));
+        } else if apply_to_arg_dict_sexp_p (env, &sexp) {
+            apply_to_arg_dict_compile (env, static_scope, sexp)
+        } else if apply_sexp_p (env, &sexp) {
             apply_compile (env, static_scope, sexp)
+        } else {
+            eprintln! ("- sexp_compile");
+            eprintln! ("  unknown sexp : {}", sexp_repr (env, sexp));
+            panic! ("jojo fatal error!");
         }
     }
     pub fn sexp_list_compile (

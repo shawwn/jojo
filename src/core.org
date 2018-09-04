@@ -1,6 +1,6 @@
 #+property: tangle core.rs
 #+title: core
-- native List
+- maybe native List
 - maybe not everything as Ptr
 - apply_compile handle (.method ...)
 * use
@@ -568,6 +568,19 @@
         fn exe (&self, env: &mut Env, _: Ptr <Scope>) {
             let obj = env.obj_stack.pop () .unwrap ();
             obj.apply (env, self.arity);
+        }
+    }
+    #+end_src
+
+*** ApplyToArgDictJo
+
+    #+begin_src rust
+    pub struct ApplyToArgDictJo;
+
+    impl Jo for ApplyToArgDictJo {
+        fn exe (&self, env: &mut Env, _: Ptr <Scope>) {
+            let obj = env.obj_stack.pop () .unwrap ();
+            obj.apply_to_arg_dict (env);
         }
     }
     #+end_src
@@ -1506,6 +1519,30 @@
     }
     #+end_src
 
+*** list_to_dict
+
+    #+begin_src rust
+    fn list_to_dict (mut list: Ptr <Obj>) -> Ptr <Dict> {
+        let mut obj_dic = ObjDic::new ();
+        while ! null_p (&list) {
+            let pair = car (list.dup ());
+            let key = car (pair.dup ());
+            let rest = cdr (pair.dup ());
+            assert! (sym_p (& key));
+            let sym = obj_to::<Sym> (key);
+            let name = &sym.sym;
+            if cons_p (&rest) {
+                let obj = car (rest);
+                obj_dic.set (name, Some (obj));
+            } else {
+                obj_dic.set (name, None);
+            }
+            list = cdr (list);
+        }
+        Dict::obj (&obj_dic)
+    }
+    #+end_src
+
 *** dict_to_flat_list_rev
 
     #+begin_src rust
@@ -1637,10 +1674,7 @@
             unit_list (last_sexp)
         } else {
             let head = car (sexp_list.dup ());
-            if (sym_p (&head) &&
-                obj_to::<Sym> (head.dup ())
-                .sym .as_str () == "=")
-            {
+            if sym_sexp_as_str_p (&head, "=") {
                 let next = car (cdr (sexp_list.dup ()));
                 let rest = cdr (cdr (sexp_list));
                 let new_last_sexp = cons_c (
@@ -1747,6 +1781,19 @@
             format! ("{} {}",
                      sexp_repr (env, car (sexp_list.dup ())),
                      sexp_list_repr (env, cdr (sexp_list)))
+        }
+    }
+    #+end_src
+
+*** sym_sexp_as_str_p
+
+    #+begin_src rust
+    fn sym_sexp_as_str_p (sexp: &Ptr <Obj>, str: &str) -> bool {
+        if ! sym_p (&sexp) {
+            false
+        } else {
+            let sym = obj_to::<Sym> (sexp.dup ());
+            (sym.sym .as_str () == str)
         }
     }
     #+end_src
@@ -2124,13 +2171,73 @@
 ***** apply_to_arg_dict_sexp_p
 
       #+begin_src rust
+      fn apply_to_arg_dict_sexp_p (
+          _env: &Env,
+          sexp: &Ptr <Obj>,
+      ) -> bool {
+          if ! cons_p (sexp) {
+              return false;
+          }
+          let mut body = sexp_list_prefix_assign (cdr (sexp.dup ()));
+          while ! null_p (&body) {
+              let head = car (body.dup ());
+              if cons_p (&head) {
+                  let head_car = car (head);
+                  if sym_sexp_as_str_p (&head_car, "=") {
+                      return true;
+                  }
+              } else {
+                  return false;
+              }
+              body = cdr (body);
+          }
+          return false;
+      }
+      #+end_src
 
+***** sexp_list_assign_to_pair
+
+      #+begin_src rust
+      fn sexp_list_assign_to_pair (sexp_list: Ptr <Obj>) -> Ptr <Obj> {
+          if null_p (& sexp_list) {
+              sexp_list
+          } else {
+              cons_c (cdr (car (sexp_list.dup ())),
+                      sexp_list_assign_to_pair (cdr (sexp_list)))
+          }
+      }
+      #+end_src
+
+***** sexp_list_to_dict
+
+      #+begin_src rust
+      fn sexp_list_to_dict (sexp_list: Ptr <Obj>) -> Ptr <Dict> {
+          list_to_dict (
+              sexp_list_assign_to_pair (
+                  sexp_list_prefix_assign (sexp_list)))
+      }
       #+end_src
 
 ***** apply_to_arg_dict_compile
 
       #+begin_src rust
-
+      pub fn apply_to_arg_dict_compile (
+          env: &mut Env,
+          static_scope: &StaticScope,
+          sexp: Ptr <Obj>,
+      ) -> Ptr <JoVec> {
+          let head = car (sexp.dup ());
+          let body = cdr (sexp);
+          let jojo = jojo! [
+              ApplyToArgDictJo {},
+          ];
+          let head_jojo = sexp_compile (env, static_scope, head);
+          let dict = sexp_list_to_dict (body);
+          let body_jojo = dict_compile (env, static_scope, dict);
+          let jojo = jojo_append (&head_jojo, &jojo);
+          let jojo = jojo_append (&body_jojo, &jojo);
+          jojo
+      }
       #+end_src
 
 *** apply_compile
@@ -2171,6 +2278,17 @@
       }
       #+end_src
 
+***** apply_sexp_p
+
+      #+begin_src rust
+      fn apply_sexp_p (
+          _env: &Env,
+          sexp: &Ptr <Obj>,
+      ) -> bool {
+          cons_p (sexp)
+      }
+      #+end_src
+
 ***** apply_compile
 
       - the head still must be one word.
@@ -2195,7 +2313,7 @@
       }
       #+end_src
 
-*** [todo] sexp_compile
+*** sexp_compile
 
     #+begin_src rust
     pub fn sexp_compile (
@@ -2218,11 +2336,14 @@
             keyword_compile (env, static_scope, sexp)
         } else if macro_sexp_p (env, &sexp) {
             macro_compile (env, static_scope, sexp)
-        // } else if apply_to_arg_dict_sexp_p (env, sexp) {
-        //     apply_to_arg_dict_compile (env, static_scope, sexp)
-        } else {
-            assert! (cons_p (&sexp));
+        } else if apply_to_arg_dict_sexp_p (env, &sexp) {
+            apply_to_arg_dict_compile (env, static_scope, sexp)
+        } else if apply_sexp_p (env, &sexp) {
             apply_compile (env, static_scope, sexp)
+        } else {
+            eprintln! ("- sexp_compile");
+            eprintln! ("  unknown sexp : {}", sexp_repr (env, sexp));
+            panic! ("jojo fatal error!");
         }
     }
     #+end_src
@@ -2264,8 +2385,6 @@
 * [todo] expose
 
 * [todo] interface
-
-*** ><
 
 * test
 
