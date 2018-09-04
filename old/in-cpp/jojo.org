@@ -4883,7 +4883,7 @@
         keyword_sexp_p (env_t &env, shared_ptr <obj_t> sexp)
         {
             if (! cons_p (sexp)) return false;
-            if (! sym_p ((car (sexp)))) return false;
+            if (! sym_p (car (sexp))) return false;
             auto head = as_sym (car (sexp));
             auto name = head->sym;
             auto it = env.box_map.find (name);

@@ -65,8 +65,7 @@
           (lhs.len () == rhs.len () &&
            lhs.iter () .zip (rhs.iter ())
            .all (|p| ((p.0).0 == (p.1).0 &&
-                      obj_eq ((p.0).1.dup (),
-                              (p.1).1.dup ()))))
+                      obj_eq (& (p.0).1, & (p.1).1))))
       }
       pub fn obj_vec_eq (
           lhs: &ObjVec,
@@ -74,8 +73,7 @@
       ) -> bool {
           (lhs.len () == rhs.len () &&
            lhs.iter () .zip (rhs.iter ())
-           .all (|p| obj_eq (p.0.dup (),
-                             p.1.dup ())))
+           .all (|p| obj_eq (&p.0, &p.1)))
       }
       pub fn scope_extend (
           scope: &Scope,
@@ -295,10 +293,10 @@
         }
     }
     pub fn obj_eq (
-        lhs: Ptr <Obj>,
-        rhs: Ptr <Obj>,
+        lhs: &Ptr <Obj>,
+        rhs: &Ptr <Obj>,
     ) -> bool {
-        lhs.eq (rhs)
+        lhs.eq (rhs.dup ())
     }
     pub trait Jo {
         fn exe (&self, env: &mut Env, scope: Ptr <Scope>);
@@ -640,7 +638,10 @@
             }
         }
     }
-    pub type PrimFn = fn (env: &mut Env, arg_dic: &ObjDic);
+    pub type PrimFn = fn (
+        env: &mut Env,
+        arg_dic: &ObjDic,
+    );
     pub fn prim_fn_eq (
         lhs: &PrimFn,
         rhs: &PrimFn,
@@ -1117,11 +1118,153 @@
                      sexp_list_repr (env, cdr (sexp_list)))
         }
     }
+    pub type KeywordFn = fn (
+        env: &mut Env,
+        static_scope: &StaticScope,
+        body: Ptr <Obj>,
+    ) -> Ptr <JoVec>;
+    pub fn keyword_fn_eq (
+        lhs: &KeywordFn,
+        rhs: &KeywordFn,
+    ) -> bool {
+        (*lhs) as usize == (*rhs) as usize
+    }
+    struct Keyword {
+        fun: KeywordFn,
+    }
+    pub fn keyword_p (x: &Ptr <Obj>) -> bool {
+        let tag = x.tag ();
+        (KEYWORD_T == tag)
+    }
+    impl Obj for Keyword {
+        fn tag (&self) -> Tag { KEYWORD_T }
+
+        fn eq (&self, other: Ptr <Obj>) -> bool {
+            if self.tag () != other.tag () {
+                false
+            } else {
+                let other = obj_to::<Keyword> (other);
+                (keyword_fn_eq (&self.fun, &other.fun))
+            }
+        }
+    }
+    fn find_keyword (
+        env: &Env,
+        name: &str,
+    ) -> Option <Ptr <Keyword>> {
+        if let Some (obj) = env.obj_dic.get (name) {
+            if keyword_p (obj) {
+                let keyword = obj_to::<Keyword> (obj.dup ());
+                Some (keyword)
+            } else {
+                None
+            }
+        } else {
+            None
+        }
+    }
     fn keyword_sexp_p (env: &Env, sexp: &Ptr <Obj>) -> bool {
-        unimplemented! ();
+        if ! cons_p (&sexp) {
+            return false;
+        }
+        let head = car (sexp.dup ());
+        if ! sym_p (&head) {
+            false
+        } else {
+            let sym = obj_to::<Sym> (head);
+            let name = &sym.sym;
+            if let Some (_) = find_keyword (env, name) {
+                true
+            } else {
+                false
+            }
+        }
+    }
+    fn keyword_compile (
+        env: &mut Env,
+        static_scope: &StaticScope,
+        sexp: Ptr <Obj>,
+    ) -> Ptr <JoVec> {
+        let head = car (sexp.dup ());
+        let sym = obj_to::<Sym> (head);
+        let name = &sym.sym;
+        let keyword = find_keyword (env, name) .unwrap ();
+        let body = cdr (sexp);
+        (keyword.fun) (env, static_scope, body)
+    }
+    struct Macro {
+        obj: Ptr <Obj>,
+    }
+    pub fn macro_p (x: &Ptr <Obj>) -> bool {
+        let tag = x.tag ();
+        (MACRO_T == tag)
+    }
+    impl Obj for Macro {
+        fn tag (&self) -> Tag { MACRO_T }
+
+        fn eq (&self, other: Ptr <Obj>) -> bool {
+            if self.tag () != other.tag () {
+                false
+            } else {
+                let other = obj_to::<Macro> (other);
+                (obj_eq (&self.obj, &other.obj))
+            }
+        }
+    }
+    fn find_macro (
+        env: &Env,
+        name: &str,
+    ) -> Option <Ptr <Macro>> {
+        if let Some (obj) = env.obj_dic.get (name) {
+            if macro_p (obj) {
+                let mac = obj_to::<Macro> (obj.dup ());
+                Some (mac)
+            } else {
+                None
+            }
+        } else {
+            None
+        }
     }
     fn macro_sexp_p (env: &Env, sexp: &Ptr <Obj>) -> bool {
-        unimplemented! ();
+        if ! cons_p (&sexp) {
+            return false;
+        }
+        let head = car (sexp.dup ());
+        if ! sym_p (&head) {
+            false
+        } else {
+            let sym = obj_to::<Sym> (head);
+            let name = &sym.sym;
+            if let Some (_) = find_macro (env, name) {
+                true
+            } else {
+                false
+            }
+        }
+    }
+    fn macro_eval (
+        env: &mut Env,
+        sexp: Ptr <Obj>,
+    ) -> Ptr <Obj> {
+        let head = car (sexp.dup ());
+        let sym = obj_to::<Sym> (head);
+        let name = &sym.sym;
+        let mac = find_macro (env, name) .unwrap ();
+        let body = cdr (sexp);
+        env.obj_stack.push (body);
+        let base = env.frame_stack.len ();
+        mac.obj.apply (env, 1);
+        env.run_with_base (base);
+        env.obj_stack.pop () .unwrap ()
+    }
+    fn macro_compile (
+        env: &mut Env,
+        static_scope: &StaticScope,
+        sexp: Ptr <Obj>,
+    ) -> Ptr <JoVec> {
+        let new_sexp = macro_eval (env, sexp);
+        sexp_compile (env, static_scope, new_sexp)
     }
     pub struct StaticRef {
         level: usize,
@@ -1258,10 +1401,10 @@
         } else if dict_p (&sexp) {
             let dict = obj_to::<Dict> (sexp);
             dict_compile (env, static_scope, dict)
-        // } else if keyword_sexp_p (env, &sexp) {
-        //     keyword_compile (env, static_scope, sexp)
-        // } else if macro_sexp_p (env, &sexp) {
-        //     macro_compile (env, static_scope, sexp)
+        } else if keyword_sexp_p (env, &sexp) {
+            keyword_compile (env, static_scope, sexp)
+        } else if macro_sexp_p (env, &sexp) {
+            macro_compile (env, static_scope, sexp)
         // } else if call_with_arg_dict_sexp_p (env, sexp) {
         //     call_with_arg_dict_compile (env, static_scope, sexp)
         } else {
@@ -1286,6 +1429,10 @@
             jojo_append (&head_jojo, &body_jojo)
         }
     }
+    fn assert_pop (env: &mut Env, obj: Ptr <Obj>) {
+        let pop = env.obj_stack.pop () .unwrap ();
+        assert! (obj_eq (&obj, &pop));
+    }
     #[test]
     fn test_step () {
         let mut env = Env::new ();
@@ -1304,17 +1451,11 @@
         env.run ();
 
         assert_eq! (3, env.obj_stack.len ());
-        assert! (obj_eq (
-            env.obj_stack.pop () .unwrap (),
-            Str::obj ("world")));
+        assert_pop (&mut env, Str::obj ("world"));
         assert_eq! (2, env.obj_stack.len ());
-        assert! (obj_eq (
-            env.obj_stack.pop () .unwrap (),
-            Str::obj ("bye")));
+        assert_pop (&mut env, Str::obj ("bye"));
         assert_eq! (1, env.obj_stack.len ());
-        assert! (obj_eq (
-            env.obj_stack.pop () .unwrap (),
-            Str::obj ("world")));
+        assert_pop (&mut env, Str::obj ("world"));
         assert_eq! (0, env.obj_stack.len ());
     }
     #[test]
@@ -1339,13 +1480,9 @@
 
         env.run ();
         assert_eq! (2, env.obj_stack.len ());
-        assert! (obj_eq (
-            env.obj_stack.pop () .unwrap (),
-            Str::obj ("bye")));
+        assert_pop (&mut env, Str::obj ("bye"));
         assert_eq! (1, env.obj_stack.len ());
-        assert! (obj_eq (
-            env.obj_stack.pop () .unwrap (),
-            Str::obj ("world")));
+        assert_pop (&mut env, Str::obj ("world"));
         assert_eq! (0, env.obj_stack.len ());
 
         // curry
@@ -1364,13 +1501,9 @@
 
         env.run ();
         assert_eq! (2, env.obj_stack.len ());
-        assert! (obj_eq (
-            env.obj_stack.pop () .unwrap (),
-            Str::obj ("world")));
+        assert_pop (&mut env, Str::obj ("world"));
         assert_eq! (1, env.obj_stack.len ());
-        assert! (obj_eq (
-            env.obj_stack.pop () .unwrap (),
-            Str::obj ("bye")));
+        assert_pop (&mut env, Str::obj ("bye"));
         assert_eq! (0, env.obj_stack.len ());
     }
     #[test]
@@ -1392,18 +1525,13 @@
 
         env.run ();
         assert_eq! (3, env.obj_stack.len ());
-        assert! (obj_eq (
-            env.obj_stack.pop () .unwrap (),
-            cons_c (Str::obj ("bye"),
-                    Str::obj ("world"))));
+        assert_pop (&mut env,
+                    cons_c (Str::obj ("bye"),
+                            Str::obj ("world")));
         assert_eq! (2, env.obj_stack.len ());
-        assert! (obj_eq (
-            env.obj_stack.pop () .unwrap (),
-            Str::obj ("bye")));
+        assert_pop (&mut env, Str::obj ("bye"));
         assert_eq! (1, env.obj_stack.len ());
-        assert! (obj_eq (
-            env.obj_stack.pop () .unwrap (),
-            Str::obj ("world")));
+        assert_pop (&mut env, Str::obj ("world"));
         assert_eq! (0, env.obj_stack.len ());
     }
     #[test]
@@ -1427,9 +1555,7 @@
 
         env.run ();
         assert_eq! (1, env.obj_stack.len ());
-        assert! (obj_eq (
-            env.obj_stack.pop () .unwrap (),
-            Str::obj ("bye")));
+        assert_pop (&mut env, Str::obj ("bye"));
         assert_eq! (0, env.obj_stack.len ());
 
         // curry
@@ -1445,9 +1571,7 @@
 
         env.run ();
         assert_eq! (1, env.obj_stack.len ());
-        assert! (obj_eq (
-            env.obj_stack.pop () .unwrap (),
-            Str::obj ("world")));
+        assert_pop (&mut env, Str::obj ("world"));
         assert_eq! (0, env.obj_stack.len ());
     }
     #[test]
@@ -1478,13 +1602,9 @@
 
         env.run ();
         assert_eq! (2, env.obj_stack.len ());
-        assert! (obj_eq (
-            env.obj_stack.pop () .unwrap (),
-            Str::obj ("bye")));
+        assert_pop (&mut env, Str::obj ("bye"));
         assert_eq! (1, env.obj_stack.len ());
-        assert! (obj_eq (
-            env.obj_stack.pop () .unwrap (),
-            Str::obj ("world")));
+        assert_pop (&mut env, Str::obj ("world"));
         assert_eq! (0, env.obj_stack.len ());
 
         // curry
@@ -1499,13 +1619,9 @@
 
         env.run ();
         assert_eq! (2, env.obj_stack.len ());
-        assert! (obj_eq (
-            env.obj_stack.pop () .unwrap (),
-            Str::obj ("world")));
+        assert_pop (&mut env, Str::obj ("world"));
         assert_eq! (1, env.obj_stack.len ());
-        assert! (obj_eq (
-            env.obj_stack.pop () .unwrap (),
-            Str::obj ("bye")));
+        assert_pop (&mut env, Str::obj ("bye"));
         assert_eq! (0, env.obj_stack.len ());
     }
     #[test]
