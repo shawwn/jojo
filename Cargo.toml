@@ -1,8 +1,9 @@
 [package]
 name = "jojo"
-version = "0.1.0"
+version = "0.1.1"
 authors = ["Xie Yuheng <xyheme@gmail.com>"]
 description = "JOJO's Bizarre Programming Adventure."
 license = "GPL-3.0"
 
 [dependencies]
+dic = "0.1.0"

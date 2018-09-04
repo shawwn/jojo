@@ -1,9 +1,8 @@
-  // use std::rc::Rc;
-  use std::sync::Arc;
-  use std::collections::HashMap;
-
-  use dic::Dic;
-  use token;
+    // use std::rc::Rc;
+    use std::sync::Arc;
+    use std::collections::HashMap;
+    use dic::Dic;
+    use token;
   // pub type Ptr <T> = Rc <T>;
   pub type Ptr <T> = Arc <T>;
 

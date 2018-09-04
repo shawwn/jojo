@@ -4,8 +4,8 @@
 // #![allow(dead_code)]
 #![allow(unused_macros)]
 
+extern crate dic;
 
-pub mod dic;
 pub mod token;
 
 mod core;

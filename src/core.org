@@ -4,14 +4,25 @@
 - call_compile handle (.method ...)
 * use
 
-  #+begin_src rust
-  // use std::rc::Rc;
-  use std::sync::Arc;
-  use std::collections::HashMap;
+*** std
 
-  use dic::Dic;
-  use token;
-  #+end_src
+    #+begin_src rust
+    // use std::rc::Rc;
+    use std::sync::Arc;
+    use std::collections::HashMap;
+    #+end_src
+
+*** extern mod
+
+    #+begin_src rust
+    use dic::Dic;
+    #+end_src
+
+*** intern mod
+
+    #+begin_src rust
+    use token;
+    #+end_src
 
 * datatype
 
