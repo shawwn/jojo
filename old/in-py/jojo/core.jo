@@ -42,7 +42,9 @@
       (quote (@ :body)) sexp-list-print newline
       error]))
 
-(+gene p (-> :x) :x print)
+(+gene p (-> :x) :x default-print)
+
+(+jojo print p)
 
 (+disp p (-> :bool Bool)
   (if :bool
@@ -50,17 +52,36 @@
     ["false" p]))
 
 (+disp p (-> :list List)
-  (cond [:list null?] ["()" p]
-        [:list cons?] ["(" p :list list-print/loop ")" p]))
-
-(+jojo list-print/loop (-> :list)
   (cond
     [:list null?] []
     [:list.cdr null?] [:list.car p]
     else [:list.car p space
-          :list.cdr list-print/loop]))
+          :list.cdr p]))
 
-(+gene repr (-> :x -- String) :x representation)
+(+disp p (-> Vect)
+  vect->list p)
+
+(+disp p (-> Tuple)
+  tuple->vect p)
+
+(+disp p (-> Set)
+  set->vect p)
+
+(+disp p (-> Dict)
+  dict->assco-list assco-list-dict-print)
+
+(+jojo assco-list-dict-print (-> :alist)
+  (cond
+    [:alist null?] []
+    [:alist.cdr null?]
+    [:alist.car 0 tuple-ref p " : " p
+     :alist.car 1 tuple-ref p]
+    else
+    [:alist.car 0 tuple-ref p " : " p
+     :alist.car 1 tuple-ref p ", " p
+     :alist.cdr assco-list-dict-print]))
+
+(+gene repr (-> :x -- String) :x default-repr)
 
 (+disp repr (-> :bool Bool -- String)
   (if :bool
@@ -72,27 +93,69 @@
   doublequote swap string-append)
 
 (+disp repr (-> :list List -- String)
-  (cond [:list null?] ["(list)"]
-        [:list cons?] [:list list-repr/recur
-                       "(list " swap string-append
-                       ")" string-append]))
+  (cond
+    [:list null?] ["(list)"]
+    [:list cons?] [:list list-inner-repr
+                   "(list " swap string-append
+                   ")" string-append]))
 
-(+jojo list-repr/recur (-> :list List -- String)
+(+jojo list-inner-repr (-> :list List -- String)
   (cond
     [:list null?] [""]
     [:list.cdr null?] [:list.car repr]
     else [:list.car repr " " string-append
-          :list.cdr list-repr/recur string-append]))
+          :list.cdr list-inner-repr string-append]))
 
+(+disp repr (-> :vect Vect -- String)
+  (cond
+    [:vect vect-empty?] ["(vect)"]
+    else [:vect vect-inner-repr
+          "(vect " swap string-append
+          ")" string-append]))
 
+(+jojo vect-inner-repr
+  vect->list list-inner-repr)
 
+(+disp repr (-> :tuple Tuple -- String)
+  (cond
+    [:tuple tuple-empty?] ["(*)"]
+    else [:tuple tuple-inner-repr
+          "(* " swap string-append
+          ")" string-append]))
 
+(+jojo tuple-inner-repr
+  tuple->vect vect-inner-repr)
 
+(+disp repr (-> :set Set -- String)
+  (cond
+    [:set set-empty?] ["(set)"]
+    else [:set set-inner-repr
+          "(set " swap string-append
+          ")" string-append]))
 
+(+jojo set-inner-repr
+  set->vect vect-inner-repr)
 
+(+disp repr (-> Dict -- String)
+  dict->assco-list assco-list-dict-repr)
 
+(+jojo assco-list-dict-repr (-> :alist -- String)
+  (cond
+    [:alist null?] ["(dict)"]
+    [:alist cons?] [:alist assco-list-dict-inner-repr
+                    "(dict " swap string-append
+                    ")" string-append]))
 
-
+(+jojo assco-list-dict-inner-repr (-> :alist -- String)
+  (cond
+    [:alist null?] [""]
+    [:alist.cdr null?]
+    [:alist.car 0 tuple-ref repr " " string-append
+     :alist.car 1 tuple-ref repr string-append]
+    else
+    [:alist.car 0 tuple-ref repr " " string-append
+     :alist.car 1 tuple-ref repr ", " string-append string-append
+     :alist.cdr assco-list-dict-inner-repr string-append]))
 
 (+gene w (-> :x) :x repr p)
 
@@ -127,7 +190,7 @@
 
 (+jojo case-spread-one-question
   (-> :value :case -- question)
-  (cond [:value 'else eq?] 'else
+  (cond [:case 'else eq?] 'else
         else `[(list (@ :value)) (list (@ :case)) case-match?]))
 
 (+jojo case-syntax-check (-> :sexp-list)
@@ -165,7 +228,7 @@
     (if [:x .car :y .car equal? not]
       false
       [:x .cdr :y .cdr equal?])
-    [Object Object] false))
+    else false))
 
 (+jojo list-any? (-> :list :pred -> Bool)
   (cond [:list null?] false

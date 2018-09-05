@@ -1,0 +1,5 @@
+(import os sys)
+
+(begin
+  (assert os .name string?)
+  (assert sys .copyright string?))

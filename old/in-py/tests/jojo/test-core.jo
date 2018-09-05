@@ -1,0 +1,5 @@
+(+jojo test1
+  (assert 4 even?)
+  (assert 4 odd? not))
+
+test1

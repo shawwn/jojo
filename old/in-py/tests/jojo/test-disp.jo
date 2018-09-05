@@ -1,0 +1,10 @@
+(+gene 2repr (-> :x :y -- String) "><><><")
+
+(+disp 2repr (-> Int Int -- String) drop drop "Int Int")
+(+disp 2repr (-> String Int -- String) drop drop "String Int")
+(+disp 2repr (-> Int String -- String) drop drop "Int String")
+
+(assert 1 1     2repr "Int Int" eq?)
+(assert 1 "a"   2repr "Int String" eq?)
+(assert "a" 1   2repr "String Int" eq?)
+(assert "a" "a" 2repr "><><><" eq?)

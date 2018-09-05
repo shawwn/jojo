@@ -913,24 +913,7 @@ def parse_sexp_cons_until_ket(string_vect, i, ket):
         return (cons(s, s_cons), i2)
 
 def p_print(x):
-    def p(x):
-        print(x, end="")
-    if x == Bool:
-        p("Bool")
-    elif x == Int:
-        p("Int")
-    elif x == String:
-        p("String")
-    elif x == Vect:
-        p("Vect")
-    elif x == Dict:
-        p("Dict")
-    elif x == Tuple:
-        p("Tuple")
-    elif x == Set:
-        p("Set")
-    else:
-        p(x)
+    print(x, end="")
     sys.stdout.flush()
 
 def sexp_print(s):
@@ -1104,7 +1087,7 @@ def int_string_emitter(module, string):
 def doublequoted_string_p(string):
     if not string_p(string):
         return False
-    if len(string) < 3:
+    if len(string) < 2:
         return False
     elif string[0] != '"':
         return False
@@ -1386,6 +1369,10 @@ def vect_member_p(x, vect):
 def vect_length(vect):
     return len(vect)
 
+@prim('vect-empty?')
+def vect_empty_p(vect):
+    return len(vect) == 0
+
 @prim('vect-ref')
 def vect_ref(vect, index):
     return vect[index]
@@ -1558,8 +1545,8 @@ def dict_p(x):
 def dict_copy(d):
     return d.copy()
 
-@prim('vect->dict')
-def vect_to_dict(vect):
+@prim('even-vect->dict')
+def even_vect_to_dict(vect):
     length = len(vect)
     if length % 2 != 0:
         print("- vect->dict fail")
@@ -1578,9 +1565,26 @@ def vect_to_dict(vect):
 
     return d
 
+@prim('dict->assco-vect')
+def dict_to_assco_vect(d):
+    assco_vect = []
+    for k, v in d.items():
+        assco_vect.append((k, v))
+    return assco_vect
+
+@prim('dict->assco-list')
+def dict_to_assco_list(d):
+    assco_vect = dict_to_assco_vect(d)
+    assco_list = vect_to_list(assco_vect)
+    return assco_list
+
 @prim('dict-length')
 def dict_length(d):
     return len(d)
+
+@prim('dict-empty?')
+def dict_empty_p(d):
+    return len(d) == 0
 
 @prim('dict-find')
 def dict_find(d, k):
@@ -1627,6 +1631,10 @@ def tuple_to_vect(tu):
 def tuple_length(tu):
     return len(tu)
 
+@prim('tuple-empty?')
+def tuple_empty_p(tu):
+    return len(tu) == 0
+
 @prim('tuple-ref')
 def tuple_ref(tu, index):
     return tu[index]
@@ -1655,6 +1663,10 @@ def set_to_vect(s):
 @prim('set-length')
 def set_length(s):
     return len(s)
+
+@prim('set-empty?')
+def set_empty_p(s):
+    return len(s) == 0
 
 @prim('set-member?')
 def set_member_p(x, s):
@@ -1688,10 +1700,36 @@ def set_difference(s1, s2):
 def set_symmetric_difference(s1, s2):
     return s1.symmetric_difference(s2)
 
-prim('print')(p_print)
+@prim('py-print')
+def py_print(x):
+    p_print(x)
 
-@prim('representation')
-def representation(x):
+@prim('default-print')
+def default_print(x):
+    if x == Bool:
+        py_print("Bool")
+    elif x == Int:
+        py_print("Int")
+    elif x == String:
+        py_print("String")
+    elif x == Vect:
+        py_print("Vect")
+    elif x == Dict:
+        py_print("Dict")
+    elif x == Tuple:
+        py_print("Tuple")
+    elif x == Set:
+        py_print("Set")
+    else:
+        py_print(x)
+    sys.stdout.flush()
+
+@prim('py-repr')
+def py_repr(x):
+    return repr(x)
+
+@prim('default-repr')
+def default_repr(x):
     if x == Bool:
         return "Bool"
     elif x == Int:
@@ -1707,7 +1745,7 @@ def representation(x):
     elif x == Set:
         return "Set"
     else:
-        return repr(x)
+        return py_repr(x)
 
 @prim('newline')
 def newline():
@@ -2078,11 +2116,6 @@ def prepare_data_arguments(field_vect, value_vect, data):
         print("  data must be a python class")
         print("  data : {}".format(data))
         error()
-    elif not hasattr(data, 'field_name_vect'):
-        print("- prepare_data_arguments fail")
-        print("  data must has 'field_name_vect' attribute")
-        print("  data : {}".format(data))
-        error()
 
     if len(field_vect) == 0:
         normal_value_vect = value_vect
@@ -2203,7 +2236,7 @@ def k_dict(module, sexp_list):
     jo_vect = []
     jo_vect.extend([MARK])
     jo_vect.extend(sexp_list_emit(module, sexp_list))
-    jo_vect.extend([COLLECT_VECT, vect_to_dict])
+    jo_vect.extend([COLLECT_VECT, even_vect_to_dict])
     return jo_vect
 
 @keyword('tuple')
@@ -2439,9 +2472,7 @@ def create_data_class(data_name, field_name_vect):
     rev.reverse()
     def update_ns(ns):
         ns.update({
-            '__init__' : create_data_init(field_name_vect),
-            'field_name_vect': field_name_vect,
-            'reversed_field_name_vect': rev,
+            '__init__': create_data_init(field_name_vect),
         })
     return types.new_class(
         data_name,
@@ -2570,6 +2601,17 @@ def arrow_get_type_tuple_vect(module, arrow):
     type_vect = arrow_get_type_vect(module, arrow)
     type_vect_vect = type_vect_to_type_vect_vect(type_vect)
     return Vect(itertools.product(*type_vect_vect))
+
+@keyword("+def")
+def plus_def(module, body):
+    name = car(body)
+    rest = cdr(body)
+    jojo = JOJO(sexp_list_emit(module, rest))
+    vm = VM([], [RP(jojo)])
+    vm.exe()
+    data = vm.ds[0]
+    jojo_define(module, name, data)
+    return []
 
 key_jo_dict = {}
 
