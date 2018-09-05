@@ -1,6 +1,7 @@
     // use std::rc::Rc;
     use std::sync::Arc;
     use std::collections::HashMap;
+    use std::path::Path;
     use dic::Dic;
     use token;
   // pub type Ptr <T> = Rc <T>;
@@ -27,6 +28,14 @@
             let back_index = vec.len () - index - 1;
             &vec [back_index]
       }
+      pub fn obj_vec_eq (
+          lhs: &ObjVec,
+          rhs: &ObjVec,
+      ) -> bool {
+          (lhs.len () == rhs.len () &&
+           lhs.iter () .zip (rhs.iter ())
+           .all (|p| obj_eq (&p.0, &p.1)))
+      }
       pub fn obj_stack_pop_to_vec (
           env: &mut Env,
           len: usize,
@@ -37,6 +46,12 @@
               .for_each (|_| obj_vec.push (
                   env.obj_stack.pop () .unwrap ()));
           obj_vec
+      }
+      pub fn obj_stack_eq (
+          lhs: &ObjVec,
+          rhs: &ObjVec,
+      ) -> bool {
+          obj_vec_eq (lhs, rhs)
       }
       pub fn obj_dic_eat_obj_vec (
           obj_dic: &ObjDic,
@@ -67,13 +82,14 @@
            .all (|p| ((p.0).0 == (p.1).0 &&
                       obj_eq (& (p.0).1, & (p.1).1))))
       }
-      pub fn obj_vec_eq (
-          lhs: &ObjVec,
-          rhs: &ObjVec,
+      fn type_dic_eq (
+          lhs: &TypeDic,
+          rhs: &TypeDic,
       ) -> bool {
           (lhs.len () == rhs.len () &&
            lhs.iter () .zip (rhs.iter ())
-           .all (|p| obj_eq (&p.0, &p.1)))
+           .all (|p| ((p.0).0 == (p.1).0 &&
+                      type_eq (& (p.0).1, & (p.1).1))))
       }
       pub fn scope_extend (
           scope: &Scope,
@@ -127,6 +143,14 @@
               ];
               Frame::make (jo_vec)
           }};
+      }
+      fn frame_stack_eq (
+          lhs: &FrameStack,
+          rhs: &FrameStack,
+      ) -> bool {
+          (lhs.len () == rhs.len () &&
+           lhs.iter () .zip (rhs.iter ())
+           .all (|p| frame_eq (&p.0, &p.1)))
       }
       pub fn name_of_tag (
           env: &Env,
@@ -195,6 +219,11 @@
               Ptr::clone (self)
           }
       }
+      impl Dup for Ptr <Type> {
+          fn dup (&self) -> Self {
+              Ptr::clone (self)
+          }
+      }
       impl Dup for Ptr <Jo> {
           fn dup (&self) -> Self {
               Ptr::clone (self)
@@ -213,11 +242,104 @@
     pub trait ObjFrom <T> {
         fn obj (x: T) -> Ptr <Self>;
     }
+    pub struct Env {
+        pub obj_dic: ObjDic,
+        pub type_dic: TypeDic,
+        pub obj_stack: ObjStack,
+        pub frame_stack: FrameStack,
+    }
+
+    impl Env {
+        pub fn new () -> Env {
+            let mut env = Env {
+                obj_dic: ObjDic::new (),
+                type_dic: TypeDic::new (),
+                obj_stack: ObjStack::new (),
+                frame_stack: FrameStack::new (),
+            };
+            init_type_dic (&mut env);
+            env
+        }
+
+        pub fn step (&mut self) {
+            if let Some (mut frame) = self.frame_stack.pop () {
+                let index = frame.index;
+                let jo = frame.jojo [frame.index] .dup ();
+                frame.index += 1;
+                if index + 1 < frame.jojo.len () {
+                    let scope = frame.scope.dup ();
+                    self.frame_stack.push (frame);
+                    jo.exe (self, scope);
+                } else {
+                    jo.exe (self, frame.scope);
+                }
+            }
+        }
+
+        pub fn run (&mut self) {
+            while ! self.frame_stack.is_empty () {
+                self.step ();
+            }
+        }
+
+        pub fn run_with_base (&mut self, base: usize) {
+            while self.frame_stack.len () > base {
+                self.step ();
+            }
+        }
+
+        pub fn define (
+            &mut self,
+            name: &str,
+            obj: Ptr <Obj>,
+        ) -> Id {
+            self.obj_dic.ins (name, Some (obj))
+        }
+
+        pub fn define_type (
+            &mut self,
+            name: &str,
+            typ: Ptr <Type>,
+        ) -> Tag {
+            self.type_dic.ins (name, Some (typ))
+        }
+    }
+    fn env_eq (
+        lhs: &Env,
+        rhs: &Env,
+    ) -> bool {
+        (obj_dic_eq (&lhs.obj_dic, &rhs.obj_dic) &&
+         type_dic_eq (&lhs.type_dic, &rhs.type_dic) &&
+         obj_stack_eq (&lhs.obj_stack, &rhs.obj_stack) &&
+         frame_stack_eq (&lhs.frame_stack, &rhs.frame_stack))
+    }
+    pub struct Frame {
+        pub index: usize,
+        pub jojo: Ptr <JoVec>,
+        pub scope: Ptr <Scope>,
+    }
+    fn frame_eq (
+        lhs: &Frame,
+        rhs: &Frame,
+    ) -> bool {
+        (lhs.index == rhs.index &&
+         jojo_eq (&lhs.jojo, &rhs.jojo) &&
+         scope_eq (&lhs.scope, &rhs.scope))
+    }
+    impl Frame {
+        pub fn make (jo_vec: JoVec) -> Box <Frame> {
+            Box::new (Frame {
+                index: 0,
+                jojo: Ptr::new (jo_vec),
+                scope: Ptr::new (Scope::new ()),
+            })
+        }
+    }
     pub trait Obj {
         fn tag (&self) -> Tag;
         fn obj_dic (&self) -> Option <&ObjDic> { None }
 
-        fn eq (&self, other: Ptr <Obj>) -> bool;
+        fn eq (&self, _other: Ptr <Obj>) -> bool { false }
 
         fn get (
             &self,
@@ -403,86 +525,16 @@
             env.obj_stack.push (self.obj.dup ());
         }
     }
-    pub struct Env {
-        pub obj_dic: ObjDic,
-        pub type_dic: TypeDic,
-        pub obj_stack: ObjStack,
-        pub frame_stack: FrameStack,
-    }
-
-    impl Env {
-        pub fn new () -> Env {
-            let mut env = Env {
-                obj_dic: ObjDic::new (),
-                type_dic: TypeDic::new (),
-                obj_stack: ObjStack::new (),
-                frame_stack: FrameStack::new (),
-            };
-            init_type_dic (&mut env);
-            env
-        }
-
-        pub fn step (&mut self) {
-            if let Some (mut frame) = self.frame_stack.pop () {
-                let index = frame.index;
-                let jo = frame.jojo [frame.index] .dup ();
-                frame.index += 1;
-                if index + 1 < frame.jojo.len () {
-                    let scope = frame.scope.dup ();
-                    self.frame_stack.push (frame);
-                    jo.exe (self, scope);
-                } else {
-                    jo.exe (self, frame.scope);
-                }
-            }
-        }
-
-        pub fn run (&mut self) {
-            while ! self.frame_stack.is_empty () {
-                self.step ();
-            }
-        }
-
-        pub fn run_with_base (&mut self, base: usize) {
-            while self.frame_stack.len () > base {
-                self.step ();
-            }
-        }
-
-        pub fn define (
-            &mut self,
-            name: &str,
-            obj: Ptr <Obj>,
-        ) -> Id {
-            self.obj_dic.ins (name, Some (obj))
-        }
-
-        pub fn define_type (
-            &mut self,
-            name: &str,
-            typ: Ptr <Type>,
-        ) -> Tag {
-            self.type_dic.ins (name, Some (typ))
-        }
-    }
-    pub struct Frame {
-        pub index: usize,
-        pub jojo: Ptr <JoVec>,
-        pub scope: Ptr <Scope>,
-    }
-    impl Frame {
-        pub fn make (jo_vec: JoVec) -> Box <Frame> {
-            Box::new (Frame {
-                index: 0,
-                jojo: Ptr::new (jo_vec),
-                scope: Ptr::new (Scope::new ()),
-            })
-        }
-    }
     pub struct Type {
         method_dic: ObjDic,
         tag_of_type: Tag,
         super_tag_vec: TagVec,
+    }
+    pub fn type_eq (
+        lhs: &Ptr <Type>,
+        rhs: &Ptr <Type>,
+    ) -> bool {
+        lhs.eq (rhs.dup ())
     }
     impl ObjFrom <Tag> for Type {
         fn obj (tag: Tag) -> Ptr <Type> {
@@ -1538,6 +1590,213 @@
             jojo_append (&head_jojo, &body_jojo)
         }
     }
+    struct Module {
+        module_env: Env,
+    }
+    impl Obj for Module {
+        fn tag (&self) -> Tag { MODULE_T }
+
+        fn eq (&self, other: Ptr <Obj>) -> bool {
+            if self.tag () != other.tag () {
+                false
+            } else {
+                let other = obj_to::<Module> (other);
+                (env_eq (&self.module_env, &other.module_env))
+            }
+        }
+    }
+    pub type TopKeywordFn = fn (
+        env: &mut Env,
+        body: Ptr <Obj>,
+    );
+    pub fn top_keyword_fn_eq (
+        lhs: &TopKeywordFn,
+        rhs: &TopKeywordFn,
+    ) -> bool {
+        (*lhs) as usize == (*rhs) as usize
+    }
+    struct TopKeyword {
+        fun: TopKeywordFn,
+    }
+    pub fn top_keyword_p (x: &Ptr <Obj>) -> bool {
+        let tag = x.tag ();
+        (TOP_KEYWORD_T == tag)
+    }
+    impl Obj for TopKeyword {
+        fn tag (&self) -> Tag { TOP_KEYWORD_T }
+
+        fn eq (&self, other: Ptr <Obj>) -> bool {
+            if self.tag () != other.tag () {
+                false
+            } else {
+                let other = obj_to::<TopKeyword> (other);
+                (top_keyword_fn_eq (&self.fun, &other.fun))
+            }
+        }
+    }
+    fn find_top_keyword (
+        env: &Env,
+        name: &str,
+    ) -> Option <Ptr <TopKeyword>> {
+        if let Some (obj) = env.obj_dic.get (name) {
+            if top_keyword_p (obj) {
+                let top_keyword = obj_to::<TopKeyword> (obj.dup ());
+                Some (top_keyword)
+            } else {
+                None
+            }
+        } else {
+            None
+        }
+    }
+    fn top_keyword_sexp_p (env: &Env, sexp: &Ptr <Obj>) -> bool {
+        if ! cons_p (&sexp) {
+            return false;
+        }
+        let head = car (sexp.dup ());
+        if ! sym_p (&head) {
+            false
+        } else {
+            let sym = obj_to::<Sym> (head);
+            let name = &sym.sym;
+            if let Some (_) = find_top_keyword (env, name) {
+                true
+            } else {
+                false
+            }
+        }
+    }
+    fn jojo_run (
+        env: &mut Env,
+        scope: &Scope,
+        jojo: Ptr <JoVec>,
+    ) {
+        let base = env.frame_stack.len ();
+        let frame = Frame {
+            index: 0,
+            jojo,
+            scope: Ptr::new (scope.clone ()),
+        };
+        env.frame_stack.push (Box::new (frame));
+        env.run_with_base (base);
+    }
+    fn jojo_eval (
+        env: &mut Env,
+        scope: &Scope,
+        jojo: Ptr <JoVec>,
+    ) -> Ptr <Obj> {
+        jojo_run (env, scope, jojo);
+        env.obj_stack.pop () .unwrap ()
+    }
+    fn jojo_run_in_new_frame (
+        env: &mut Env,
+        jojo: Ptr <JoVec>,
+    ) {
+        let base = env.frame_stack.len ();
+        let jo_vec = (*jojo).clone ();
+        env.frame_stack.push (Frame::make (jo_vec));
+        env.run_with_base (base);
+    }
+    fn jojo_eval_in_new_frame (
+        env: &mut Env,
+        jojo: Ptr <JoVec>,
+    ) -> Ptr <Obj> {
+        jojo_run_in_new_frame (env, jojo);
+        env.obj_stack.pop () .unwrap ()
+    }
+    fn sexp_run (
+        env: &mut Env,
+        sexp: Ptr <Obj>,
+    ) {
+        if top_keyword_sexp_p (env, &sexp) {
+            eprintln! ("- sexp_run");
+            eprintln! ("  can not handle top_keyword_sexp");
+            eprintln! ("  only `top_sexp_run` can handle top_keyword_sexp");
+            eprintln! ("  sexp : {}", sexp_repr (env, sexp));
+            panic! ("jojo fatal error!");
+        } else {
+            let static_scope = StaticScope::new ();
+            let jojo = sexp_compile (env, &static_scope, sexp);
+            jojo_run_in_new_frame (env, jojo);
+        }
+    }
+    fn sexp_list_run (
+        env: &mut Env,
+        sexp_list: Ptr <Obj>,
+    ) {
+        if cons_p (&sexp_list) {
+            sexp_run (env, car (sexp_list.dup ()));
+            sexp_list_run (env, cdr (sexp_list));
+        }
+    }
+    fn sexp_eval (
+        env: &mut Env,
+        sexp: Ptr <Obj>,
+    ) -> Ptr <Obj> {
+        let size_before = env.obj_stack.len ();
+        sexp_run (env, sexp.dup ());
+        let size_after = env.obj_stack.len ();
+        if size_after - size_before == 1 {
+            env.obj_stack.pop () .unwrap ()
+        } else {
+            eprintln! ("- sexp_eval mismatch");
+            eprintln! ("  sexp must eval to one value");
+            eprintln! ("  sexp : {}", sexp_repr (env, sexp));
+            eprintln! ("  stack size before : {}", size_before);
+            eprintln! ("  stack size after : {}", size_after);
+            panic! ("jojo fatal error!");
+        }
+    }
+    fn top_sexp_run (
+        env: &mut Env,
+        sexp: Ptr <Obj>,
+    ) {
+        if top_keyword_sexp_p (env, &sexp) {
+            let head = car (sexp.dup ());
+            let sym = obj_to::<Sym> (head);
+            let name = &sym.sym;
+            let top_keyword = find_top_keyword (env, name) .unwrap ();
+            let body = cdr (sexp);
+            (top_keyword.fun) (env, body);
+        } else {
+            let static_scope = StaticScope::new ();
+            let jojo = sexp_compile (env, &static_scope, sexp);
+            jojo_run_in_new_frame (env, jojo);
+            env.obj_stack.pop ();
+        }
+    }
+    fn top_sexp_list_run_without_infix_assign (
+        env: &mut Env,
+        sexp_list: Ptr <Obj>,
+    ) {
+        if cons_p (&sexp_list) {
+            top_sexp_run (env, car (sexp_list.dup ()));
+            top_sexp_list_run_without_infix_assign (
+                env, cdr (sexp_list));
+        }
+    }
+    fn top_sexp_list_run (
+        env: &mut Env,
+        sexp_list: Ptr <Obj>,
+    ) {
+        top_sexp_list_run_without_infix_assign (
+            env, sexp_list_prefix_assign (sexp_list));
+    }
+
+
+
+
+    // impl Env {
+    //     fn from_module_path (module_path: &Path) -> Env {
+    //         let mut env = Env::new ();
+    //         module_path = respect_current_dir (env, module_path);
+    //         // env.module_path = module_path;
+    //         // expose_core (env);
+    //         let code = code_from_module_path (env, &module_path);
+    //         code_run (env, &code);
+    //         env
+    //     }
+    // }
     fn assert_pop (env: &mut Env, obj: Ptr <Obj>) {
         let pop = env.obj_stack.pop () .unwrap ();
         assert! (obj_eq (&obj, &pop));

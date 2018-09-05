@@ -2803,7 +2803,7 @@
         }
     }
     bool
-    eq_env_p (env_t &lhs, env_t &rhs)
+    env_eq (env_t &lhs, env_t &rhs)
     {
         return false;
     }
@@ -2812,7 +2812,7 @@
     {
         if (this->tag != obj->tag) return false;
         auto that = static_pointer_cast <module_o> (obj);
-        return eq_env_p (this->module_env, that->module_env);
+        return env_eq (this->module_env, that->module_env);
     }
     string
     module_o::repr (env_t &env)
@@ -3603,76 +3603,76 @@
             return jojo_append (head_jojo, body_jojo);
         }
     }
-      using top_keyword_fn = function
-          <void (env_t &, shared_ptr <obj_t>)>;
-      struct top_keyword_o: obj_t
-      {
-          top_keyword_fn fn;
-          top_keyword_o (top_keyword_fn fn);
-          bool eq (shared_ptr <obj_t> obj);
-      };
-      top_keyword_o::
-      top_keyword_o (top_keyword_fn fn)
-      {
-          this->tag = top_keyword_tag;
-          this->fn = fn;
-      }
-      bool
-      top_keyword_o::eq (shared_ptr <obj_t> obj)
-      {
-          if (this->tag != obj->tag) return false;
-          return this != obj.get ();
-      }
-      bool
-      top_keyword_p (shared_ptr <obj_t> a)
-      {
-          return a->tag == top_keyword_tag;
-      }
-      void
-      define_top_keyword (env_t &env, name_t name, top_keyword_fn fn)
-      {
-          define (env, name, make_shared <top_keyword_o> (fn));
-      }
-      bool
-      top_keyword_sexp_p (env_t &env, shared_ptr <obj_t> sexp)
-      {
-          if (! cons_p (sexp)) return false;
-          if (! sym_p ((car (sexp)))) return false;
-          auto head = as_sym (car (sexp));
-          auto name = head->sym;
-          auto it = env.box_map.find (name);
-          if (it != env.box_map.end ()) {
-              auto box = it->second;
-              if (box->empty_p) return false;
-              if (top_keyword_p (box->obj)) return true;
-              else return false;
-          } else {
-              return false;
-          }
-      }
-      top_keyword_fn
-      top_keyword_fn_from_name (env_t &env, name_t name)
-      {
-          auto it = env.box_map.find (name);
-          if (it != env.box_map.end ()) {
-              auto box = it->second;
-              if (box->empty_p) {
-                  cout << "- fatal error: top_keyword_fn_from_name fail\n";
-                  exit (1);
-              }
-              if (top_keyword_p (box->obj)) {
-                  auto top_keyword = static_pointer_cast <top_keyword_o>
-                      (box->obj);
-                  return top_keyword->fn;
-              } else {
-                  cout << "- fatal error: top_keyword_fn_from_name fail\n";
-                  exit (1);
-              };
-          } else {
-              cout << "- fatal error: top_keyword_fn_from_name fail\n";
-              exit (1);
-          }
-      }
+    using top_keyword_fn = function
+        <void (env_t &, shared_ptr <obj_t>)>;
+    struct top_keyword_o: obj_t
+    {
+        top_keyword_fn fn;
+        top_keyword_o (top_keyword_fn fn);
+        bool eq (shared_ptr <obj_t> obj);
+    };
+    top_keyword_o::
+    top_keyword_o (top_keyword_fn fn)
+    {
+        this->tag = top_keyword_tag;
+        this->fn = fn;
+    }
+    bool
+    top_keyword_o::eq (shared_ptr <obj_t> obj)
+    {
+        if (this->tag != obj->tag) return false;
+        return this != obj.get ();
+    }
+    bool
+    top_keyword_p (shared_ptr <obj_t> a)
+    {
+        return a->tag == top_keyword_tag;
+    }
+    void
+    define_top_keyword (env_t &env, name_t name, top_keyword_fn fn)
+    {
+        define (env, name, make_shared <top_keyword_o> (fn));
+    }
+    bool
+    top_keyword_sexp_p (env_t &env, shared_ptr <obj_t> sexp)
+    {
+        if (! cons_p (sexp)) return false;
+        if (! sym_p ((car (sexp)))) return false;
+        auto head = as_sym (car (sexp));
+        auto name = head->sym;
+        auto it = env.box_map.find (name);
+        if (it != env.box_map.end ()) {
+            auto box = it->second;
+            if (box->empty_p) return false;
+            if (top_keyword_p (box->obj)) return true;
+            else return false;
+        } else {
+            return false;
+        }
+    }
+    top_keyword_fn
+    top_keyword_fn_from_name (env_t &env, name_t name)
+    {
+        auto it = env.box_map.find (name);
+        if (it != env.box_map.end ()) {
+            auto box = it->second;
+            if (box->empty_p) {
+                cout << "- fatal error: top_keyword_fn_from_name fail\n";
+                exit (1);
+            }
+            if (top_keyword_p (box->obj)) {
+                auto top_keyword = static_pointer_cast <top_keyword_o>
+                    (box->obj);
+                return top_keyword->fn;
+            } else {
+                cout << "- fatal error: top_keyword_fn_from_name fail\n";
+                exit (1);
+            };
+        } else {
+            cout << "- fatal error: top_keyword_fn_from_name fail\n";
+            exit (1);
+        }
+    }
     void
     jojo_run (
         env_t &env,
