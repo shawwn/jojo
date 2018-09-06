@@ -2,32 +2,74 @@
 
 * [note]
 
-  - before a re-imp
-    we must mark the points where a re-design is needed
-    and what might be improved in the a rust imp
+*** not yet implemented in c++
 
-  - (.field <obj>)
+    - (match)
+    - (orz)
+    - (>)
+    - actor-model
 
-  - (::field <type>)
+*** re-design
 
-* not yet implemented in c++
+***** object module
 
-  - (= ((f x) y) ...)
-  - (match)
-  - (orz)
-  - (>)
-  - actor-model
+*** improve
 
-* re-design
+***** no org-mode
 
-*** object module
+***** ffi
 
-* improve
+***** doc
 
-*** no org-mode
+***** cargo as package manager -- how about module system ?
 
-*** ffi
-
-*** doc
-
-*** cargo as package manager -- how about module system ?
+* core
+  - an interpreter implemented by dynamic threaded code
+* macro system
+  - with lisp like macro system
+*** (>) -- k_threading
+*** (*>) -- k_threading_to_list
+*** (v>) -- k_threading_to_vect
+*** (match) -- k_match
+* object system
+  - with object system
+*** (union)
+*** (inherit)
+* ffi
+  - with simple ffi to c++
+*** handle ffi by dynamic library
+* prelude
+  - with a practical prelude
+*** basic stream
+*** basic fs
+*** basic network
+*** basic git
+* module system
+  - with simple module system
+*** `env_eq` -- for module_o::eq -- actor-model might need this
+*** use (module) for non file module
+* secure
+*** can not handle big file -- due to the recursion in sexp parser
+*** make syntax frontend more secure
+* actor model
+* documentation
+  - well documented
+*** renew old notes
+*** renew ideas form jojo-history
+* toolchain
+*** debug
+*** profile
+*** repl
+*** package manager
+*** editing support
+***** jojo-mode
+***** org-mode for neovim
+* apps
+  - with some good applications written in it
+*** jojo-bch
+    - compile a subset of jojo to bch opcode
+*** org-mode parser
+*** git-dir parser
+*** xml/html generator
+* community
+  - maintained by a community as a live system

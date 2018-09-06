@@ -1,10 +1,11 @@
 #+property: tangle core.rs
 #+title: core
+- assign -- no nested type definition
 - TypeRefJo
+- apply_compile handle (.method ...)
+- maybe native List
 - char-t
 - path-t
-- maybe native List
-- apply_compile handle (.method ...)
 * use
 
 *** std
@@ -50,6 +51,7 @@
 
   pub type Scope = Vec <ObjDic>; // index from end
 
+  pub type StringVec = Vec <String>;
   pub type NameVec = Vec <Name>;
   pub type TagVec = Vec <Tag>;
   pub type ObjVec = Vec <Ptr <Obj>>;
@@ -66,6 +68,21 @@
       fn vec_peek <T> (vec: &Vec <T>, index: usize) -> &T {
             let back_index = vec.len () - index - 1;
             &vec [back_index]
+      }
+      #+end_src
+
+*** str_vec
+
+***** str_vec_join
+
+      #+begin_src rust
+      fn str_vec_join (vec: Vec <&str>, c: char) -> String {
+          let mut string = String::new ();
+          for s in vec {
+              string = format! ("{}{}", s, c);
+          }
+          string.pop ();
+          string
       }
       #+end_src
 
@@ -502,6 +519,42 @@
     }
     #+end_src
 
+*** Env::find_type_from_prefix
+
+    #+begin_src rust
+    // impl Env {
+    //     pub fn find_type_from_prefix (
+    //         &mut self,
+    //         prefix: &str,
+    //     ) -> Option <Ptr <Type>> {
+    //         panic! ();
+    //     }
+    // }
+    #+end_src
+
+*** Env::assign
+
+    #+begin_src rust
+    // impl Env {
+    //     pub fn assign (
+    //         &mut self,
+    //         prefix: &str,
+    //         name: &str,
+    //         obj: Ptr <Obj>,
+    //     ) -> Id {
+    //         if prefix == "" {
+    //             self.define (name, obj)
+    //         } else {
+    //             if let Some (typ) = self.find_type_from_prefix (prefix) {
+
+    //             } else {
+
+    //             }
+    //         }
+    //     }
+    // }
+    #+end_src
+
 *** Env::define_type
 
     #+begin_src rust
@@ -514,6 +567,12 @@
             self.type_dic.ins (name, Some (typ))
         }
     }
+    #+end_src
+
+*** Env::assign_type
+
+    #+begin_src rust
+
     #+end_src
 
 *** env_eq
@@ -2813,16 +2872,30 @@
 
 *** about name
 
-***** [todo] prefix_of_word
+***** prefix_of_word
 
       #+begin_src rust
-
+      fn prefix_of_word (word: &str) -> String {
+          let mut vec = word.split ('.') .collect::<Vec <&str>> ();
+          if vec.len () == 1 {
+              String::new ()
+          } else {
+              vec.pop ();
+              str_vec_join (vec, '.')
+          }
+      }
       #+end_src
 
-***** [todo] name_of_word
+***** name_of_word
 
       #+begin_src rust
-
+      fn name_of_word (word: &str) -> String {
+          word.split ('.')
+              .rev ()
+              .next ()
+              .unwrap ()
+              .to_string ()
+      }
       #+end_src
 
 *** (= <name> (data ...))
@@ -2839,6 +2912,18 @@
       }
       #+end_src
 
+***** name_t2c
+
+      #+begin_src rust
+      fn name_t2c (name: &str) -> String {
+          let mut name = name.to_string ();
+          assert! (name.ends_with ("-t"));
+          name.pop ();
+          name.push ('c');
+          name
+      }
+      #+end_src
+
 ***** [todo] tk_assign_data
 
       #+begin_src rust
@@ -2846,7 +2931,20 @@
           env: &mut Env,
           body: Ptr <Obj>,
       ) {
-
+          let sym = car_as_sym (body.dup ());
+          let type_name = name_of_word (&sym.sym);
+          let data_name = name_t2c (&type_name);
+          let prefix = prefix_of_word (&sym.sym);
+          let rest = cdr (body);
+          let data_body = cdr (car (rest));
+          let name_vect = list_to_vect (data_body);
+          // let name_vector = name_vector_t ();
+          // for (let obj: name_vect->obj_vector) {
+          //     let sym = as_sym (obj);
+          //     name_vector.push_back (sym->sym);
+          // }
+          // env.assign_type (env, &prefix, &type_name, tag_of_type, {});
+          // env.assign_data (env, &prefix, &data_name, tag_of_type, name_vector);
       }
       #+end_src
 
@@ -2878,12 +2976,6 @@
 
 *** (= <name> ...)
 
-***** [todo] sexp_patch_this
-
-      #+begin_src rust
-
-      #+end_src
-
 ***** [todo] tk_assign_value
 
       #+begin_src rust
@@ -2892,19 +2984,15 @@
           body: Ptr <Obj>,
       ) {
           let sym = car_as_sym (body.dup ());
-          let name = &sym.sym;
-          // let name = name_of_word (&sym.sym);
-          // let prefix = prefix_of_word (&sym.sym);
+          let name = name_of_word (&sym.sym);
+          let prefix = prefix_of_word (&sym.sym);
           let rest = cdr (body);
           let rest_cdr = cdr (rest.dup ());
           assert! (null_p (&rest_cdr));
           let sexp = car (rest);
-          // let mut sexp = car (rest);
-          // if &prefix != "" {
-          //     sexp = sexp_patch_this (env, sexp);
-          // }
           let obj = sexp_eval (env, sexp);
-          env.define (name, obj);
+          env.define (&name, obj);
+          // env.assign (prefix, name, obj);
       }
       #+end_src
 

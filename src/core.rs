@@ -23,6 +23,7 @@
 
   pub type Scope = Vec <ObjDic>; // index from end
 
+  pub type StringVec = Vec <String>;
   pub type NameVec = Vec <Name>;
   pub type TagVec = Vec <Tag>;
   pub type ObjVec = Vec <Ptr <Obj>>;
@@ -30,6 +31,14 @@
       fn vec_peek <T> (vec: &Vec <T>, index: usize) -> &T {
             let back_index = vec.len () - index - 1;
             &vec [back_index]
+      }
+      fn str_vec_join (vec: Vec <&str>, c: char) -> String {
+          let mut string = String::new ();
+          for s in vec {
+              string = format! ("{}{}", s, c);
+          }
+          string.pop ();
+          string
       }
       pub fn obj_vec_eq (
           lhs: &ObjVec,
@@ -304,6 +313,32 @@
             self.obj_dic.ins (name, Some (obj))
         }
     }
+    // impl Env {
+    //     pub fn find_type_from_prefix (
+    //         &mut self,
+    //         prefix: &str,
+    //     ) -> Option <Ptr <Type>> {
+    //         panic! ();
+    //     }
+    // }
+    // impl Env {
+    //     pub fn assign (
+    //         &mut self,
+    //         prefix: &str,
+    //         name: &str,
+    //         obj: Ptr <Obj>,
+    //     ) -> Id {
+    //         if prefix == "" {
+    //             self.define (name, obj)
+    //         } else {
+    //             if let Some (typ) = self.find_type_from_prefix (prefix) {
+
+    //             } else {
+
+    //             }
+    //         }
+    //     }
+    // }
     impl Env {
         pub fn define_type (
             &mut self,
@@ -313,6 +348,7 @@
             self.type_dic.ins (name, Some (typ))
         }
     }
+
     fn env_eq (
         lhs: &Env,
         rhs: &Env,
@@ -1810,8 +1846,22 @@
         top_sexp_list_run_without_infix_assign (
             env, sexp_list_prefix_assign (sexp_list));
     }
-
-
+      fn prefix_of_word (word: &str) -> String {
+          let mut vec = word.split ('.') .collect::<Vec <&str>> ();
+          if vec.len () == 1 {
+              String::new ()
+          } else {
+              vec.pop ();
+              str_vec_join (vec, '.')
+          }
+      }
+      fn name_of_word (word: &str) -> String {
+          word.split ('.')
+              .rev ()
+              .next ()
+              .unwrap ()
+              .to_string ()
+      }
       fn assign_data_p (body: &Ptr <Obj>) -> bool {
           (cons_p (&body) &&
            sym_p (&(car (body.dup ()))) &&
@@ -1819,11 +1869,31 @@
            cons_p (&(car (cdr (body.dup ())))) &&
            sym_sexp_as_str_p (&(car (car (cdr (body.dup ())))), "data"))
       }
+      fn name_t2c (name: &str) -> String {
+          let mut name = name.to_string ();
+          assert! (name.ends_with ("-t"));
+          name.pop ();
+          name.push ('c');
+          name
+      }
       fn tk_assign_data (
           env: &mut Env,
           body: Ptr <Obj>,
       ) {
-
+          let sym = car_as_sym (body.dup ());
+          let type_name = name_of_word (&sym.sym);
+          let data_name = name_t2c (&type_name);
+          let prefix = prefix_of_word (&sym.sym);
+          let rest = cdr (body);
+          let data_body = cdr (car (rest));
+          let name_vect = list_to_vect (data_body);
+          // let name_vector = name_vector_t ();
+          // for (let obj: name_vect->obj_vector) {
+          //     let sym = as_sym (obj);
+          //     name_vector.push_back (sym->sym);
+          // }
+          // env.assign_type (env, &prefix, &type_name, tag_of_type, {});
+          // env.assign_data (env, &prefix, &data_name, tag_of_type, name_vector);
       }
       fn assign_lambda_sugar_p (body: &Ptr <Obj>) -> bool {
           (cons_p (&body) &&
@@ -1839,25 +1909,20 @@
                       cons_c (list_to_vect (arg_list),
                               rest))))
       }
-
       fn tk_assign_value (
           env: &mut Env,
           body: Ptr <Obj>,
       ) {
           let sym = car_as_sym (body.dup ());
-          let name = &sym.sym;
-          // let name = name_of_word (&sym.sym);
-          // let prefix = prefix_of_word (&sym.sym);
+          let name = name_of_word (&sym.sym);
+          let prefix = prefix_of_word (&sym.sym);
           let rest = cdr (body);
           let rest_cdr = cdr (rest.dup ());
           assert! (null_p (&rest_cdr));
           let sexp = car (rest);
-          // let mut sexp = car (rest);
-          // if &prefix != "" {
-          //     sexp = sexp_patch_this (env, sexp);
-          // }
           let obj = sexp_eval (env, sexp);
-          env.define (name, obj);
+          env.define (&name, obj);
+          // env.assign (prefix, name, obj);
       }
       fn tk_assign (
           env: &mut Env,

@@ -1,12 +1,11 @@
 #+property: tangle jojo.cpp
 #+title: jojo
-
+- fix -- non-full type name in method definition -- misleading
 * [note]
 
 *** improving point
 
     - no data_cons -- null fields
-    - non-full type name in method definition -- misleading
     - no (.method obj) syntax
     - no class method
     - no letrec
@@ -712,23 +711,6 @@
       }
       #+end_src
 
-***** name_t2p
-
-      #+begin_src cpp
-      name_t
-      name_t2p (name_t type_name)
-      {
-          auto name = type_name;
-          auto size = name.size ();
-          assert (size > 2);
-          assert (name [size - 1] == 't');
-          assert (name [size - 2] == '-');
-          name.pop_back ();
-          name += 'p';
-          return name;
-      }
-      #+end_src
-
 ***** name_c2t
 
       #+begin_src cpp
@@ -739,23 +721,6 @@
           auto size = name.size ();
           assert (size > 2);
           assert (name [size - 1] == 'c');
-          assert (name [size - 2] == '-');
-          name.pop_back ();
-          name += 't';
-          return name;
-      }
-      #+end_src
-
-***** name_p2t
-
-      #+begin_src cpp
-      name_t
-      name_p2t (name_t pred_name)
-      {
-          auto name = pred_name;
-          auto size = name.size ();
-          assert (size > 2);
-          assert (name [size - 1] == 'p');
           assert (name [size - 2] == '-');
           name.pop_back ();
           name += 't';
@@ -1776,15 +1741,6 @@
             auto obj = box->obj;
             if (obj->tag != type_tag) return nullptr;
             auto type = as_type (obj);
-            auto begin = string_vector.begin () + 1;
-            auto end = string_vector.end ();
-            for (auto it = begin; it != end; it++) {
-                auto field = *it;
-                field += "-t";
-                auto obj = type->obj_map [field];
-                if (obj->tag != type_tag) return nullptr;
-                type = as_type (obj);
-            }
             return type;
         }
         return nullptr;
@@ -5831,6 +5787,7 @@
           if (string_vector.size () == 1)
               return "";
           else {
+              assert (string_vector.size () == 2);
               string_vector.pop_back ();
               return string_vector_join (string_vector, '.');
           }
@@ -5889,20 +5846,17 @@
           auto prefix = prefix_of_word (head->sym);
           auto type_name = name_of_word (head->sym);
           auto data_name = name_t2c (type_name);
-          auto pred_name = name_t2p (type_name);
           auto tag_of_type = tagging (env, head->sym);
           auto rest = cdr (body);
-          auto data_body = cdr ((car (rest)));
+          auto data_body = cdr (car (rest));
           auto name_vect = list_to_vect (data_body);
           auto name_vector = name_vector_t ();
           for (auto obj: name_vect->obj_vector) {
               auto sym = as_sym (obj);
               name_vector.push_back (sym->sym);
           }
-          assign_type
-              (env, prefix, type_name, tag_of_type, {});
-          assign_data
-              (env, prefix, data_name, tag_of_type, name_vector);
+          assign_type (env, prefix, type_name, tag_of_type, {});
+          assign_data (env, prefix, data_name, tag_of_type, name_vector);
       }
       #+end_src
 
