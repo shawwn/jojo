@@ -1,6 +1,6 @@
 #+property: tangle jojo.cpp
 #+title: jojo
-- fix -- non-full type name in method definition -- misleading
+- this -> self -- for rust
 * [note]
 
 *** improving point
@@ -1734,7 +1734,8 @@
         auto string_vector = string_split (prefix, '.');
         assert (string_vector.size () > 0);
         auto top = string_vector [0];
-        auto it = env.box_map.find (top + "-t");
+        // auto it = env.box_map.find (top + "-t");
+        auto it = env.box_map.find (top);
         if (it != env.box_map.end ()) {
             auto box = it->second;
             if (box->empty_p) return nullptr;

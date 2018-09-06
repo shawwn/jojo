@@ -1,4 +1,4 @@
-(= null.list-of-one-null
+(= null-t.list-of-one-null
    (cons-c this this))
 
 (assert (eq null-c .list-of-one-null

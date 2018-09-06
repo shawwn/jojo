@@ -1170,24 +1170,14 @@
         auto string_vector = string_split (prefix, '.');
         assert (string_vector.size () > 0);
         auto top = string_vector [0];
-        auto it = env.box_map.find (top + "-t");
+        // auto it = env.box_map.find (top + "-t");
+        auto it = env.box_map.find (top);
         if (it != env.box_map.end ()) {
             auto box = it->second;
             if (box->empty_p) return nullptr;
             auto obj = box->obj;
             if (obj->tag != type_tag) return nullptr;
             auto type = as_type (obj);
-            return type;
-            // auto type = as_type (obj);
-            // auto begin = string_vector.begin () + 1;
-            // auto end = string_vector.end ();
-            // for (auto it = begin; it != end; it++) {
-            //     auto field = *it;
-            //     field += "-t";
-            //     auto obj = type->obj_map [field];
-            //     if (obj->tag != type_tag) return nullptr;
-            //     type = as_type (obj);
-            // }
             return type;
         }
         return nullptr;
