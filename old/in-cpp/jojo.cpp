@@ -873,8 +873,8 @@
       tag_t macro_tag        = 14;
       tag_t top_keyword_tag  = 15;
       tag_t sym_tag          = 16;
-      tag_t nothing_tag      = 17;
-      tag_t just_tag         = 18;
+      tag_t none_tag         = 17;
+      tag_t some_tag         = 18;
       void
       init_tagged_box_vector (env_t &env)
       {
@@ -895,8 +895,8 @@
           preserve_tag (env, macro_tag        , "macro-t");
           preserve_tag (env, top_keyword_tag  , "top-keyword-t");
           preserve_tag (env, sym_tag          , "sym-t");
-          preserve_tag (env, nothing_tag      , "nothing-t");
-          preserve_tag (env, just_tag         , "just-t");
+          preserve_tag (env, none_tag         , "none-t");
+          preserve_tag (env, some_tag         , "some-t");
       }
     env_t::env_t ()
     {
@@ -2011,44 +2011,44 @@
         return make_vect (obj_vector);
     }
     shared_ptr <data_o>
-    nothing_c ()
+    none_c ()
     {
        return make_data (
-           nothing_tag,
+           none_tag,
            name_vector_t (),
            obj_map_t ());
     }
     bool
-    nothing_p (shared_ptr <obj_t> a)
+    none_p (shared_ptr <obj_t> a)
     {
-        return a->tag == nothing_tag;
+        return a->tag == none_tag;
     }
     shared_ptr <data_o>
-    just_c (shared_ptr <obj_t> value)
+    some_c (shared_ptr <obj_t> value)
     {
         auto obj_map = obj_map_t ();
         obj_map ["value"] = value;
         return make_data (
-            just_tag,
+            some_tag,
             name_vector_t (),
             obj_map);
     }
     bool
-    just_p (shared_ptr <obj_t> a)
+    some_p (shared_ptr <obj_t> a)
     {
-        return a->tag == just_tag;
+        return a->tag == some_tag;
     }
     shared_ptr <obj_t>
-    value_of_just (shared_ptr <obj_t> just)
+    value_of_some (shared_ptr <obj_t> some)
     {
-        assert (just_p (just));
-        return just->obj_map ["value"];
+        assert (some_p (some));
+        return some->obj_map ["value"];
     }
     bool
-    maybe_p (shared_ptr <obj_t> a)
+    option_p (shared_ptr <obj_t> a)
     {
-        return nothing_p (a)
-            or just_p (a);
+        return none_p (a)
+            or some_p (a);
     }
     struct dict_o: obj_t
     {
@@ -2191,9 +2191,9 @@
         auto it = obj_map.find (key);
         if (it != obj_map.end ()) {
             auto value = it->second;
-            return just_c (value);
+            return some_c (value);
         } else {
-            return nothing_c ();
+            return none_c ();
         }
     }
     bool
@@ -3912,9 +3912,9 @@
           return cons_c (name, lambda_body);
       }
       shared_ptr <obj_t>
-      sexp_patch_this (shared_ptr <obj_t> sexp)
+      sexp_patch_self (shared_ptr <obj_t> sexp)
       {
-          auto this_str = make_sym ("this");
+          auto this_str = make_sym ("self");
           obj_vector_t obj_vector = { this_str };
           auto vect = make_vect (obj_vector);
           auto lambda_body = unit_list (sexp);
@@ -3932,7 +3932,7 @@
           auto name = name_of_word (head->sym);
           auto prefix = prefix_of_word (head->sym);
           if (prefix != "")
-              sexp = sexp_patch_this (sexp);
+              sexp = sexp_patch_self (sexp);
           auto obj = sexp_eval (env, sexp);
           assign (env, prefix, name, obj);
       }
@@ -5369,20 +5369,20 @@
             });
     }
       shared_ptr <data_o>
-      jj_just_c ()
+      jj_some_c ()
       {
           return make_data (
-              just_tag,
+              some_tag,
               name_vector_t ({ "value" }),
               obj_map_t ());
       }
       void
-      expose_maybe (env_t &env)
+      expose_option (env_t &env)
       {
-          define (env, "nothing-c", nothing_c ());
-          define (env, "nothing", nothing_c ());
-          define (env, "just-c", jj_just_c ());
-          define (env, "just", jj_just_c ());
+          define (env, "none-c", none_c ());
+          define (env, "none", none_c ());
+          define (env, "some-c", jj_some_c ());
+          define (env, "some", jj_some_c ());
       }
     void
     expose_dict (env_t &env)
@@ -5683,7 +5683,7 @@
         expose_sym (env);
         expose_list (env);
         expose_vect (env);
-        expose_maybe (env);
+        expose_option (env);
         expose_dict (env);
         expose_sexp (env);
         expose_top_keyword (env);

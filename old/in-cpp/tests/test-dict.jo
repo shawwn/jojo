@@ -51,26 +51,26 @@
 
 
 (assert (eq (dict-find {a = "b" c = "d"} 'a)
-            (just-c "b")))
+            (some-c "b")))
 
 (assert (eq (dict-find {a = "b" c = "d"} 'x)
-            nothing-c))
+            none-c))
 
 (let [(key 'a)
       (dict {a = "b" c = "d"})
       (found (dict-find dict key))]
   (case found
-    (nothing-t (assert false))
-    (just-t (assert (eq found.value "b")))))
+    (none-t (assert false))
+    (some-t (assert (eq found.value "b")))))
 
 (let [(key 'x)
       (dict {a = "b" c = "d"})
       (found (dict-find dict key))]
   (case found
-    (nothing-t (assert true))
-    (just-t (assert false))))
+    (none-t (assert true))
+    (some-t (assert false))))
 
 ;; (note
 ;;   (match (dict-find dict key)
-;;     (nothing-t ...)
-;;     ((just-c value) ...)))
+;;     (none-t ...)
+;;     ((some-c value) ...)))

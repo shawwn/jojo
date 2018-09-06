@@ -26,13 +26,13 @@
 (assert (eq (nat-mul two two) four))
 
 (= (succ-t.add1)
-    (nat-add this one))
+    (nat-add self one))
 
 (assert (eq (one.add1) two))
 (assert (eq (two.add1) three))
 
 (= succ-t.inc
-   (nat-add this one))
+   (nat-add self one))
 
 (assert (eq one.inc two))
 (assert (eq two.inc three))
