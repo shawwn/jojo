@@ -640,7 +640,7 @@
         return lhs->eq (rhs);
     }
     shared_ptr <obj_t>
-    find_obj_from_name (env_t &env, name_t name)
+    find_obj (env_t &env, name_t name)
     {
         auto string_vector = string_split (name, '.');
         assert (string_vector.size () > 0);
@@ -1165,13 +1165,9 @@
         return true;
     }
     shared_ptr <type_o>
-    find_type_from_prefix (env_t &env, name_t prefix)
+    find_type (env_t &env, name_t name)
     {
-        auto string_vector = string_split (prefix, '.');
-        assert (string_vector.size () > 0);
-        auto top = string_vector [0];
-        // auto it = env.box_map.find (top + "-t");
-        auto it = env.box_map.find (top);
+        auto it = env.box_map.find (name);
         if (it != env.box_map.end ()) {
             auto box = it->second;
             if (box->empty_p) return nullptr;
@@ -1185,27 +1181,26 @@
     void
     assign (
         env_t &env,
-        name_t prefix,
+        name_t type_name,
         name_t name,
         shared_ptr <obj_t> obj)
     {
-        if (prefix == "") {
+        if (type_name == "") {
             define (env, name, obj);
             return;
         }
-        auto type = find_type_from_prefix (env, prefix);
+        auto type = find_type (env, type_name);
         if (type) {
             type->obj_map [name] = obj;
         } else {
             cout << "- fatal error : assign fail" << "\n";
-            cout << "  unknown prefix : " << prefix << "\n";
+            cout << "  unknown type_name : " << type_name << "\n";
             exit (1);
         }
     }
     void
-    assign_type (
+    define_type_with_super (
         env_t &env,
-        name_t prefix,
         name_t type_name,
         tag_t tag_of_type,
         tag_vector_t super_tag_vector)
@@ -1217,14 +1212,14 @@
         auto box = box_of_tag (env, tag_of_type);
         box->obj = type;
         box->empty_p = false;
-        assign (env, prefix, type_name, type);
+        define (env, type_name, type);
     }
     void
     define_type (env_t &env, name_t name)
     {
         auto type_name = name;
         auto tag_of_type = tagging (env, name);
-        assign_type (env, "", type_name, tag_of_type, {});
+        define_type_with_super (env, type_name, tag_of_type, {});
     }
     shared_ptr <type_o>
     type_of (env_t &env, shared_ptr <obj_t> obj)
@@ -1302,9 +1297,8 @@
         }
     }
     void
-    assign_data (
+    define_data (
         env_t &env,
-        name_t prefix,
         name_t data_name,
         tag_t tag_of_type,
         name_vector_t name_vector)
@@ -1313,7 +1307,7 @@
             tag_of_type,
             name_vector,
             obj_map_t ());
-        assign (env, prefix, data_name, data);
+        define (env, data_name, data);
     }
     void
     data_o::apply (env_t &env, size_t arity)
@@ -3277,7 +3271,7 @@
             if (! sym_p (head)) return false;
             auto sym = as_sym (head);
             auto name = sym->sym;
-            auto found = find_obj_from_name (env, name);
+            auto found = find_obj (env, name);
             if (! found) return false;
             auto obj = sexp_eval (env, head);
             return macro_p (obj);
@@ -3872,8 +3866,7 @@
       tk_assign_data (env_t &env, shared_ptr <obj_t> body)
       {
           auto head = as_sym (car (body));
-          auto prefix = prefix_of_word (head->sym);
-          auto type_name = name_of_word (head->sym);
+          auto type_name = head->sym;
           auto data_name = name_t2c (type_name);
           auto tag_of_type = tagging (env, head->sym);
           auto rest = cdr (body);
@@ -3884,8 +3877,10 @@
               auto sym = as_sym (obj);
               name_vector.push_back (sym->sym);
           }
-          assign_type (env, prefix, type_name, tag_of_type, {});
-          assign_data (env, prefix, data_name, tag_of_type, name_vector);
+          define_type_with_super (
+              env, type_name, tag_of_type, {});
+          define_data (
+              env, data_name, tag_of_type, name_vector);
       }
       bool
       assign_lambda_sugar_p (shared_ptr <obj_t> body)

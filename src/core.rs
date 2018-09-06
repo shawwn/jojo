@@ -94,6 +94,15 @@
            .all (|p| ((p.0).0 == (p.1).0 &&
                       obj_eq (& (p.0).1, & (p.1).1))))
       }
+      fn obj_dic_extend (
+          obj_dic: &ObjDic,
+          name: &str,
+          obj: Ptr <Obj>,
+      ) -> ObjDic {
+          let mut obj_dic = obj_dic.clone ();
+          obj_dic.set (name, Some (obj));
+          obj_dic
+      }
       fn type_dic_eq (
           lhs: &TypeDic,
           rhs: &TypeDic,
@@ -313,32 +322,46 @@
             self.obj_dic.ins (name, Some (obj))
         }
     }
-    // impl Env {
-    //     pub fn find_type_from_prefix (
-    //         &mut self,
-    //         prefix: &str,
-    //     ) -> Option <Ptr <Type>> {
-    //         panic! ();
-    //     }
-    // }
-    // impl Env {
-    //     pub fn assign (
-    //         &mut self,
-    //         prefix: &str,
-    //         name: &str,
-    //         obj: Ptr <Obj>,
-    //     ) -> Id {
-    //         if prefix == "" {
-    //             self.define (name, obj)
-    //         } else {
-    //             if let Some (typ) = self.find_type_from_prefix (prefix) {
-
-    //             } else {
-
-    //             }
-    //         }
-    //     }
-    // }
+    impl Env {
+        pub fn find_type (
+            &mut self,
+            name: &str,
+        ) -> Option <Ptr <Type>> {
+            if let Some (typ) = self.type_dic.get (name) {
+                Some (typ.dup ())
+            } else {
+                None
+            }
+        }
+    }
+    impl Env {
+        pub fn assign (
+            &mut self,
+            type_name: &str,
+            name: &str,
+            obj: Ptr <Obj>,
+        ) {
+            if type_name == "" {
+                self.define (name, obj);
+            } else {
+                if let Some (typ) = self.find_type (type_name) {
+                    let new_typ = Ptr::new (Type  {
+                        method_dic: obj_dic_extend (
+                            &typ.method_dic, name, obj),
+                        tag_of_type: typ.tag_of_type,
+                        super_tag_vec: typ.super_tag_vec.clone (),
+                    });
+                    self.type_dic.set (name, Some (new_typ));
+                } else {
+                    eprintln! ("- Env::assign");
+                    eprintln! ("  unknown type_name : {}", type_name);
+                    eprintln! ("  name : {}", name);
+                    eprintln! ("  obj : {}", obj.repr (self));
+                    panic! ("jojo fatal error!");
+                }
+            }
+        }
+    }
     impl Env {
         pub fn define_type (
             &mut self,
@@ -348,7 +371,6 @@
             self.type_dic.ins (name, Some (typ))
         }
     }
-
     fn env_eq (
         lhs: &Env,
         rhs: &Env,
@@ -497,7 +519,23 @@
             }
         }
     }
+    pub struct TypeRefJo {
+        tag: Tag,
+    }
 
+    impl Jo for TypeRefJo {
+        fn exe (&self, env: &mut Env, _: Ptr <Scope>) {
+            let entry = env.type_dic.idx (self.tag);
+            if let Some (typ) = &entry.value {
+                env.obj_stack.push (typ.dup ());
+            } else {
+                eprintln! ("- TypeRefJo::exe");
+                eprintln! ("  undefined name : {}", entry.name);
+                eprintln! ("  tag : {}", self.tag);
+                panic! ("jojo fatal error!");
+            }
+        }
+    }
     pub struct LocalRefJo {
         level: usize,
         index: usize,
@@ -648,7 +686,7 @@
     impl DataCons {
         pub fn make (
             tag: Tag,
-            vec: Vec <&str>,
+            vec: Vec <String>,
         ) -> Ptr <DataCons> {
             Ptr::new (DataCons {
                 tag_of_type: tag,
@@ -1847,20 +1885,17 @@
             env, sexp_list_prefix_assign (sexp_list));
     }
       fn prefix_of_word (word: &str) -> String {
-          let mut vec = word.split ('.') .collect::<Vec <&str>> ();
+          let vec = word.split ('.') .collect::<Vec <&str>> ();
           if vec.len () == 1 {
               String::new ()
           } else {
-              vec.pop ();
-              str_vec_join (vec, '.')
+              assert! (vec.len () == 2);
+              vec [0] .to_string ()
           }
       }
       fn name_of_word (word: &str) -> String {
-          word.split ('.')
-              .rev ()
-              .next ()
-              .unwrap ()
-              .to_string ()
+          let vec = word.split ('.') .collect::<Vec <&str>> ();
+          vec [vec.len () - 1] .to_string ()
       }
       fn assign_data_p (body: &Ptr <Obj>) -> bool {
           (cons_p (&body) &&
@@ -1881,19 +1916,21 @@
           body: Ptr <Obj>,
       ) {
           let sym = car_as_sym (body.dup ());
-          let type_name = name_of_word (&sym.sym);
+          let type_name = sym.sym.clone ();
           let data_name = name_t2c (&type_name);
-          let prefix = prefix_of_word (&sym.sym);
           let rest = cdr (body);
           let data_body = cdr (car (rest));
           let name_vect = list_to_vect (data_body);
-          // let name_vector = name_vector_t ();
-          // for (let obj: name_vect->obj_vector) {
-          //     let sym = as_sym (obj);
-          //     name_vector.push_back (sym->sym);
-          // }
-          // env.assign_type (env, &prefix, &type_name, tag_of_type, {});
-          // env.assign_data (env, &prefix, &data_name, tag_of_type, name_vector);
+          let name_vec = name_vect.obj_vec .iter ()
+              .map (|x| {
+                  assert! (sym_p (x));
+                  let sym = obj_to::<Sym> (x.dup ());
+                  sym.sym.to_string ()
+              })
+              .collect ();
+          let tag = env.type_dic.len ();
+          env.define_type (&type_name, Type::obj (tag));
+          env.define (&data_name, DataCons::make (tag, name_vec));
       }
       fn assign_lambda_sugar_p (body: &Ptr <Obj>) -> bool {
           (cons_p (&body) &&
@@ -1921,8 +1958,7 @@
           assert! (null_p (&rest_cdr));
           let sexp = car (rest);
           let obj = sexp_eval (env, sexp);
-          env.define (&name, obj);
-          // env.assign (prefix, name, obj);
+          env.assign (&prefix, &name, obj);
       }
       fn tk_assign (
           env: &mut Env,
@@ -2136,7 +2172,11 @@
         let world = env.define (
             "world", Str::obj ("world"));
         let cons = env.define (
-            "cons-c", DataCons::make (CONS_T, vec! ["car", "cdr"]));
+            "cons-c", DataCons::make (
+                CONS_T, vec! [
+                    String::from ("car"),
+                    String::from ("cdr"),
+                ]));
 
         env.frame_stack.push (frame! [
             RefJo { id: bye },
