@@ -2,6 +2,9 @@
     use std::sync::Arc;
     use std::collections::HashMap;
     use std::path::Path;
+    use std::path::PathBuf;
+    use std::fs;
+    use std::env;
     use dic::Dic;
     use token;
   // pub type Ptr <T> = Rc <T>;
@@ -247,6 +250,8 @@
         pub type_dic: TypeDic,
         pub obj_stack: ObjStack,
         pub frame_stack: FrameStack,
+        pub current_dir: PathBuf,
+        pub module_path: PathBuf,
     }
 
     impl Env {
@@ -256,6 +261,8 @@
                 type_dic: TypeDic::new (),
                 obj_stack: ObjStack::new (),
                 frame_stack: FrameStack::new (),
+                current_dir: env::current_dir () .unwrap (),
+                module_path: PathBuf::new (),
             };
             init_type_dic (&mut env);
             env
@@ -287,7 +294,8 @@
                 self.step ();
             }
         }
-
+    }
+    impl Env {
         pub fn define (
             &mut self,
             name: &str,
@@ -295,7 +303,8 @@
         ) -> Id {
             self.obj_dic.ins (name, Some (obj))
         }
-
+    }
+    impl Env {
         pub fn define_type (
             &mut self,
             name: &str,
@@ -860,6 +869,12 @@
         (null_p (x) ||
          cons_p (x))
     }
+    fn car_as_sym (cons: Ptr <Obj>) -> Ptr <Sym> {
+        assert! (cons_p (&cons));
+        let head = car (cons);
+        assert! (sym_p (&head));
+        obj_to::<Sym> (head)
+    }
     fn list_size (mut list: Ptr <Obj>) -> usize {
         assert! (list_p (&list));
         let mut size = 0;
@@ -1269,8 +1284,7 @@
         static_scope: &StaticScope,
         sexp: Ptr <Obj>,
     ) -> Ptr <JoVec> {
-        let head = car (sexp.dup ());
-        let sym = obj_to::<Sym> (head);
+        let sym = car_as_sym (sexp.dup ());
         let name = &sym.sym;
         let keyword = find_keyword (env, name) .unwrap ();
         let body = cdr (sexp);
@@ -1331,8 +1345,7 @@
         env: &mut Env,
         sexp: Ptr <Obj>,
     ) -> Ptr <Obj> {
-        let head = car (sexp.dup ());
-        let sym = obj_to::<Sym> (head);
+        let sym = car_as_sym (sexp.dup ());
         let name = &sym.sym;
         let mac = find_macro (env, name) .unwrap ();
         let body = cdr (sexp);
@@ -1622,6 +1635,13 @@
         let tag = x.tag ();
         (TOP_KEYWORD_T == tag)
     }
+    impl ObjFrom <TopKeywordFn> for TopKeyword {
+        fn obj (fun: TopKeywordFn) -> Ptr <TopKeyword> {
+            Ptr::new (TopKeyword {
+                fun,
+            })
+        }
+    }
     impl Obj for TopKeyword {
         fn tag (&self) -> Tag { TOP_KEYWORD_T }
 
@@ -1664,6 +1684,15 @@
             } else {
                 false
             }
+        }
+    }
+    impl Env {
+        pub fn define_top_keyword (
+            &mut self,
+            name: &str,
+            fun: TopKeywordFn,
+        ) -> Id {
+            self.define (name, TopKeyword::obj (fun))
         }
     }
     fn jojo_run (
@@ -1752,8 +1781,7 @@
         sexp: Ptr <Obj>,
     ) {
         if top_keyword_sexp_p (env, &sexp) {
-            let head = car (sexp.dup ());
-            let sym = obj_to::<Sym> (head);
+            let sym = car_as_sym (sexp.dup ());
             let name = &sym.sym;
             let top_keyword = find_top_keyword (env, name) .unwrap ();
             let body = cdr (sexp);
@@ -1784,19 +1812,151 @@
     }
 
 
+      fn assign_data_p (body: &Ptr <Obj>) -> bool {
+          (cons_p (&body) &&
+           sym_p (&(car (body.dup ()))) &&
+           cons_p (&(cdr (body.dup ()))) &&
+           cons_p (&(car (cdr (body.dup ())))) &&
+           sym_sexp_as_str_p (&(car (car (cdr (body.dup ())))), "data"))
+      }
+      fn tk_assign_data (
+          env: &mut Env,
+          body: Ptr <Obj>,
+      ) {
 
+      }
+      fn assign_lambda_sugar_p (body: &Ptr <Obj>) -> bool {
+          (cons_p (&body) &&
+           cons_p (&(car (body.dup ()))))
+      }
+      fn assign_lambda_desugar (body: Ptr <Obj>) -> Ptr <Obj> {
+          let head = car (body.dup ());
+          let name = car (head.dup ());
+          let arg_list = cdr (head);
+          let rest = cdr (body);
+          cons_c (name, unit_list (
+              cons_c (Sym::obj ("lambda"),
+                      cons_c (list_to_vect (arg_list),
+                              rest))))
+      }
 
-    // impl Env {
-    //     fn from_module_path (module_path: &Path) -> Env {
-    //         let mut env = Env::new ();
-    //         module_path = respect_current_dir (env, module_path);
-    //         // env.module_path = module_path;
-    //         // expose_core (env);
-    //         let code = code_from_module_path (env, &module_path);
-    //         code_run (env, &code);
-    //         env
-    //     }
-    // }
+      fn tk_assign_value (
+          env: &mut Env,
+          body: Ptr <Obj>,
+      ) {
+          let sym = car_as_sym (body.dup ());
+          let name = &sym.sym;
+          // let name = name_of_word (&sym.sym);
+          // let prefix = prefix_of_word (&sym.sym);
+          let rest = cdr (body);
+          let rest_cdr = cdr (rest.dup ());
+          assert! (null_p (&rest_cdr));
+          let sexp = car (rest);
+          // let mut sexp = car (rest);
+          // if &prefix != "" {
+          //     sexp = sexp_patch_this (env, sexp);
+          // }
+          let obj = sexp_eval (env, sexp);
+          env.define (name, obj);
+      }
+      fn tk_assign (
+          env: &mut Env,
+          body: Ptr <Obj>,
+      ) {
+          if assign_data_p (&body) {
+              tk_assign_data (env, body);
+          } else if assign_lambda_sugar_p (&body) {
+              tk_assign_value (env, assign_lambda_desugar (body));
+          } else {
+              tk_assign_value (env, body);
+          }
+      }
+    fn expose_syntax (env: &mut Env) {
+        env.define_top_keyword ("=", tk_assign);
+        // env.define_keyword ("lambda", k_lambda);
+        // env.define_keyword ("macro", k_macro);
+        // env.define_keyword ("case", k_case);
+        // env.define_keyword ("quote", k_quote);
+        // env.define_keyword ("*", k_list);
+        // env.define_keyword ("note", k_note);
+        // env.define_keyword ("assert", k_assert);
+        // env.define_keyword ("if", k_if);
+        // env.define_keyword ("when", k_when);
+        // env.define_keyword ("do", k_do);
+        // env.define_prim_macro ("let", m_let);
+        // env.define_prim_macro ("quasiquote", m_quasiquote);
+        // env.define_prim_macro ("and", m_and);
+        // env.define_prim_macro ("or", m_or);
+        // env.define_prim_macro ("cond", m_cond);
+    }
+    fn expose_core (env: &mut Env) {
+        // expose_bool (env);
+        // expose_num (env);
+        // expose_str (env);
+        // expose_sym (env);
+        // expose_list (env);
+        // expose_vect (env);
+        // expose_maybe (env);
+        // expose_dict (env);
+        // expose_sexp (env);
+        // expose_top_keyword (env);
+        // expose_keyword (env);
+        // expose_system (env);
+        // expose_module (env);
+        expose_syntax (env);
+        // expose_type (env);
+        // expose_stack (env);
+        // expose_misc (env);
+    }
+    fn code_run (
+        env: &mut Env,
+        code: &str,
+    ) {
+        let token_vec = token::scan (code);
+        let sexp_list = parse_sexp_list (&token_vec);
+        top_sexp_list_run (env, sexp_list);
+    }
+    fn code_from_module_path (
+        module_path: &Path,
+    ) -> String {
+        let code = fs::read_to_string (module_path)
+            .expect ("fail to read file");
+        code
+    }
+    fn respect_current_dir (
+        env: &Env,
+        path: &Path,
+    ) -> PathBuf {
+        if path.is_absolute () {
+            path.to_path_buf ()
+        } else {
+            let mut path_buf = env.current_dir.clone ();
+            path_buf.push (path);
+            path_buf
+        }
+    }
+    fn respect_module_path (
+        env: &Env,
+        path: &Path,
+    ) -> PathBuf {
+        if path.is_absolute () {
+            path.to_path_buf ()
+        } else {
+            let mut path_buf = env.module_path.clone ();
+            path_buf.push (path);
+            path_buf
+        }
+    }
+    impl Env {
+        pub fn from_module_path (module_path: &Path) -> Env {
+            let mut env = Env::new ();
+            env.module_path = respect_current_dir (&env, module_path);
+            expose_core (&mut env);
+            let code = code_from_module_path (module_path);
+            code_run (&mut env, &code);
+            env
+        }
+    }
     fn assert_pop (env: &mut Env, obj: Ptr <Obj>) {
         let pop = env.obj_stack.pop () .unwrap ();
         assert! (obj_eq (&obj, &pop));

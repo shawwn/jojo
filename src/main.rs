@@ -1,10 +1,11 @@
 extern crate jojo;
 
-use jojo::ObjFrom;
+use std::env;
+use std::path::Path;
 
 fn main () {
-    println! ("JOJO's Bizarre Programming Adventure!");
-    let mut env = jojo::Env::new ();
-    let num = jojo::Num::obj (1.0);
-    env.obj_stack.push (num);
+    for arg in env::args () .skip (1) {
+        let module_path = Path::new (&arg);
+        let _env = jojo::Env::from_module_path (module_path);
+    }
 }

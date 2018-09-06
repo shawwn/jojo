@@ -3797,7 +3797,7 @@
         top_sexp_list_run (env, sexp_list);
     }
     shared_ptr <str_o>
-    code_from_module_path (env_t &env, path_t module_path)
+    code_from_module_path (path_t module_path)
     {
         auto input_file = ifstream (module_path);
         auto buffer = stringstream ();
@@ -3853,31 +3853,31 @@
         }
         env.module_path = module_path;
         expose_core (env);
-        auto code = code_from_module_path (env, env.module_path);
+        auto code = code_from_module_path (env.module_path);
         code_run (env, code);
         return env;
     }
-    name_t
-    prefix_of_string (string str)
-    {
-        auto string_vector = string_split (str, '.');
-        assert (string_vector.size () > 0);
-        if (string_vector.size () == 1)
-            return "";
-        else {
-            string_vector.pop_back ();
-            return string_vector_join (string_vector, '.');
-        }
-    }
-    name_t
-    name_of_string (string str)
-    {
-        auto string_vector = string_split (str, '.');
-        assert (string_vector.size () > 0);
-        return string_vector [string_vector.size () - 1];
-    }
+      name_t
+      prefix_of_word (string str)
+      {
+          auto string_vector = string_split (str, '.');
+          assert (string_vector.size () > 0);
+          if (string_vector.size () == 1)
+              return "";
+          else {
+              string_vector.pop_back ();
+              return string_vector_join (string_vector, '.');
+          }
+      }
+      name_t
+      name_of_word (string str)
+      {
+          auto string_vector = string_split (str, '.');
+          assert (string_vector.size () > 0);
+          return string_vector [string_vector.size () - 1];
+      }
       bool
-      assign_data_p (env_t &env, shared_ptr <obj_t> body)
+      assign_data_p (shared_ptr <obj_t> body)
       {
           if (! cons_p (body))
               return false;
@@ -3903,8 +3903,8 @@
       tk_assign_data (env_t &env, shared_ptr <obj_t> body)
       {
           auto head = as_sym (car (body));
-          auto prefix = prefix_of_string (head->sym);
-          auto type_name = name_of_string (head->sym);
+          auto prefix = prefix_of_word (head->sym);
+          auto type_name = name_of_word (head->sym);
           auto data_name = name_t2c (type_name);
           auto pred_name = name_t2p (type_name);
           auto tag_of_type = tagging (env, head->sym);
@@ -3922,7 +3922,7 @@
               (env, prefix, data_name, tag_of_type, name_vector);
       }
       bool
-      assign_lambda_sugar_p (env_t &env, shared_ptr <obj_t> body)
+      assign_lambda_sugar_p (shared_ptr <obj_t> body)
       {
           if (! cons_p (body))
               return false;
@@ -3931,7 +3931,7 @@
           return true;
       }
       shared_ptr <obj_t>
-      assign_lambda_desugar (env_t &env, shared_ptr <obj_t> body)
+      assign_lambda_desugar (shared_ptr <obj_t> body)
       {
           auto head = car (body);
           auto name = car (head);
@@ -3946,7 +3946,7 @@
           return cons_c (name, lambda_body);
       }
       shared_ptr <obj_t>
-      sexp_patch_this (env_t &env, shared_ptr <obj_t> sexp)
+      sexp_patch_this (shared_ptr <obj_t> sexp)
       {
           auto this_str = make_sym ("this");
           obj_vector_t obj_vector = { this_str };
@@ -3963,23 +3963,24 @@
           auto rest = cdr (body);
           assert (null_p (cdr (rest)));
           auto sexp = car (rest);
-          auto name = name_of_string (head->sym);
-          auto prefix = prefix_of_string (head->sym);
+          auto name = name_of_word (head->sym);
+          auto prefix = prefix_of_word (head->sym);
           if (prefix != "")
-              sexp = sexp_patch_this (env, sexp);
+              sexp = sexp_patch_this (sexp);
           auto obj = sexp_eval (env, sexp);
           assign (env, prefix, name, obj);
       }
-    void
-    tk_assign (env_t &env, shared_ptr <obj_t> body)
-    {
-        if (assign_data_p (env, body))
-            tk_assign_data (env, body);
-        else if (assign_lambda_sugar_p (env, body))
-            tk_assign_value (env, assign_lambda_desugar (env, body));
-        else
-            tk_assign_value (env, body);
-    }
+      void
+      tk_assign (env_t &env, shared_ptr <obj_t> body)
+      {
+          if (assign_data_p (body)) {
+              tk_assign_data (env, body);
+          } else if (assign_lambda_sugar_p (body)) {
+              tk_assign_value (env, assign_lambda_desugar (body));
+          } else {
+              tk_assign_value (env, body);
+          }
+      }
       bool
       assign_sexp_p (
           env_t &env,
@@ -3999,10 +4000,10 @@
       {
           auto head = car (sexp);
           auto body = cdr (sexp);
-          if (assign_lambda_sugar_p (env, body))
+          if (assign_lambda_sugar_p (body))
               return cons_c (
                   head,
-                  assign_lambda_desugar (env, body));
+                  assign_lambda_desugar (body));
           else
               return sexp;
       }
