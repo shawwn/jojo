@@ -1495,6 +1495,22 @@
           }
           jojo_append (&head_jojo, &jo_vec)
       }
+      fn type_word_p (word: &str) -> bool {
+          word.ends_with ("-t")
+      }
+      fn type_ref_compile (
+          env: &mut Env,
+          _: &StaticScope,
+          name: &str,
+      ) -> Ptr <JoVec> {
+          if let Some (tag) = env.type_dic.get_index (name) {
+              jojo! [ TypeRefJo { tag } ]
+          } else {
+              jojo! [
+                  TypeRefJo { tag: env.type_dic.ins (name, None) }
+              ]
+          }
+      }
       fn ref_compile (
           env: &mut Env,
           static_scope: &StaticScope,
@@ -1525,6 +1541,8 @@
           let word = &sym.sym;
           if dot_in_word_p (word) {
               dot_in_word_compile (env, static_scope, word)
+          } else if type_word_p (word) {
+              type_ref_compile (env, static_scope, word)
           } else {
               ref_compile (env, static_scope, word)
           }
