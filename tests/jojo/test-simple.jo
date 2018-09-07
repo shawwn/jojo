@@ -26,3 +26,6 @@ x2
 (println zero)
 
 (println (list-length null))
+
+(println (type-of zero))
+(assert (eq prim-t (type-of list-length)))

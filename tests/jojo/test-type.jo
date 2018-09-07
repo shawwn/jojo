@@ -1,7 +1,7 @@
 (= zero-t (data))
 (= succ-t (data prev))
 
-(= zero zero-c)
+(= zero (zero-c))
 (= one (succ-c zero))
 (= two (succ-c one))
 (= three (succ-c two))
@@ -20,7 +20,8 @@
 (assert (not (eq zero-t (type-of four))))
 
 
-(assert (eq null-t (type-of null-c)))
+(assert (eq data-cons-t (type-of null-c)))
+(assert (eq null-t (type-of (null-c))))
 
 (assert (eq data-cons-t (type-of cons-c)))
 (assert (eq data-cons-t (type-of (cons-c null-c))))

@@ -1,5 +1,9 @@
 #+property: tangle core.rs
 #+title: core
+- fix test_jojo.rs
+- fix type of prim-function for define_prim!
+- `as_*` for all obj -- instead of `obj_to::<*>`
+- use `*::make` for all obj -- instead of `*::obj`
 - apply_compile handle (.method ...)
 - maybe native List
 - char-t
@@ -977,6 +981,23 @@
     }
     #+end_src
 
+*** type_of
+
+    #+begin_src rust
+    fn type_of (env: &Env, obj: Ptr <Obj>) -> Ptr <Type> {
+        let tag = obj.tag ();
+        let entry = env.type_dic.idx (tag);
+        if let Some (typ) = &entry.value {
+            typ.dup ()
+        } else {
+            eprintln! ("- type_of");
+            eprintln! ("  obj : {}", obj.repr (env));
+            eprintln! ("  tag : {}", tag);
+            panic! ("jojo fatal error!");
+        }
+    }
+    #+end_src
+
 * data
 
 *** Data
@@ -1412,6 +1433,54 @@
             }
         }
     }
+    #+end_src
+
+*** as_str
+
+    #+begin_src rust
+    fn as_str (obj: Ptr <Obj>) -> Ptr <Str> {
+        assert! (str_p (&obj));
+        obj_to::<Str> (obj)
+    }
+    #+end_src
+
+*** str_length
+
+    #+begin_src rust
+    fn str_length (str: Ptr <Obj>) -> Ptr <Num> {
+        let str = as_str (str);
+        Num::obj (str.str.len () as f64)
+    }
+    #+end_src
+
+*** str_append
+
+    #+begin_src rust
+
+    #+end_src
+
+*** str_slice
+
+    #+begin_src rust
+
+    #+end_src
+
+*** str_ref
+
+    #+begin_src rust
+
+    #+end_src
+
+*** str_head
+
+    #+begin_src rust
+
+    #+end_src
+
+*** str_rest
+
+    #+begin_src rust
+
     #+end_src
 
 * sym
@@ -2762,8 +2831,6 @@
     }
     #+end_src
 
-* [todo] system
-
 * module
 
 *** Module
@@ -3437,6 +3504,24 @@
     }
     #+end_src
 
+*** expose_type
+
+    #+begin_src rust
+    fn expose_type (env: &mut Env) {
+        env.define_prim ("type-of", vec! ["obj"], |env, arg| {
+            env.obj_stack.push (type_of (env, arg_idx (arg, 0)));
+        });
+    }
+    #+end_src
+
+*** [todo] expose_str
+
+    #+begin_src rust
+    fn expose_str (env: &mut Env) {
+        define_prim! (env, "str-length", ["str"], str_length);
+    }
+    #+end_src
+
 *** expose_list
 
     #+begin_src rust
@@ -3511,9 +3596,10 @@
 
     #+begin_src rust
     fn expose_core (env: &mut Env) {
+        expose_type (env);
         // expose_bool (env);
         // expose_num (env);
-        // expose_str (env);
+        expose_str (env);
         // expose_sym (env);
         expose_list (env);
         // expose_vect (env);
@@ -3525,7 +3611,6 @@
         // expose_system (env);
         // expose_module (env);
         expose_syntax (env);
-        // expose_type (env);
         expose_stack (env);
         expose_misc (env);
     }

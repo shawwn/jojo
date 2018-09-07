@@ -642,6 +642,18 @@
             }
         }
     }
+    fn type_of (env: &Env, obj: Ptr <Obj>) -> Ptr <Type> {
+        let tag = obj.tag ();
+        let entry = env.type_dic.idx (tag);
+        if let Some (typ) = &entry.value {
+            typ.dup ()
+        } else {
+            eprintln! ("- type_of");
+            eprintln! ("  obj : {}", obj.repr (env));
+            eprintln! ("  tag : {}", tag);
+            panic! ("jojo fatal error!");
+        }
+    }
     pub struct Data {
         tag_of_type: Tag,
         field_dic: ObjDic,
@@ -947,6 +959,19 @@
             }
         }
     }
+    fn as_str (obj: Ptr <Obj>) -> Ptr <Str> {
+        assert! (str_p (&obj));
+        obj_to::<Str> (obj)
+    }
+    fn str_length (str: Ptr <Obj>) -> Ptr <Num> {
+        let str = as_str (str);
+        Num::obj (str.str.len () as f64)
+    }
+
+
+
+
+
     pub struct Sym { pub sym: String }
     pub fn sym_p (x: &Ptr <Obj>) -> bool {
         let tag = x.tag ();
@@ -2215,6 +2240,14 @@
             panic! ("jojo fatal error!");
         }
     }
+    fn expose_type (env: &mut Env) {
+        env.define_prim ("type-of", vec! ["obj"], |env, arg| {
+            env.obj_stack.push (type_of (env, arg_idx (arg, 0)));
+        });
+    }
+    fn expose_str (env: &mut Env) {
+        define_prim! (env, "str-length", ["str"], str_length);
+    }
     fn expose_list (env: &mut Env) {
         env.define ("null", null_c ());
         define_prim! (env, "list-length", ["list"], list_length);
@@ -2266,9 +2299,10 @@
         });
     }
     fn expose_core (env: &mut Env) {
+        expose_type (env);
         // expose_bool (env);
         // expose_num (env);
-        // expose_str (env);
+        expose_str (env);
         // expose_sym (env);
         expose_list (env);
         // expose_vect (env);
@@ -2280,7 +2314,6 @@
         // expose_system (env);
         // expose_module (env);
         expose_syntax (env);
-        // expose_type (env);
         expose_stack (env);
         expose_misc (env);
     }
