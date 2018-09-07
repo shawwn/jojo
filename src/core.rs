@@ -454,7 +454,7 @@
         }
 
         fn print (&self, env: &Env) {
-            println! ("{}", self.repr (&env));
+            print! ("{}", self.repr (&env));
         }
 
         fn apply (&self, env: &mut Env, arity: usize) {
@@ -830,12 +830,93 @@
             }
         }
     }
+    impl Env {
+        pub fn define_prim (
+            &mut self,
+            name: &str,
+            name_vec: Vec <&str>,
+            fun: PrimFn,
+        ) -> Id {
+            let arg_vec = name_vec. iter ()
+                .map (|x| x.to_string ())
+                .collect::<NameVec> ();
+            self.define (name, Ptr::new (Prim {
+                arg_dic: Dic::from (arg_vec),
+                fun,
+            }))
+        }
+    }
+    macro_rules! define_prim {
+        ( $env:expr, $name:expr,
+          [$arg0:expr],
+          $fun:expr ) => {
+            ($env).define_prim (
+                $name,
+                vec! [$arg0],
+                |env, arg| {
+                    env.obj_stack.push ($fun (
+                        arg_idx (arg, 0)));
+                });
+        };
+
+        ( $env:expr, $name:expr,
+          [$arg0:expr, $arg1:expr],
+          $fun:expr ) => {
+            ($env).define_prim (
+                $name,
+                vec! [$arg0, $arg1],
+                |env, arg| {
+                    env.obj_stack.push ($fun (
+                        arg_idx (arg, 0),
+                        arg_idx (arg, 1)));
+                });
+        };
+
+        ( $env:expr, $name:expr,
+          [$arg0:expr, $arg1:expr, $arg2:expr],
+          $fun:expr ) => {
+            ($env).define_prim (
+                $name,
+                vec! [$arg0, $arg1, $arg2],
+                |env, arg| {
+                    env.obj_stack.push ($fun (
+                        arg_idx (arg, 0),
+                        arg_idx (arg, 1),
+                        arg_idx (arg, 2)));
+                });
+        };
+
+        ( $env:expr, $name:expr,
+          [$arg0:expr, $arg1:expr, $arg2:expr, $arg3:expr],
+          $fun:expr ) => {
+            ($env).define_prim (
+                $name,
+                vec! [$arg0, $arg1, $arg2, $arg3],
+                |env, arg| {
+                    env.obj_stack.push ($fun (
+                        arg_idx (arg, 0),
+                        arg_idx (arg, 1),
+                        arg_idx (arg, 2),
+                        arg_idx (arg, 3)));
+                });
+        };
+    }
     pub fn true_c () -> Ptr <Data> {
         Data::unit (TRUE_T)
     }
+    pub fn true_p (x: &Ptr <Obj>) -> bool {
+        let tag = x.tag ();
+        (TRUE_T == tag)
+    }
+
     pub fn false_c () -> Ptr <Data> {
         Data::unit (FALSE_T)
     }
+    pub fn false_p (x: &Ptr <Obj>) -> bool {
+        let tag = x.tag ();
+        (FALSE_T == tag)
+    }
+
     pub fn make_bool (b: bool) -> Ptr <Data> {
         if b {
             true_c ()
@@ -958,6 +1039,10 @@
         }
         size
     }
+    fn list_length (list: Ptr <Obj>) -> Ptr <Num> {
+        assert! (list_p (&list));
+        Num::obj (list_size (list) as f64)
+    }
     fn list_rev (mut list: Ptr <Obj>) -> Ptr <Obj> {
         assert! (list_p (&list));
         let mut rev = null_c ();
@@ -1053,6 +1138,15 @@
             CollectVectJo { counter },
         ];
         jojo_append (&jojo, &ending_jojo)
+    }
+    fn name_vect_to_name_vec (name_vect: Ptr <Vect>) -> NameVec {
+        name_vect.obj_vec .iter ()
+            .map (|x| {
+                assert! (sym_p (x));
+                let sym = obj_to::<Sym> (x.dup ());
+                sym.sym.to_string ()
+            })
+            .collect::<NameVec> ()
     }
     pub struct Dict { pub obj_dic: ObjDic }
     pub fn dict_p (x: &Ptr <Obj>) -> bool {
@@ -1309,6 +1403,13 @@
         let tag = x.tag ();
         (KEYWORD_T == tag)
     }
+    impl ObjFrom <KeywordFn> for Keyword {
+        fn obj (fun: KeywordFn) -> Ptr <Keyword> {
+            Ptr::new (Keyword {
+                fun,
+            })
+        }
+    }
     impl Obj for Keyword {
         fn tag (&self) -> Tag { KEYWORD_T }
 
@@ -1363,6 +1464,15 @@
         let keyword = find_keyword (env, name) .unwrap ();
         let body = cdr (sexp);
         (keyword.fun) (env, static_scope, body)
+    }
+    impl Env {
+        pub fn define_keyword (
+            &mut self,
+            name: &str,
+            fun: KeywordFn,
+        ) -> Id {
+            self.define (name, Keyword::obj (fun))
+        }
     }
     struct Macro {
         obj: Ptr <Obj>,
@@ -1939,13 +2049,7 @@
           let rest = cdr (body);
           let data_body = cdr (car (rest));
           let name_vect = list_to_vect (data_body);
-          let name_vec = name_vect.obj_vec .iter ()
-              .map (|x| {
-                  assert! (sym_p (x));
-                  let sym = obj_to::<Sym> (x.dup ());
-                  sym.sym.to_string ()
-              })
-              .collect ();
+          let name_vec = name_vect_to_name_vec (name_vect);
           let tag = env.type_dic.len ();
           env.define_type (&type_name, Type::obj (tag));
           env.define (&data_name, DataCons::make (tag, name_vec));
@@ -1990,30 +2094,183 @@
               tk_assign_value (env, body);
           }
       }
+      fn do_body_trans (body: Ptr <Obj>) -> Ptr <Obj> {
+          if null_p (&body) {
+              return body;
+          }
+          let sexp = car (body.dup ());
+          let rest = cdr (body.dup ());
+          if null_p (&rest) {
+              return body;
+          } else {
+              let drop = unit_list (Sym::obj ("drop"));
+              let body = do_body_trans (rest);
+              let body = cons_c (drop, body);
+              let body = cons_c (sexp, body);
+              return body;
+          }
+      }
+      fn k_do (
+          env: &mut Env,
+          static_scope: &StaticScope,
+          mut body: Ptr <Obj>,
+      ) -> Ptr <JoVec> {
+          body = sexp_list_prefix_assign (body.dup ());
+          body = do_body_trans (body.dup ());
+          sexp_list_compile (env, static_scope, body)
+      }
+      fn k_lambda (
+          env: &mut Env,
+          old_static_scope: &StaticScope,
+          body: Ptr <Obj>,
+      ) -> Ptr <JoVec> {
+          let head = car (body.dup ());
+          assert! (vect_p (&head));
+          let name_vect = obj_to::<Vect> (head);
+          let name_vec = name_vect_to_name_vec (name_vect);
+          let rest = cdr (body);
+          let static_scope = static_scope_extend (
+              old_static_scope, &name_vec);
+          let jojo = sexp_compile (
+              env, &static_scope, cons_c (Sym::obj ("do"), rest));
+          jojo! [
+              LambdaJo  {
+                  arg_dic: Dic::from (name_vec),
+                  jojo,
+              }
+          ]
+      }
+      fn sexp_qoute_compile (
+          env: &mut Env,
+          sexp: Ptr <Obj>,
+      ) -> Ptr <JoVec> {
+          jojo! [
+              LitJo { obj: sexp }
+          ]
+      }
+      fn k_quote (
+          env: &mut Env,
+          static_scope: &StaticScope,
+          body: Ptr <Obj>,
+      ) -> Ptr <JoVec> {
+          assert! (cons_p (&body));
+          assert! (null_p (&(cdr (body.dup ()))));
+          let sexp = car (body);
+          sexp_qoute_compile (env, sexp)
+      }
+      fn k_note (
+          env: &mut Env,
+          static_scope: &StaticScope,
+          body: Ptr <Obj>,
+      ) -> Ptr <JoVec> {
+          jojo! [
+              LitJo { obj: cons_c (Sym::obj ("note"), body) },
+          ]
+      }
+      pub struct AssertJo {
+          body: Ptr <Obj>,
+          jojo: Ptr <JoVec>,
+      }
+
+      impl Jo for AssertJo {
+          fn exe (&self, env: &mut Env, scope: Ptr <Scope>) {
+              let base = env.frame_stack.len ();
+              env.frame_stack.push (Box::new (Frame {
+                  index: 0,
+                  jojo: self.jojo.dup (),
+                  scope: scope.dup (),
+              }));
+              env.run_with_base (base);
+              let result = env.obj_stack.pop () .unwrap ();
+              if true_p (&result) {
+                  return;
+              } else {
+                  // env.frame_stack_report ();
+                  // env.obj_stack_report ();
+                  eprintln! ("- assert fail : ");
+                  eprintln! ("  {} : ", sexp_list_repr (env, self.body.dup ()));
+                  panic! ("jojo fatal error!");
+              }
+          }
+      }
+      fn k_assert (
+          env: &mut Env,
+          static_scope: &StaticScope,
+          body: Ptr <Obj>,
+      ) -> Ptr <JoVec> {
+          let jojo = sexp_list_compile (env, &static_scope, body.dup ());
+          jojo! [
+              AssertJo { body, jojo }
+          ]
+      }
+
+
+    fn arg_idx (arg_dic: &ObjDic, index: usize) -> Ptr <Obj> {
+        let entry = arg_dic.idx (index);
+        if let Some (value) = &entry.value {
+            value.dup ()
+        } else {
+            eprintln! ("- arg_idx");
+            eprintln! ("  unknown index : {}", index);
+            panic! ("jojo fatal error!");
+        }
+    }
+    fn expose_list (env: &mut Env) {
+        env.define ("null", null_c ());
+        define_prim! (env, "list-length", ["list"], list_length);
+    }
+    fn expose_stack (env: &mut Env) {
+        env.define_prim ("drop", vec! [], |env, _| {
+            env.obj_stack.pop ();
+        });
+    }
     fn expose_syntax (env: &mut Env) {
         env.define_top_keyword ("=", tk_assign);
-        // env.define_keyword ("lambda", k_lambda);
+        env.define_keyword ("do", k_do);
+        env.define_keyword ("lambda", k_lambda);
         // env.define_keyword ("macro", k_macro);
         // env.define_keyword ("case", k_case);
-        // env.define_keyword ("quote", k_quote);
+        env.define_keyword ("quote", k_quote);
         // env.define_keyword ("*", k_list);
-        // env.define_keyword ("note", k_note);
-        // env.define_keyword ("assert", k_assert);
+        env.define_keyword ("note", k_note);
+        env.define_keyword ("assert", k_assert);
         // env.define_keyword ("if", k_if);
         // env.define_keyword ("when", k_when);
-        // env.define_keyword ("do", k_do);
         // env.define_prim_macro ("let", m_let);
         // env.define_prim_macro ("quasiquote", m_quasiquote);
         // env.define_prim_macro ("and", m_and);
         // env.define_prim_macro ("or", m_or);
         // env.define_prim_macro ("cond", m_cond);
     }
+    fn expose_misc (env: &mut Env) {
+        env.define_prim ("repr", vec! ["obj"], |env, arg| {
+            let obj = arg_idx (arg, 0);
+            obj.print (env);
+            env.obj_stack.push (obj);
+        });
+        env.define_prim ("print", vec! ["obj"], |env, arg| {
+            let obj = arg_idx (arg, 0);
+            obj.print (env);
+            env.obj_stack.push (obj);
+        });
+        env.define_prim ("println", vec! ["obj"], |env, arg| {
+            let obj = arg_idx (arg, 0);
+            obj.print (env);
+            println! ("");
+            env.obj_stack.push (obj);
+        });
+        env.define_prim ("eq", vec! ["lhs", "rhs"], |env, arg| {
+            let lhs = arg_idx (arg, 0);
+            let rhs = arg_idx (arg, 1);
+            env.obj_stack.push (make_bool (obj_eq (&lhs, &rhs)));
+        });
+    }
     fn expose_core (env: &mut Env) {
         // expose_bool (env);
         // expose_num (env);
         // expose_str (env);
         // expose_sym (env);
-        // expose_list (env);
+        expose_list (env);
         // expose_vect (env);
         // expose_maybe (env);
         // expose_dict (env);
@@ -2024,8 +2281,8 @@
         // expose_module (env);
         expose_syntax (env);
         // expose_type (env);
-        // expose_stack (env);
-        // expose_misc (env);
+        expose_stack (env);
+        expose_misc (env);
     }
     fn code_run (
         env: &mut Env,

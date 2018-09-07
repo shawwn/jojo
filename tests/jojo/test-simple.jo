@@ -1,5 +1,28 @@
-(= f 1)
+(= x1 1)
 
-(= g f)
+(= x2 (do x1 x1 (note ><) x1))
 
-g
+x2
+
+(note ><)
+
+(= f1 (lambda [x y] x (lambda [x] x)))
+
+(= (f2 x) (f1 x x))
+
+(= (f3 x) (f1 (quote x) (quote x)))
+
+(= zero-t (data))
+(= succ-t (data prev))
+
+(= zero (zero-c))
+(= one (succ-c zero))
+(= two (succ-c one))
+(= three (succ-c two))
+(= four (succ-c three))
+
+(assert (eq zero zero))
+
+(println zero)
+
+(println (list-length null))

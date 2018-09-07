@@ -3943,9 +3943,7 @@
           }
       }
       bool
-      assign_sexp_p (
-          env_t &env,
-          shared_ptr <obj_t> sexp)
+      assign_sexp_p (shared_ptr <obj_t> sexp)
       {
           if (! cons_p (sexp)) return false;
           auto head = car (sexp);
@@ -3955,9 +3953,7 @@
           return true;
       }
       shared_ptr <obj_t>
-      assign_sexp_normalize (
-          env_t &env,
-          shared_ptr <obj_t> sexp)
+      assign_sexp_normalize (shared_ptr <obj_t> sexp)
       {
           auto head = car (sexp);
           auto body = cdr (sexp);
@@ -3969,17 +3965,15 @@
               return sexp;
       }
       shared_ptr <obj_t>
-      do_body_trans (
-        env_t &env,
-        shared_ptr <obj_t> body)
+      do_body_trans (shared_ptr <obj_t> body)
       {
           if (null_p (body)) return body;
           auto sexp = car (body);
           auto rest = cdr (body);
           if (null_p (rest))
               return body;
-          else if (assign_sexp_p (env, sexp)) {
-              sexp = assign_sexp_normalize (env, sexp);
+          else if (assign_sexp_p (sexp)) {
+              sexp = assign_sexp_normalize (sexp);
               auto obj_vector = obj_vector_t ();
               obj_vector.push_back (cdr (sexp));
               auto let_sexp = cons_c (
@@ -3990,7 +3984,7 @@
               return unit_list (let_sexp);
           } else {
               auto drop = unit_list (make_sym ("drop"));
-              body = do_body_trans (env, rest);
+              body = do_body_trans (rest);
               body = cons_c (drop, body);
               body = cons_c (sexp, body);
               return body;
@@ -4003,7 +3997,7 @@
           shared_ptr <obj_t> body)
       {
           body = sexp_list_prefix_assign (body);
-          body = do_body_trans (env, body);
+          body = do_body_trans (body);
           return sexp_list_compile (env, static_scope, body);
       }
         struct lambda_jo_t: jo_t
