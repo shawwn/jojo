@@ -189,7 +189,7 @@
           tag: Tag,
           name: &str,
       ) {
-          let index = env.type_dic.ins (name, Some (Type::obj (tag)));
+          let index = env.type_dic.ins (name, Some (Type::make (tag)));
           assert_eq! (tag, index);
       }
       pub const CLOSURE_T      : Tag = 0;
@@ -260,9 +260,6 @@
               Ptr::clone (self)
           }
       }
-    pub trait ObjFrom <T> {
-        fn obj (x: T) -> Ptr <Self>;
-    }
     pub struct Env {
         pub obj_dic: ObjDic,
         pub type_dic: TypeDic,
@@ -619,8 +616,8 @@
     ) -> bool {
         lhs.eq (rhs.dup ())
     }
-    impl ObjFrom <Tag> for Type {
-        fn obj (tag: Tag) -> Ptr <Type> {
+    impl Type {
+        fn make (tag: Tag) -> Ptr <Type> {
             Ptr::new (Type {
                 method_dic: ObjDic::new (),
                 tag_of_type: tag,
@@ -942,8 +939,8 @@
         let tag = x.tag ();
         (STR_T == tag)
     }
-    impl <'a> ObjFrom <&'a str> for Str {
-        fn obj (str: &'a str) -> Ptr <Str> {
+    impl Str {
+        fn make (str: &str) -> Ptr <Str> {
             Ptr::new (Str { str: String::from (str) })
         }
     }
@@ -965,7 +962,7 @@
     }
     fn str_length (str: Ptr <Obj>) -> Ptr <Num> {
         let str = as_str (str);
-        Num::obj (str.str.len () as f64)
+        Num::make (str.str.len () as f64)
     }
 
 
@@ -977,8 +974,8 @@
         let tag = x.tag ();
         (SYM_T == tag)
     }
-    impl <'a> ObjFrom <&'a str> for Sym {
-        fn obj (str: &'a str) -> Ptr <Sym> {
+    impl Sym {
+        fn make (str: &str) -> Ptr <Sym> {
             Ptr::new (Sym { sym: String::from (str) })
         }
     }
@@ -999,8 +996,8 @@
         let tag = x.tag ();
         (NUM_T == tag)
     }
-    impl ObjFrom <f64> for Num {
-        fn obj (num: f64) -> Ptr <Num> {
+    impl Num {
+        fn make (num: f64) -> Ptr <Num> {
             Ptr::new (Num { num })
         }
     }
@@ -1066,7 +1063,7 @@
     }
     fn list_length (list: Ptr <Obj>) -> Ptr <Num> {
         assert! (list_p (&list));
-        Num::obj (list_size (list) as f64)
+        Num::make (list_size (list) as f64)
     }
     fn list_rev (mut list: Ptr <Obj>) -> Ptr <Obj> {
         assert! (list_p (&list));
@@ -1103,8 +1100,8 @@
         let tag = x.tag ();
         (VECT_T == tag)
     }
-    impl <'a> ObjFrom <&'a ObjVec> for Vect {
-        fn obj (obj_vec: &'a ObjVec) -> Ptr <Vect> {
+    impl Vect {
+        fn make (obj_vec: &ObjVec) -> Ptr <Vect> {
             Ptr::new (Vect { obj_vec: obj_vec.clone () })
         }
     }
@@ -1134,7 +1131,7 @@
             obj_vec.push (car (list.dup ()));
             list = cdr (list);
         }
-        Vect::obj (&obj_vec)
+        Vect::make (&obj_vec)
     }
     struct CollectVectJo {
         counter: usize,
@@ -1147,7 +1144,7 @@
                 .map (|_| env.obj_stack.pop () .unwrap ())
                 .rev ()
                 .collect::<ObjVec> ();
-            env.obj_stack.push (Vect::obj (&obj_vec));
+            env.obj_stack.push (Vect::make (&obj_vec));
         }
     }
     fn vect_compile (
@@ -1178,8 +1175,8 @@
         let tag = x.tag ();
         (DICT_T == tag)
     }
-    impl <'a> ObjFrom <&'a ObjDic> for Dict {
-        fn obj (obj_dic: &'a ObjDic) -> Ptr <Dict> {
+    impl Dict {
+        fn make (obj_dic: &ObjDic) -> Ptr <Dict> {
             Ptr::new (Dict { obj_dic: obj_dic.clone () })
         }
     }
@@ -1199,7 +1196,7 @@
         let mut list = null_c ();
         let obj_dic = &dict.obj_dic;
         for kv in obj_dic.iter () {
-            let sym = Sym::obj (kv.0);
+            let sym = Sym::make (kv.0);
             let obj = kv.1;
             let pair = cons_c (sym, unit_list (obj.dup ()));
             list = cons_c (pair, list);
@@ -1227,14 +1224,14 @@
             }
             list = cdr (list);
         }
-        Dict::obj (&obj_dic)
+        Dict::make (&obj_dic)
     }
     fn dict_to_flat_list_rev (dict: Ptr <Dict>) -> Ptr <Obj> {
         let mut list = null_c ();
         for kv in dict.obj_dic.iter () {
             let key = cons_c (
-                Sym::obj ("quote"),
-                unit_list (Sym::obj (kv.0)));
+                Sym::make ("quote"),
+                unit_list (Sym::make (kv.0)));
             let obj = kv.1.dup ();
             list = cons_c (obj, list);
             list = cons_c (key, list);
@@ -1256,7 +1253,7 @@
                 let name = sym.sym .as_str ();
                 obj_dic.ins (name, Some (obj));
             }
-            env.obj_stack.push (Dict::obj (&obj_dic));
+            env.obj_stack.push (Dict::make (&obj_dic));
         }
     }
     fn dict_compile (
@@ -1280,11 +1277,11 @@
             token::Token::Vect { token_vec, .. } => parse_sexp_vect (token_vec),
             token::Token::Dict { token_vec, .. } => parse_sexp_dict (token_vec),
             token::Token::QuotationMark { mark_name, token, .. } =>
-                cons_c (Sym::obj (mark_name),
+                cons_c (Sym::make (mark_name),
                         unit_list (parse_sexp (token))),
-            token::Token::Num { num, .. } => Num::obj (*num),
-            token::Token::Str { str, .. } => Str::obj (str),
-            token::Token::Sym { sym, .. } => Sym::obj (sym),
+            token::Token::Num { num, .. } => Num::make (*num),
+            token::Token::Str { str, .. } => Str::make (str),
+            token::Token::Sym { sym, .. } => Sym::make (sym),
         }
     }
     pub fn parse_sexp_list (token_vec: &token::TokenVec) -> Ptr <Obj> {
@@ -1303,7 +1300,7 @@
             .iter ()
             .map (parse_sexp)
             .collect::<ObjVec> ();
-        Vect::obj (&obj_vec)
+        Vect::make (&obj_vec)
     }
     fn sexp_list_prefix_assign_with_last_sexp (
         sexp_list: Ptr <Obj>,
@@ -1355,7 +1352,7 @@
             obj_dic.ins (&name.sym, Some (value));
             sexp_list = cdr (sexp_list.dup ())
         }
-        Dict::obj (&obj_dic)
+        Dict::make (&obj_dic)
     }
     pub fn sexp_repr (env: &Env, sexp: Ptr <Obj>) -> String {
         if (null_p (&sexp)) {
@@ -1372,9 +1369,9 @@
             let v = list_to_vect (l);
             let obj_vec = v.obj_vec
                 .iter ()
-                .map (|x| cons_c (Sym::obj ("="), x.dup ()))
+                .map (|x| cons_c (Sym::make ("="), x.dup ()))
                 .collect ();
-            let v = Vect::obj (&obj_vec);
+            let v = Vect::make (&obj_vec);
             let l = vect_to_list (v);
             format! ("{{{}}}", sexp_list_repr (env, l))
         } else if (str_p (&sexp)) {
@@ -1428,8 +1425,8 @@
         let tag = x.tag ();
         (KEYWORD_T == tag)
     }
-    impl ObjFrom <KeywordFn> for Keyword {
-        fn obj (fun: KeywordFn) -> Ptr <Keyword> {
+    impl Keyword {
+        fn make (fun: KeywordFn) -> Ptr <Keyword> {
             Ptr::new (Keyword {
                 fun,
             })
@@ -1496,7 +1493,7 @@
             name: &str,
             fun: KeywordFn,
         ) -> Id {
-            self.define (name, Keyword::obj (fun))
+            self.define (name, Keyword::make (fun))
         }
     }
     struct Macro {
@@ -1620,7 +1617,7 @@
           let head_jojo = if name == "" {
               jojo! []
           } else {
-              let sym = Sym::obj (name);
+              let sym = Sym::make (name);
               sym_compile (env, static_scope, sym)
           };
           let mut jo_vec = JoVec::new ();
@@ -1862,8 +1859,8 @@
         let tag = x.tag ();
         (TOP_KEYWORD_T == tag)
     }
-    impl ObjFrom <TopKeywordFn> for TopKeyword {
-        fn obj (fun: TopKeywordFn) -> Ptr <TopKeyword> {
+    impl TopKeyword {
+        fn make (fun: TopKeywordFn) -> Ptr <TopKeyword> {
             Ptr::new (TopKeyword {
                 fun,
             })
@@ -1919,7 +1916,7 @@
             name: &str,
             fun: TopKeywordFn,
         ) -> Id {
-            self.define (name, TopKeyword::obj (fun))
+            self.define (name, TopKeyword::make (fun))
         }
     }
     fn jojo_run (
@@ -2076,7 +2073,7 @@
           let name_vect = list_to_vect (data_body);
           let name_vec = name_vect_to_name_vec (name_vect);
           let tag = env.type_dic.len ();
-          env.define_type (&type_name, Type::obj (tag));
+          env.define_type (&type_name, Type::make (tag));
           env.define (&data_name, DataCons::make (tag, name_vec));
       }
       fn assign_lambda_sugar_p (body: &Ptr <Obj>) -> bool {
@@ -2089,7 +2086,7 @@
           let arg_list = cdr (head);
           let rest = cdr (body);
           cons_c (name, unit_list (
-              cons_c (Sym::obj ("lambda"),
+              cons_c (Sym::make ("lambda"),
                       cons_c (list_to_vect (arg_list),
                               rest))))
       }
@@ -2128,7 +2125,7 @@
           if null_p (&rest) {
               return body;
           } else {
-              let drop = unit_list (Sym::obj ("drop"));
+              let drop = unit_list (Sym::make ("drop"));
               let body = do_body_trans (rest);
               let body = cons_c (drop, body);
               let body = cons_c (sexp, body);
@@ -2157,7 +2154,7 @@
           let static_scope = static_scope_extend (
               old_static_scope, &name_vec);
           let jojo = sexp_compile (
-              env, &static_scope, cons_c (Sym::obj ("do"), rest));
+              env, &static_scope, cons_c (Sym::make ("do"), rest));
           jojo! [
               LambdaJo  {
                   arg_dic: Dic::from (name_vec),
@@ -2189,7 +2186,7 @@
           body: Ptr <Obj>,
       ) -> Ptr <JoVec> {
           jojo! [
-              LitJo { obj: cons_c (Sym::obj ("note"), body) },
+              LitJo { obj: cons_c (Sym::make ("note"), body) },
           ]
       }
       pub struct AssertJo {
@@ -2375,9 +2372,9 @@
         let mut env = Env::new ();
 
         let bye = env.define (
-            "bye", Str::obj ("bye"));
+            "bye", Str::make ("bye"));
         let world = env.define (
-            "world", Str::obj ("world"));
+            "world", Str::make ("world"));
 
         env.frame_stack.push (frame! [
             RefJo { id: world },
@@ -2388,11 +2385,11 @@
         env.run ();
 
         assert_eq! (3, env.obj_stack.len ());
-        assert_pop (&mut env, Str::obj ("world"));
+        assert_pop (&mut env, Str::make ("world"));
         assert_eq! (2, env.obj_stack.len ());
-        assert_pop (&mut env, Str::obj ("bye"));
+        assert_pop (&mut env, Str::make ("bye"));
         assert_eq! (1, env.obj_stack.len ());
-        assert_pop (&mut env, Str::obj ("world"));
+        assert_pop (&mut env, Str::make ("world"));
         assert_eq! (0, env.obj_stack.len ());
     }
     #[test]
@@ -2400,9 +2397,9 @@
         let mut env = Env::new ();
 
         let bye = env.define (
-            "bye", Str::obj ("bye"));
+            "bye", Str::make ("bye"));
         let world = env.define (
-            "world", Str::obj ("world"));
+            "world", Str::make ("world"));
 
         env.frame_stack.push (frame! [
             RefJo { id: bye },
@@ -2417,9 +2414,9 @@
 
         env.run ();
         assert_eq! (2, env.obj_stack.len ());
-        assert_pop (&mut env, Str::obj ("bye"));
+        assert_pop (&mut env, Str::make ("bye"));
         assert_eq! (1, env.obj_stack.len ());
-        assert_pop (&mut env, Str::obj ("world"));
+        assert_pop (&mut env, Str::make ("world"));
         assert_eq! (0, env.obj_stack.len ());
 
         // curry
@@ -2438,9 +2435,9 @@
 
         env.run ();
         assert_eq! (2, env.obj_stack.len ());
-        assert_pop (&mut env, Str::obj ("world"));
+        assert_pop (&mut env, Str::make ("world"));
         assert_eq! (1, env.obj_stack.len ());
-        assert_pop (&mut env, Str::obj ("bye"));
+        assert_pop (&mut env, Str::make ("bye"));
         assert_eq! (0, env.obj_stack.len ());
     }
     #[test]
@@ -2449,8 +2446,8 @@
 
         let last_cry = env.define (
             "last-cry",
-            cons_c (Str::obj ("bye"),
-                    Str::obj ("world")));
+            cons_c (Str::make ("bye"),
+                    Str::make ("world")));
 
         env.frame_stack.push (frame! [
             RefJo { id: last_cry },
@@ -2463,12 +2460,12 @@
         env.run ();
         assert_eq! (3, env.obj_stack.len ());
         assert_pop (&mut env,
-                    cons_c (Str::obj ("bye"),
-                            Str::obj ("world")));
+                    cons_c (Str::make ("bye"),
+                            Str::make ("world")));
         assert_eq! (2, env.obj_stack.len ());
-        assert_pop (&mut env, Str::obj ("bye"));
+        assert_pop (&mut env, Str::make ("bye"));
         assert_eq! (1, env.obj_stack.len ());
-        assert_pop (&mut env, Str::obj ("world"));
+        assert_pop (&mut env, Str::make ("world"));
         assert_eq! (0, env.obj_stack.len ());
     }
     #[test]
@@ -2476,9 +2473,9 @@
         let mut env = Env::new ();
 
         let bye = env.define (
-            "bye", Str::obj ("bye"));
+            "bye", Str::make ("bye"));
         let world = env.define (
-            "world", Str::obj ("world"));
+            "world", Str::make ("world"));
         let cons = env.define (
             "cons-c", DataCons::make (
                 CONS_T, vec! [
@@ -2496,7 +2493,7 @@
 
         env.run ();
         assert_eq! (1, env.obj_stack.len ());
-        assert_pop (&mut env, Str::obj ("bye"));
+        assert_pop (&mut env, Str::make ("bye"));
         assert_eq! (0, env.obj_stack.len ());
 
         // curry
@@ -2512,7 +2509,7 @@
 
         env.run ();
         assert_eq! (1, env.obj_stack.len ());
-        assert_pop (&mut env, Str::obj ("world"));
+        assert_pop (&mut env, Str::make ("world"));
         assert_eq! (0, env.obj_stack.len ());
     }
     #[test]
@@ -2520,9 +2517,9 @@
         let mut env = Env::new ();
 
         let bye = env.define (
-            "bye", Str::obj ("bye"));
+            "bye", Str::make ("bye"));
         let world = env.define (
-            "world", Str::obj ("world"));
+            "world", Str::make ("world"));
         let swap = env.define (
             "swap", Ptr::new (Prim {
                 arg_dic: Dic::from (vec! [ "x", "y" ]),
@@ -2543,9 +2540,9 @@
 
         env.run ();
         assert_eq! (2, env.obj_stack.len ());
-        assert_pop (&mut env, Str::obj ("bye"));
+        assert_pop (&mut env, Str::make ("bye"));
         assert_eq! (1, env.obj_stack.len ());
-        assert_pop (&mut env, Str::obj ("world"));
+        assert_pop (&mut env, Str::make ("world"));
         assert_eq! (0, env.obj_stack.len ());
 
         // curry
@@ -2560,9 +2557,9 @@
 
         env.run ();
         assert_eq! (2, env.obj_stack.len ());
-        assert_pop (&mut env, Str::obj ("world"));
+        assert_pop (&mut env, Str::make ("world"));
         assert_eq! (1, env.obj_stack.len ());
-        assert_pop (&mut env, Str::obj ("bye"));
+        assert_pop (&mut env, Str::make ("bye"));
         assert_eq! (0, env.obj_stack.len ());
     }
     #[test]
