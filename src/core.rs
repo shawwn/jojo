@@ -1141,7 +1141,8 @@
             Ptr::new (Vect { obj_vec: obj_vec.clone () })
         }
     }
-    pub fn vect_to_list (vect: Ptr <Vect>) -> Ptr <Obj> {
+    pub fn vect_to_list (vect: Ptr <Obj>) -> Ptr <Obj> {
+        let vect = Vect::cast (vect);
         let obj_vec = &vect.obj_vec;
         let mut result = null_c ();
         for x in obj_vec .iter () .rev () {
@@ -1214,7 +1215,8 @@
             Ptr::new (Dict { obj_dic: obj_dic.clone () })
         }
     }
-    pub fn dict_to_list_rev (dict: Ptr <Dict>) -> Ptr <Obj> {
+    pub fn dict_to_list_rev (dict: Ptr <Obj>) -> Ptr <Obj> {
+        let dict = Dict::cast (dict);
         let mut list = null_c ();
         let obj_dic = &dict.obj_dic;
         for kv in obj_dic.iter () {
@@ -1225,7 +1227,8 @@
         }
         list
     }
-    pub fn dict_to_list (dict: Ptr <Dict>) -> Ptr <Obj> {
+    pub fn dict_to_list (dict: Ptr <Obj>) -> Ptr <Obj> {
+        let dict = Dict::cast (dict);
         let list = dict_to_list_rev (dict);
         list_rev (list)
     }
@@ -1247,7 +1250,8 @@
         }
         Dict::make (&obj_dic)
     }
-    fn dict_to_flat_list_rev (dict: Ptr <Dict>) -> Ptr <Obj> {
+    fn dict_to_flat_list_rev (dict: Ptr <Obj>) -> Ptr <Obj> {
+        let dict = Dict::cast (dict);
         let mut list = null_c ();
         for kv in dict.obj_dic.iter () {
             let key = cons_c (
