@@ -1,13 +1,12 @@
 #+property: tangle core.rs
 #+title: core
-- fix test_jojo.rs
 - fix type of prim-function for define_prim!
 - `as_*` for all obj -- instead of `obj_to::<*>`
 - use `*::make` for all obj -- instead of `*::obj`
 - apply_compile handle (.method ...)
 - maybe native List
-- char-t
-- path-t
+- char-t -- #char"..." as literal
+- path-t -- #path"..." as literal
 * use
 
 *** std
