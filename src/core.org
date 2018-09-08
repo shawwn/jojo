@@ -1,6 +1,5 @@
 #+property: tangle core.rs
 #+title: core
-- `as_*` for all obj -- instead of `obj_to::<*>`
 - fix type of PrimFn for define_prim!
 - apply_compile handle (.method ...)
 - maybe native List
@@ -272,33 +271,7 @@
       }
       #+end_src
 
-***** jojo!
-
-      #+begin_src rust
-      macro_rules! jojo {
-          ( $( $x:expr ),* $(,)* ) => {{
-              let jo_vec: JoVec = vec! [
-                  $( Ptr::new ($x) ),*
-              ];
-              Ptr::new (jo_vec)
-          }};
-      }
-      #+end_src
-
 *** frame
-
-***** frame!
-
-      #+begin_src rust
-      macro_rules! frame {
-          ( $( $x:expr ),* $(,)* ) => {{
-              let jo_vec: JoVec = vec! [
-                  $( Ptr::new ($x) ),*
-              ];
-              Frame::make (jo_vec)
-          }};
-      }
-      #+end_src
 
 ***** frame_stack_eq
 
@@ -451,6 +424,58 @@
           fn dup (&self) -> Self {
               Ptr::clone (self)
           }
+      }
+      #+end_src
+
+*** macro
+
+***** impl_tag!
+
+      #+begin_src rust
+      macro_rules! impl_tag {
+          ( $type:ty, $tag:expr ) => {
+              impl $type {
+
+                  pub fn tag () -> Tag {
+                      $tag
+                  }
+
+                  pub fn cast (obj: Ptr <Obj>) -> Ptr <Self> {
+                      assert! (Self::p (&obj));
+                      obj_to::<Self> (obj)
+                  }
+
+                  pub fn p (x: &Ptr <Obj>) -> bool {
+                      let tag = x.tag ();
+                      (Self::tag () == tag)
+                  }
+              }};
+      }
+      #+end_src
+
+***** jojo!
+
+      #+begin_src rust
+      macro_rules! jojo {
+          ( $( $x:expr ),* $(,)* ) => {{
+              let jo_vec: JoVec = vec! [
+                  $( Ptr::new ($x) ),*
+              ];
+              Ptr::new (jo_vec)
+          }};
+      }
+      #+end_src
+
+***** frame!
+
+      #+begin_src rust
+      macro_rules! frame {
+          ( $( $x:expr ),* $(,)* ) => {{
+              let jo_vec: JoVec = vec! [
+                  $( Ptr::new ($x) ),*
+              ];
+              Frame::make (jo_vec)
+          }};
       }
       #+end_src
 
@@ -647,6 +672,7 @@
     #+begin_src rust
     pub trait Obj {
         fn tag (&self) -> Tag;
+
         fn obj_dic (&self) -> Option <&ObjDic> { None }
 
         fn eq (&self, _other: Ptr <Obj>) -> bool { false }
@@ -925,6 +951,23 @@
         tag_of_type: Tag,
         super_tag_vec: TagVec,
     }
+
+    impl_tag! (Type, TYPE_T);
+
+    impl Obj for Type {
+        fn tag (&self) -> Tag { TYPE_T }
+        fn obj_dic (&self) -> Option <&ObjDic> { Some (&self.method_dic) }
+
+        fn eq (&self, other: Ptr <Obj>) -> bool {
+            if self.tag () != other.tag () {
+                false
+            } else {
+                let other = obj_to::<Type> (other);
+                (self.tag_of_type == other.tag_of_type &&
+                 self.super_tag_vec == other.super_tag_vec)
+            }
+        }
+    }
     #+end_src
 
 *** type_eq
@@ -948,25 +991,6 @@
                 tag_of_type: tag,
                 super_tag_vec: TagVec::new (),
             })
-        }
-    }
-    #+end_src
-
-*** Obj for Type
-
-    #+begin_src rust
-    impl Obj for Type {
-        fn tag (&self) -> Tag { TYPE_T }
-        fn obj_dic (&self) -> Option <&ObjDic> { Some (&self.method_dic) }
-
-        fn eq (&self, other: Ptr <Obj>) -> bool {
-            if self.tag () != other.tag () {
-                false
-            } else {
-                let other = obj_to::<Type> (other);
-                (self.tag_of_type == other.tag_of_type &&
-                 self.super_tag_vec == other.super_tag_vec)
-            }
         }
     }
     #+end_src
@@ -996,6 +1020,21 @@
     pub struct Data {
         tag_of_type: Tag,
         field_dic: ObjDic,
+    }
+
+    impl Obj for Data {
+        fn tag (&self) -> Tag { self.tag_of_type }
+        fn obj_dic (&self) -> Option <&ObjDic> { Some (&self.field_dic) }
+
+        fn eq (&self, other: Ptr <Obj>) -> bool {
+            if self.tag () != other.tag () {
+                false
+            } else {
+                let other = obj_to::<Data> (other);
+                (self.tag_of_type == other.tag_of_type &&
+                 obj_dic_eq (&self.field_dic, &other.field_dic))
+            }
+        }
     }
     #+end_src
 
@@ -1028,25 +1067,6 @@
     }
     #+end_src
 
-*** Obj for Data
-
-    #+begin_src rust
-    impl Obj for Data {
-        fn tag (&self) -> Tag { self.tag_of_type }
-        fn obj_dic (&self) -> Option <&ObjDic> { Some (&self.field_dic) }
-
-        fn eq (&self, other: Ptr <Obj>) -> bool {
-            if self.tag () != other.tag () {
-                false
-            } else {
-                let other = obj_to::<Data> (other);
-                (self.tag_of_type == other.tag_of_type &&
-                 obj_dic_eq (&self.field_dic, &other.field_dic))
-            }
-        }
-    }
-    #+end_src
-
 * data_cons
 
 *** DataCons
@@ -1056,27 +1076,9 @@
         tag_of_type: Tag,
         field_dic: ObjDic,
     }
-    #+end_src
 
-*** DataCons::make
+    impl_tag! (DataCons, DATA_CONS_T);
 
-    #+begin_src rust
-    impl DataCons {
-        pub fn make (
-            tag: Tag,
-            vec: Vec <String>,
-        ) -> Ptr <DataCons> {
-            Ptr::new (DataCons {
-                tag_of_type: tag,
-                field_dic: Dic::from (vec),
-            })
-        }
-    }
-    #+end_src
-
-*** Obj for DataCons
-
-    #+begin_src rust
     impl Obj for DataCons {
         fn tag (&self) -> Tag { DATA_CONS_T }
         fn obj_dic (&self) -> Option <&ObjDic> { Some (&self.field_dic) }
@@ -1119,6 +1121,22 @@
     }
     #+end_src
 
+*** DataCons::make
+
+    #+begin_src rust
+    impl DataCons {
+        pub fn make (
+            tag: Tag,
+            vec: Vec <String>,
+        ) -> Ptr <DataCons> {
+            Ptr::new (DataCons {
+                tag_of_type: tag,
+                field_dic: Dic::from (vec),
+            })
+        }
+    }
+    #+end_src
+
 * closure
 
 *** Closure
@@ -1129,11 +1147,9 @@
         jojo: Ptr <JoVec>,
         scope: Ptr <Scope>,
     }
-    #+end_src
 
-*** Obj for Closure
+    impl_tag! (Closure, CLOSURE_T);
 
-    #+begin_src rust
     impl Obj for Closure {
         fn tag (&self) -> Tag { CLOSURE_T }
         fn obj_dic (&self) -> Option <&ObjDic> { Some (&self.arg_dic) }
@@ -1207,11 +1223,9 @@
         arg_dic: ObjDic,
         fun: PrimFn,
     }
-    #+end_src
 
-*** Obj for Prim
+    impl_tag! (Prim, PRIM_T);
 
-    #+begin_src rust
     impl Obj for Prim {
         fn tag (&self) -> Tag { PRIM_T }
 
@@ -1387,30 +1401,9 @@
 
     #+begin_src rust
     pub struct Str { pub str: String }
-    #+end_src
 
-*** str_p
+    impl_tag! (Str, STR_T);
 
-    #+begin_src rust
-    pub fn str_p (x: &Ptr <Obj>) -> bool {
-        let tag = x.tag ();
-        (STR_T == tag)
-    }
-    #+end_src
-
-*** Str::make
-
-    #+begin_src rust
-    impl Str {
-        fn make (str: &str) -> Ptr <Str> {
-            Ptr::new (Str { str: String::from (str) })
-        }
-    }
-    #+end_src
-
-*** Obj for Str
-
-    #+begin_src rust
     impl Obj for Str {
         fn tag (&self) -> Tag { STR_T }
 
@@ -1425,12 +1418,13 @@
     }
     #+end_src
 
-*** as_str
+*** Str::make
 
     #+begin_src rust
-    fn as_str (obj: Ptr <Obj>) -> Ptr <Str> {
-        assert! (str_p (&obj));
-        obj_to::<Str> (obj)
+    impl Str {
+        fn make (str: &str) -> Ptr <Str> {
+            Ptr::new (Str { str: String::from (str) })
+        }
     }
     #+end_src
 
@@ -1438,7 +1432,7 @@
 
     #+begin_src rust
     fn str_length (str: Ptr <Obj>) -> Ptr <Num> {
-        let str = as_str (str);
+        let str = Str::cast (str);
         Num::make (str.str.len () as f64)
     }
     #+end_src
@@ -1479,30 +1473,9 @@
 
     #+begin_src rust
     pub struct Sym { pub sym: String }
-    #+end_src
 
-*** sym_p
+    impl_tag! (Sym, SYM_T);
 
-    #+begin_src rust
-    pub fn sym_p (x: &Ptr <Obj>) -> bool {
-        let tag = x.tag ();
-        (SYM_T == tag)
-    }
-    #+end_src
-
-*** Sym::make
-
-    #+begin_src rust
-    impl Sym {
-        fn make (str: &str) -> Ptr <Sym> {
-            Ptr::new (Sym { sym: String::from (str) })
-        }
-    }
-    #+end_src
-
-*** Obj for Sym
-
-    #+begin_src rust
     impl Obj for Sym {
         fn tag (&self) -> Tag { SYM_T }
 
@@ -1517,36 +1490,25 @@
     }
     #+end_src
 
+*** Sym::make
+
+    #+begin_src rust
+    impl Sym {
+        fn make (str: &str) -> Ptr <Sym> {
+            Ptr::new (Sym { sym: String::from (str) })
+        }
+    }
+    #+end_src
+
 * num
 
 *** Num
 
     #+begin_src rust
     pub struct Num { pub num: f64 }
-    #+end_src
 
-*** num_p
+    impl_tag! (Num, NUM_T);
 
-    #+begin_src rust
-    pub fn num_p (x: &Ptr <Obj>) -> bool {
-        let tag = x.tag ();
-        (NUM_T == tag)
-    }
-    #+end_src
-
-*** Num::make
-
-    #+begin_src rust
-    impl Num {
-        fn make (num: f64) -> Ptr <Num> {
-            Ptr::new (Num { num })
-        }
-    }
-    #+end_src
-
-*** Obj for Num
-
-    #+begin_src rust
     impl Obj for Num {
         fn tag (&self) -> Tag { NUM_T }
 
@@ -1561,6 +1523,16 @@
 
         fn repr (&self, _env: &Env) -> String {
             format! ("{}", self.num)
+        }
+    }
+    #+end_src
+
+*** Num::make
+
+    #+begin_src rust
+    impl Num {
+        fn make (num: f64) -> Ptr <Num> {
+            Ptr::new (Num { num })
         }
     }
     #+end_src
@@ -1637,8 +1609,7 @@
     fn car_as_sym (cons: Ptr <Obj>) -> Ptr <Sym> {
         assert! (cons_p (&cons));
         let head = car (cons);
-        assert! (sym_p (&head));
-        obj_to::<Sym> (head)
+        Sym::cast (head)
     }
     #+end_src
 
@@ -1733,30 +1704,9 @@
 
     #+begin_src rust
     pub struct Vect { pub obj_vec: ObjVec }
-    #+end_src
 
-*** vect_p
+    impl_tag! (Vect, VECT_T);
 
-    #+begin_src rust
-    pub fn vect_p (x: &Ptr <Obj>) -> bool {
-        let tag = x.tag ();
-        (VECT_T == tag)
-    }
-    #+end_src
-
-*** Vect::make
-
-    #+begin_src rust
-    impl Vect {
-        fn make (obj_vec: &ObjVec) -> Ptr <Vect> {
-            Ptr::new (Vect { obj_vec: obj_vec.clone () })
-        }
-    }
-    #+end_src
-
-*** Obj for Vect
-
-    #+begin_src rust
     impl Obj for Vect {
         fn tag (&self) -> Tag { VECT_T }
 
@@ -1767,6 +1717,16 @@
                 let other = obj_to::<Vect> (other);
                 (obj_vec_eq (&self.obj_vec, &other.obj_vec))
             }
+        }
+    }
+    #+end_src
+
+*** Vect::make
+
+    #+begin_src rust
+    impl Vect {
+        fn make (obj_vec: &ObjVec) -> Ptr <Vect> {
+            Ptr::new (Vect { obj_vec: obj_vec.clone () })
         }
     }
     #+end_src
@@ -1841,8 +1801,7 @@
     fn name_vect_to_name_vec (name_vect: Ptr <Vect>) -> NameVec {
         name_vect.obj_vec .iter ()
             .map (|x| {
-                assert! (sym_p (x));
-                let sym = obj_to::<Sym> (x.dup ());
+                let sym = Sym::cast (x.dup ());
                 sym.sym.to_string ()
             })
             .collect::<NameVec> ()
@@ -1855,30 +1814,9 @@
 
     #+begin_src rust
     pub struct Dict { pub obj_dic: ObjDic }
-    #+end_src
 
-*** dict_p
+    impl_tag! (Dict, DICT_T);
 
-    #+begin_src rust
-    pub fn dict_p (x: &Ptr <Obj>) -> bool {
-        let tag = x.tag ();
-        (DICT_T == tag)
-    }
-    #+end_src
-
-*** Dict::make
-
-    #+begin_src rust
-    impl Dict {
-        fn make (obj_dic: &ObjDic) -> Ptr <Dict> {
-            Ptr::new (Dict { obj_dic: obj_dic.clone () })
-        }
-    }
-    #+end_src
-
-*** Obj for Dict
-
-    #+begin_src rust
     impl Obj for Dict {
         fn tag (&self) -> Tag { DICT_T }
 
@@ -1889,6 +1827,16 @@
                 let other = obj_to::<Dict> (other);
                 (obj_dic_eq (&self.obj_dic, &other.obj_dic))
             }
+        }
+    }
+    #+end_src
+
+*** Dict::make
+
+    #+begin_src rust
+    impl Dict {
+        fn make (obj_dic: &ObjDic) -> Ptr <Dict> {
+            Ptr::new (Dict { obj_dic: obj_dic.clone () })
         }
     }
     #+end_src
@@ -1927,8 +1875,7 @@
             let pair = car (list.dup ());
             let key = car (pair.dup ());
             let rest = cdr (pair.dup ());
-            assert! (sym_p (& key));
-            let sym = obj_to::<Sym> (key);
+            let sym = Sym::cast (key);
             let name = &sym.sym;
             if cons_p (&rest) {
                 let obj = car (rest);
@@ -1972,8 +1919,7 @@
             for _ in 0..self.counter {
                 let key = env.obj_stack.pop () .unwrap ();
                 let obj = env.obj_stack.pop () .unwrap ();
-                assert! (sym_p (&key));
-                let sym = obj_to::<Sym> (key);
+                let sym = Sym::cast (key);
                 let name = sym.sym .as_str ();
                 obj_dic.ins (name, Some (obj));
             }
@@ -2119,8 +2065,7 @@
         while (cons_p (&sexp_list)) {
             let sexp = car (sexp_list.dup ());
             let name = car (cdr (sexp.dup ()));
-            assert! (sym_p (&name));
-            let name = obj_to::<Sym> (name);
+            let name = Sym::cast (name);
             let value = car (cdr (cdr (sexp.dup ())));
             obj_dic.ins (&name.sym, Some (value));
             sexp_list = cdr (sexp_list.dup ())
@@ -2137,11 +2082,11 @@
             format! ("()")
         } else if (cons_p (&sexp)) {
             format! ("({})", sexp_list_repr (env, sexp))
-        } else if (vect_p (&sexp)) {
-            let v = obj_to::<Vect> (sexp);
+        } else if (Vect::p (&sexp)) {
+            let v = Vect::cast (sexp);
             let l = vect_to_list (v);
             format! ("[{}]", sexp_list_repr (env, l))
-        } else if (dict_p (&sexp)) {
+        } else if (Dict::p (&sexp)) {
             let d = obj_to::<Dict> (sexp);
             let l = dict_to_list (d);
             let v = list_to_vect (l);
@@ -2152,10 +2097,10 @@
             let v = Vect::make (&obj_vec);
             let l = vect_to_list (v);
             format! ("{{{}}}", sexp_list_repr (env, l))
-        } else if (str_p (&sexp)) {
-            let str = obj_to::<Str> (sexp);
+        } else if (Str::p (&sexp)) {
+            let str = Str::cast (sexp);
             format! ("\"{}\"", str.str)
-        } else if (sym_p (&sexp)) {
+        } else if (Sym::p (&sexp)) {
             let sym = obj_to::<Sym> (sexp);
             sym.sym.clone ()
         } else {
@@ -2188,7 +2133,7 @@
 
     #+begin_src rust
     fn sym_sexp_as_str_p (sexp: &Ptr <Obj>, str: &str) -> bool {
-        if ! sym_p (&sexp) {
+        if ! Sym::p (&sexp) {
             false
         } else {
             let sym = obj_to::<Sym> (sexp.dup ());
@@ -2226,14 +2171,20 @@
     struct Keyword {
         fun: KeywordFn,
     }
-    #+end_src
 
-*** keyword_p
+    impl_tag! (Keyword, KEYWORD_T);
 
-    #+begin_src rust
-    pub fn keyword_p (x: &Ptr <Obj>) -> bool {
-        let tag = x.tag ();
-        (KEYWORD_T == tag)
+    impl Obj for Keyword {
+        fn tag (&self) -> Tag { KEYWORD_T }
+
+        fn eq (&self, other: Ptr <Obj>) -> bool {
+            if self.tag () != other.tag () {
+                false
+            } else {
+                let other = obj_to::<Keyword> (other);
+                (keyword_fn_eq (&self.fun, &other.fun))
+            }
+        }
     }
     #+end_src
 
@@ -2249,23 +2200,6 @@
     }
     #+end_src
 
-*** Obj for Keyword
-
-    #+begin_src rust
-    impl Obj for Keyword {
-        fn tag (&self) -> Tag { KEYWORD_T }
-
-        fn eq (&self, other: Ptr <Obj>) -> bool {
-            if self.tag () != other.tag () {
-                false
-            } else {
-                let other = obj_to::<Keyword> (other);
-                (keyword_fn_eq (&self.fun, &other.fun))
-            }
-        }
-    }
-    #+end_src
-
 *** find_keyword
 
     #+begin_src rust
@@ -2274,7 +2208,7 @@
         name: &str,
     ) -> Option <Ptr <Keyword>> {
         if let Some (obj) = env.obj_dic.get (name) {
-            if keyword_p (obj) {
+            if Keyword::p (obj) {
                 let keyword = obj_to::<Keyword> (obj.dup ());
                 Some (keyword)
             } else {
@@ -2294,7 +2228,7 @@
             return false;
         }
         let head = car (sexp.dup ());
-        if ! sym_p (&head) {
+        if ! Sym::p (&head) {
             false
         } else {
             let sym = obj_to::<Sym> (head);
@@ -2346,20 +2280,9 @@
     struct Macro {
         obj: Ptr <Obj>,
     }
-    #+end_src
 
-*** macro_p
+    impl_tag! (Macro, MACRO_T);
 
-    #+begin_src rust
-    pub fn macro_p (x: &Ptr <Obj>) -> bool {
-        let tag = x.tag ();
-        (MACRO_T == tag)
-    }
-    #+end_src
-
-*** Obj for Macro
-
-    #+begin_src rust
     impl Obj for Macro {
         fn tag (&self) -> Tag { MACRO_T }
 
@@ -2382,7 +2305,7 @@
         name: &str,
     ) -> Option <Ptr <Macro>> {
         if let Some (obj) = env.obj_dic.get (name) {
-            if macro_p (obj) {
+            if Macro::p (obj) {
                 let mac = obj_to::<Macro> (obj.dup ());
                 Some (mac)
             } else {
@@ -2402,7 +2325,7 @@
             return false;
         }
         let head = car (sexp.dup ());
-        if ! sym_p (&head) {
+        if ! Sym::p (&head) {
             false
         } else {
             let sym = obj_to::<Sym> (head);
@@ -2710,7 +2633,7 @@
           let mut arity = 0;
           while ! null_p (&body) {
               let head = car (body.dup ());
-              if ! sym_p (&head) {
+              if ! Sym::p (&head) {
                   arity += 1;
               } else {
                   let sym = obj_to::<Sym> (head.dup ());
@@ -2772,15 +2695,15 @@
         static_scope: &StaticScope,
         sexp: Ptr <Obj>,
     ) -> Ptr <JoVec> {
-        if str_p (&sexp) || num_p (&sexp) {
+        if Str::p (&sexp) || Num::p (&sexp) {
             lit_compile (env, static_scope, sexp)
-        } else if sym_p (&sexp) {
+        } else if Sym::p (&sexp) {
             let sym = obj_to::<Sym> (sexp);
             sym_compile (env, static_scope, sym)
-        } else if vect_p (&sexp) {
+        } else if Vect::p (&sexp) {
             let vect = obj_to::<Vect> (sexp);
             vect_compile (env, static_scope, vect)
-        } else if dict_p (&sexp) {
+        } else if Dict::p (&sexp) {
             let dict = obj_to::<Dict> (sexp);
             dict_compile (env, static_scope, dict)
         } else if keyword_sexp_p (env, &sexp) {
@@ -2829,11 +2752,9 @@
     struct Module {
         module_env: Env,
     }
-    #+end_src
 
-*** Obj for Module
+    impl_tag! (Module, MODULE_T);
 
-    #+begin_src rust
     impl Obj for Module {
         fn tag (&self) -> Tag { MODULE_T }
 
@@ -2876,14 +2797,20 @@
     struct TopKeyword {
         fun: TopKeywordFn,
     }
-    #+end_src
 
-*** top_keyword_p
+    impl_tag! (TopKeyword, TOP_KEYWORD_T);
 
-    #+begin_src rust
-    pub fn top_keyword_p (x: &Ptr <Obj>) -> bool {
-        let tag = x.tag ();
-        (TOP_KEYWORD_T == tag)
+    impl Obj for TopKeyword {
+        fn tag (&self) -> Tag { TOP_KEYWORD_T }
+
+        fn eq (&self, other: Ptr <Obj>) -> bool {
+            if self.tag () != other.tag () {
+                false
+            } else {
+                let other = obj_to::<TopKeyword> (other);
+                (top_keyword_fn_eq (&self.fun, &other.fun))
+            }
+        }
     }
     #+end_src
 
@@ -2899,23 +2826,6 @@
     }
     #+end_src
 
-*** Obj for TopKeyword
-
-    #+begin_src rust
-    impl Obj for TopKeyword {
-        fn tag (&self) -> Tag { TOP_KEYWORD_T }
-
-        fn eq (&self, other: Ptr <Obj>) -> bool {
-            if self.tag () != other.tag () {
-                false
-            } else {
-                let other = obj_to::<TopKeyword> (other);
-                (top_keyword_fn_eq (&self.fun, &other.fun))
-            }
-        }
-    }
-    #+end_src
-
 *** find_top_keyword
 
     #+begin_src rust
@@ -2924,7 +2834,7 @@
         name: &str,
     ) -> Option <Ptr <TopKeyword>> {
         if let Some (obj) = env.obj_dic.get (name) {
-            if top_keyword_p (obj) {
+            if TopKeyword::p (obj) {
                 let top_keyword = obj_to::<TopKeyword> (obj.dup ());
                 Some (top_keyword)
             } else {
@@ -2944,7 +2854,7 @@
             return false;
         }
         let head = car (sexp.dup ());
-        if ! sym_p (&head) {
+        if ! Sym::p (&head) {
             false
         } else {
             let sym = obj_to::<Sym> (head);
@@ -3173,7 +3083,7 @@
       #+begin_src rust
       fn assign_data_p (body: &Ptr <Obj>) -> bool {
           (cons_p (&body) &&
-           sym_p (&(car (body.dup ()))) &&
+           Sym::p (&(car (body.dup ()))) &&
            cons_p (&(cdr (body.dup ()))) &&
            cons_p (&(car (cdr (body.dup ())))) &&
            sym_sexp_as_str_p (&(car (car (cdr (body.dup ())))), "data"))
@@ -3328,7 +3238,7 @@
           body: Ptr <Obj>,
       ) -> Ptr <JoVec> {
           let head = car (body.dup ());
-          assert! (vect_p (&head));
+          assert! (Vect::p (&head));
           let name_vect = obj_to::<Vect> (head);
           let name_vec = name_vect_to_name_vec (name_vect);
           let rest = cdr (body);

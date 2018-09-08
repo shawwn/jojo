@@ -149,22 +149,6 @@
            .all (|p| jo_eq (p.0.dup (),
                             p.1.dup ())))
       }
-      macro_rules! jojo {
-          ( $( $x:expr ),* $(,)* ) => {{
-              let jo_vec: JoVec = vec! [
-                  $( Ptr::new ($x) ),*
-              ];
-              Ptr::new (jo_vec)
-          }};
-      }
-      macro_rules! frame {
-          ( $( $x:expr ),* $(,)* ) => {{
-              let jo_vec: JoVec = vec! [
-                  $( Ptr::new ($x) ),*
-              ];
-              Frame::make (jo_vec)
-          }};
-      }
       fn frame_stack_eq (
           lhs: &FrameStack,
           rhs: &FrameStack,
@@ -259,6 +243,41 @@
           fn dup (&self) -> Self {
               Ptr::clone (self)
           }
+      }
+      macro_rules! impl_tag {
+          ( $type:ty, $tag:expr ) => {
+              impl $type {
+
+                  pub fn tag () -> Tag {
+                      $tag
+                  }
+
+                  pub fn cast (obj: Ptr <Obj>) -> Ptr <Self> {
+                      assert! (Self::p (&obj));
+                      obj_to::<Self> (obj)
+                  }
+
+                  pub fn p (x: &Ptr <Obj>) -> bool {
+                      let tag = x.tag ();
+                      (Self::tag () == tag)
+                  }
+              }};
+      }
+      macro_rules! jojo {
+          ( $( $x:expr ),* $(,)* ) => {{
+              let jo_vec: JoVec = vec! [
+                  $( Ptr::new ($x) ),*
+              ];
+              Ptr::new (jo_vec)
+          }};
+      }
+      macro_rules! frame {
+          ( $( $x:expr ),* $(,)* ) => {{
+              let jo_vec: JoVec = vec! [
+                  $( Ptr::new ($x) ),*
+              ];
+              Frame::make (jo_vec)
+          }};
       }
     pub struct Env {
         pub obj_dic: ObjDic,
@@ -401,6 +420,7 @@
     }
     pub trait Obj {
         fn tag (&self) -> Tag;
+
         fn obj_dic (&self) -> Option <&ObjDic> { None }
 
         fn eq (&self, _other: Ptr <Obj>) -> bool { false }
@@ -610,6 +630,23 @@
         tag_of_type: Tag,
         super_tag_vec: TagVec,
     }
+
+    impl_tag! (Type, TYPE_T);
+
+    impl Obj for Type {
+        fn tag (&self) -> Tag { TYPE_T }
+        fn obj_dic (&self) -> Option <&ObjDic> { Some (&self.method_dic) }
+
+        fn eq (&self, other: Ptr <Obj>) -> bool {
+            if self.tag () != other.tag () {
+                false
+            } else {
+                let other = obj_to::<Type> (other);
+                (self.tag_of_type == other.tag_of_type &&
+                 self.super_tag_vec == other.super_tag_vec)
+            }
+        }
+    }
     pub fn type_eq (
         lhs: &Ptr <Type>,
         rhs: &Ptr <Type>,
@@ -623,20 +660,6 @@
                 tag_of_type: tag,
                 super_tag_vec: TagVec::new (),
             })
-        }
-    }
-    impl Obj for Type {
-        fn tag (&self) -> Tag { TYPE_T }
-        fn obj_dic (&self) -> Option <&ObjDic> { Some (&self.method_dic) }
-
-        fn eq (&self, other: Ptr <Obj>) -> bool {
-            if self.tag () != other.tag () {
-                false
-            } else {
-                let other = obj_to::<Type> (other);
-                (self.tag_of_type == other.tag_of_type &&
-                 self.super_tag_vec == other.super_tag_vec)
-            }
         }
     }
     fn type_of (env: &Env, obj: Ptr <Obj>) -> Ptr <Type> {
@@ -654,6 +677,21 @@
     pub struct Data {
         tag_of_type: Tag,
         field_dic: ObjDic,
+    }
+
+    impl Obj for Data {
+        fn tag (&self) -> Tag { self.tag_of_type }
+        fn obj_dic (&self) -> Option <&ObjDic> { Some (&self.field_dic) }
+
+        fn eq (&self, other: Ptr <Obj>) -> bool {
+            if self.tag () != other.tag () {
+                false
+            } else {
+                let other = obj_to::<Data> (other);
+                (self.tag_of_type == other.tag_of_type &&
+                 obj_dic_eq (&self.field_dic, &other.field_dic))
+            }
+        }
     }
     impl Data {
         fn make (
@@ -674,35 +712,13 @@
             })
         }
     }
-    impl Obj for Data {
-        fn tag (&self) -> Tag { self.tag_of_type }
-        fn obj_dic (&self) -> Option <&ObjDic> { Some (&self.field_dic) }
-
-        fn eq (&self, other: Ptr <Obj>) -> bool {
-            if self.tag () != other.tag () {
-                false
-            } else {
-                let other = obj_to::<Data> (other);
-                (self.tag_of_type == other.tag_of_type &&
-                 obj_dic_eq (&self.field_dic, &other.field_dic))
-            }
-        }
-    }
     pub struct DataCons {
         tag_of_type: Tag,
         field_dic: ObjDic,
     }
-    impl DataCons {
-        pub fn make (
-            tag: Tag,
-            vec: Vec <String>,
-        ) -> Ptr <DataCons> {
-            Ptr::new (DataCons {
-                tag_of_type: tag,
-                field_dic: Dic::from (vec),
-            })
-        }
-    }
+
+    impl_tag! (DataCons, DATA_CONS_T);
+
     impl Obj for DataCons {
         fn tag (&self) -> Tag { DATA_CONS_T }
         fn obj_dic (&self) -> Option <&ObjDic> { Some (&self.field_dic) }
@@ -743,11 +759,25 @@
             }
         }
     }
+    impl DataCons {
+        pub fn make (
+            tag: Tag,
+            vec: Vec <String>,
+        ) -> Ptr <DataCons> {
+            Ptr::new (DataCons {
+                tag_of_type: tag,
+                field_dic: Dic::from (vec),
+            })
+        }
+    }
     pub struct Closure {
         arg_dic: ObjDic,
         jojo: Ptr <JoVec>,
         scope: Ptr <Scope>,
     }
+
+    impl_tag! (Closure, CLOSURE_T);
+
     impl Obj for Closure {
         fn tag (&self) -> Tag { CLOSURE_T }
         fn obj_dic (&self) -> Option <&ObjDic> { Some (&self.arg_dic) }
@@ -804,6 +834,9 @@
         arg_dic: ObjDic,
         fun: PrimFn,
     }
+
+    impl_tag! (Prim, PRIM_T);
+
     impl Obj for Prim {
         fn tag (&self) -> Tag { PRIM_T }
 
@@ -935,15 +968,9 @@
         }
     }
     pub struct Str { pub str: String }
-    pub fn str_p (x: &Ptr <Obj>) -> bool {
-        let tag = x.tag ();
-        (STR_T == tag)
-    }
-    impl Str {
-        fn make (str: &str) -> Ptr <Str> {
-            Ptr::new (Str { str: String::from (str) })
-        }
-    }
+
+    impl_tag! (Str, STR_T);
+
     impl Obj for Str {
         fn tag (&self) -> Tag { STR_T }
 
@@ -956,12 +983,13 @@
             }
         }
     }
-    fn as_str (obj: Ptr <Obj>) -> Ptr <Str> {
-        assert! (str_p (&obj));
-        obj_to::<Str> (obj)
+    impl Str {
+        fn make (str: &str) -> Ptr <Str> {
+            Ptr::new (Str { str: String::from (str) })
+        }
     }
     fn str_length (str: Ptr <Obj>) -> Ptr <Num> {
-        let str = as_str (str);
+        let str = Str::cast (str);
         Num::make (str.str.len () as f64)
     }
 
@@ -970,15 +998,9 @@
 
 
     pub struct Sym { pub sym: String }
-    pub fn sym_p (x: &Ptr <Obj>) -> bool {
-        let tag = x.tag ();
-        (SYM_T == tag)
-    }
-    impl Sym {
-        fn make (str: &str) -> Ptr <Sym> {
-            Ptr::new (Sym { sym: String::from (str) })
-        }
-    }
+
+    impl_tag! (Sym, SYM_T);
+
     impl Obj for Sym {
         fn tag (&self) -> Tag { SYM_T }
 
@@ -991,16 +1013,15 @@
             }
         }
     }
-    pub struct Num { pub num: f64 }
-    pub fn num_p (x: &Ptr <Obj>) -> bool {
-        let tag = x.tag ();
-        (NUM_T == tag)
-    }
-    impl Num {
-        fn make (num: f64) -> Ptr <Num> {
-            Ptr::new (Num { num })
+    impl Sym {
+        fn make (str: &str) -> Ptr <Sym> {
+            Ptr::new (Sym { sym: String::from (str) })
         }
     }
+    pub struct Num { pub num: f64 }
+
+    impl_tag! (Num, NUM_T);
+
     impl Obj for Num {
         fn tag (&self) -> Tag { NUM_T }
 
@@ -1015,6 +1036,11 @@
 
         fn repr (&self, _env: &Env) -> String {
             format! ("{}", self.num)
+        }
+    }
+    impl Num {
+        fn make (num: f64) -> Ptr <Num> {
+            Ptr::new (Num { num })
         }
     }
     pub fn null_c () -> Ptr <Obj> {
@@ -1049,8 +1075,7 @@
     fn car_as_sym (cons: Ptr <Obj>) -> Ptr <Sym> {
         assert! (cons_p (&cons));
         let head = car (cons);
-        assert! (sym_p (&head));
-        obj_to::<Sym> (head)
+        Sym::cast (head)
     }
     fn list_size (mut list: Ptr <Obj>) -> usize {
         assert! (list_p (&list));
@@ -1096,15 +1121,9 @@
          SOME_T == tag)
     }
     pub struct Vect { pub obj_vec: ObjVec }
-    pub fn vect_p (x: &Ptr <Obj>) -> bool {
-        let tag = x.tag ();
-        (VECT_T == tag)
-    }
-    impl Vect {
-        fn make (obj_vec: &ObjVec) -> Ptr <Vect> {
-            Ptr::new (Vect { obj_vec: obj_vec.clone () })
-        }
-    }
+
+    impl_tag! (Vect, VECT_T);
+
     impl Obj for Vect {
         fn tag (&self) -> Tag { VECT_T }
 
@@ -1115,6 +1134,11 @@
                 let other = obj_to::<Vect> (other);
                 (obj_vec_eq (&self.obj_vec, &other.obj_vec))
             }
+        }
+    }
+    impl Vect {
+        fn make (obj_vec: &ObjVec) -> Ptr <Vect> {
+            Ptr::new (Vect { obj_vec: obj_vec.clone () })
         }
     }
     pub fn vect_to_list (vect: Ptr <Vect>) -> Ptr <Obj> {
@@ -1164,22 +1188,15 @@
     fn name_vect_to_name_vec (name_vect: Ptr <Vect>) -> NameVec {
         name_vect.obj_vec .iter ()
             .map (|x| {
-                assert! (sym_p (x));
-                let sym = obj_to::<Sym> (x.dup ());
+                let sym = Sym::cast (x.dup ());
                 sym.sym.to_string ()
             })
             .collect::<NameVec> ()
     }
     pub struct Dict { pub obj_dic: ObjDic }
-    pub fn dict_p (x: &Ptr <Obj>) -> bool {
-        let tag = x.tag ();
-        (DICT_T == tag)
-    }
-    impl Dict {
-        fn make (obj_dic: &ObjDic) -> Ptr <Dict> {
-            Ptr::new (Dict { obj_dic: obj_dic.clone () })
-        }
-    }
+
+    impl_tag! (Dict, DICT_T);
+
     impl Obj for Dict {
         fn tag (&self) -> Tag { DICT_T }
 
@@ -1190,6 +1207,11 @@
                 let other = obj_to::<Dict> (other);
                 (obj_dic_eq (&self.obj_dic, &other.obj_dic))
             }
+        }
+    }
+    impl Dict {
+        fn make (obj_dic: &ObjDic) -> Ptr <Dict> {
+            Ptr::new (Dict { obj_dic: obj_dic.clone () })
         }
     }
     pub fn dict_to_list_rev (dict: Ptr <Dict>) -> Ptr <Obj> {
@@ -1213,8 +1235,7 @@
             let pair = car (list.dup ());
             let key = car (pair.dup ());
             let rest = cdr (pair.dup ());
-            assert! (sym_p (& key));
-            let sym = obj_to::<Sym> (key);
+            let sym = Sym::cast (key);
             let name = &sym.sym;
             if cons_p (&rest) {
                 let obj = car (rest);
@@ -1248,8 +1269,7 @@
             for _ in 0..self.counter {
                 let key = env.obj_stack.pop () .unwrap ();
                 let obj = env.obj_stack.pop () .unwrap ();
-                assert! (sym_p (&key));
-                let sym = obj_to::<Sym> (key);
+                let sym = Sym::cast (key);
                 let name = sym.sym .as_str ();
                 obj_dic.ins (name, Some (obj));
             }
@@ -1346,8 +1366,7 @@
         while (cons_p (&sexp_list)) {
             let sexp = car (sexp_list.dup ());
             let name = car (cdr (sexp.dup ()));
-            assert! (sym_p (&name));
-            let name = obj_to::<Sym> (name);
+            let name = Sym::cast (name);
             let value = car (cdr (cdr (sexp.dup ())));
             obj_dic.ins (&name.sym, Some (value));
             sexp_list = cdr (sexp_list.dup ())
@@ -1359,11 +1378,11 @@
             format! ("()")
         } else if (cons_p (&sexp)) {
             format! ("({})", sexp_list_repr (env, sexp))
-        } else if (vect_p (&sexp)) {
-            let v = obj_to::<Vect> (sexp);
+        } else if (Vect::p (&sexp)) {
+            let v = Vect::cast (sexp);
             let l = vect_to_list (v);
             format! ("[{}]", sexp_list_repr (env, l))
-        } else if (dict_p (&sexp)) {
+        } else if (Dict::p (&sexp)) {
             let d = obj_to::<Dict> (sexp);
             let l = dict_to_list (d);
             let v = list_to_vect (l);
@@ -1374,10 +1393,10 @@
             let v = Vect::make (&obj_vec);
             let l = vect_to_list (v);
             format! ("{{{}}}", sexp_list_repr (env, l))
-        } else if (str_p (&sexp)) {
-            let str = obj_to::<Str> (sexp);
+        } else if (Str::p (&sexp)) {
+            let str = Str::cast (sexp);
             format! ("\"{}\"", str.str)
-        } else if (sym_p (&sexp)) {
+        } else if (Sym::p (&sexp)) {
             let sym = obj_to::<Sym> (sexp);
             sym.sym.clone ()
         } else {
@@ -1400,7 +1419,7 @@
         }
     }
     fn sym_sexp_as_str_p (sexp: &Ptr <Obj>, str: &str) -> bool {
-        if ! sym_p (&sexp) {
+        if ! Sym::p (&sexp) {
             false
         } else {
             let sym = obj_to::<Sym> (sexp.dup ());
@@ -1421,17 +1440,9 @@
     struct Keyword {
         fun: KeywordFn,
     }
-    pub fn keyword_p (x: &Ptr <Obj>) -> bool {
-        let tag = x.tag ();
-        (KEYWORD_T == tag)
-    }
-    impl Keyword {
-        fn make (fun: KeywordFn) -> Ptr <Keyword> {
-            Ptr::new (Keyword {
-                fun,
-            })
-        }
-    }
+
+    impl_tag! (Keyword, KEYWORD_T);
+
     impl Obj for Keyword {
         fn tag (&self) -> Tag { KEYWORD_T }
 
@@ -1444,12 +1455,19 @@
             }
         }
     }
+    impl Keyword {
+        fn make (fun: KeywordFn) -> Ptr <Keyword> {
+            Ptr::new (Keyword {
+                fun,
+            })
+        }
+    }
     fn find_keyword (
         env: &Env,
         name: &str,
     ) -> Option <Ptr <Keyword>> {
         if let Some (obj) = env.obj_dic.get (name) {
-            if keyword_p (obj) {
+            if Keyword::p (obj) {
                 let keyword = obj_to::<Keyword> (obj.dup ());
                 Some (keyword)
             } else {
@@ -1464,7 +1482,7 @@
             return false;
         }
         let head = car (sexp.dup ());
-        if ! sym_p (&head) {
+        if ! Sym::p (&head) {
             false
         } else {
             let sym = obj_to::<Sym> (head);
@@ -1499,10 +1517,9 @@
     struct Macro {
         obj: Ptr <Obj>,
     }
-    pub fn macro_p (x: &Ptr <Obj>) -> bool {
-        let tag = x.tag ();
-        (MACRO_T == tag)
-    }
+
+    impl_tag! (Macro, MACRO_T);
+
     impl Obj for Macro {
         fn tag (&self) -> Tag { MACRO_T }
 
@@ -1520,7 +1537,7 @@
         name: &str,
     ) -> Option <Ptr <Macro>> {
         if let Some (obj) = env.obj_dic.get (name) {
-            if macro_p (obj) {
+            if Macro::p (obj) {
                 let mac = obj_to::<Macro> (obj.dup ());
                 Some (mac)
             } else {
@@ -1535,7 +1552,7 @@
             return false;
         }
         let head = car (sexp.dup ());
-        if ! sym_p (&head) {
+        if ! Sym::p (&head) {
             false
         } else {
             let sym = obj_to::<Sym> (head);
@@ -1740,7 +1757,7 @@
           let mut arity = 0;
           while ! null_p (&body) {
               let head = car (body.dup ());
-              if ! sym_p (&head) {
+              if ! Sym::p (&head) {
                   arity += 1;
               } else {
                   let sym = obj_to::<Sym> (head.dup ());
@@ -1785,15 +1802,15 @@
         static_scope: &StaticScope,
         sexp: Ptr <Obj>,
     ) -> Ptr <JoVec> {
-        if str_p (&sexp) || num_p (&sexp) {
+        if Str::p (&sexp) || Num::p (&sexp) {
             lit_compile (env, static_scope, sexp)
-        } else if sym_p (&sexp) {
+        } else if Sym::p (&sexp) {
             let sym = obj_to::<Sym> (sexp);
             sym_compile (env, static_scope, sym)
-        } else if vect_p (&sexp) {
+        } else if Vect::p (&sexp) {
             let vect = obj_to::<Vect> (sexp);
             vect_compile (env, static_scope, vect)
-        } else if dict_p (&sexp) {
+        } else if Dict::p (&sexp) {
             let dict = obj_to::<Dict> (sexp);
             dict_compile (env, static_scope, dict)
         } else if keyword_sexp_p (env, &sexp) {
@@ -1830,6 +1847,9 @@
     struct Module {
         module_env: Env,
     }
+
+    impl_tag! (Module, MODULE_T);
+
     impl Obj for Module {
         fn tag (&self) -> Tag { MODULE_T }
 
@@ -1855,17 +1875,9 @@
     struct TopKeyword {
         fun: TopKeywordFn,
     }
-    pub fn top_keyword_p (x: &Ptr <Obj>) -> bool {
-        let tag = x.tag ();
-        (TOP_KEYWORD_T == tag)
-    }
-    impl TopKeyword {
-        fn make (fun: TopKeywordFn) -> Ptr <TopKeyword> {
-            Ptr::new (TopKeyword {
-                fun,
-            })
-        }
-    }
+
+    impl_tag! (TopKeyword, TOP_KEYWORD_T);
+
     impl Obj for TopKeyword {
         fn tag (&self) -> Tag { TOP_KEYWORD_T }
 
@@ -1878,12 +1890,19 @@
             }
         }
     }
+    impl TopKeyword {
+        fn make (fun: TopKeywordFn) -> Ptr <TopKeyword> {
+            Ptr::new (TopKeyword {
+                fun,
+            })
+        }
+    }
     fn find_top_keyword (
         env: &Env,
         name: &str,
     ) -> Option <Ptr <TopKeyword>> {
         if let Some (obj) = env.obj_dic.get (name) {
-            if top_keyword_p (obj) {
+            if TopKeyword::p (obj) {
                 let top_keyword = obj_to::<TopKeyword> (obj.dup ());
                 Some (top_keyword)
             } else {
@@ -1898,7 +1917,7 @@
             return false;
         }
         let head = car (sexp.dup ());
-        if ! sym_p (&head) {
+        if ! Sym::p (&head) {
             false
         } else {
             let sym = obj_to::<Sym> (head);
@@ -2049,7 +2068,7 @@
       }
       fn assign_data_p (body: &Ptr <Obj>) -> bool {
           (cons_p (&body) &&
-           sym_p (&(car (body.dup ()))) &&
+           Sym::p (&(car (body.dup ()))) &&
            cons_p (&(cdr (body.dup ()))) &&
            cons_p (&(car (cdr (body.dup ())))) &&
            sym_sexp_as_str_p (&(car (car (cdr (body.dup ())))), "data"))
@@ -2147,7 +2166,7 @@
           body: Ptr <Obj>,
       ) -> Ptr <JoVec> {
           let head = car (body.dup ());
-          assert! (vect_p (&head));
+          assert! (Vect::p (&head));
           let name_vect = obj_to::<Vect> (head);
           let name_vec = name_vect_to_name_vec (name_vect);
           let rest = cdr (body);
