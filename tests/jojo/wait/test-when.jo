@@ -1,11 +1,11 @@
 (when (eq 1 1)
-  (assert true-c))
+  (assert true))
 
 (assert
   (when (eq 1 1)
-    true-c))
+    true))
 
 (assert
   (not
    (when (eq 1 2)
-     true-c)))
+     true)))

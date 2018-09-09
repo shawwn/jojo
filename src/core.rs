@@ -954,31 +954,64 @@
                 });
         };
     }
-    pub fn true_c () -> Ptr <Data> {
-        Data::unit (TRUE_T)
+    pub struct True;
+
+    impl_tag! (True, TRUE_T);
+
+    impl Obj for True {
+        fn tag (&self) -> Tag { TRUE_T }
+
+        fn eq (&self, other: Ptr <Obj>) -> bool {
+            if self.tag () != other.tag () {
+                false
+            } else {
+                true
+            }
+        }
+    }
+    impl True {
+        fn make () -> Ptr <True> {
+            Ptr::new (True {})
+        }
+    }
+    pub struct False;
+
+    impl_tag! (False, FALSE_T);
+
+    impl Obj for False {
+        fn tag (&self) -> Tag { FALSE_T }
+
+        fn eq (&self, other: Ptr <Obj>) -> bool {
+            if self.tag () != other.tag () {
+                false
+            } else {
+                true
+            }
+        }
+    }
+    impl False {
+        fn make () -> Ptr <False> {
+            Ptr::new (False {})
+        }
     }
     pub fn true_p (x: &Ptr <Obj>) -> bool {
         let tag = x.tag ();
         (TRUE_T == tag)
     }
 
-    pub fn false_c () -> Ptr <Data> {
-        Data::unit (FALSE_T)
-    }
     pub fn false_p (x: &Ptr <Obj>) -> bool {
         let tag = x.tag ();
         (FALSE_T == tag)
     }
-
-    pub fn not (x: Ptr <Obj>) -> Ptr <Data> {
+    pub fn not (x: Ptr <Obj>) -> Ptr <Obj> {
         make_bool (false_p (&x))
     }
-    pub fn make_bool (b: bool) -> Ptr <Data> {
+    pub fn make_bool (b: bool) -> Ptr <Obj> {
         if b {
-            true_c ()
+            True::make ()
         }
         else {
-            false_c ()
+            False::make ()
         }
     }
     pub struct Str { pub str: String }
@@ -2353,10 +2386,8 @@
         });
     }
     fn expose_bool (env: &mut Env) {
-        env.define ("true-c", DataCons::unit (TRUE_T));
-        env.define ("false-c", DataCons::unit (FALSE_T));
-        env.define ("true", true_c ());
-        env.define ("false", false_c ());;
+        env.define ("true", True::make ());
+        env.define ("false", False::make ());;
         define_prim! (env, "not", ["x"], not);;
     }
     fn expose_str (env: &mut Env) {
