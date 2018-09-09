@@ -1,6 +1,6 @@
-(assert (eq (*) null-c))
-(assert (eq (* 1) (cons-c 1 null-c)))
-(assert (eq (* 1 2) (cons-c 1 (cons-c 2 null-c))))
+(assert (eq (*) null))
+(assert (eq (* 1) (cons 1 null)))
+(assert (eq (* 1 2) (cons 1 (cons 2 null))))
 (assert (eq (list-to-vect (* 1 2 3 4)) [1 2 3 4]))
 
 (assert (eq (list-length (* 1 2 3))

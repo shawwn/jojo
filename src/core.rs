@@ -230,6 +230,11 @@
               Ptr::clone (self)
           }
       }
+      // impl Dup for Ptr <Type> {
+      //     fn dup (&self) -> Self {
+      //         Ptr::clone (self)
+      //     }
+      // }
       impl Dup for Ptr <Jo> {
           fn dup (&self) -> Self {
               Ptr::clone (self)
@@ -1180,18 +1185,67 @@
         let x = Num::cast (x);
         Num::make (x.num + 1.0)
     }
-    pub fn null_c () -> Ptr <Obj> {
-       Data::unit (NULL_T)
+    pub struct Null;
+
+    impl_tag! (Null, NULL_T);
+
+    impl Obj for Null {
+        fn tag (&self) -> Tag { NULL_T }
+
+        fn eq (&self, other: Ptr <Obj>) -> bool {
+            if self.tag () != other.tag () {
+                false
+            } else {
+                true
+            }
+        }
+    }
+    impl Null {
+        fn make () -> Ptr <Null> {
+            Ptr::new (Null {})
+        }
+    }
+    pub fn null () -> Ptr <Obj> {
+       Null::make ()
+    }
+    pub struct Cons {
+        car: Ptr <Obj>,
+        cdr: Ptr <Obj>,
+    }
+
+    impl_tag! (Cons, CONS_T);
+
+    impl Obj for Cons {
+        fn tag (&self) -> Tag { CONS_T }
+
+        fn obj_dic (&self) -> Option <Ptr <ObjDic>> {
+            let mut obj_dic = ObjDic::new ();
+            obj_dic.ins ("car", Some (self.car.dup ()));
+            obj_dic.ins ("cdr", Some (self.cdr.dup ()));
+            Some (Ptr::new (obj_dic))
+        }
+
+        fn eq (&self, other: Ptr <Obj>) -> bool {
+            if self.tag () != other.tag () {
+                false
+            } else {
+                let other = obj_to::<Cons> (other);
+                (obj_eq (&self.car, &other.car) &&
+                 obj_eq (&self.cdr, &other.cdr))
+            }
+        }
+    }
+    impl Cons {
+        fn make (car: Ptr <Obj>, cdr: Ptr <Obj>) -> Ptr <Cons> {
+            Ptr::new (Cons { car, cdr })
+        }
+    }
+    pub fn cons (car: Ptr <Obj>, cdr: Ptr <Obj>) -> Ptr <Obj> {
+        Cons::make (car, cdr)
     }
     pub fn null_p (x: &Ptr <Obj>) -> bool {
         let tag = x.tag ();
         (NULL_T == tag)
-    }
-    pub fn cons_c (car: Ptr <Obj>, cdr: Ptr <Obj>) -> Ptr <Obj> {
-        Data::make (CONS_T, vec! [
-            ("car", car),
-            ("cdr", cdr),
-        ])
     }
     pub fn cons_p (x: &Ptr <Obj>) -> bool {
         let tag = x.tag ();
@@ -1229,16 +1283,16 @@
     }
     fn list_rev (mut list: Ptr <Obj>) -> Ptr <Obj> {
         assert! (list_p (&list));
-        let mut rev = null_c ();
+        let mut rev = null ();
         while ! null_p (&list) {
             let obj = car (list.dup ());
-            rev = cons_c (obj, rev);
+            rev = cons (obj, rev);
             list = cdr (list);
         }
         rev
     }
     pub fn unit_list (obj: Ptr <Obj>) -> Ptr <Obj> {
-        cons_c (obj, null_c ())
+        cons (obj, null ())
     }
     pub struct JNone;
 
@@ -1261,7 +1315,7 @@
         }
     }
     pub struct JSome {
-        value: Ptr <Obj>
+        value: Ptr <Obj>,
     }
 
     impl_tag! (JSome, SOME_T);
@@ -1321,9 +1375,9 @@
     pub fn vect_to_list (vect: Ptr <Obj>) -> Ptr <Obj> {
         let vect = Vect::cast (vect);
         let obj_vec = &vect.obj_vec;
-        let mut result = null_c ();
+        let mut result = null ();
         for x in obj_vec .iter () .rev () {
-            result = cons_c (x.dup (), result);
+            result = cons (x.dup (), result);
         }
         result
     }
@@ -1394,13 +1448,13 @@
     }
     pub fn dict_to_list_rev (dict: Ptr <Obj>) -> Ptr <Obj> {
         let dict = Dict::cast (dict);
-        let mut list = null_c ();
+        let mut list = null ();
         let obj_dic = &dict.obj_dic;
         for kv in obj_dic.iter () {
             let sym = Sym::make (kv.0);
             let obj = kv.1;
-            let pair = cons_c (sym, unit_list (obj.dup ()));
-            list = cons_c (pair, list);
+            let pair = cons (sym, unit_list (obj.dup ()));
+            list = cons (pair, list);
         }
         list
     }
@@ -1429,14 +1483,14 @@
     }
     fn dict_to_flat_list_rev (dict: Ptr <Obj>) -> Ptr <Obj> {
         let dict = Dict::cast (dict);
-        let mut list = null_c ();
+        let mut list = null ();
         for kv in dict.obj_dic.iter () {
-            let key = cons_c (
+            let key = cons (
                 Sym::make ("quote"),
                 unit_list (Sym::make (kv.0)));
             let obj = kv.1.dup ();
-            list = cons_c (obj, list);
-            list = cons_c (key, list);
+            list = cons (obj, list);
+            list = cons (key, list);
         }
         list
     }
@@ -1478,7 +1532,7 @@
             token::Token::Vect { token_vec, .. } => parse_sexp_vect (token_vec),
             token::Token::Dict { token_vec, .. } => parse_sexp_dict (token_vec),
             token::Token::QuotationMark { mark_name, token, .. } =>
-                cons_c (Sym::make (mark_name),
+                cons (Sym::make (mark_name),
                         unit_list (parse_sexp (token))),
             token::Token::Num { num, .. } => Num::make (*num),
             token::Token::Str { str, .. } => Str::make (str),
@@ -1486,13 +1540,13 @@
         }
     }
     pub fn parse_sexp_list (token_vec: &token::TokenVec) -> Ptr <Obj> {
-        let mut list = null_c ();
+        let mut list = null ();
         token_vec
             .iter ()
             .rev ()
             .map (parse_sexp)
             .for_each (|obj| {
-                list = cons_c (obj, list.dup ());
+                list = cons (obj, list.dup ());
             });
         list
     }
@@ -1514,18 +1568,18 @@
             if sym_sexp_as_str_p (&head, "=") {
                 let next = car (cdr (sexp_list.dup ()));
                 let rest = cdr (cdr (sexp_list));
-                let new_last_sexp = cons_c (
-                    head, cons_c (
+                let new_last_sexp = cons (
+                    head, cons (
                         last_sexp,
                         unit_list (next)));
-                cons_c (
+                cons (
                     new_last_sexp,
                     sexp_list_prefix_assign (rest))
             }
             else
             {
                 let rest = cdr (sexp_list);
-                cons_c (
+                cons (
                     last_sexp,
                     sexp_list_prefix_assign_with_last_sexp (rest, head))
             }
@@ -1569,7 +1623,7 @@
             let v = list_to_vect (l);
             let obj_vec = v.obj_vec
                 .iter ()
-                .map (|x| cons_c (Sym::make ("="), x.dup ()))
+                .map (|x| cons (Sym::make ("="), x.dup ()))
                 .collect ();
             let v = Vect::make (&obj_vec);
             let l = vect_to_list (v);
@@ -1903,7 +1957,7 @@
           if null_p (& sexp_list) {
               sexp_list
           } else {
-              cons_c (cdr (car (sexp_list.dup ())),
+              cons (cdr (car (sexp_list.dup ())),
                       sexp_list_assign_to_pair (cdr (sexp_list)))
           }
       }
@@ -2285,9 +2339,9 @@
           let name = car (head.dup ());
           let arg_list = cdr (head);
           let rest = cdr (body);
-          cons_c (name, unit_list (
-              cons_c (Sym::make ("lambda"),
-                      cons_c (list_to_vect (arg_list),
+          cons (name, unit_list (
+              cons (Sym::make ("lambda"),
+                      cons (list_to_vect (arg_list),
                               rest))))
       }
       fn tk_assign_value (
@@ -2327,8 +2381,8 @@
           } else {
               let drop = unit_list (Sym::make ("drop"));
               let body = do_body_trans (rest);
-              let body = cons_c (drop, body);
-              let body = cons_c (sexp, body);
+              let body = cons (drop, body);
+              let body = cons (sexp, body);
               return body;
           }
       }
@@ -2354,7 +2408,7 @@
           let static_scope = static_scope_extend (
               old_static_scope, &name_vec);
           let jojo = sexp_compile (
-              env, &static_scope, cons_c (Sym::make ("do"), rest));
+              env, &static_scope, cons (Sym::make ("do"), rest));
           jojo! [
               LambdaJo  {
                   arg_dic: Ptr::new (Dic::from (name_vec)),
@@ -2386,7 +2440,7 @@
           body: Ptr <Obj>,
       ) -> Ptr <JoVec> {
           jojo! [
-              LitJo { obj: cons_c (Sym::make ("note"), body) },
+              LitJo { obj: cons (Sym::make ("note"), body) },
           ]
       }
       pub struct AssertJo {
@@ -2469,7 +2523,7 @@
             String::from ("car"),
             String::from ("cdr"),
         ]));
-        env.define ("null", null_c ());
+        env.define ("null", null ());
         define_prim! (env, "list-length", ["list"], list_length);
     }
     fn expose_option (env: &mut Env) {
@@ -2673,7 +2727,7 @@
 
         let last_cry = env.define (
             "last-cry",
-            cons_c (Str::make ("bye"),
+            cons (Str::make ("bye"),
                     Str::make ("world")));
 
         env.frame_stack.push (frame! [
@@ -2687,8 +2741,8 @@
         env.run ();
         assert_eq! (3, env.obj_stack.len ());
         assert_pop (&mut env,
-                    cons_c (Str::make ("bye"),
-                            Str::make ("world")));
+                    cons (Str::make ("bye"),
+                          Str::make ("world")));
         assert_eq! (2, env.obj_stack.len ());
         assert_pop (&mut env, Str::make ("bye"));
         assert_eq! (1, env.obj_stack.len ());

@@ -11,21 +11,3 @@ x2
 (= (f2 x) (f1 x x))
 
 (= (f3 x) (f1 (quote x) (quote x)))
-
-(= zero-t (data))
-(= succ-t (data prev))
-
-(= zero (zero-c))
-(= one (succ-c zero))
-(= two (succ-c one))
-(= three (succ-c two))
-(= four (succ-c three))
-
-(assert (eq zero zero))
-
-(println zero)
-
-(println (list-length null))
-
-(println (type-of zero))
-(assert (eq prim-t (type-of list-length)))
