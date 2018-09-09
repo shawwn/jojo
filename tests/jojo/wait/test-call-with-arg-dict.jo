@@ -56,9 +56,9 @@
 ;; data
 
 (assert
-  (eq (cons-c car = 1 cdr = 2)
-      (cons-c 1 2)))
+  (eq (cons car = 1 cdr = 2)
+      (cons 1 2)))
 
 (assert
-  (eq ((cons-c car = 1) cdr = 2)
-      (cons-c 1 2)))
+  (eq ((cons car = 1) cdr = 2)
+      (cons 1 2)))

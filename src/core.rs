@@ -95,15 +95,6 @@
            .all (|p| ((p.0).0 == (p.1).0 &&
                       obj_eq (& (p.0).1, & (p.1).1))))
       }
-      fn obj_dic_extend (
-          obj_dic: &ObjDic,
-          name: &str,
-          obj: Ptr <Obj>,
-      ) -> Ptr <ObjDic> {
-          let mut obj_dic = obj_dic.clone ();
-          obj_dic.set (name, Some (obj));
-          Ptr::new (obj_dic)
-      }
       fn type_dic_eq (
           lhs: &TypeDic,
           rhs: &TypeDic,
@@ -361,6 +352,19 @@
             }
         }
     }
+    fn method_dic_extend (
+        obj_dic: &ObjDic,
+        name: &str,
+        obj: Ptr <Obj>,
+    ) -> Ptr <ObjDic> {
+        let mut obj_dic = obj_dic.clone ();
+        if obj_dic.has_name (name) {
+            obj_dic.set (name, Some (obj));
+        } else {
+            obj_dic.ins (name, Some (obj));
+        }
+        Ptr::new (obj_dic)
+    }
     impl Env {
         pub fn assign (
             &mut self,
@@ -373,12 +377,12 @@
             } else {
                 if let Some (typ) = self.find_type (type_name) {
                     let new_typ = Ptr::new (Type  {
-                        method_dic: obj_dic_extend (
+                        method_dic: method_dic_extend (
                             &typ.method_dic, name, obj),
                         tag_of_type: typ.tag_of_type,
                         super_tag_vec: typ.super_tag_vec.clone (),
                     });
-                    self.type_dic.set (name, Some (new_typ));
+                    self.type_dic.set (type_name, Some (new_typ));
                 } else {
                     eprintln! ("- Env::assign");
                     eprintln! ("  unknown type_name : {}", type_name);
@@ -2518,12 +2522,8 @@
         define_prim! (env, "sym-rest", ["sym"], sym_rest);
     }
     fn expose_list (env: &mut Env) {
-        env.define ("null-c", DataCons::unit (NULL_T));
-        env.define ("cons-c", DataCons::make (CONS_T, vec! [
-            String::from ("car"),
-            String::from ("cdr"),
-        ]));
         env.define ("null", null ());
+        define_prim! (env, "cons", ["car", "cdr"], cons);
         define_prim! (env, "list-length", ["list"], list_length);
     }
     fn expose_option (env: &mut Env) {

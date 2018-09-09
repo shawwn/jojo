@@ -5,7 +5,13 @@
 
   - list-t
 
+  - vect-t
+
+  - num-t
+
   - (case)
+
+  - dict-t
 
   - apply_compile handle (.method ...)
 
@@ -14,6 +20,8 @@
       bool-p -- (eq bool-t)
       list-p -- (eq list-t)
       option-p -- (eq option-t)
+
+  - (=) as (letrec) in (lambda)
 
 * use
 
@@ -183,20 +191,6 @@
            lhs.iter () .zip (rhs.iter ())
            .all (|p| ((p.0).0 == (p.1).0 &&
                       obj_eq (& (p.0).1, & (p.1).1))))
-      }
-      #+end_src
-
-***** obj_dic_extend
-
-      #+begin_src rust
-      fn obj_dic_extend (
-          obj_dic: &ObjDic,
-          name: &str,
-          obj: Ptr <Obj>,
-      ) -> Ptr <ObjDic> {
-          let mut obj_dic = obj_dic.clone ();
-          obj_dic.set (name, Some (obj));
-          Ptr::new (obj_dic)
       }
       #+end_src
 
@@ -598,6 +592,24 @@
     }
     #+end_src
 
+*** method_dic_extend
+
+    #+begin_src rust
+    fn method_dic_extend (
+        obj_dic: &ObjDic,
+        name: &str,
+        obj: Ptr <Obj>,
+    ) -> Ptr <ObjDic> {
+        let mut obj_dic = obj_dic.clone ();
+        if obj_dic.has_name (name) {
+            obj_dic.set (name, Some (obj));
+        } else {
+            obj_dic.ins (name, Some (obj));
+        }
+        Ptr::new (obj_dic)
+    }
+    #+end_src
+
 *** Env::assign
 
     #+begin_src rust
@@ -613,12 +625,12 @@
             } else {
                 if let Some (typ) = self.find_type (type_name) {
                     let new_typ = Ptr::new (Type  {
-                        method_dic: obj_dic_extend (
+                        method_dic: method_dic_extend (
                             &typ.method_dic, name, obj),
                         tag_of_type: typ.tag_of_type,
                         super_tag_vec: typ.super_tag_vec.clone (),
                     });
-                    self.type_dic.set (name, Some (new_typ));
+                    self.type_dic.set (type_name, Some (new_typ));
                 } else {
                     eprintln! ("- Env::assign");
                     eprintln! ("  unknown type_name : {}", type_name);
@@ -3794,12 +3806,8 @@
 
     #+begin_src rust
     fn expose_list (env: &mut Env) {
-        env.define ("null-c", DataCons::unit (NULL_T));
-        env.define ("cons-c", DataCons::make (CONS_T, vec! [
-            String::from ("car"),
-            String::from ("cdr"),
-        ]));
         env.define ("null", null ());
+        define_prim! (env, "cons", ["car", "cdr"], cons);
         define_prim! (env, "list-length", ["list"], list_length);
     }
     #+end_src
