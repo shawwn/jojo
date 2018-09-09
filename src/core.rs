@@ -99,10 +99,10 @@
           obj_dic: &ObjDic,
           name: &str,
           obj: Ptr <Obj>,
-      ) -> ObjDic {
+      ) -> Ptr <ObjDic> {
           let mut obj_dic = obj_dic.clone ();
           obj_dic.set (name, Some (obj));
-          obj_dic
+          Ptr::new (obj_dic)
       }
       fn type_dic_eq (
           lhs: &TypeDic,
@@ -241,6 +241,11 @@
           }
       }
       impl Dup for Ptr <JoVec> {
+          fn dup (&self) -> Self {
+              Ptr::clone (self)
+          }
+      }
+      impl Dup for Ptr <ObjDic> {
           fn dup (&self) -> Self {
               Ptr::clone (self)
           }
@@ -422,7 +427,7 @@
     pub trait Obj {
         fn tag (&self) -> Tag;
 
-        fn obj_dic (&self) -> Option <&ObjDic> { None }
+        fn obj_dic (&self) -> Option <Ptr <ObjDic>> { None }
 
         fn eq (&self, _other: Ptr <Obj>) -> bool { false }
 
@@ -604,14 +609,14 @@
         }
     }
     pub struct LambdaJo {
-        arg_dic: ObjDic,
+        arg_dic: Ptr <ObjDic>,
         jojo: Ptr <JoVec>,
     }
 
     impl Jo for LambdaJo {
         fn exe (&self, env: &mut Env, scope: Ptr <Scope>) {
             env.obj_stack.push (Ptr::new (Closure {
-                arg_dic: self.arg_dic.clone (),
+                arg_dic: self.arg_dic.dup (),
                 jojo: self.jojo.dup (),
                 scope: scope.dup (),
             }));
@@ -627,7 +632,7 @@
         }
     }
     pub struct Type {
-        method_dic: ObjDic,
+        method_dic: Ptr <ObjDic>,
         tag_of_type: Tag,
         super_tag_vec: TagVec,
     }
@@ -636,7 +641,10 @@
 
     impl Obj for Type {
         fn tag (&self) -> Tag { TYPE_T }
-        fn obj_dic (&self) -> Option <&ObjDic> { Some (&self.method_dic) }
+
+        fn obj_dic (&self) -> Option <Ptr <ObjDic>> {
+            Some (self.method_dic.dup ())
+        }
 
         fn eq (&self, other: Ptr <Obj>) -> bool {
             if self.tag () != other.tag () {
@@ -657,7 +665,7 @@
     impl Type {
         fn make (tag: Tag) -> Ptr <Type> {
             Ptr::new (Type {
-                method_dic: ObjDic::new (),
+                method_dic: Ptr::new (ObjDic::new ()),
                 tag_of_type: tag,
                 super_tag_vec: TagVec::new (),
             })
@@ -677,12 +685,15 @@
     }
     pub struct Data {
         tag_of_type: Tag,
-        field_dic: ObjDic,
+        field_dic: Ptr <ObjDic>,
     }
 
     impl Obj for Data {
         fn tag (&self) -> Tag { self.tag_of_type }
-        fn obj_dic (&self) -> Option <&ObjDic> { Some (&self.field_dic) }
+
+        fn obj_dic (&self) -> Option <Ptr <ObjDic>> {
+            Some (self.field_dic.dup ())
+        }
 
         fn eq (&self, other: Ptr <Obj>) -> bool {
             if self.tag () != other.tag () {
@@ -701,7 +712,7 @@
         ) -> Ptr <Data> {
             Ptr::new (Data {
                 tag_of_type: tag,
-                field_dic: Dic::from (vec),
+                field_dic: Ptr::new (Dic::from (vec)),
             })
         }
     }
@@ -709,20 +720,23 @@
         fn unit (tag: Tag) -> Ptr <Data> {
             Ptr::new (Data {
                 tag_of_type: tag,
-                field_dic: ObjDic::new (),
+                field_dic: Ptr::new (ObjDic::new ()),
             })
         }
     }
     pub struct DataCons {
         tag_of_type: Tag,
-        field_dic: ObjDic,
+        field_dic: Ptr <ObjDic>,
     }
 
     impl_tag! (DataCons, DATA_CONS_T);
 
     impl Obj for DataCons {
         fn tag (&self) -> Tag { DATA_CONS_T }
-        fn obj_dic (&self) -> Option <&ObjDic> { Some (&self.field_dic) }
+
+        fn obj_dic (&self) -> Option <Ptr <ObjDic>> {
+            Some (self.field_dic.dup ())
+        }
 
         fn eq (&self, other: Ptr <Obj>) -> bool {
             if self.tag () != other.tag () {
@@ -750,12 +764,12 @@
             if arity == lack {
                 env.obj_stack.push (Ptr::new (Data {
                     tag_of_type,
-                    field_dic,
+                    field_dic: Ptr::new (field_dic),
                 }));
             } else {
                 env.obj_stack.push (Ptr::new (DataCons {
                     tag_of_type,
-                    field_dic,
+                    field_dic: Ptr::new (field_dic),
                 }));
             }
         }
@@ -767,7 +781,7 @@
         ) -> Ptr <DataCons> {
             Ptr::new (DataCons {
                 tag_of_type: tag,
-                field_dic: Dic::from (vec),
+                field_dic: Ptr::new (Dic::from (vec)),
             })
         }
     }
@@ -777,12 +791,12 @@
         ) -> Ptr <DataCons> {
             Ptr::new (DataCons {
                 tag_of_type: tag,
-                field_dic: ObjDic::new (),
+                field_dic: Ptr::new (ObjDic::new ()),
             })
         }
     }
     pub struct Closure {
-        arg_dic: ObjDic,
+        arg_dic: Ptr <ObjDic>,
         jojo: Ptr <JoVec>,
         scope: Ptr <Scope>,
     }
@@ -791,7 +805,10 @@
 
     impl Obj for Closure {
         fn tag (&self) -> Tag { CLOSURE_T }
-        fn obj_dic (&self) -> Option <&ObjDic> { Some (&self.arg_dic) }
+
+        fn obj_dic (&self) -> Option <Ptr <ObjDic>> {
+            Some (self.arg_dic.dup ())
+        }
 
         fn eq (&self, other: Ptr <Obj>) -> bool {
             if self.tag () != other.tag () {
@@ -824,7 +841,7 @@
                 }));
             } else {
                 env.obj_stack.push (Ptr::new (Closure {
-                    arg_dic,
+                    arg_dic: Ptr::new (arg_dic),
                     jojo: self.jojo.dup (),
                     scope: self.scope.dup (),
                 }));
@@ -1223,17 +1240,57 @@
     pub fn unit_list (obj: Ptr <Obj>) -> Ptr <Obj> {
         cons_c (obj, null_c ())
     }
-    pub fn none_c () -> Ptr <Obj> {
-       Data::unit (NONE_T)
+    pub struct JNone;
+
+    impl_tag! (JNone, NONE_T);
+
+    impl Obj for JNone {
+        fn tag (&self) -> Tag { NONE_T }
+
+        fn eq (&self, other: Ptr <Obj>) -> bool {
+            if self.tag () != other.tag () {
+                false
+            } else {
+                true
+            }
+        }
     }
-    pub fn some_c (value: Ptr <Obj>) -> Ptr <Obj> {
-        Data::make (SOME_T, vec! [
-            ("value", value),
-        ])
+    impl JNone {
+        fn make () -> Ptr <JNone> {
+            Ptr::new (JNone {})
+        }
     }
-    pub fn value_of_some (some: Ptr <Obj>) -> Ptr <Obj> {
-        assert_eq! (SOME_T, some.tag ());
-        some.get ("value") .unwrap ()
+    pub struct JSome {
+        value: Ptr <Obj>
+    }
+
+    impl_tag! (JSome, SOME_T);
+
+    impl Obj for JSome {
+        fn tag (&self) -> Tag { SOME_T }
+
+        fn obj_dic (&self) -> Option <Ptr <ObjDic>> {
+            let mut obj_dic = ObjDic::new ();
+            obj_dic.ins ("value", Some (self.value.dup ()));
+            Some (Ptr::new (obj_dic))
+        }
+
+        fn eq (&self, other: Ptr <Obj>) -> bool {
+            if self.tag () != other.tag () {
+                false
+            } else {
+                let other = obj_to::<JSome> (other);
+                (obj_eq (&self.value, &other.value))
+            }
+        }
+    }
+    impl JSome {
+        fn make (value: Ptr <Obj>) -> Ptr <JSome> {
+            Ptr::new (JSome { value })
+        }
+    }
+    pub fn some (value: Ptr <Obj>) -> Ptr <JSome> {
+        JSome::make (value)
     }
     pub fn option_p (x: &Ptr <Obj>) -> bool {
         let tag = x.tag ();
@@ -2300,7 +2357,7 @@
               env, &static_scope, cons_c (Sym::make ("do"), rest));
           jojo! [
               LambdaJo  {
-                  arg_dic: Dic::from (name_vec),
+                  arg_dic: Ptr::new (Dic::from (name_vec)),
                   jojo,
               }
           ]
@@ -2415,6 +2472,10 @@
         env.define ("null", null_c ());
         define_prim! (env, "list-length", ["list"], list_length);
     }
+    fn expose_option (env: &mut Env) {
+        env.define ("none", JNone::make ());
+        define_prim! (env, "some", ["value"], some);
+    }
     fn expose_stack (env: &mut Env) {
         env.define_prim ("drop", vec! [], |env, _| {
             env.obj_stack.pop ();
@@ -2469,7 +2530,7 @@
         expose_sym (env);
         expose_list (env);
         // expose_vect (env);
-        // expose_maybe (env);
+        expose_option (env);
         // expose_dict (env);
         // expose_sexp (env);
         // expose_top_keyword (env);
@@ -2570,7 +2631,7 @@
         env.frame_stack.push (frame! [
             RefJo { id: bye },
             RefJo { id: world },
-            LambdaJo { arg_dic: Dic::from (vec! [ "x", "y" ]),
+            LambdaJo { arg_dic: Ptr::new (Dic::from (vec! [ "x", "y" ])),
                        jojo: jojo! [
                            LocalRefJo { level: 0, index: 1 },
                            LocalRefJo { level: 0, index: 0 },
@@ -2590,7 +2651,7 @@
         env.frame_stack.push (frame! [
             RefJo { id: bye },
             RefJo { id: world },
-            LambdaJo { arg_dic: Dic::from (vec! [ "x", "y" ]),
+            LambdaJo { arg_dic: Ptr::new (Dic::from (vec! [ "x", "y" ])),
                        jojo: jojo! [
                            LocalRefJo { level: 0, index: 1 },
                            LocalRefJo { level: 0, index: 0 },
