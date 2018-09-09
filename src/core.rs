@@ -771,7 +771,16 @@
             })
         }
     }
-
+    impl DataCons {
+        pub fn unit (
+            tag: Tag,
+        ) -> Ptr <DataCons> {
+            Ptr::new (DataCons {
+                tag_of_type: tag,
+                field_dic: ObjDic::new (),
+            })
+        }
+    }
     pub struct Closure {
         arg_dic: ObjDic,
         jojo: Ptr <JoVec>,
@@ -961,6 +970,9 @@
         (FALSE_T == tag)
     }
 
+    pub fn not (x: Ptr <Obj>) -> Ptr <Data> {
+        make_bool (false_p (&x))
+    }
     pub fn make_bool (b: bool) -> Ptr <Data> {
         if b {
             true_c ()
@@ -2261,7 +2273,7 @@
           ]
       }
       fn sexp_qoute_compile (
-          env: &mut Env,
+          _env: &mut Env,
           sexp: Ptr <Obj>,
       ) -> Ptr <JoVec> {
           jojo! [
@@ -2270,7 +2282,7 @@
       }
       fn k_quote (
           env: &mut Env,
-          static_scope: &StaticScope,
+          _static_scope: &StaticScope,
           body: Ptr <Obj>,
       ) -> Ptr <JoVec> {
           assert! (cons_p (&body));
@@ -2279,8 +2291,8 @@
           sexp_qoute_compile (env, sexp)
       }
       fn k_note (
-          env: &mut Env,
-          static_scope: &StaticScope,
+          _env: &mut Env,
+          _static_scope: &StaticScope,
           body: Ptr <Obj>,
       ) -> Ptr <JoVec> {
           jojo! [
@@ -2340,6 +2352,13 @@
             env.obj_stack.push (type_of (env, arg_idx (arg, 0)));
         });
     }
+    fn expose_bool (env: &mut Env) {
+        env.define ("true-c", DataCons::unit (TRUE_T));
+        env.define ("false-c", DataCons::unit (FALSE_T));
+        env.define ("true", true_c ());
+        env.define ("false", false_c ());;
+        define_prim! (env, "not", ["x"], not);;
+    }
     fn expose_str (env: &mut Env) {
         define_prim! (env, "str-length", ["str"], str_length);
         define_prim! (env, "str-append", ["ante", "succ"], str_append);
@@ -2357,6 +2376,11 @@
         define_prim! (env, "sym-rest", ["sym"], sym_rest);
     }
     fn expose_list (env: &mut Env) {
+        env.define ("null-c", DataCons::unit (NULL_T));
+        env.define ("cons-c", DataCons::make (CONS_T, vec! [
+            String::from ("car"),
+            String::from ("cdr"),
+        ]));
         env.define ("null", null_c ());
         define_prim! (env, "list-length", ["list"], list_length);
     }
@@ -2408,7 +2432,7 @@
     }
     fn expose_core (env: &mut Env) {
         expose_type (env);
-        // expose_bool (env);
+        expose_bool (env);
         // expose_num (env);
         expose_str (env);
         expose_sym (env);
@@ -2588,11 +2612,10 @@
         let world = env.define (
             "world", Str::make ("world"));
         let cons = env.define (
-            "cons-c", DataCons::make (
-                CONS_T, vec! [
-                    String::from ("car"),
-                    String::from ("cdr"),
-                ]));
+            "cons-c", DataCons::make (CONS_T, vec! [
+                String::from ("car"),
+                String::from ("cdr"),
+            ]));
 
         env.frame_stack.push (frame! [
             RefJo { id: bye },

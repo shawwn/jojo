@@ -7103,7 +7103,7 @@
         define (env, "false-c", false_c ());
         define (env, "false", false_c ());
         define_prim (
-            env, { "not", "bool" },
+            env, { "not", "x" },
             [] (env_t &env, obj_map_t &obj_map)
             {
                 auto obj = obj_map ["bool"];

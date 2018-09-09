@@ -1,9 +1,8 @@
 #+property: tangle core.rs
 #+title: core
-- bool-t
 - (case)
 - apply_compile handle (.method ...)
-- maybe native List
+- maybe native List, Bool, Obtion
 * use
 
 *** std
@@ -1137,10 +1136,19 @@
     }
     #+end_src
 
-*** [todo] Env::define_data_cons
+*** DataCons::unit
 
     #+begin_src rust
-
+    impl DataCons {
+        pub fn unit (
+            tag: Tag,
+        ) -> Ptr <DataCons> {
+            Ptr::new (DataCons {
+                tag_of_type: tag,
+                field_dic: ObjDic::new (),
+            })
+        }
+    }
     #+end_src
 
 * closure
@@ -1386,6 +1394,14 @@
         (FALSE_T == tag)
     }
 
+    #+end_src
+
+*** not
+
+    #+begin_src rust
+    pub fn not (x: Ptr <Obj>) -> Ptr <Data> {
+        make_bool (false_p (&x))
+    }
     #+end_src
 
 *** make_bool
@@ -3381,7 +3397,7 @@
 
       #+begin_src rust
       fn sexp_qoute_compile (
-          env: &mut Env,
+          _env: &mut Env,
           sexp: Ptr <Obj>,
       ) -> Ptr <JoVec> {
           jojo! [
@@ -3395,7 +3411,7 @@
       #+begin_src rust
       fn k_quote (
           env: &mut Env,
-          static_scope: &StaticScope,
+          _static_scope: &StaticScope,
           body: Ptr <Obj>,
       ) -> Ptr <JoVec> {
           assert! (cons_p (&body));
@@ -3419,8 +3435,8 @@
 
       #+begin_src rust
       fn k_note (
-          env: &mut Env,
-          static_scope: &StaticScope,
+          _env: &mut Env,
+          _static_scope: &StaticScope,
           body: Ptr <Obj>,
       ) -> Ptr <JoVec> {
           jojo! [
@@ -3532,6 +3548,18 @@
     }
     #+end_src
 
+*** expose_bool
+
+    #+begin_src rust
+    fn expose_bool (env: &mut Env) {
+        env.define ("true-c", DataCons::unit (TRUE_T));
+        env.define ("false-c", DataCons::unit (FALSE_T));
+        env.define ("true", true_c ());
+        env.define ("false", false_c ());;
+        define_prim! (env, "not", ["x"], not);;
+    }
+    #+end_src
+
 *** expose_str
 
     #+begin_src rust
@@ -3562,6 +3590,11 @@
 
     #+begin_src rust
     fn expose_list (env: &mut Env) {
+        env.define ("null-c", DataCons::unit (NULL_T));
+        env.define ("cons-c", DataCons::make (CONS_T, vec! [
+            String::from ("car"),
+            String::from ("cdr"),
+        ]));
         env.define ("null", null_c ());
         define_prim! (env, "list-length", ["list"], list_length);
     }
@@ -3633,7 +3666,7 @@
     #+begin_src rust
     fn expose_core (env: &mut Env) {
         expose_type (env);
-        // expose_bool (env);
+        expose_bool (env);
         // expose_num (env);
         expose_str (env);
         expose_sym (env);
@@ -3867,11 +3900,10 @@
         let world = env.define (
             "world", Str::make ("world"));
         let cons = env.define (
-            "cons-c", DataCons::make (
-                CONS_T, vec! [
-                    String::from ("car"),
-                    String::from ("cdr"),
-                ]));
+            "cons-c", DataCons::make (CONS_T, vec! [
+                String::from ("car"),
+                String::from ("cdr"),
+            ]));
 
         env.frame_stack.push (frame! [
             RefJo { id: bye },
