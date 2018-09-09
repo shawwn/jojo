@@ -24,6 +24,7 @@
   pub type Scope = Vec <ObjDic>; // index from end
 
   pub type StringVec = Vec <String>;
+  pub type CharVec = Vec <char>;
   pub type NameVec = Vec <Name>;
   pub type TagVec = Vec <Tag>;
   pub type ObjVec = Vec <Ptr <Obj>>;
@@ -993,11 +994,41 @@
         let str = Str::cast (str);
         Num::make (str.str.len () as f64)
     }
-
-
-
-
-
+    fn str_append (
+        ante: Ptr <Obj>,
+        succ: Ptr <Obj>,
+    ) -> Ptr <Str> {
+        let ante = Str::cast (ante);
+        let succ = Str::cast (succ);
+        Str::make (&format! ("{}{}", ante.str, succ.str))
+    }
+    fn str_slice (
+        str: Ptr <Obj>,
+        begin: Ptr <Obj>,
+        end: Ptr <Obj>,
+    ) -> Ptr <Str> {
+        let str = Str::cast (str);
+        let begin = Num::cast (begin);
+        let end = Num::cast (end);
+        let char_vec = str.str.chars() .collect::<CharVec> ();
+        let begin = begin.num as usize;
+        let end = end.num as usize;
+        let slice = &char_vec [begin..end];
+        Str::make (&slice .iter () .collect::<String> ())
+    }
+    fn str_ref (
+        str: Ptr <Obj>,
+        index: Ptr <Obj>,
+    ) -> Ptr <Str> {
+        str_slice (str, index.dup (), inc (index))
+    }
+    fn str_head (str: Ptr <Obj>) -> Ptr <Str> {
+        str_ref (str, Num::make (0.0))
+    }
+    fn str_rest (str: Ptr <Obj>) -> Ptr <Str> {
+        let len = str_length (str.dup ());
+        str_slice (str, Num::make (1.0), len)
+    }
     pub struct Sym { pub sym: String }
 
     impl_tag! (Sym, SYM_T);
@@ -1018,6 +1049,45 @@
         fn make (str: &str) -> Ptr <Sym> {
             Ptr::new (Sym { sym: String::from (str) })
         }
+    }
+    fn sym_length (sym: Ptr <Obj>) -> Ptr <Num> {
+        let sym = Sym::cast (sym);
+        Num::make (sym.sym.len () as f64)
+    }
+    fn sym_append (
+        ante: Ptr <Obj>,
+        succ: Ptr <Obj>,
+    ) -> Ptr <Sym> {
+        let ante = Sym::cast (ante);
+        let succ = Sym::cast (succ);
+        Sym::make (&format! ("{}{}", ante.sym, succ.sym))
+    }
+    fn sym_slice (
+        sym: Ptr <Obj>,
+        begin: Ptr <Obj>,
+        end: Ptr <Obj>,
+    ) -> Ptr <Sym> {
+        let sym = Sym::cast (sym);
+        let begin = Num::cast (begin);
+        let end = Num::cast (end);
+        let char_vec = sym.sym.chars() .collect::<CharVec> ();
+        let begin = begin.num as usize;
+        let end = end.num as usize;
+        let slice = &char_vec [begin..end];
+        Sym::make (&slice .iter () .collect::<String> ())
+    }
+    fn sym_ref (
+        sym: Ptr <Obj>,
+        index: Ptr <Obj>,
+    ) -> Ptr <Sym> {
+        sym_slice (sym, index.dup (), inc (index))
+    }
+    fn sym_head (sym: Ptr <Obj>) -> Ptr <Sym> {
+        sym_ref (sym, Num::make (0.0))
+    }
+    fn sym_rest (sym: Ptr <Obj>) -> Ptr <Sym> {
+        let len = sym_length (sym.dup ());
+        sym_slice (sym, Num::make (1.0), len)
     }
     pub struct Num { pub num: f64 }
 
@@ -1043,6 +1113,10 @@
         fn make (num: f64) -> Ptr <Num> {
             Ptr::new (Num { num })
         }
+    }
+    fn inc (x: Ptr <Obj>) -> Ptr <Num> {
+        let x = Num::cast (x);
+        Num::make (x.num + 1.0)
     }
     pub fn null_c () -> Ptr <Obj> {
        Data::unit (NULL_T)
@@ -2268,6 +2342,19 @@
     }
     fn expose_str (env: &mut Env) {
         define_prim! (env, "str-length", ["str"], str_length);
+        define_prim! (env, "str-append", ["ante", "succ"], str_append);
+        define_prim! (env, "str-slice", ["str", "begin", "end"], str_slice);
+        define_prim! (env, "str-ref", ["str", "index"], str_ref);
+        define_prim! (env, "str-head", ["str"], str_head);
+        define_prim! (env, "str-rest", ["str"], str_rest);
+    }
+    fn expose_sym (env: &mut Env) {
+        define_prim! (env, "sym-length", ["sym"], sym_length);
+        define_prim! (env, "sym-append", ["ante", "succ"], sym_append);
+        define_prim! (env, "sym-slice", ["sym", "begin", "end"], sym_slice);
+        define_prim! (env, "sym-ref", ["sym", "index"], sym_ref);
+        define_prim! (env, "sym-head", ["sym"], sym_head);
+        define_prim! (env, "sym-rest", ["sym"], sym_rest);
     }
     fn expose_list (env: &mut Env) {
         env.define ("null", null_c ());
@@ -2324,7 +2411,7 @@
         // expose_bool (env);
         // expose_num (env);
         expose_str (env);
-        // expose_sym (env);
+        expose_sym (env);
         expose_list (env);
         // expose_vect (env);
         // expose_maybe (env);

@@ -1,7 +1,5 @@
 #+property: tangle core.rs
 #+title: core
-- str-t
-- sym-t
 - bool-t
 - (case)
 - apply_compile handle (.method ...)
@@ -52,6 +50,7 @@
   pub type Scope = Vec <ObjDic>; // index from end
 
   pub type StringVec = Vec <String>;
+  pub type CharVec = Vec <char>;
   pub type NameVec = Vec <Name>;
   pub type TagVec = Vec <Tag>;
   pub type ObjVec = Vec <Ptr <Obj>>;
@@ -1444,34 +1443,64 @@
     }
     #+end_src
 
-*** [todo] str_append
+*** str_append
 
     #+begin_src rust
-
+    fn str_append (
+        ante: Ptr <Obj>,
+        succ: Ptr <Obj>,
+    ) -> Ptr <Str> {
+        let ante = Str::cast (ante);
+        let succ = Str::cast (succ);
+        Str::make (&format! ("{}{}", ante.str, succ.str))
+    }
     #+end_src
 
-*** [todo] str_slice
+*** str_slice
 
     #+begin_src rust
-
+    fn str_slice (
+        str: Ptr <Obj>,
+        begin: Ptr <Obj>,
+        end: Ptr <Obj>,
+    ) -> Ptr <Str> {
+        let str = Str::cast (str);
+        let begin = Num::cast (begin);
+        let end = Num::cast (end);
+        let char_vec = str.str.chars() .collect::<CharVec> ();
+        let begin = begin.num as usize;
+        let end = end.num as usize;
+        let slice = &char_vec [begin..end];
+        Str::make (&slice .iter () .collect::<String> ())
+    }
     #+end_src
 
-*** [todo] str_ref
+*** str_ref
 
     #+begin_src rust
-
+    fn str_ref (
+        str: Ptr <Obj>,
+        index: Ptr <Obj>,
+    ) -> Ptr <Str> {
+        str_slice (str, index.dup (), inc (index))
+    }
     #+end_src
 
-*** [todo] str_head
+*** str_head
 
     #+begin_src rust
-
+    fn str_head (str: Ptr <Obj>) -> Ptr <Str> {
+        str_ref (str, Num::make (0.0))
+    }
     #+end_src
 
-*** [todo] str_rest
+*** str_rest
 
     #+begin_src rust
-
+    fn str_rest (str: Ptr <Obj>) -> Ptr <Str> {
+        let len = str_length (str.dup ());
+        str_slice (str, Num::make (1.0), len)
+    }
     #+end_src
 
 * sym
@@ -1504,6 +1533,75 @@
         fn make (str: &str) -> Ptr <Sym> {
             Ptr::new (Sym { sym: String::from (str) })
         }
+    }
+    #+end_src
+
+*** sym_length
+
+    #+begin_src rust
+    fn sym_length (sym: Ptr <Obj>) -> Ptr <Num> {
+        let sym = Sym::cast (sym);
+        Num::make (sym.sym.len () as f64)
+    }
+    #+end_src
+
+*** sym_append
+
+    #+begin_src rust
+    fn sym_append (
+        ante: Ptr <Obj>,
+        succ: Ptr <Obj>,
+    ) -> Ptr <Sym> {
+        let ante = Sym::cast (ante);
+        let succ = Sym::cast (succ);
+        Sym::make (&format! ("{}{}", ante.sym, succ.sym))
+    }
+    #+end_src
+
+*** sym_slice
+
+    #+begin_src rust
+    fn sym_slice (
+        sym: Ptr <Obj>,
+        begin: Ptr <Obj>,
+        end: Ptr <Obj>,
+    ) -> Ptr <Sym> {
+        let sym = Sym::cast (sym);
+        let begin = Num::cast (begin);
+        let end = Num::cast (end);
+        let char_vec = sym.sym.chars() .collect::<CharVec> ();
+        let begin = begin.num as usize;
+        let end = end.num as usize;
+        let slice = &char_vec [begin..end];
+        Sym::make (&slice .iter () .collect::<String> ())
+    }
+    #+end_src
+
+*** sym_ref
+
+    #+begin_src rust
+    fn sym_ref (
+        sym: Ptr <Obj>,
+        index: Ptr <Obj>,
+    ) -> Ptr <Sym> {
+        sym_slice (sym, index.dup (), inc (index))
+    }
+    #+end_src
+
+*** sym_head
+
+    #+begin_src rust
+    fn sym_head (sym: Ptr <Obj>) -> Ptr <Sym> {
+        sym_ref (sym, Num::make (0.0))
+    }
+    #+end_src
+
+*** sym_rest
+
+    #+begin_src rust
+    fn sym_rest (sym: Ptr <Obj>) -> Ptr <Sym> {
+        let len = sym_length (sym.dup ());
+        sym_slice (sym, Num::make (1.0), len)
     }
     #+end_src
 
@@ -1541,6 +1639,15 @@
         fn make (num: f64) -> Ptr <Num> {
             Ptr::new (Num { num })
         }
+    }
+    #+end_src
+
+*** inc
+
+    #+begin_src rust
+    fn inc (x: Ptr <Obj>) -> Ptr <Num> {
+        let x = Num::cast (x);
+        Num::make (x.num + 1.0)
     }
     #+end_src
 
@@ -3425,11 +3532,29 @@
     }
     #+end_src
 
-*** [todo] expose_str
+*** expose_str
 
     #+begin_src rust
     fn expose_str (env: &mut Env) {
         define_prim! (env, "str-length", ["str"], str_length);
+        define_prim! (env, "str-append", ["ante", "succ"], str_append);
+        define_prim! (env, "str-slice", ["str", "begin", "end"], str_slice);
+        define_prim! (env, "str-ref", ["str", "index"], str_ref);
+        define_prim! (env, "str-head", ["str"], str_head);
+        define_prim! (env, "str-rest", ["str"], str_rest);
+    }
+    #+end_src
+
+*** expose_sym
+
+    #+begin_src rust
+    fn expose_sym (env: &mut Env) {
+        define_prim! (env, "sym-length", ["sym"], sym_length);
+        define_prim! (env, "sym-append", ["ante", "succ"], sym_append);
+        define_prim! (env, "sym-slice", ["sym", "begin", "end"], sym_slice);
+        define_prim! (env, "sym-ref", ["sym", "index"], sym_ref);
+        define_prim! (env, "sym-head", ["sym"], sym_head);
+        define_prim! (env, "sym-rest", ["sym"], sym_rest);
     }
     #+end_src
 
@@ -3511,7 +3636,7 @@
         // expose_bool (env);
         // expose_num (env);
         expose_str (env);
-        // expose_sym (env);
+        expose_sym (env);
         expose_list (env);
         // expose_vect (env);
         // expose_maybe (env);
