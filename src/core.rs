@@ -770,6 +770,7 @@
             })
         }
     }
+
     pub struct Closure {
         arg_dic: ObjDic,
         jojo: Ptr <JoVec>,

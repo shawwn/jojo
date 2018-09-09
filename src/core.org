@@ -1,9 +1,11 @@
 #+property: tangle core.rs
 #+title: core
+- str-t
+- sym-t
+- bool-t
+- (case)
 - apply_compile handle (.method ...)
 - maybe native List
-- char-t -- #char"..." as literal
-- path-t -- #path"..." as literal
 * use
 
 *** std
@@ -1134,6 +1136,12 @@
             })
         }
     }
+    #+end_src
+
+*** [todo] Env::define_data_cons
+
+    #+begin_src rust
+
     #+end_src
 
 * closure
