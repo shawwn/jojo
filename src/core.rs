@@ -1289,7 +1289,10 @@
         assert! (list_p (&list));
         Num::make (list_size (list) as f64)
     }
-    fn list_rev (mut list: Ptr <Obj>) -> Ptr <Obj> {
+    pub fn unit_list (obj: Ptr <Obj>) -> Ptr <Obj> {
+        cons (obj, null ())
+    }
+    fn list_reverse (mut list: Ptr <Obj>) -> Ptr <Obj> {
         assert! (list_p (&list));
         let mut rev = null ();
         while ! null_p (&list) {
@@ -1299,8 +1302,24 @@
         }
         rev
     }
-    pub fn unit_list (obj: Ptr <Obj>) -> Ptr <Obj> {
-        cons (obj, null ())
+    fn list_reverse_append (
+        ante: Ptr <Obj>,
+        succ: Ptr <Obj>,
+    ) -> Ptr <Obj> {
+        let mut list = ante;
+        let mut result = succ;
+        while ! null_p (&list) {
+            let obj = car (list.dup ());
+            result = cons (obj, result);
+            list = cdr (list);
+        }
+        result
+    }
+    fn list_append (
+        ante: Ptr <Obj>,
+        succ: Ptr <Obj>,
+    ) -> Ptr <Obj> {
+        list_reverse_append (list_reverse (ante), succ)
     }
     pub struct JNone;
 
@@ -1454,7 +1473,7 @@
             Ptr::new (Dict { obj_dic: obj_dic.clone () })
         }
     }
-    pub fn dict_to_list_rev (dict: Ptr <Obj>) -> Ptr <Obj> {
+    pub fn dict_to_list_reverse (dict: Ptr <Obj>) -> Ptr <Obj> {
         let dict = Dict::cast (dict);
         let mut list = null ();
         let obj_dic = &dict.obj_dic;
@@ -1468,8 +1487,8 @@
     }
     pub fn dict_to_list (dict: Ptr <Obj>) -> Ptr <Obj> {
         let dict = Dict::cast (dict);
-        let list = dict_to_list_rev (dict);
-        list_rev (list)
+        let list = dict_to_list_reverse (dict);
+        list_reverse (list)
     }
     fn list_to_dict (mut list: Ptr <Obj>) -> Ptr <Dict> {
         let mut obj_dic = ObjDic::new ();
@@ -1489,7 +1508,7 @@
         }
         Dict::make (&obj_dic)
     }
-    fn dict_to_flat_list_rev (dict: Ptr <Obj>) -> Ptr <Obj> {
+    fn dict_to_flat_list_reverse (dict: Ptr <Obj>) -> Ptr <Obj> {
         let dict = Dict::cast (dict);
         let mut list = null ();
         for kv in dict.obj_dic.iter () {
@@ -1524,7 +1543,7 @@
         static_scope: &StaticScope,
         dict: Ptr <Dict>,
     ) -> Ptr <JoVec> {
-        let sexp_list = dict_to_flat_list_rev (dict);
+        let sexp_list = dict_to_flat_list_reverse (dict);
         let counter = list_size (sexp_list.dup ());
         let counter = counter / 2;
         let jojo = sexp_list_compile (
@@ -2529,6 +2548,10 @@
         env.define ("null", null ());
         define_prim! (env, "cons", ["car", "cdr"], cons);
         define_prim! (env, "list-length", ["list"], list_length);
+        define_prim! (env, "unit-list", ["obj"], unit_list);
+        define_prim! (env, "list-reverse", ["list"], list_reverse);
+        define_prim! (env, "list-reverse-append", ["ante", "succ"], list_reverse_append);
+        define_prim! (env, "list-append", ["ante", "succ"], list_append);
     }
     fn expose_option (env: &mut Env) {
         env.define ("none", JNone::make ());

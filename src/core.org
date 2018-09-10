@@ -3,17 +3,17 @@
 
 * [todo-stack]
 
-  - use rust's doc system -- in separated org-mode blocks
-
-  - list-t
-
   - vect-t
 
   - num-t
 
+  - (*)
+
   - (case)
 
   - dict-t
+
+  - use rust's doc system -- in separated org-mode blocks
 
   - apply_compile handle (.method ...)
 
@@ -1940,10 +1940,18 @@
     }
     #+end_src
 
-*** list_rev
+*** unit_list
 
     #+begin_src rust
-    fn list_rev (mut list: Ptr <Obj>) -> Ptr <Obj> {
+    pub fn unit_list (obj: Ptr <Obj>) -> Ptr <Obj> {
+        cons (obj, null ())
+    }
+    #+end_src
+
+*** list_reverse
+
+    #+begin_src rust
+    fn list_reverse (mut list: Ptr <Obj>) -> Ptr <Obj> {
         assert! (list_p (&list));
         let mut rev = null ();
         while ! null_p (&list) {
@@ -1955,11 +1963,32 @@
     }
     #+end_src
 
-*** unit_list
+*** list_reverse_append
 
     #+begin_src rust
-    pub fn unit_list (obj: Ptr <Obj>) -> Ptr <Obj> {
-        cons (obj, null ())
+    fn list_reverse_append (
+        ante: Ptr <Obj>,
+        succ: Ptr <Obj>,
+    ) -> Ptr <Obj> {
+        let mut list = ante;
+        let mut result = succ;
+        while ! null_p (&list) {
+            let obj = car (list.dup ());
+            result = cons (obj, result);
+            list = cdr (list);
+        }
+        result
+    }
+    #+end_src
+
+*** list_append
+
+    #+begin_src rust
+    fn list_append (
+        ante: Ptr <Obj>,
+        succ: Ptr <Obj>,
+    ) -> Ptr <Obj> {
+        list_reverse_append (list_reverse (ante), succ)
     }
     #+end_src
 
@@ -2196,10 +2225,10 @@
     }
     #+end_src
 
-*** dict_to_list_rev
+*** dict_to_list_reverse
 
     #+begin_src rust
-    pub fn dict_to_list_rev (dict: Ptr <Obj>) -> Ptr <Obj> {
+    pub fn dict_to_list_reverse (dict: Ptr <Obj>) -> Ptr <Obj> {
         let dict = Dict::cast (dict);
         let mut list = null ();
         let obj_dic = &dict.obj_dic;
@@ -2218,8 +2247,8 @@
     #+begin_src rust
     pub fn dict_to_list (dict: Ptr <Obj>) -> Ptr <Obj> {
         let dict = Dict::cast (dict);
-        let list = dict_to_list_rev (dict);
-        list_rev (list)
+        let list = dict_to_list_reverse (dict);
+        list_reverse (list)
     }
     #+end_src
 
@@ -2246,10 +2275,10 @@
     }
     #+end_src
 
-*** dict_to_flat_list_rev
+*** dict_to_flat_list_reverse
 
     #+begin_src rust
-    fn dict_to_flat_list_rev (dict: Ptr <Obj>) -> Ptr <Obj> {
+    fn dict_to_flat_list_reverse (dict: Ptr <Obj>) -> Ptr <Obj> {
         let dict = Dict::cast (dict);
         let mut list = null ();
         for kv in dict.obj_dic.iter () {
@@ -2294,7 +2323,7 @@
         static_scope: &StaticScope,
         dict: Ptr <Dict>,
     ) -> Ptr <JoVec> {
-        let sexp_list = dict_to_flat_list_rev (dict);
+        let sexp_list = dict_to_flat_list_reverse (dict);
         let counter = list_size (sexp_list.dup ());
         let counter = counter / 2;
         let jojo = sexp_list_compile (
@@ -3815,6 +3844,10 @@
         env.define ("null", null ());
         define_prim! (env, "cons", ["car", "cdr"], cons);
         define_prim! (env, "list-length", ["list"], list_length);
+        define_prim! (env, "unit-list", ["obj"], unit_list);
+        define_prim! (env, "list-reverse", ["list"], list_reverse);
+        define_prim! (env, "list-reverse-append", ["ante", "succ"], list_reverse_append);
+        define_prim! (env, "list-append", ["ante", "succ"], list_append);
     }
     #+end_src
 
