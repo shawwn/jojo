@@ -3,7 +3,12 @@
 (assert (eq vect-t (type-of (quote [a b c]))))
 (assert (eq vect-t (type-of '[a b c])))
 
+(assert (eq [1 2 3] [1 2 3]))
+(assert (eq (unit-vect 1) (unit-vect 1)))
+(assert (eq (unit-vect 1) [1]))
+
 (assert (eq (vect-to-list ["a" "b" "c"]) '("a" "b" "c")))
+
 (assert (eq (list-to-vect '("a" "b" "c")) ["a" "b" "c"]))
 (assert (eq (vect-to-list [1 2 3 ["a" "b" "c"]]) '(1 2 3 ["a" "b" "c"])))
 

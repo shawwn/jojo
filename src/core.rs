@@ -1436,6 +1436,7 @@
         vect: Ptr <Vect>,
     ) -> Ptr <JoVec> {
         let sexp_list = vect_to_list (vect);
+        let sexp_list = list_reverse (sexp_list);
         let counter = list_size (sexp_list.dup ());
         let jojo = sexp_list_compile (
             env, static_scope, sexp_list);
@@ -1451,6 +1452,75 @@
                 sym.sym.to_string ()
             })
             .collect::<NameVec> ()
+    }
+    fn vect_length (vect: Ptr <Obj>) -> Ptr <Obj> {
+        let vect = Vect::cast (vect);
+        Num::make (vect.obj_vec.len () as f64)
+    }
+    fn vect_append (
+        ante: Ptr <Obj>,
+        succ: Ptr <Obj>,
+    ) -> Ptr <Obj> {
+        let ante = Vect::cast (ante);
+        let succ = Vect::cast (succ);
+        let mut ante_obj_vec = ante.obj_vec.clone ();
+        let mut succ_obj_vec = succ.obj_vec.clone ();
+        ante_obj_vec.append (&mut succ_obj_vec);
+        Vect::make (&ante_obj_vec)
+    }
+    fn vect_slice (
+        vect: Ptr <Obj>,
+        begin: Ptr <Obj>,
+        end: Ptr <Obj>,
+    ) -> Ptr <Obj> {
+        let vect = Vect::cast (vect);
+        let begin = Num::cast (begin);
+        let end = Num::cast (end);
+        let begin = begin.num as usize;
+        let end = end.num as usize;
+        let obj_vec = ObjVec::from (&vect.obj_vec [begin..end]);
+        Vect::make (&obj_vec)
+    }
+    fn vect_ref (
+        vect: Ptr <Obj>,
+        index: Ptr <Obj>,
+    ) -> Ptr <Obj> {
+        let vect = Vect::cast (vect);
+        let index = Num::cast (index);
+        let index = index.num as usize;
+        let obj = &vect.obj_vec[index];
+        obj.dup ()
+    }
+    fn vect_head (
+        vect: Ptr <Obj>,
+    ) -> Ptr <Obj> {
+        let index = Num::make (0.0);
+        vect_ref (vect, index)
+    }
+    fn vect_rest (
+        vect: Ptr <Obj>,
+    ) -> Ptr <Obj> {
+        let begin = Num::make (1.0);
+        let end = vect_length (vect.dup ());
+        vect_slice (vect, begin, end)
+    }
+    fn vect_reverse (
+        vect: Ptr <Obj>,
+    ) -> Ptr <Obj> {
+        let vect = Vect::cast (vect);
+        let obj_vec = vect.obj_vec
+            .clone ()
+            .into_iter ()
+            .rev ()
+            .collect::<ObjVec> ();
+        Vect::make (&obj_vec)
+    }
+    fn unit_vect (
+        obj: Ptr <Obj>,
+    ) -> Ptr <Obj> {
+        let mut obj_vec = ObjVec::new ();
+        obj_vec.push (obj);
+        Vect::make (&obj_vec)
     }
     pub struct Dict { pub obj_dic: ObjDic }
 
@@ -2547,6 +2617,8 @@
     fn expose_list (env: &mut Env) {
         env.define ("null", null ());
         define_prim! (env, "cons", ["car", "cdr"], cons);
+        define_prim! (env, "car", ["pair"], car);
+        define_prim! (env, "cdr", ["pair"], cdr);
         define_prim! (env, "list-length", ["list"], list_length);
         define_prim! (env, "list-reverse", ["list"], list_reverse);
         define_prim! (env, "list-reverse-append", ["ante", "succ"], list_reverse_append);
@@ -2554,13 +2626,16 @@
         define_prim! (env, "unit-list", ["obj"], unit_list);
     }
     fn expose_vect (env: &mut Env) {
-        // env.define ("null", null ());
-        // define_prim! (env, "cons", ["car", "cdr"], cons);
-        // define_prim! (env, "list-length", ["list"], list_length);
-        // define_prim! (env, "list-reverse", ["list"], list_reverse);
-        // define_prim! (env, "list-reverse-append", ["ante", "succ"], list_reverse_append);
-        // define_prim! (env, "list-append", ["ante", "succ"], list_append);
-        // define_prim! (env, "unit-list", ["obj"], unit_list);
+        define_prim! (env, "list-to-vect", ["list"], list_to_vect);
+        define_prim! (env, "vect-to-list", ["vect"], vect_to_list);
+        define_prim! (env, "vect-length", ["vect"], vect_length);
+        define_prim! (env, "vect-append", ["ante", "succ"], vect_append);
+        define_prim! (env, "vect-slice", ["vect", "begin", "end"], vect_slice);
+        define_prim! (env, "vect-ref", ["vect", "index"], vect_ref);
+        define_prim! (env, "vect-head", ["vect"], vect_head);
+        define_prim! (env, "vect-rest", ["vect"], vect_rest);
+        define_prim! (env, "vect-reverse", ["vect"], vect_reverse);
+        define_prim! (env, "unit-vect", ["obj"], unit_vect);
     }
     fn expose_option (env: &mut Env) {
         env.define ("none", JNone::make ());
