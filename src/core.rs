@@ -1289,9 +1289,6 @@
         assert! (list_p (&list));
         Num::make (list_size (list) as f64)
     }
-    pub fn unit_list (obj: Ptr <Obj>) -> Ptr <Obj> {
-        cons (obj, null ())
-    }
     fn list_reverse (mut list: Ptr <Obj>) -> Ptr <Obj> {
         assert! (list_p (&list));
         let mut rev = null ();
@@ -1320,6 +1317,9 @@
         succ: Ptr <Obj>,
     ) -> Ptr <Obj> {
         list_reverse_append (list_reverse (ante), succ)
+    }
+    pub fn unit_list (obj: Ptr <Obj>) -> Ptr <Obj> {
+        cons (obj, null ())
     }
     pub struct JNone;
 
@@ -2548,10 +2548,19 @@
         env.define ("null", null ());
         define_prim! (env, "cons", ["car", "cdr"], cons);
         define_prim! (env, "list-length", ["list"], list_length);
-        define_prim! (env, "unit-list", ["obj"], unit_list);
         define_prim! (env, "list-reverse", ["list"], list_reverse);
         define_prim! (env, "list-reverse-append", ["ante", "succ"], list_reverse_append);
         define_prim! (env, "list-append", ["ante", "succ"], list_append);
+        define_prim! (env, "unit-list", ["obj"], unit_list);
+    }
+    fn expose_vect (env: &mut Env) {
+        // env.define ("null", null ());
+        // define_prim! (env, "cons", ["car", "cdr"], cons);
+        // define_prim! (env, "list-length", ["list"], list_length);
+        // define_prim! (env, "list-reverse", ["list"], list_reverse);
+        // define_prim! (env, "list-reverse-append", ["ante", "succ"], list_reverse_append);
+        // define_prim! (env, "list-append", ["ante", "succ"], list_append);
+        // define_prim! (env, "unit-list", ["obj"], unit_list);
     }
     fn expose_option (env: &mut Env) {
         env.define ("none", JNone::make ());
@@ -2610,7 +2619,7 @@
         expose_str (env);
         expose_sym (env);
         expose_list (env);
-        // expose_vect (env);
+        expose_vect (env);
         expose_option (env);
         // expose_dict (env);
         // expose_sexp (env);

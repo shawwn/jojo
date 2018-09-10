@@ -1940,14 +1940,6 @@
     }
     #+end_src
 
-*** unit_list
-
-    #+begin_src rust
-    pub fn unit_list (obj: Ptr <Obj>) -> Ptr <Obj> {
-        cons (obj, null ())
-    }
-    #+end_src
-
 *** list_reverse
 
     #+begin_src rust
@@ -1989,6 +1981,14 @@
         succ: Ptr <Obj>,
     ) -> Ptr <Obj> {
         list_reverse_append (list_reverse (ante), succ)
+    }
+    #+end_src
+
+*** unit_list
+
+    #+begin_src rust
+    pub fn unit_list (obj: Ptr <Obj>) -> Ptr <Obj> {
+        cons (obj, null ())
     }
     #+end_src
 
@@ -2191,6 +2191,22 @@
             .collect::<NameVec> ()
     }
     #+end_src
+
+*** vect_length
+
+*** vect_append
+
+*** vect_slice
+
+*** vect_ref
+
+*** vect_head
+
+*** vect_rest
+
+*** vect_reverse
+
+*** unit_vect
 
 * dict
 
@@ -3844,10 +3860,24 @@
         env.define ("null", null ());
         define_prim! (env, "cons", ["car", "cdr"], cons);
         define_prim! (env, "list-length", ["list"], list_length);
-        define_prim! (env, "unit-list", ["obj"], unit_list);
         define_prim! (env, "list-reverse", ["list"], list_reverse);
         define_prim! (env, "list-reverse-append", ["ante", "succ"], list_reverse_append);
         define_prim! (env, "list-append", ["ante", "succ"], list_append);
+        define_prim! (env, "unit-list", ["obj"], unit_list);
+    }
+    #+end_src
+
+*** expose_vect
+
+    #+begin_src rust
+    fn expose_vect (env: &mut Env) {
+        // env.define ("null", null ());
+        // define_prim! (env, "cons", ["car", "cdr"], cons);
+        // define_prim! (env, "list-length", ["list"], list_length);
+        // define_prim! (env, "list-reverse", ["list"], list_reverse);
+        // define_prim! (env, "list-reverse-append", ["ante", "succ"], list_reverse_append);
+        // define_prim! (env, "list-append", ["ante", "succ"], list_append);
+        // define_prim! (env, "unit-list", ["obj"], unit_list);
     }
     #+end_src
 
@@ -3931,7 +3961,7 @@
         expose_str (env);
         expose_sym (env);
         expose_list (env);
-        // expose_vect (env);
+        expose_vect (env);
         expose_option (env);
         // expose_dict (env);
         // expose_sexp (env);
