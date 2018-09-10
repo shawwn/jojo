@@ -5,6 +5,8 @@
 
   - num-t
 
+  - fix `repr` and `print` of obj
+
   - (*)
 
   - (case)

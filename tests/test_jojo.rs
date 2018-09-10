@@ -5,15 +5,7 @@ use std::io;
 use std::fs::DirEntry;
 use std::path::Path;
 
-#[test]
-fn test_jojo () -> io::Result <()> {
-    visit_dirs (Path::new ("tests/jojo"), &|entry| {
-        let module_path = entry.path ();
-        let _env = jojo::Env::from_module_path (&module_path);
-    })
-}
-
-fn visit_dirs (
+fn visit_dir (
     dir: &Path,
     cb: &Fn (&DirEntry),
 ) -> io::Result <()> {
@@ -25,6 +17,32 @@ fn visit_dirs (
                 cb (&entry);
             }
         }
+        Ok (())
+    } else {
+        Err (io::Error::new (
+            io::ErrorKind::InvalidInput,
+            "path must be a path of dir"))
     }
-    Ok (())
+}
+
+fn run_all_scripts_in_dir (dir: &Path) -> io::Result <()> {
+    visit_dir (dir, &|entry| {
+        let module_path = entry.path ();
+        let _env = jojo::Env::from_module_path (&module_path);
+    })
+}
+
+#[test]
+fn test_jojo_datatype () -> io::Result <()> {
+    run_all_scripts_in_dir (Path::new ("tests/jojo/datatype"))
+}
+
+#[test]
+fn test_jojo_syntax () -> io::Result <()> {
+    run_all_scripts_in_dir (Path::new ("tests/jojo/syntax"))
+}
+
+#[test]
+fn test_jojo_semantic () -> io::Result <()> {
+    run_all_scripts_in_dir (Path::new ("tests/jojo/semantic"))
 }
