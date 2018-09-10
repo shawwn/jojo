@@ -3,6 +3,8 @@
 
 * [todo-stack]
 
+  - use rust's doc system -- in separated org-mode blocks
+
   - list-t
 
   - vect-t
