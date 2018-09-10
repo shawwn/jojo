@@ -256,7 +256,9 @@
 
                   pub fn cast (obj: Ptr <Obj>) -> Ptr <Self> {
                       assert! (Self::p (&obj));
-                      obj_to::<Self> (obj)
+                      unsafe {
+                          obj_to::<Self> (obj)
+                      }
                   }
 
                   pub fn p (x: &Ptr <Obj>) -> bool {
@@ -506,12 +508,12 @@
             panic! ("jojo fatal error!");
         }
     }
-    pub fn obj_to <T: Obj> (obj: Ptr <Obj>) -> Ptr <T> {
+    /// Before cast an obj to T, caller must check that
+    ///   the obj has the tag of T.
+    unsafe fn obj_to <T: Obj> (obj: Ptr <Obj>) -> Ptr <T> {
         let obj_ptr = Ptr::into_raw (obj);
-        unsafe {
-            let obj_ptr = obj_ptr as *const Obj as *const T;
-            Ptr::from_raw (obj_ptr)
-        }
+        let obj_ptr = obj_ptr as *const Obj as *const T;
+        Ptr::from_raw (obj_ptr)
     }
     pub fn obj_eq (
         lhs: &Ptr <Obj>,
@@ -659,7 +661,7 @@
             if self.tag () != other.tag () {
                 false
             } else {
-                let other = obj_to::<Type> (other);
+                let other = Type::cast (other);
                 (self.tag_of_type == other.tag_of_type &&
                  self.super_tag_vec == other.super_tag_vec)
             }
@@ -708,9 +710,11 @@
             if self.tag () != other.tag () {
                 false
             } else {
-                let other = obj_to::<Data> (other);
-                (self.tag_of_type == other.tag_of_type &&
-                 obj_dic_eq (&self.field_dic, &other.field_dic))
+                unsafe {
+                    let other = obj_to::<Data> (other);
+                    (self.tag_of_type == other.tag_of_type &&
+                     obj_dic_eq (&self.field_dic, &other.field_dic))
+                }
             }
         }
     }
@@ -751,7 +755,7 @@
             if self.tag () != other.tag () {
                 false
             } else {
-                let other = obj_to::<DataCons> (other);
+                let other = DataCons::cast (other);
                 (self.tag_of_type == other.tag_of_type &&
                  obj_dic_eq (&self.field_dic, &other.field_dic))
             }
@@ -823,7 +827,7 @@
             if self.tag () != other.tag () {
                 false
             } else {
-                let other = obj_to::<Closure> (other);
+                let other = Closure::cast (other);
                 (jojo_eq (&self.jojo, &other.jojo) &&
                  scope_eq (&self.scope, &other.scope) &&
                  obj_dic_eq (&self.arg_dic, &other.arg_dic))
@@ -881,7 +885,7 @@
             if self.tag () != other.tag () {
                 false
             } else {
-                let other = obj_to::<Prim> (other);
+                let other = Prim::cast (other);
                 (obj_dic_eq (&self.arg_dic, &other.arg_dic) &&
                  prim_fn_eq (&self.fun, &other.fun))
             }
@@ -1051,7 +1055,7 @@
             if self.tag () != other.tag () {
                 false
             } else {
-                let other = obj_to::<Str> (other);
+                let other = Str::cast (other);
                 (self.str == other.str)
             }
         }
@@ -1111,7 +1115,7 @@
             if self.tag () != other.tag () {
                 false
             } else {
-                let other = obj_to::<Sym> (other);
+                let other = Sym::cast (other);
                 (self.sym == other.sym)
             }
         }
@@ -1171,7 +1175,7 @@
             if self.tag () != other.tag () {
                 false
             } else {
-                let other = obj_to::<Num> (other);
+                let other = Num::cast (other);
                 (self.num == other.num)
             }
         }
@@ -1233,7 +1237,7 @@
             if self.tag () != other.tag () {
                 false
             } else {
-                let other = obj_to::<Cons> (other);
+                let other = Cons::cast (other);
                 (obj_eq (&self.car, &other.car) &&
                  obj_eq (&self.cdr, &other.cdr))
             }
@@ -1337,7 +1341,7 @@
             if self.tag () != other.tag () {
                 false
             } else {
-                let other = obj_to::<JSome> (other);
+                let other = JSome::cast (other);
                 (obj_eq (&self.value, &other.value))
             }
         }
@@ -1366,7 +1370,7 @@
             if self.tag () != other.tag () {
                 false
             } else {
-                let other = obj_to::<Vect> (other);
+                let other = Vect::cast (other);
                 (obj_vec_eq (&self.obj_vec, &other.obj_vec))
             }
         }
@@ -1440,7 +1444,7 @@
             if self.tag () != other.tag () {
                 false
             } else {
-                let other = obj_to::<Dict> (other);
+                let other = Dict::cast (other);
                 (obj_dic_eq (&self.obj_dic, &other.obj_dic))
             }
         }
@@ -1622,7 +1626,7 @@
             let l = vect_to_list (v);
             format! ("[{}]", sexp_list_repr (env, l))
         } else if (Dict::p (&sexp)) {
-            let d = obj_to::<Dict> (sexp);
+            let d = Dict::cast (sexp);
             let l = dict_to_list (d);
             let v = list_to_vect (l);
             let obj_vec = v.obj_vec
@@ -1636,7 +1640,7 @@
             let str = Str::cast (sexp);
             format! ("\"{}\"", str.str)
         } else if (Sym::p (&sexp)) {
-            let sym = obj_to::<Sym> (sexp);
+            let sym = Sym::cast (sexp);
             sym.sym.clone ()
         } else {
             sexp.repr (env)
@@ -1661,7 +1665,7 @@
         if ! Sym::p (&sexp) {
             false
         } else {
-            let sym = obj_to::<Sym> (sexp.dup ());
+            let sym = Sym::cast (sexp.dup ());
             (sym.sym .as_str () == str)
         }
     }
@@ -1689,7 +1693,7 @@
             if self.tag () != other.tag () {
                 false
             } else {
-                let other = obj_to::<Keyword> (other);
+                let other = Keyword::cast (other);
                 (keyword_fn_eq (&self.fun, &other.fun))
             }
         }
@@ -1707,7 +1711,7 @@
     ) -> Option <Ptr <Keyword>> {
         if let Some (obj) = env.obj_dic.get (name) {
             if Keyword::p (obj) {
-                let keyword = obj_to::<Keyword> (obj.dup ());
+                let keyword = Keyword::cast (obj.dup ());
                 Some (keyword)
             } else {
                 None
@@ -1724,7 +1728,7 @@
         if ! Sym::p (&head) {
             false
         } else {
-            let sym = obj_to::<Sym> (head);
+            let sym = Sym::cast (head);
             let name = &sym.sym;
             if let Some (_) = find_keyword (env, name) {
                 true
@@ -1766,7 +1770,7 @@
             if self.tag () != other.tag () {
                 false
             } else {
-                let other = obj_to::<Macro> (other);
+                let other = Macro::cast (other);
                 (obj_eq (&self.obj, &other.obj))
             }
         }
@@ -1777,7 +1781,7 @@
     ) -> Option <Ptr <Macro>> {
         if let Some (obj) = env.obj_dic.get (name) {
             if Macro::p (obj) {
-                let mac = obj_to::<Macro> (obj.dup ());
+                let mac = Macro::cast (obj.dup ());
                 Some (mac)
             } else {
                 None
@@ -1794,7 +1798,7 @@
         if ! Sym::p (&head) {
             false
         } else {
-            let sym = obj_to::<Sym> (head);
+            let sym = Sym::cast (head);
             let name = &sym.sym;
             if let Some (_) = find_macro (env, name) {
                 true
@@ -1999,7 +2003,7 @@
               if ! Sym::p (&head) {
                   arity += 1;
               } else {
-                  let sym = obj_to::<Sym> (head.dup ());
+                  let sym = Sym::cast (head.dup ());
                   let word = sym.sym .as_str ();
                   match word {
                       "drop" => arity -= 1,
@@ -2044,13 +2048,13 @@
         if Str::p (&sexp) || Num::p (&sexp) {
             lit_compile (env, static_scope, sexp)
         } else if Sym::p (&sexp) {
-            let sym = obj_to::<Sym> (sexp);
+            let sym = Sym::cast (sexp);
             sym_compile (env, static_scope, sym)
         } else if Vect::p (&sexp) {
-            let vect = obj_to::<Vect> (sexp);
+            let vect = Vect::cast (sexp);
             vect_compile (env, static_scope, vect)
         } else if Dict::p (&sexp) {
-            let dict = obj_to::<Dict> (sexp);
+            let dict = Dict::cast (sexp);
             dict_compile (env, static_scope, dict)
         } else if keyword_sexp_p (env, &sexp) {
             keyword_compile (env, static_scope, sexp)
@@ -2096,7 +2100,7 @@
             if self.tag () != other.tag () {
                 false
             } else {
-                let other = obj_to::<Module> (other);
+                let other = Module::cast (other);
                 (env_eq (&self.module_env, &other.module_env))
             }
         }
@@ -2124,7 +2128,7 @@
             if self.tag () != other.tag () {
                 false
             } else {
-                let other = obj_to::<TopKeyword> (other);
+                let other = TopKeyword::cast (other);
                 (top_keyword_fn_eq (&self.fun, &other.fun))
             }
         }
@@ -2142,7 +2146,7 @@
     ) -> Option <Ptr <TopKeyword>> {
         if let Some (obj) = env.obj_dic.get (name) {
             if TopKeyword::p (obj) {
-                let top_keyword = obj_to::<TopKeyword> (obj.dup ());
+                let top_keyword = TopKeyword::cast (obj.dup ());
                 Some (top_keyword)
             } else {
                 None
@@ -2159,7 +2163,7 @@
         if ! Sym::p (&head) {
             false
         } else {
-            let sym = obj_to::<Sym> (head);
+            let sym = Sym::cast (head);
             let name = &sym.sym;
             if let Some (_) = find_top_keyword (env, name) {
                 true
@@ -2406,7 +2410,7 @@
       ) -> Ptr <JoVec> {
           let head = car (body.dup ());
           assert! (Vect::p (&head));
-          let name_vect = obj_to::<Vect> (head);
+          let name_vect = Vect::cast (head);
           let name_vec = name_vect_to_name_vec (name_vect);
           let rest = cdr (body);
           let static_scope = static_scope_extend (
