@@ -2528,6 +2528,8 @@
               }
           ]
       }
+
+
       fn sexp_qoute_compile (
           _env: &mut Env,
           sexp: Ptr <Obj>,
@@ -2694,8 +2696,96 @@
               AssertJo { body, jojo }
           ]
       }
+      struct IfJo {
+          pred_jojo: Ptr <JoVec>,
+          then_jojo: Ptr <JoVec>,
+          else_jojo: Ptr <JoVec>,
+      }
 
+      impl Jo for IfJo {
+          fn exe (&self, env: &mut Env, scope: Ptr <Scope>) {
+              let result = jojo_eval (env, &scope, self.pred_jojo.dup ());
+              if true_p (&result) {
+                  env.frame_stack.push (Box::new (Frame {
+                      index: 0,
+                      jojo: self.then_jojo.dup (),
+                      scope,
+                  }));
+              } else if false_p (&result) {
+                  env.frame_stack.push (Box::new (Frame {
+                      index: 0,
+                      jojo: self.else_jojo.dup (),
+                      scope,
+                  }));
+              } else {
+                  eprintln! ("- IfJo::exe");
+                  eprintln! ("  pred_jojo run to non bool value");
+                  panic! ("jojo fatal error!");
+              }
+          }
+      }
+      fn k_if (
+          env: &mut Env,
+          static_scope: &StaticScope,
+          body: Ptr <Obj>,
+      ) -> Ptr <JoVec> {
+          let size = list_size (body.dup ());
+          assert! (size == 3);
+          let pred_sexp = car (body.dup ());
+          let then_sexp = car (cdr (body.dup ()));
+          let else_sexp = car (cdr (cdr (body)));
+          let pred_jojo = sexp_compile (env, static_scope, pred_sexp);
+          let then_jojo = sexp_compile (env, static_scope, then_sexp);
+          let else_jojo = sexp_compile (env, static_scope, else_sexp);
+          jojo! [
+              IfJo {
+                  pred_jojo,
+                  then_jojo,
+                  else_jojo,
+              }
+          ]
+      }
+      struct WhenJo {
+          pred_jojo: Ptr <JoVec>,
+          then_jojo: Ptr <JoVec>,
+      }
 
+      impl Jo for WhenJo {
+          fn exe (&self, env: &mut Env, scope: Ptr <Scope>) {
+              let result = jojo_eval (env, &scope, self.pred_jojo.dup ());
+              if true_p (&result) {
+                  env.frame_stack.push (Box::new (Frame {
+                      index: 0,
+                      jojo: self.then_jojo.dup (),
+                      scope,
+                  }));
+              } else if false_p (&result) {
+                  env.obj_stack.push (result);
+              } else {
+                  eprintln! ("- WhenJo::exe");
+                  eprintln! ("  pred_jojo run to non bool value");
+                  panic! ("jojo fatal error!");
+              }
+          }
+      }
+      fn k_when (
+          env: &mut Env,
+          static_scope: &StaticScope,
+          body: Ptr <Obj>,
+      ) -> Ptr <JoVec> {
+          let size = list_size (body.dup ());
+          assert! (size == 2);
+          let pred_sexp = car (body.dup ());
+          let then_sexp = car (cdr (body.dup ()));
+          let pred_jojo = sexp_compile (env, static_scope, pred_sexp);
+          let then_jojo = sexp_compile (env, static_scope, then_sexp);
+          jojo! [
+              WhenJo {
+                  pred_jojo,
+                  then_jojo,
+              }
+          ]
+      }
       fn m_let (
           env: &mut Env,
           arg: &ObjDic,
@@ -2795,8 +2885,8 @@
         env.define_keyword ("*", k_list);
         env.define_keyword ("note", k_note);
         env.define_keyword ("assert", k_assert);
-        // env.define_keyword ("if", k_if);
-        // env.define_keyword ("when", k_when);
+        env.define_keyword ("if", k_if);
+        env.define_keyword ("when", k_when);
         env.define_prim_macro ("let", m_let);
         // env.define_prim_macro ("quasiquote", m_quasiquote);
         // env.define_prim_macro ("and", m_and);
