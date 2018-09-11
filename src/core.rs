@@ -1513,7 +1513,7 @@
     }
     fn vect_reverse (
         vect: Ptr <Obj>,
-    ) -> Ptr <Obj> {
+    ) -> Ptr <Vect> {
         let vect = Vect::cast (vect);
         let obj_vec = obj_vec_rev (&vect.obj_vec);
         Vect::make (&obj_vec)
@@ -1626,6 +1626,7 @@
         ];
         jojo_append (&jojo, &ending_jojo)
     }
+
     pub fn parse_sexp (token: &token::Token) -> Ptr <Obj> {
         match token {
             token::Token::List { token_vec, .. } => parse_sexp_list (token_vec),
@@ -1920,6 +1921,18 @@
     ) -> Ptr <JoVec> {
         let new_sexp = macro_eval (env, sexp);
         sexp_compile (env, static_scope, new_sexp)
+    }
+    impl Env {
+        pub fn define_prim_macro (
+            &mut self,
+            name: &str,
+            fun: PrimFn,
+        ) -> Id {
+            let arg_dic = Dic::from (vec! [ "body" ]);
+            let obj = Ptr::new (Prim { arg_dic, fun });
+            let mac = Ptr::new (Macro { obj });
+            self.define (name, mac)
+        }
     }
     pub struct StaticRef {
         level: usize,
@@ -2683,6 +2696,27 @@
       }
 
 
+      fn m_let (
+          env: &mut Env,
+          arg: &ObjDic,
+      ) {
+          let body = arg_idx (arg, 0);
+          let head = car (body.dup ());
+          let rest = cdr (body);
+          let binding_vect = vect_reverse (head);
+          let mut sexp = cons (Sym::make ("do"), rest);
+          for binding in &binding_vect.obj_vec {
+              let name = car (binding.dup ());
+              let obj = car (cdr (binding.dup ()));
+              sexp = cons (
+                  cons (Sym::make ("lambda"),
+                        cons (unit_vect (name),
+                              unit_list (sexp))),
+                  unit_list (obj));
+          }
+          println! ("sexp : {}", sexp_repr (env, sexp.dup ()));
+          env.obj_stack.push (sexp);
+      }
     fn arg_idx (arg_dic: &ObjDic, index: usize) -> Ptr <Obj> {
         let entry = arg_dic.idx (index);
         if let Some (value) = &entry.value {
@@ -2763,7 +2797,7 @@
         env.define_keyword ("assert", k_assert);
         // env.define_keyword ("if", k_if);
         // env.define_keyword ("when", k_when);
-        // env.define_prim_macro ("let", m_let);
+        env.define_prim_macro ("let", m_let);
         // env.define_prim_macro ("quasiquote", m_quasiquote);
         // env.define_prim_macro ("and", m_and);
         // env.define_prim_macro ("or", m_or);

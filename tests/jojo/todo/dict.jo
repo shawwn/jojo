@@ -6,8 +6,8 @@
 (assert (eq d.a "b"))
 (assert (eq d.c "d"))
 
-(= d {a = (cons-c 1 null-c)
-      b = (cons-c 1 (cons-c 2 null-c))})
+(= d {a = (cons 1 null)
+      b = (cons 1 (cons 2 null))})
 
 (assert (eq (type-of d) dict-t))
 (assert (eq d.a.car 1))
@@ -51,26 +51,21 @@
 
 
 (assert (eq (dict-find {a = "b" c = "d"} 'a)
-            (just-c "b")))
+            (some "b")))
 
 (assert (eq (dict-find {a = "b" c = "d"} 'x)
-            nothing-c))
+            none))
 
 (let [(key 'a)
       (dict {a = "b" c = "d"})
       (found (dict-find dict key))]
   (case found
-    (nothing-t (assert false))
-    (just-t (assert (eq found.value "b")))))
+    (none-t (assert false))
+    (some-t (assert (eq found.value "b")))))
 
 (let [(key 'x)
       (dict {a = "b" c = "d"})
       (found (dict-find dict key))]
   (case found
-    (nothing-t (assert true))
-    (just-t (assert false))))
-
-;; (note
-;;   (match (dict-find dict key)
-;;     (nothing-t ...)
-;;     ((just-c value) ...)))
+    (none-t (assert true))
+    (some-t (assert false))))
