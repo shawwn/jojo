@@ -629,6 +629,33 @@
             obj.apply_to_arg_dict (env);
         }
     }
+    fn method_p (obj: &Ptr <Obj>) -> bool {
+        if Closure::p (&obj) {
+            let closure = Closure::cast (obj.dup ());
+            if closure.arg_dic.len () == 0 {
+                false
+            } else {
+                let entry = closure.arg_dic.idx (0);
+                (entry.name == "self" &&
+                 entry.value.is_none ())
+            }
+        } else {
+            false
+        }
+    }
+    fn method_merge_self (
+        method: Ptr <Obj>,
+        self_obj: Ptr <Obj>,
+    ) -> Ptr <Closure> {
+        let method = Closure::cast (method);
+        let mut arg_dic = (*method.arg_dic).clone ();
+        arg_dic.idx_set_value (0, Some (self_obj));
+        Ptr::new (Closure {
+            arg_dic: Ptr::new (arg_dic),
+            jojo: method.jojo.dup (),
+            scope: method.scope.dup (),
+        })
+    }
     pub struct DotJo {
         name: String,
     }
@@ -637,7 +664,11 @@
         fn exe (&self, env: &mut Env, _: Ptr <Scope>) {
             let obj = env.obj_stack.pop () .unwrap ();
             let dot = obj.dot (env, &self.name) .unwrap ();
-            env.obj_stack.push (dot);
+            if method_p (&dot) {
+                env.obj_stack.push (method_merge_self (dot, obj));
+            } else {
+                env.obj_stack.push (dot);
+            }
         }
     }
     pub struct LambdaJo {
@@ -3110,7 +3141,6 @@
                               unit_list (sexp))),
                   unit_list (obj));
           }
-          println! ("sexp : {}", sexp_repr (env, sexp.dup ()));
           env.obj_stack.push (sexp);
       }
       fn sexp_quote_and_unquote (

@@ -2,9 +2,3 @@
 (assert (eq cons-t (type-of (cons cons null))))
 (assert (eq null-t (type-of null)))
 (assert (eq x x))
-
-(= (null-t.cons x)
-   (cons x null))
-
-(assert (eq (null-t.cons null)
-            (cons null null)))

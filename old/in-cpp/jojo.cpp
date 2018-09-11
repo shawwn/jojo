@@ -3946,10 +3946,9 @@
           return cons_c (name, lambda_body);
       }
       shared_ptr <obj_t>
-      sexp_patch_self (env_t &env, shared_ptr <obj_t> sexp)
+      sexp_patch_self (shared_ptr <obj_t> sexp)
       {
-          auto this_str = make_sym ("self");
-          obj_vector_t obj_vector = { this_str };
+          obj_vector_t obj_vector = { make_sym ("self") };
           auto vect = make_vect (obj_vector);
           auto lambda_body = unit_list (sexp);
           lambda_body = cons_c (vect, lambda_body);
@@ -3966,7 +3965,7 @@
           auto name = name_of_string (head->sym);
           auto prefix = prefix_of_string (head->sym);
           if (prefix != "")
-              sexp = sexp_patch_self (env, sexp);
+              sexp = sexp_patch_self (sexp);
           auto obj = sexp_eval (env, sexp);
           assign (env, prefix, name, obj);
       }
