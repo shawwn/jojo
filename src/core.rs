@@ -1576,6 +1576,9 @@
             Ptr::new (JNone {})
         }
     }
+    pub fn none () -> Ptr <JNone> {
+        JNone::make ()
+    }
     pub struct JSome {
         value: Ptr <Obj>,
     }
@@ -1753,12 +1756,18 @@
         obj_vec.push (obj);
         Vect::make (&obj_vec)
     }
-    pub struct Dict { pub obj_dic: ObjDic }
+    pub struct Dict {
+        pub obj_dic: Ptr <ObjDic>,
+    }
 
     impl_tag! (Dict, DICT_T);
 
     impl Obj for Dict {
         fn tag (&self) -> Tag { DICT_T }
+
+        fn obj_dic (&self) -> Option <Ptr <ObjDic>> {
+            Some (self.obj_dic.dup ())
+        }
 
         fn eq (&self, other: Ptr <Obj>) -> bool {
             if self.tag () != other.tag () {
@@ -1771,56 +1780,8 @@
     }
     impl Dict {
         fn make (obj_dic: &ObjDic) -> Ptr <Dict> {
-            Ptr::new (Dict { obj_dic: obj_dic.clone () })
+            Ptr::new (Dict { obj_dic: Ptr::new (obj_dic.clone ()) })
         }
-    }
-    pub fn dict_to_list_reverse (dict: Ptr <Obj>) -> Ptr <Obj> {
-        let dict = Dict::cast (dict);
-        let mut list = null ();
-        let obj_dic = &dict.obj_dic;
-        for kv in obj_dic.iter () {
-            let sym = Sym::make (kv.0);
-            let obj = kv.1;
-            let pair = cons (sym, unit_list (obj.dup ()));
-            list = cons (pair, list);
-        }
-        list
-    }
-    pub fn dict_to_list (dict: Ptr <Obj>) -> Ptr <Obj> {
-        let dict = Dict::cast (dict);
-        let list = dict_to_list_reverse (dict);
-        list_reverse (list)
-    }
-    fn list_to_dict (mut list: Ptr <Obj>) -> Ptr <Dict> {
-        let mut obj_dic = ObjDic::new ();
-        while ! null_p (&list) {
-            let pair = car (list.dup ());
-            let key = car (pair.dup ());
-            let rest = cdr (pair.dup ());
-            let sym = Sym::cast (key);
-            let name = &sym.sym;
-            if cons_p (&rest) {
-                let obj = car (rest);
-                obj_dic.set (name, Some (obj));
-            } else {
-                obj_dic.set (name, None);
-            }
-            list = cdr (list);
-        }
-        Dict::make (&obj_dic)
-    }
-    fn dict_to_flat_list_reverse (dict: Ptr <Obj>) -> Ptr <Obj> {
-        let dict = Dict::cast (dict);
-        let mut list = null ();
-        for kv in dict.obj_dic.iter () {
-            let key = cons (
-                Sym::make ("quote"),
-                unit_list (Sym::make (kv.0)));
-            let obj = kv.1.dup ();
-            list = cons (obj, list);
-            list = cons (key, list);
-        }
-        list
     }
     struct CollectDictJo {
         counter: usize,
@@ -1830,8 +1791,9 @@
         fn exe (&self, env: &mut Env, _: Ptr <Scope>) {
             let mut obj_dic = ObjDic::new ();
             for _ in 0..self.counter {
-                let key = env.obj_stack.pop () .unwrap ();
+                // note the order!
                 let obj = env.obj_stack.pop () .unwrap ();
+                let key = env.obj_stack.pop () .unwrap ();
                 let sym = Sym::cast (key);
                 let name = sym.sym .as_str ();
                 obj_dic.ins (name, Some (obj));
@@ -1854,7 +1816,123 @@
         ];
         jojo_append (&jojo, &ending_jojo)
     }
-
+    pub fn dict_to_list_reverse (dict: Ptr <Obj>) -> Ptr <Obj> {
+        let dict = Dict::cast (dict);
+        let mut list = null ();
+        let obj_dic = &dict.obj_dic;
+        for kv in obj_dic.iter () {
+            let sym = Sym::make (kv.0);
+            let obj = kv.1;
+            let pair = cons (sym, unit_list (obj.dup ()));
+            list = cons (pair, list);
+        }
+        list
+    }
+    pub fn dict_to_list (dict: Ptr <Obj>) -> Ptr <Obj> {
+        let dict = Dict::cast (dict);
+        let list = dict_to_list_reverse (dict);
+        list_reverse (list)
+    }
+    fn list_to_dict (mut list: Ptr <Obj>) -> Ptr <Dict> {
+        assert! (list_p (&list));
+        let mut obj_dic = ObjDic::new ();
+        while ! null_p (&list) {
+           let pair = car (list.dup ());
+           let sym = car_as_sym (pair.dup ());
+           let name = &sym.sym;
+           let obj = car (cdr (pair.dup ()));
+           obj_dic.ins (name, Some (obj));
+           list = cdr (list);
+        }
+        Dict::make (&obj_dic)
+    }
+    fn dict_to_flat_list_reverse (dict: Ptr <Obj>) -> Ptr <Obj> {
+        let dict = Dict::cast (dict);
+        let mut list = null ();
+        for kv in dict.obj_dic.iter () {
+            let key = cons (
+                Sym::make ("quote"),
+                unit_list (Sym::make (kv.0)));
+            let obj = kv.1.dup ();
+            list = cons (obj, list);
+            list = cons (key, list);
+        }
+        list
+    }
+    fn dict_length (dict: Ptr <Obj>) -> Ptr <Num> {
+        let dict = Dict::cast (dict);
+        Num::make (dict.obj_dic.len () as f64)
+    }
+    fn dict_key_list_reverse (dict: Ptr <Obj>) -> Ptr <Obj> {
+        let dict = Dict::cast (dict);
+        let mut list = null ();
+        for name in dict.obj_dic.keys () {
+            let sym = Sym::make (name);
+            list = cons (sym, list);
+        }
+        list
+    }
+    fn dict_value_list_reverse (dict: Ptr <Obj>) -> Ptr <Obj> {
+        let dict = Dict::cast (dict);
+        let mut list = null ();
+        for value in dict.obj_dic.values () {
+            list = cons (value.dup (), list);
+        }
+        list
+    }
+    fn dict_key_list (dict: Ptr <Obj>) -> Ptr <Obj> {
+        list_reverse (dict_key_list_reverse (dict))
+    }
+    fn dict_value_list (dict: Ptr <Obj>) -> Ptr <Obj> {
+        list_reverse (dict_value_list_reverse (dict))
+    }
+    fn dict_insert (
+        dict: Ptr <Obj>,
+        key: Ptr <Obj>,
+        value: Ptr <Obj>,
+    ) -> Ptr <Obj> {
+        let dict = Dict::cast (dict);
+        let key = Sym::cast (key);
+        let name = &key.sym;
+        let mut obj_dic = (*dict.obj_dic).clone ();
+        if obj_dic.has_name (name) {
+            obj_dic.set (name, Some (value));
+        } else {
+            obj_dic.ins (name, Some (value));
+        }
+        Dict::make (&obj_dic)
+    }
+    fn dict_merge (
+        ante: Ptr <Obj>,
+        succ: Ptr <Obj>,
+    ) -> Ptr <Obj> {
+        let ante = Dict::cast (ante);
+        let succ = Dict::cast (succ);
+        let mut obj_dic = (*ante.obj_dic).clone ();
+        for kv in succ.obj_dic.iter () {
+            let name = kv.0;
+            let value = kv.1.dup ();
+            if obj_dic.has_name (name) {
+                obj_dic.set (name, Some (value));
+            } else {
+                obj_dic.ins (name, Some (value));
+            }
+        }
+        Dict::make (&obj_dic)
+    }
+    fn dict_find (
+        dict: Ptr <Obj>,
+        key: Ptr <Obj>,
+    ) -> Ptr <Obj> {
+        let dict = Dict::cast (dict);
+        let key = Sym::cast (key);
+        let name = &key.sym;
+        if let Some (value) = dict.obj_dic.get (name) {
+            some (value.dup ())
+        } else {
+            none ()
+        }
+    }
     pub fn parse_sexp (token: &token::Token) -> Ptr <Obj> {
         match token {
             token::Token::List { token_vec, .. } => parse_sexp_list (token_vec),
@@ -3322,6 +3400,19 @@
         env.define ("none", JNone::make ());
         define_prim! (env, "some", ["value"], some);
     }
+    fn expose_dict (env: &mut Env) {
+        define_prim! (env, "list-to-dict", ["list"], list_to_dict);
+        define_prim! (env, "dict-to-list", ["dict"], dict_to_list);
+        define_prim! (env, "dict-to-list-reverse", ["dict"], dict_to_list_reverse);
+        define_prim! (env, "dict-length", ["dict"], dict_length);
+        define_prim! (env, "dict-key-list-reverse", ["dict"], dict_key_list_reverse);
+        define_prim! (env, "dict-key-list", ["dict"], dict_key_list);
+        define_prim! (env, "dict-value-list-reverse", ["dict"], dict_value_list_reverse);
+        define_prim! (env, "dict-value-list", ["dict"], dict_value_list);
+        define_prim! (env, "dict-insert", ["dict", "key", "value"], dict_insert);
+        define_prim! (env, "dict-merge", ["ante", "succ"], dict_merge);
+        define_prim! (env, "dict-find", ["dict", "key"], dict_find);
+    }
     fn expose_stack (env: &mut Env) {
         env.define_prim ("drop", vec! [], |env, _| {
             env.obj_stack.pop ();
@@ -3377,7 +3468,7 @@
         expose_list (env);
         expose_vect (env);
         expose_option (env);
-        // expose_dict (env);
+        expose_dict (env);
         // expose_sexp (env);
         // expose_top_keyword (env);
         // expose_keyword (env);

@@ -6,4 +6,4 @@ description = "JOJO's Bizarre Programming Adventure."
 license = "GPL-3.0"
 
 [dependencies]
-dic = "0.1.2"
+dic = "0.1.3"

@@ -3,7 +3,9 @@
 
 * [todo-stack]
 
-  - dict-t
+  - (macro)
+
+  - `self`
 
   - fix `repr` and `print` of obj
 
@@ -2513,6 +2515,14 @@
     }
     #+end_src
 
+*** none
+
+    #+begin_src rust
+    pub fn none () -> Ptr <JNone> {
+        JNone::make ()
+    }
+    #+end_src
+
 *** JSome
 
     #+begin_src rust
@@ -2792,12 +2802,18 @@
 *** Dict
 
     #+begin_src rust
-    pub struct Dict { pub obj_dic: ObjDic }
+    pub struct Dict {
+        pub obj_dic: Ptr <ObjDic>,
+    }
 
     impl_tag! (Dict, DICT_T);
 
     impl Obj for Dict {
         fn tag (&self) -> Tag { DICT_T }
+
+        fn obj_dic (&self) -> Option <Ptr <ObjDic>> {
+            Some (self.obj_dic.dup ())
+        }
 
         fn eq (&self, other: Ptr <Obj>) -> bool {
             if self.tag () != other.tag () {
@@ -2815,8 +2831,51 @@
     #+begin_src rust
     impl Dict {
         fn make (obj_dic: &ObjDic) -> Ptr <Dict> {
-            Ptr::new (Dict { obj_dic: obj_dic.clone () })
+            Ptr::new (Dict { obj_dic: Ptr::new (obj_dic.clone ()) })
         }
+    }
+    #+end_src
+
+*** CollectDictJo
+
+    #+begin_src rust
+    struct CollectDictJo {
+        counter: usize,
+    }
+
+    impl Jo for CollectDictJo {
+        fn exe (&self, env: &mut Env, _: Ptr <Scope>) {
+            let mut obj_dic = ObjDic::new ();
+            for _ in 0..self.counter {
+                // note the order!
+                let obj = env.obj_stack.pop () .unwrap ();
+                let key = env.obj_stack.pop () .unwrap ();
+                let sym = Sym::cast (key);
+                let name = sym.sym .as_str ();
+                obj_dic.ins (name, Some (obj));
+            }
+            env.obj_stack.push (Dict::make (&obj_dic));
+        }
+    }
+    #+end_src
+
+*** dict_compile
+
+    #+begin_src rust
+    fn dict_compile (
+        env: &mut Env,
+        static_scope: &StaticScope,
+        dict: Ptr <Dict>,
+    ) -> Ptr <JoVec> {
+        let sexp_list = dict_to_flat_list_reverse (dict);
+        let counter = list_size (sexp_list.dup ());
+        let counter = counter / 2;
+        let jojo = sexp_list_compile (
+            env, static_scope, sexp_list);
+        let ending_jojo = jojo! [
+            CollectDictJo { counter },
+        ];
+        jojo_append (&jojo, &ending_jojo)
     }
     #+end_src
 
@@ -2851,20 +2910,15 @@
 
     #+begin_src rust
     fn list_to_dict (mut list: Ptr <Obj>) -> Ptr <Dict> {
+        assert! (list_p (&list));
         let mut obj_dic = ObjDic::new ();
         while ! null_p (&list) {
-            let pair = car (list.dup ());
-            let key = car (pair.dup ());
-            let rest = cdr (pair.dup ());
-            let sym = Sym::cast (key);
-            let name = &sym.sym;
-            if cons_p (&rest) {
-                let obj = car (rest);
-                obj_dic.set (name, Some (obj));
-            } else {
-                obj_dic.set (name, None);
-            }
-            list = cdr (list);
+           let pair = car (list.dup ());
+           let sym = car_as_sym (pair.dup ());
+           let name = &sym.sym;
+           let obj = car (cdr (pair.dup ()));
+           obj_dic.ins (name, Some (obj));
+           list = cdr (list);
         }
         Dict::make (&obj_dic)
     }
@@ -2888,66 +2942,118 @@
     }
     #+end_src
 
-*** CollectDictJo
-
-    #+begin_src rust
-    struct CollectDictJo {
-        counter: usize,
-    }
-
-    impl Jo for CollectDictJo {
-        fn exe (&self, env: &mut Env, _: Ptr <Scope>) {
-            let mut obj_dic = ObjDic::new ();
-            for _ in 0..self.counter {
-                let key = env.obj_stack.pop () .unwrap ();
-                let obj = env.obj_stack.pop () .unwrap ();
-                let sym = Sym::cast (key);
-                let name = sym.sym .as_str ();
-                obj_dic.ins (name, Some (obj));
-            }
-            env.obj_stack.push (Dict::make (&obj_dic));
-        }
-    }
-    #+end_src
-
-*** dict_compile
-
-    #+begin_src rust
-    fn dict_compile (
-        env: &mut Env,
-        static_scope: &StaticScope,
-        dict: Ptr <Dict>,
-    ) -> Ptr <JoVec> {
-        let sexp_list = dict_to_flat_list_reverse (dict);
-        let counter = list_size (sexp_list.dup ());
-        let counter = counter / 2;
-        let jojo = sexp_list_compile (
-            env, static_scope, sexp_list);
-        let ending_jojo = jojo! [
-            CollectDictJo { counter },
-        ];
-        jojo_append (&jojo, &ending_jojo)
-    }
-    #+end_src
-
-*** list_to_dict
-
-*** dict_to_list
-
 *** dict_length
+
+    #+begin_src rust
+    fn dict_length (dict: Ptr <Obj>) -> Ptr <Num> {
+        let dict = Dict::cast (dict);
+        Num::make (dict.obj_dic.len () as f64)
+    }
+    #+end_src
+
+*** dict_key_list_reverse
+
+    #+begin_src rust
+    fn dict_key_list_reverse (dict: Ptr <Obj>) -> Ptr <Obj> {
+        let dict = Dict::cast (dict);
+        let mut list = null ();
+        for name in dict.obj_dic.keys () {
+            let sym = Sym::make (name);
+            list = cons (sym, list);
+        }
+        list
+    }
+    #+end_src
+
+*** dict_value_list_reverse
+
+    #+begin_src rust
+    fn dict_value_list_reverse (dict: Ptr <Obj>) -> Ptr <Obj> {
+        let dict = Dict::cast (dict);
+        let mut list = null ();
+        for value in dict.obj_dic.values () {
+            list = cons (value.dup (), list);
+        }
+        list
+    }
+    #+end_src
 
 *** dict_key_list
 
+    #+begin_src rust
+    fn dict_key_list (dict: Ptr <Obj>) -> Ptr <Obj> {
+        list_reverse (dict_key_list_reverse (dict))
+    }
+    #+end_src
+
 *** dict_value_list
+
+    #+begin_src rust
+    fn dict_value_list (dict: Ptr <Obj>) -> Ptr <Obj> {
+        list_reverse (dict_value_list_reverse (dict))
+    }
+    #+end_src
 
 *** dict_insert
 
+    #+begin_src rust
+    fn dict_insert (
+        dict: Ptr <Obj>,
+        key: Ptr <Obj>,
+        value: Ptr <Obj>,
+    ) -> Ptr <Obj> {
+        let dict = Dict::cast (dict);
+        let key = Sym::cast (key);
+        let name = &key.sym;
+        let mut obj_dic = (*dict.obj_dic).clone ();
+        if obj_dic.has_name (name) {
+            obj_dic.set (name, Some (value));
+        } else {
+            obj_dic.ins (name, Some (value));
+        }
+        Dict::make (&obj_dic)
+    }
+    #+end_src
+
 *** dict_merge
+
+    #+begin_src rust
+    fn dict_merge (
+        ante: Ptr <Obj>,
+        succ: Ptr <Obj>,
+    ) -> Ptr <Obj> {
+        let ante = Dict::cast (ante);
+        let succ = Dict::cast (succ);
+        let mut obj_dic = (*ante.obj_dic).clone ();
+        for kv in succ.obj_dic.iter () {
+            let name = kv.0;
+            let value = kv.1.dup ();
+            if obj_dic.has_name (name) {
+                obj_dic.set (name, Some (value));
+            } else {
+                obj_dic.ins (name, Some (value));
+            }
+        }
+        Dict::make (&obj_dic)
+    }
+    #+end_src
 
 *** dict_find
 
     #+begin_src rust
-
+    fn dict_find (
+        dict: Ptr <Obj>,
+        key: Ptr <Obj>,
+    ) -> Ptr <Obj> {
+        let dict = Dict::cast (dict);
+        let key = Sym::cast (key);
+        let name = &key.sym;
+        if let Some (value) = dict.obj_dic.get (name) {
+            some (value.dup ())
+        } else {
+            none ()
+        }
+    }
     #+end_src
 
 * sexp
@@ -5046,6 +5152,24 @@
     }
     #+end_src
 
+*** expose_dict
+
+    #+begin_src rust
+    fn expose_dict (env: &mut Env) {
+        define_prim! (env, "list-to-dict", ["list"], list_to_dict);
+        define_prim! (env, "dict-to-list", ["dict"], dict_to_list);
+        define_prim! (env, "dict-to-list-reverse", ["dict"], dict_to_list_reverse);
+        define_prim! (env, "dict-length", ["dict"], dict_length);
+        define_prim! (env, "dict-key-list-reverse", ["dict"], dict_key_list_reverse);
+        define_prim! (env, "dict-key-list", ["dict"], dict_key_list);
+        define_prim! (env, "dict-value-list-reverse", ["dict"], dict_value_list_reverse);
+        define_prim! (env, "dict-value-list", ["dict"], dict_value_list);
+        define_prim! (env, "dict-insert", ["dict", "key", "value"], dict_insert);
+        define_prim! (env, "dict-merge", ["ante", "succ"], dict_merge);
+        define_prim! (env, "dict-find", ["dict", "key"], dict_find);
+    }
+    #+end_src
+
 *** expose_stack
 
     #+begin_src rust
@@ -5119,7 +5243,7 @@
         expose_list (env);
         expose_vect (env);
         expose_option (env);
-        // expose_dict (env);
+        expose_dict (env);
         // expose_sexp (env);
         // expose_top_keyword (env);
         // expose_keyword (env);
