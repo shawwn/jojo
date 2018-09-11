@@ -582,7 +582,21 @@
             name: &str,
             obj: Ptr <Obj>,
         ) -> Id {
-            self.obj_dic.ins (name, Some (obj))
+            if self.obj_dic.has_name (name) {
+                if let Some (old_obj) = self.obj_dic.get (name) {
+                    eprintln! ("- Env::define");
+                    eprintln! ("  re-defining a name is not allowed");
+                    eprintln! ("  name : {}", name);
+                    eprintln! ("  old obj : {}", old_obj.repr (self));
+                    eprintln! ("  new obj : {}", obj.repr (self));
+                    panic! ("jojo fatal error!");
+                } else {
+                    self.obj_dic.set (name, Some (obj));
+                }
+                self.obj_dic.get_index (name) .unwrap ()
+            } else {
+               self.obj_dic.ins (name, Some (obj))
+            }
         }
     }
     #+end_src

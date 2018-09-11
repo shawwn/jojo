@@ -1,0 +1,20 @@
+(= zero-t (data))
+(= succ-t (data prev))
+
+(= zero (zero-c))
+(= one (succ-c zero))
+(= two (succ-c one))
+(= three (succ-c two))
+(= four (succ-c three))
+
+(= (succ-t.add1)
+   (succ-c self))
+
+(assert (eq (one.add1) two))
+(assert (eq (two.add1) three))
+
+(= succ-t.inc
+   (succ-c self))
+
+(assert (eq one.inc two))
+(assert (eq two.inc three))
