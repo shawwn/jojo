@@ -6,10 +6,10 @@
 (assert (eq (bool-not true) false))
 (assert (eq (bool-not false) true))
 
-(= (bool-not x)
+(= (bool-not-2 x)
    (case x
      (true-t false)
      (_ true)))
 
-(assert (eq (bool-not true) false))
-(assert (eq (bool-not false) true))
+(assert (eq (bool-not-2 true) false))
+(assert (eq (bool-not-2 false) true))

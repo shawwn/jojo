@@ -1,14 +1,14 @@
 [[package]]
 name = "dic"
-version = "0.1.1"
+version = "0.1.2"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 
 [[package]]
 name = "jojo"
 version = "0.1.1"
 dependencies = [
- "dic 0.1.1 (registry+https://github.com/rust-lang/crates.io-index)",
+ "dic 0.1.2 (registry+https://github.com/rust-lang/crates.io-index)",
 ]
 
 [metadata]
-"checksum dic 0.1.1 (registry+https://github.com/rust-lang/crates.io-index)" = "34ffed85ca74d56bcef49d66b76a6bee3c528da0456ff1c02803f7a138dc383a"
+"checksum dic 0.1.2 (registry+https://github.com/rust-lang/crates.io-index)" = "be69da496f0dd0cf49aef57ef104ce2fd5fc82e985ec6f1287ba94357609888a"

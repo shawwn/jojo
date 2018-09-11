@@ -3,13 +3,11 @@
 
 * [todo-stack]
 
+  - dict-t
+
   - num-t
 
   - fix `repr` and `print` of obj
-
-  - (case)
-
-  - dict-t
 
   - use rust's doc system -- in separated org-mode blocks
 
@@ -3789,7 +3787,102 @@
       }
       #+end_src
 
-*** [todo] (case)
+*** (case)
+
+***** JojoMap
+
+      #+begin_src rust
+      type JojoMap = HashMap <Tag, Ptr <JoVec>>;
+      #+end_src
+
+***** CaseJo
+
+      #+begin_src rust
+      struct CaseJo {
+          jojo_map: JojoMap,
+          default_jojo: Option <Ptr <JoVec>>,
+      }
+
+      impl Jo for CaseJo {
+          fn exe (&self, env: &mut Env, scope: Ptr <Scope>) {
+              let obj = env.obj_stack.pop () .unwrap ();
+              let tag = obj.tag ();
+              if let Some (jojo) = self.jojo_map.get (&tag) {
+                  env.frame_stack.push (Box::new (Frame {
+                      index: 0,
+                      jojo: jojo.dup (),
+                      scope: scope.dup (),
+                  }));
+              } else if let Some (ref jojo) = self.default_jojo {
+                  env.frame_stack.push (Box::new (Frame {
+                      index: 0,
+                      jojo: jojo.dup (),
+                      scope: scope.dup (),
+                  }));
+              } else {
+                  eprintln! ("- CaseJo::exe");
+                  eprintln! ("  tag mismatch");
+                  eprintln! ("  tag : {}", name_of_tag (env, tag));
+                  eprintln! ("  obj : {}", obj.repr (env));
+                  panic! ("jojo fatal error!");
+              }
+          }
+      }
+      #+end_src
+
+***** case_compile
+
+      #+begin_src rust
+      pub fn case_compile (
+          env: &mut Env,
+          static_scope: &StaticScope,
+          mut body: Ptr <Obj>,
+      ) -> Ptr <JoVec> {
+          let mut jojo_map = JojoMap::new ();
+          let mut default_jojo: Option <Ptr <JoVec>> = None;
+          while ! null_p (&body) {
+              let clause = car (body.dup ());
+              let sym = car_as_sym (clause.dup ());
+              let rest = cdr (clause);
+              let type_name = &sym.sym;
+              if (type_name == "_") {
+                  let jojo = sexp_list_compile (env, static_scope, rest);
+                  default_jojo = Some (jojo);
+                  body = cdr (body);
+              } else {
+                  if let Some (typ) = env.find_type (type_name) {
+                      let tag = typ.tag_of_type;
+                      let jojo = sexp_list_compile (env, static_scope, rest);
+                      jojo_map.insert (tag, jojo);
+                      body = cdr (body);
+                  } else {
+                      eprintln! ("- case_compile");
+                      eprintln! ("  unknown type_name : {}", type_name);
+                      panic! ("jojo fatal error!");
+                  }
+              }
+          }
+          jojo! [
+              CaseJo { jojo_map, default_jojo }
+          ]
+      }
+      #+end_src
+
+***** k_case
+
+      #+begin_src rust
+      fn k_case (
+          env: &mut Env,
+          static_scope: &StaticScope,
+          body: Ptr <Obj>,
+      ) -> Ptr <JoVec> {
+          let head = car (body.dup ());
+          let rest = cdr (body);
+          let head_jojo = sexp_compile (env, static_scope, head);
+          let rest_jojo = case_compile (env, static_scope, rest);
+          jojo_append (&head_jojo, &rest_jojo)
+      }
+      #+end_src
 
 *** (*) -- literal list
 
@@ -4046,7 +4139,7 @@
         env.define_keyword ("do", k_do);
         env.define_keyword ("lambda", k_lambda);
         // env.define_keyword ("macro", k_macro);
-        // env.define_keyword ("case", k_case);
+        env.define_keyword ("case", k_case);
         env.define_keyword ("quote", k_quote);
         env.define_keyword ("*", k_list);
         env.define_keyword ("note", k_note);
