@@ -1200,6 +1200,30 @@
         let x = Num::cast (x);
         Num::make (x.num + 1.0)
     }
+    fn dec (x: Ptr <Obj>) -> Ptr <Num> {
+        let x = Num::cast (x);
+        Num::make (x.num - 1.0)
+    }
+    fn add (x: Ptr <Obj>, y: Ptr <Obj>) -> Ptr <Num> {
+        let x = Num::cast (x);
+        let y = Num::cast (y);
+        Num::make (x.num + y.num)
+    }
+    fn sub (x: Ptr <Obj>, y: Ptr <Obj>) -> Ptr <Num> {
+        let x = Num::cast (x);
+        let y = Num::cast (y);
+        Num::make (x.num - y.num)
+    }
+    fn mul (x: Ptr <Obj>, y: Ptr <Obj>) -> Ptr <Num> {
+        let x = Num::cast (x);
+        let y = Num::cast (y);
+        Num::make (x.num * y.num)
+    }
+    fn div (x: Ptr <Obj>, y: Ptr <Obj>) -> Ptr <Num> {
+        let x = Num::cast (x);
+        let y = Num::cast (y);
+        Num::make (x.num / y.num)
+    }
     pub struct Null;
 
     impl_tag! (Null, NULL_T);
@@ -2807,6 +2831,82 @@
           println! ("sexp : {}", sexp_repr (env, sexp.dup ()));
           env.obj_stack.push (sexp);
       }
+      fn sexp_quote_and_unquote (
+          env: &Env,
+          sexp: Ptr <Obj>,
+      ) -> Ptr <Obj> {
+          if Str::p (&sexp) || Num::p (&sexp) {
+              sexp
+          } else if Sym::p (&sexp) {
+              cons (Sym::make ("quote"),
+                    unit_list (sexp))
+          } else if null_p (&sexp) {
+              cons (Sym::make ("quote"),
+                    unit_list (sexp))
+          } else if Vect::p (&sexp) {
+              let list = vect_to_list (sexp);
+              cons (Sym::make ("list-to-vect"),
+                    unit_list (sexp_list_quote_and_unquote (env, list)))
+          } else if Dict::p (&sexp) {
+              let list = dict_to_list (sexp);
+              cons (Sym::make ("list-to-dict"),
+                    unit_list (sexp_list_quote_and_unquote (env, list)))
+          } else {
+              assert! (cons_p (&sexp));
+              let head = car (sexp.dup ());
+              if sym_sexp_as_str_p (&head, "unquote") {
+                  let rest = cdr (sexp.dup ());
+                  assert! (cons_p (&rest));
+                  assert! (null_p (&(cdr (rest.dup ()))));
+                  car (rest)
+              } else {
+                  sexp_list_quote_and_unquote (
+                      env,
+                      sexp)
+              }
+          }
+      }
+      fn sexp_list_quote_and_unquote (
+          env: &Env,
+          sexp_list: Ptr <Obj>,
+      ) -> Ptr <Obj> {
+          if null_p (&sexp_list) {
+              unit_list (Sym::make ("*"))
+          } else {
+              assert! (cons_p (&sexp_list));
+              let mut sexp = car (sexp_list.dup ());
+              if cons_p (&sexp)
+                  && sym_sexp_as_str_p (&(car (sexp.dup ())),
+                                        "unquote-splicing")
+              {
+                  let rest = cdr (sexp);
+                  assert! (cons_p (&rest));
+                  assert! (null_p (&(cdr (rest.dup ()))));
+                  sexp = car (rest);
+              } else {
+                  sexp = cons (
+                      Sym::make ("*"),
+                      unit_list (sexp_quote_and_unquote (env, sexp)));
+              }
+              cons (Sym::make ("list-append"),
+                    cons (
+                        sexp,
+                        unit_list (
+                            sexp_list_quote_and_unquote (
+                                env, cdr (sexp_list)))))
+          }
+      }
+      fn m_quasiquote (
+          env: &mut Env,
+          arg: &ObjDic,
+      ) {
+          let body = arg_idx (arg, 0);
+          assert! (cons_p (&body));
+          assert! (null_p (&(cdr (body.dup ()))));
+          let sexp = car (body);
+          let new_sexp = sexp_quote_and_unquote (env, sexp);
+          env.obj_stack.push (new_sexp);
+      }
       fn sexp_list_and (
           env: &mut Env,
           sexp_list: Ptr <Obj>,
@@ -2919,6 +3019,14 @@
         env.define ("false", False::make ());;
         define_prim! (env, "not", ["x"], not);;
     }
+    fn expose_num (env: &mut Env) {
+        define_prim! (env, "inc", ["x"], inc);
+        define_prim! (env, "dec", ["x"], dec);
+        define_prim! (env, "add", ["x", "y"], add);
+        define_prim! (env, "sub", ["x", "y"], sub);
+        define_prim! (env, "mul", ["x", "y"], mul);
+        define_prim! (env, "div", ["x", "y"], div);
+    }
     fn expose_str (env: &mut Env) {
         define_prim! (env, "str-length", ["str"], str_length);
         define_prim! (env, "str-append", ["ante", "succ"], str_append);
@@ -2980,7 +3088,7 @@
         env.define_keyword ("if", k_if);
         env.define_keyword ("when", k_when);
         env.define_prim_macro ("let", m_let);
-        // env.define_prim_macro ("quasiquote", m_quasiquote);
+        env.define_prim_macro ("quasiquote", m_quasiquote);
         env.define_prim_macro ("and", m_and);
         env.define_prim_macro ("or", m_or);
         env.define_prim_macro ("cond", m_cond);
@@ -3011,7 +3119,7 @@
     fn expose_core (env: &mut Env) {
         expose_type (env);
         expose_bool (env);
-        // expose_num (env);
+        expose_num (env);
         expose_str (env);
         expose_sym (env);
         expose_list (env);
