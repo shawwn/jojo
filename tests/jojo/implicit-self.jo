@@ -18,3 +18,9 @@
 
 (assert (eq one.inc two))
 (assert (eq two.inc three))
+
+(= null-t.list-of-one-null
+   (cons self self))
+
+(assert (eq null .list-of-one-null
+            (cons null null)))

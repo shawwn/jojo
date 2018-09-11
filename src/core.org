@@ -3,8 +3,6 @@
 
 * [todo-stack]
 
-  - num-t
-
   - dict-t
 
   - fix `repr` and `print` of obj
@@ -1785,63 +1783,483 @@
     }
     #+end_src
 
-*** inc
+*** basic
 
-    #+begin_src rust
-    fn inc (x: Ptr <Obj>) -> Ptr <Num> {
-        let x = Num::cast (x);
-        Num::make (x.num + 1.0)
-    }
-    #+end_src
+***** inc
 
-*** dec
+      #+begin_src rust
+      fn inc (x: Ptr <Obj>) -> Ptr <Num> {
+          let x = Num::cast (x);
+          Num::make (x.num + 1.0)
+      }
+      #+end_src
 
-    #+begin_src rust
-    fn dec (x: Ptr <Obj>) -> Ptr <Num> {
-        let x = Num::cast (x);
-        Num::make (x.num - 1.0)
-    }
-    #+end_src
+***** dec
 
-*** add
+      #+begin_src rust
+      fn dec (x: Ptr <Obj>) -> Ptr <Num> {
+          let x = Num::cast (x);
+          Num::make (x.num - 1.0)
+      }
+      #+end_src
 
-    #+begin_src rust
-    fn add (x: Ptr <Obj>, y: Ptr <Obj>) -> Ptr <Num> {
-        let x = Num::cast (x);
-        let y = Num::cast (y);
-        Num::make (x.num + y.num)
-    }
-    #+end_src
+***** add
 
-*** sub
+      #+begin_src rust
+      fn add (x: Ptr <Obj>, y: Ptr <Obj>) -> Ptr <Num> {
+          let x = Num::cast (x);
+          let y = Num::cast (y);
+          Num::make (x.num + y.num)
+      }
+      #+end_src
 
-    #+begin_src rust
-    fn sub (x: Ptr <Obj>, y: Ptr <Obj>) -> Ptr <Num> {
-        let x = Num::cast (x);
-        let y = Num::cast (y);
-        Num::make (x.num - y.num)
-    }
-    #+end_src
+***** sub
 
-*** mul
+      #+begin_src rust
+      fn sub (x: Ptr <Obj>, y: Ptr <Obj>) -> Ptr <Num> {
+          let x = Num::cast (x);
+          let y = Num::cast (y);
+          Num::make (x.num - y.num)
+      }
+      #+end_src
 
-    #+begin_src rust
-    fn mul (x: Ptr <Obj>, y: Ptr <Obj>) -> Ptr <Num> {
-        let x = Num::cast (x);
-        let y = Num::cast (y);
-        Num::make (x.num * y.num)
-    }
-    #+end_src
+***** mul
 
-*** div
+      #+begin_src rust
+      fn mul (x: Ptr <Obj>, y: Ptr <Obj>) -> Ptr <Num> {
+          let x = Num::cast (x);
+          let y = Num::cast (y);
+          Num::make (x.num * y.num)
+      }
+      #+end_src
 
-    #+begin_src rust
-    fn div (x: Ptr <Obj>, y: Ptr <Obj>) -> Ptr <Num> {
-        let x = Num::cast (x);
-        let y = Num::cast (y);
-        Num::make (x.num / y.num)
-    }
-    #+end_src
+***** div
+
+      #+begin_src rust
+      fn div (x: Ptr <Obj>, y: Ptr <Obj>) -> Ptr <Num> {
+          let x = Num::cast (x);
+          let y = Num::cast (y);
+          Num::make (x.num / y.num)
+      }
+      #+end_src
+
+***** num_mod
+
+      #+begin_src rust
+      fn num_mod (x: Ptr <Obj>, y: Ptr <Obj>) -> Ptr <Num> {
+          let x = Num::cast (x);
+          let y = Num::cast (y);
+          Num::make (x.num % y.num)
+      }
+      #+end_src
+
+***** max
+
+      #+begin_src rust
+      fn max (x: Ptr <Obj>, y: Ptr <Obj>) -> Ptr <Num> {
+          let x = Num::cast (x);
+          let y = Num::cast (y);
+          Num::make (x.num.max (y.num))
+      }
+      #+end_src
+
+***** min
+
+      #+begin_src rust
+      fn min (x: Ptr <Obj>, y: Ptr <Obj>) -> Ptr <Num> {
+          let x = Num::cast (x);
+          let y = Num::cast (y);
+          Num::make (x.num.min (y.num))
+      }
+
+      #+end_src
+
+***** abs
+
+      #+begin_src rust
+      fn abs (x: Ptr <Obj>) -> Ptr <Num> {
+          let x = Num::cast (x);
+          Num::make (x.num.abs ())
+      }
+      #+end_src
+
+***** neg
+
+      #+begin_src rust
+      fn neg (x: Ptr <Obj>) -> Ptr <Num> {
+          let x = Num::cast (x);
+          Num::make (- x.num)
+      }
+      #+end_src
+
+***** pow
+
+      #+begin_src rust
+      fn pow (x: Ptr <Obj>, y: Ptr <Obj>) -> Ptr <Num> {
+          let x = Num::cast (x);
+          let y = Num::cast (y);
+          Num::make (x.num.powf (y.num))
+      }
+      #+end_src
+
+***** mul_add
+
+      #+begin_src rust
+      fn mul_add (x: Ptr <Obj>, y: Ptr <Obj>, z: Ptr <Obj>) -> Ptr <Num> {
+          let x = Num::cast (x);
+          let y = Num::cast (y);
+          let z = Num::cast (z);
+          Num::make (x.num.mul_add (y.num, z.num))
+      }
+      #+end_src
+
+***** reciprocal
+
+      #+begin_src rust
+      fn reciprocal (x: Ptr <Obj>) -> Ptr <Num> {
+          let x = Num::cast (x);
+          Num::make (x.num.recip ())
+      }
+      #+end_src
+
+***** sqrt
+
+      #+begin_src rust
+      fn sqrt (x: Ptr <Obj>) -> Ptr <Num> {
+          let x = Num::cast (x);
+          Num::make (x.num.sqrt ())
+      }
+      #+end_src
+
+***** cbrt
+
+      #+begin_src rust
+      fn cbrt (x: Ptr <Obj>) -> Ptr <Num> {
+          let x = Num::cast (x);
+          Num::make (x.num.cbrt ())
+      }
+      #+end_src
+
+***** hypot
+
+      #+begin_src rust
+      fn hypot (x: Ptr <Obj>, y: Ptr <Obj>) -> Ptr <Num> {
+          let x = Num::cast (x);
+          let y = Num::cast (y);
+          Num::make (x.num.hypot (y.num))
+      }
+      #+end_src
+
+*** predicates
+
+***** lt
+
+      #+begin_src rust
+      fn lt (x: Ptr <Obj>, y: Ptr <Obj>) -> Ptr <Obj> {
+          let x = Num::cast (x);
+          let y = Num::cast (y);
+          make_bool (x.num < y.num)
+      }
+      #+end_src
+
+***** gt
+
+      #+begin_src rust
+      fn gt (x: Ptr <Obj>, y: Ptr <Obj>) -> Ptr <Obj> {
+          let x = Num::cast (x);
+          let y = Num::cast (y);
+          make_bool (x.num > y.num)
+      }
+      #+end_src
+
+***** lteq
+
+      #+begin_src rust
+      fn lteq (x: Ptr <Obj>, y: Ptr <Obj>) -> Ptr <Obj> {
+          let x = Num::cast (x);
+          let y = Num::cast (y);
+          make_bool (x.num <= y.num)
+      }
+      #+end_src
+
+***** gteq
+
+      #+begin_src rust
+      fn gteq (x: Ptr <Obj>, y: Ptr <Obj>) -> Ptr <Obj> {
+          let x = Num::cast (x);
+          let y = Num::cast (y);
+          make_bool (x.num >= y.num)
+      }
+      #+end_src
+
+***** even_p
+
+      #+begin_src rust
+      fn even_p (x: Ptr <Obj>) -> Ptr <Obj> {
+          let x = Num::cast (x);
+          make_bool (x.num % 2.0 == 0.0)
+      }
+      #+end_src
+
+***** odd_p
+
+      #+begin_src rust
+      fn odd_p (x: Ptr <Obj>) -> Ptr <Obj> {
+          let x = Num::cast (x);
+          make_bool (x.num % 2.0 == 1.0)
+      }
+      #+end_src
+
+*** about integer
+
+***** num_integer_part
+
+      #+begin_src rust
+      fn num_integer_part (x: Ptr <Obj>) -> Ptr <Num> {
+          let x = Num::cast (x);
+          Num::make (x.num.trunc ())
+      }
+      #+end_src
+
+***** num_fractional_part
+
+      #+begin_src rust
+      fn num_fractional_part (x: Ptr <Obj>) -> Ptr <Num> {
+          let x = Num::cast (x);
+          Num::make (x.num.fract ())
+      }
+      #+end_src
+
+***** num_sign
+
+      #+begin_src rust
+      fn num_sign (x: Ptr <Obj>) -> Ptr <Num> {
+          let x = Num::cast (x);
+          Num::make (x.num.signum ())
+      }
+      #+end_src
+
+***** num_floor
+
+      #+begin_src rust
+      fn num_floor (x: Ptr <Obj>) -> Ptr <Num> {
+          let x = Num::cast (x);
+          Num::make (x.num.floor ())
+      }
+      #+end_src
+
+***** num_ceil
+
+      #+begin_src rust
+      fn num_ceil (x: Ptr <Obj>) -> Ptr <Num> {
+          let x = Num::cast (x);
+          Num::make (x.num.ceil ())
+      }
+      #+end_src
+
+***** num_round
+
+      #+begin_src rust
+      fn num_round (x: Ptr <Obj>) -> Ptr <Num> {
+          let x = Num::cast (x);
+          Num::make (x.num.round ())
+      }
+      #+end_src
+
+*** trigonometry
+
+***** num_sin
+
+      #+begin_src rust
+      fn num_sin (x: Ptr <Obj>) -> Ptr <Num> {
+          let x = Num::cast (x);
+          Num::make (x.num.sin ())
+      }
+      #+end_src
+
+***** num_cos
+
+      #+begin_src rust
+      fn num_cos (x: Ptr <Obj>) -> Ptr <Num> {
+          let x = Num::cast (x);
+          Num::make (x.num.cos ())
+      }
+      #+end_src
+
+***** num_tan
+
+      #+begin_src rust
+      fn num_tan (x: Ptr <Obj>) -> Ptr <Num> {
+          let x = Num::cast (x);
+          Num::make (x.num.tan ())
+      }
+      #+end_src
+
+***** num_asin
+
+      #+begin_src rust
+      fn num_asin (x: Ptr <Obj>) -> Ptr <Num> {
+          let x = Num::cast (x);
+          Num::make (x.num.asin ())
+      }
+      #+end_src
+
+***** num_acos
+
+      #+begin_src rust
+      fn num_acos (x: Ptr <Obj>) -> Ptr <Num> {
+          let x = Num::cast (x);
+          Num::make (x.num.acos ())
+      }
+      #+end_src
+
+***** num_atan
+
+      #+begin_src rust
+      fn num_atan (x: Ptr <Obj>) -> Ptr <Num> {
+          let x = Num::cast (x);
+          Num::make (x.num.atan ())
+      }
+      #+end_src
+
+***** num_atan2
+
+      #+begin_src rust
+      fn num_atan2 (x: Ptr <Obj>, y: Ptr <Obj>) -> Ptr <Num> {
+          let x = Num::cast (x);
+          let y = Num::cast (y);
+          Num::make (x.num.atan2 (y.num))
+      }
+      #+end_src
+
+***** num_sinh
+
+      #+begin_src rust
+      fn num_sinh (x: Ptr <Obj>) -> Ptr <Num> {
+          let x = Num::cast (x);
+          Num::make (x.num.sinh ())
+      }
+      #+end_src
+
+***** num_cosh
+
+      #+begin_src rust
+      fn num_cosh (x: Ptr <Obj>) -> Ptr <Num> {
+          let x = Num::cast (x);
+          Num::make (x.num.cosh ())
+      }
+      #+end_src
+
+***** num_tanh
+
+      #+begin_src rust
+      fn num_tanh (x: Ptr <Obj>) -> Ptr <Num> {
+          let x = Num::cast (x);
+          Num::make (x.num.tanh ())
+      }
+      #+end_src
+
+***** num_asinh
+
+      #+begin_src rust
+      fn num_asinh (x: Ptr <Obj>) -> Ptr <Num> {
+          let x = Num::cast (x);
+          Num::make (x.num.asinh ())
+      }
+      #+end_src
+
+***** num_acosh
+
+      #+begin_src rust
+      fn num_acosh (x: Ptr <Obj>) -> Ptr <Num> {
+          let x = Num::cast (x);
+          Num::make (x.num.acosh ())
+      }
+      #+end_src
+
+***** num_atanh
+
+      #+begin_src rust
+      fn num_atanh (x: Ptr <Obj>) -> Ptr <Num> {
+          let x = Num::cast (x);
+          Num::make (x.num.atanh ())
+      }
+      #+end_src
+
+*** exp and log
+
+***** num_exp
+
+      #+begin_src rust
+      fn num_exp (x: Ptr <Obj>) -> Ptr <Num> {
+          let x = Num::cast (x);
+          Num::make (x.num.exp ())
+      }
+      #+end_src
+
+***** num_exp2
+
+      #+begin_src rust
+      fn num_exp2 (x: Ptr <Obj>) -> Ptr <Num> {
+          let x = Num::cast (x);
+          Num::make (x.num.exp2 ())
+      }
+      #+end_src
+
+***** num_exp_m1
+
+      #+begin_src rust
+      fn num_exp_m1 (x: Ptr <Obj>) -> Ptr <Num> {
+          let x = Num::cast (x);
+          Num::make (x.num.exp_m1 ())
+      }
+      #+end_src
+
+***** num_ln
+
+      #+begin_src rust
+      fn num_ln (x: Ptr <Obj>) -> Ptr <Num> {
+          let x = Num::cast (x);
+          Num::make (x.num.ln ())
+      }
+      #+end_src
+
+***** num_ln_1p
+
+      #+begin_src rust
+      fn num_ln_1p (x: Ptr <Obj>) -> Ptr <Num> {
+          let x = Num::cast (x);
+          Num::make (x.num.ln_1p ())
+      }
+      #+end_src
+
+***** num_log
+
+      #+begin_src rust
+      fn num_log (x: Ptr <Obj>, y: Ptr <Obj>) -> Ptr <Num> {
+          let x = Num::cast (x);
+          let y = Num::cast (y);
+          Num::make (x.num.log (y.num))
+      }
+      #+end_src
+
+***** num_log2
+
+      #+begin_src rust
+      fn num_log2 (x: Ptr <Obj>) -> Ptr <Num> {
+          let x = Num::cast (x);
+          Num::make (x.num.log2 ())
+      }
+      #+end_src
+
+***** num_log10
+
+      #+begin_src rust
+      fn num_log10 (x: Ptr <Obj>) -> Ptr <Num> {
+          let x = Num::cast (x);
+          Num::make (x.num.log10 ())
+      }
+      #+end_src
 
 * list
 
@@ -4509,6 +4927,54 @@
         define_prim! (env, "sub", ["x", "y"], sub);
         define_prim! (env, "mul", ["x", "y"], mul);
         define_prim! (env, "div", ["x", "y"], div);
+        define_prim! (env, "mod", ["x", "y"], num_mod);
+        define_prim! (env, "max", ["x", "y"], max);
+        define_prim! (env, "min", ["x", "y"], min);
+        define_prim! (env, "abs", ["x"], abs);
+        define_prim! (env, "neg", ["x"], neg);
+        define_prim! (env, "pow", ["x", "y"], pow);
+        define_prim! (env, "mul-add", ["x", "y", "z"], mul_add);
+        define_prim! (env, "reciprocal", ["x"], reciprocal);
+        define_prim! (env, "sqrt", ["x"], sqrt);
+        define_prim! (env, "cbrt", ["x"], cbrt);
+        define_prim! (env, "hypot", ["x", "y"], hypot);
+
+        define_prim! (env, "lt", ["x", "y"], lt);
+        define_prim! (env, "gt", ["x", "y"], gt);
+        define_prim! (env, "lteq", ["x", "y"], lteq);
+        define_prim! (env, "gteq", ["x", "y"], gteq);
+        define_prim! (env, "even-p", ["x"], even_p);
+        define_prim! (env, "odd-p", ["x"], odd_p);
+
+        define_prim! (env, "num-integer-part", ["x"], num_integer_part);
+        define_prim! (env, "num-fractional-part", ["x"], num_fractional_part);
+        define_prim! (env, "num-sign", ["x"], num_sign);
+        define_prim! (env, "num-floor", ["x"], num_floor);
+        define_prim! (env, "num-ceil", ["x"], num_ceil);
+        define_prim! (env, "num-round", ["x"], num_round);
+
+        define_prim! (env, "num-sin", ["x"], num_sin);
+        define_prim! (env, "num-cos", ["x"], num_cos);
+        define_prim! (env, "num-tan", ["x"], num_tan);
+        define_prim! (env, "num-asin", ["x"], num_asin);
+        define_prim! (env, "num-acos", ["x"], num_acos);
+        define_prim! (env, "num-atan", ["x"], num_atan);
+        define_prim! (env, "num-atan2", ["x", "y"], num_atan2);
+        define_prim! (env, "num-sinh", ["x"], num_sinh);
+        define_prim! (env, "num-cosh", ["x"], num_cosh);
+        define_prim! (env, "num-tanh", ["x"], num_tanh);
+        define_prim! (env, "num-asinh", ["x"], num_asinh);
+        define_prim! (env, "num-acosh", ["x"], num_acosh);
+        define_prim! (env, "num-atanh", ["x"], num_atanh);
+
+        define_prim! (env, "num-exp", ["x"], num_exp);
+        define_prim! (env, "num-exp2", ["x"], num_exp2);
+        define_prim! (env, "num-exp-m1", ["x"], num_exp_m1);
+        define_prim! (env, "num-ln", ["x"], num_ln);
+        define_prim! (env, "num-ln-1p", ["x"], num_ln_1p);
+        define_prim! (env, "num-log", ["x", "y"], num_log);
+        define_prim! (env, "num-log2", ["x"], num_log2);
+        define_prim! (env, "num-log10", ["x"], num_log10);
     }
     #+end_src
 

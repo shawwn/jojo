@@ -1210,34 +1210,224 @@
             Ptr::new (Num { num })
         }
     }
-    fn inc (x: Ptr <Obj>) -> Ptr <Num> {
-        let x = Num::cast (x);
-        Num::make (x.num + 1.0)
-    }
-    fn dec (x: Ptr <Obj>) -> Ptr <Num> {
-        let x = Num::cast (x);
-        Num::make (x.num - 1.0)
-    }
-    fn add (x: Ptr <Obj>, y: Ptr <Obj>) -> Ptr <Num> {
-        let x = Num::cast (x);
-        let y = Num::cast (y);
-        Num::make (x.num + y.num)
-    }
-    fn sub (x: Ptr <Obj>, y: Ptr <Obj>) -> Ptr <Num> {
-        let x = Num::cast (x);
-        let y = Num::cast (y);
-        Num::make (x.num - y.num)
-    }
-    fn mul (x: Ptr <Obj>, y: Ptr <Obj>) -> Ptr <Num> {
-        let x = Num::cast (x);
-        let y = Num::cast (y);
-        Num::make (x.num * y.num)
-    }
-    fn div (x: Ptr <Obj>, y: Ptr <Obj>) -> Ptr <Num> {
-        let x = Num::cast (x);
-        let y = Num::cast (y);
-        Num::make (x.num / y.num)
-    }
+      fn inc (x: Ptr <Obj>) -> Ptr <Num> {
+          let x = Num::cast (x);
+          Num::make (x.num + 1.0)
+      }
+      fn dec (x: Ptr <Obj>) -> Ptr <Num> {
+          let x = Num::cast (x);
+          Num::make (x.num - 1.0)
+      }
+      fn add (x: Ptr <Obj>, y: Ptr <Obj>) -> Ptr <Num> {
+          let x = Num::cast (x);
+          let y = Num::cast (y);
+          Num::make (x.num + y.num)
+      }
+      fn sub (x: Ptr <Obj>, y: Ptr <Obj>) -> Ptr <Num> {
+          let x = Num::cast (x);
+          let y = Num::cast (y);
+          Num::make (x.num - y.num)
+      }
+      fn mul (x: Ptr <Obj>, y: Ptr <Obj>) -> Ptr <Num> {
+          let x = Num::cast (x);
+          let y = Num::cast (y);
+          Num::make (x.num * y.num)
+      }
+      fn div (x: Ptr <Obj>, y: Ptr <Obj>) -> Ptr <Num> {
+          let x = Num::cast (x);
+          let y = Num::cast (y);
+          Num::make (x.num / y.num)
+      }
+      fn num_mod (x: Ptr <Obj>, y: Ptr <Obj>) -> Ptr <Num> {
+          let x = Num::cast (x);
+          let y = Num::cast (y);
+          Num::make (x.num % y.num)
+      }
+      fn max (x: Ptr <Obj>, y: Ptr <Obj>) -> Ptr <Num> {
+          let x = Num::cast (x);
+          let y = Num::cast (y);
+          Num::make (x.num.max (y.num))
+      }
+      fn min (x: Ptr <Obj>, y: Ptr <Obj>) -> Ptr <Num> {
+          let x = Num::cast (x);
+          let y = Num::cast (y);
+          Num::make (x.num.min (y.num))
+      }
+
+      fn abs (x: Ptr <Obj>) -> Ptr <Num> {
+          let x = Num::cast (x);
+          Num::make (x.num.abs ())
+      }
+      fn neg (x: Ptr <Obj>) -> Ptr <Num> {
+          let x = Num::cast (x);
+          Num::make (- x.num)
+      }
+      fn pow (x: Ptr <Obj>, y: Ptr <Obj>) -> Ptr <Num> {
+          let x = Num::cast (x);
+          let y = Num::cast (y);
+          Num::make (x.num.powf (y.num))
+      }
+      fn mul_add (x: Ptr <Obj>, y: Ptr <Obj>, z: Ptr <Obj>) -> Ptr <Num> {
+          let x = Num::cast (x);
+          let y = Num::cast (y);
+          let z = Num::cast (z);
+          Num::make (x.num.mul_add (y.num, z.num))
+      }
+      fn reciprocal (x: Ptr <Obj>) -> Ptr <Num> {
+          let x = Num::cast (x);
+          Num::make (x.num.recip ())
+      }
+      fn sqrt (x: Ptr <Obj>) -> Ptr <Num> {
+          let x = Num::cast (x);
+          Num::make (x.num.sqrt ())
+      }
+      fn cbrt (x: Ptr <Obj>) -> Ptr <Num> {
+          let x = Num::cast (x);
+          Num::make (x.num.cbrt ())
+      }
+      fn hypot (x: Ptr <Obj>, y: Ptr <Obj>) -> Ptr <Num> {
+          let x = Num::cast (x);
+          let y = Num::cast (y);
+          Num::make (x.num.hypot (y.num))
+      }
+      fn lt (x: Ptr <Obj>, y: Ptr <Obj>) -> Ptr <Obj> {
+          let x = Num::cast (x);
+          let y = Num::cast (y);
+          make_bool (x.num < y.num)
+      }
+      fn gt (x: Ptr <Obj>, y: Ptr <Obj>) -> Ptr <Obj> {
+          let x = Num::cast (x);
+          let y = Num::cast (y);
+          make_bool (x.num > y.num)
+      }
+      fn lteq (x: Ptr <Obj>, y: Ptr <Obj>) -> Ptr <Obj> {
+          let x = Num::cast (x);
+          let y = Num::cast (y);
+          make_bool (x.num <= y.num)
+      }
+      fn gteq (x: Ptr <Obj>, y: Ptr <Obj>) -> Ptr <Obj> {
+          let x = Num::cast (x);
+          let y = Num::cast (y);
+          make_bool (x.num >= y.num)
+      }
+      fn even_p (x: Ptr <Obj>) -> Ptr <Obj> {
+          let x = Num::cast (x);
+          make_bool (x.num % 2.0 == 0.0)
+      }
+      fn odd_p (x: Ptr <Obj>) -> Ptr <Obj> {
+          let x = Num::cast (x);
+          make_bool (x.num % 2.0 == 1.0)
+      }
+      fn num_integer_part (x: Ptr <Obj>) -> Ptr <Num> {
+          let x = Num::cast (x);
+          Num::make (x.num.trunc ())
+      }
+      fn num_fractional_part (x: Ptr <Obj>) -> Ptr <Num> {
+          let x = Num::cast (x);
+          Num::make (x.num.fract ())
+      }
+      fn num_sign (x: Ptr <Obj>) -> Ptr <Num> {
+          let x = Num::cast (x);
+          Num::make (x.num.signum ())
+      }
+      fn num_floor (x: Ptr <Obj>) -> Ptr <Num> {
+          let x = Num::cast (x);
+          Num::make (x.num.floor ())
+      }
+      fn num_ceil (x: Ptr <Obj>) -> Ptr <Num> {
+          let x = Num::cast (x);
+          Num::make (x.num.ceil ())
+      }
+      fn num_round (x: Ptr <Obj>) -> Ptr <Num> {
+          let x = Num::cast (x);
+          Num::make (x.num.round ())
+      }
+      fn num_sin (x: Ptr <Obj>) -> Ptr <Num> {
+          let x = Num::cast (x);
+          Num::make (x.num.sin ())
+      }
+      fn num_cos (x: Ptr <Obj>) -> Ptr <Num> {
+          let x = Num::cast (x);
+          Num::make (x.num.cos ())
+      }
+      fn num_tan (x: Ptr <Obj>) -> Ptr <Num> {
+          let x = Num::cast (x);
+          Num::make (x.num.tan ())
+      }
+      fn num_asin (x: Ptr <Obj>) -> Ptr <Num> {
+          let x = Num::cast (x);
+          Num::make (x.num.asin ())
+      }
+      fn num_acos (x: Ptr <Obj>) -> Ptr <Num> {
+          let x = Num::cast (x);
+          Num::make (x.num.acos ())
+      }
+      fn num_atan (x: Ptr <Obj>) -> Ptr <Num> {
+          let x = Num::cast (x);
+          Num::make (x.num.atan ())
+      }
+      fn num_atan2 (x: Ptr <Obj>, y: Ptr <Obj>) -> Ptr <Num> {
+          let x = Num::cast (x);
+          let y = Num::cast (y);
+          Num::make (x.num.atan2 (y.num))
+      }
+      fn num_sinh (x: Ptr <Obj>) -> Ptr <Num> {
+          let x = Num::cast (x);
+          Num::make (x.num.sinh ())
+      }
+      fn num_cosh (x: Ptr <Obj>) -> Ptr <Num> {
+          let x = Num::cast (x);
+          Num::make (x.num.cosh ())
+      }
+      fn num_tanh (x: Ptr <Obj>) -> Ptr <Num> {
+          let x = Num::cast (x);
+          Num::make (x.num.tanh ())
+      }
+      fn num_asinh (x: Ptr <Obj>) -> Ptr <Num> {
+          let x = Num::cast (x);
+          Num::make (x.num.asinh ())
+      }
+      fn num_acosh (x: Ptr <Obj>) -> Ptr <Num> {
+          let x = Num::cast (x);
+          Num::make (x.num.acosh ())
+      }
+      fn num_atanh (x: Ptr <Obj>) -> Ptr <Num> {
+          let x = Num::cast (x);
+          Num::make (x.num.atanh ())
+      }
+      fn num_exp (x: Ptr <Obj>) -> Ptr <Num> {
+          let x = Num::cast (x);
+          Num::make (x.num.exp ())
+      }
+      fn num_exp2 (x: Ptr <Obj>) -> Ptr <Num> {
+          let x = Num::cast (x);
+          Num::make (x.num.exp2 ())
+      }
+      fn num_exp_m1 (x: Ptr <Obj>) -> Ptr <Num> {
+          let x = Num::cast (x);
+          Num::make (x.num.exp_m1 ())
+      }
+      fn num_ln (x: Ptr <Obj>) -> Ptr <Num> {
+          let x = Num::cast (x);
+          Num::make (x.num.ln ())
+      }
+      fn num_ln_1p (x: Ptr <Obj>) -> Ptr <Num> {
+          let x = Num::cast (x);
+          Num::make (x.num.ln_1p ())
+      }
+      fn num_log (x: Ptr <Obj>, y: Ptr <Obj>) -> Ptr <Num> {
+          let x = Num::cast (x);
+          let y = Num::cast (y);
+          Num::make (x.num.log (y.num))
+      }
+      fn num_log2 (x: Ptr <Obj>) -> Ptr <Num> {
+          let x = Num::cast (x);
+          Num::make (x.num.log2 ())
+      }
+      fn num_log10 (x: Ptr <Obj>) -> Ptr <Num> {
+          let x = Num::cast (x);
+          Num::make (x.num.log10 ())
+      }
     pub struct Null;
 
     impl_tag! (Null, NULL_T);
@@ -3040,6 +3230,54 @@
         define_prim! (env, "sub", ["x", "y"], sub);
         define_prim! (env, "mul", ["x", "y"], mul);
         define_prim! (env, "div", ["x", "y"], div);
+        define_prim! (env, "mod", ["x", "y"], num_mod);
+        define_prim! (env, "max", ["x", "y"], max);
+        define_prim! (env, "min", ["x", "y"], min);
+        define_prim! (env, "abs", ["x"], abs);
+        define_prim! (env, "neg", ["x"], neg);
+        define_prim! (env, "pow", ["x", "y"], pow);
+        define_prim! (env, "mul-add", ["x", "y", "z"], mul_add);
+        define_prim! (env, "reciprocal", ["x"], reciprocal);
+        define_prim! (env, "sqrt", ["x"], sqrt);
+        define_prim! (env, "cbrt", ["x"], cbrt);
+        define_prim! (env, "hypot", ["x", "y"], hypot);
+
+        define_prim! (env, "lt", ["x", "y"], lt);
+        define_prim! (env, "gt", ["x", "y"], gt);
+        define_prim! (env, "lteq", ["x", "y"], lteq);
+        define_prim! (env, "gteq", ["x", "y"], gteq);
+        define_prim! (env, "even-p", ["x"], even_p);
+        define_prim! (env, "odd-p", ["x"], odd_p);
+
+        define_prim! (env, "num-integer-part", ["x"], num_integer_part);
+        define_prim! (env, "num-fractional-part", ["x"], num_fractional_part);
+        define_prim! (env, "num-sign", ["x"], num_sign);
+        define_prim! (env, "num-floor", ["x"], num_floor);
+        define_prim! (env, "num-ceil", ["x"], num_ceil);
+        define_prim! (env, "num-round", ["x"], num_round);
+
+        define_prim! (env, "num-sin", ["x"], num_sin);
+        define_prim! (env, "num-cos", ["x"], num_cos);
+        define_prim! (env, "num-tan", ["x"], num_tan);
+        define_prim! (env, "num-asin", ["x"], num_asin);
+        define_prim! (env, "num-acos", ["x"], num_acos);
+        define_prim! (env, "num-atan", ["x"], num_atan);
+        define_prim! (env, "num-atan2", ["x", "y"], num_atan2);
+        define_prim! (env, "num-sinh", ["x"], num_sinh);
+        define_prim! (env, "num-cosh", ["x"], num_cosh);
+        define_prim! (env, "num-tanh", ["x"], num_tanh);
+        define_prim! (env, "num-asinh", ["x"], num_asinh);
+        define_prim! (env, "num-acosh", ["x"], num_acosh);
+        define_prim! (env, "num-atanh", ["x"], num_atanh);
+
+        define_prim! (env, "num-exp", ["x"], num_exp);
+        define_prim! (env, "num-exp2", ["x"], num_exp2);
+        define_prim! (env, "num-exp-m1", ["x"], num_exp_m1);
+        define_prim! (env, "num-ln", ["x"], num_ln);
+        define_prim! (env, "num-ln-1p", ["x"], num_ln_1p);
+        define_prim! (env, "num-log", ["x", "y"], num_log);
+        define_prim! (env, "num-log2", ["x"], num_log2);
+        define_prim! (env, "num-log10", ["x"], num_log10);
     }
     fn expose_str (env: &mut Env) {
         define_prim! (env, "str-length", ["str"], str_length);
