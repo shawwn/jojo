@@ -6498,8 +6498,8 @@
           shared_ptr <obj_t> body)
       {
           auto sexp_list = body;
-          auto jojo = sexp_list_compile
-              (env, static_scope, sexp_list);
+          auto jojo = sexp_list_compile (
+              env, static_scope, sexp_list);
           auto counter = list_size (sexp_list);
           jo_vector_t jo_vector = {
               new collect_list_jo_t (counter),

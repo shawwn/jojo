@@ -49,6 +49,13 @@
            lhs.iter () .zip (rhs.iter ())
            .all (|p| obj_eq (&p.0, &p.1)))
       }
+      pub fn obj_vec_rev (obj_vec: &ObjVec) -> ObjVec {
+          obj_vec
+              .clone ()
+              .into_iter ()
+              .rev ()
+              .collect::<ObjVec> ()
+      }
       pub fn obj_stack_pop_to_vec (
           env: &mut Env,
           len: usize,
@@ -1422,11 +1429,12 @@
 
     impl Jo for CollectVectJo {
         fn exe (&self, env: &mut Env, _: Ptr <Scope>) {
-            let obj_vec = (0..self.counter)
-                .into_iter ()
-                .map (|_| env.obj_stack.pop () .unwrap ())
-                .rev ()
-                .collect::<ObjVec> ();
+            let mut obj_vec = ObjVec::new ();
+            for _ in 0..self.counter {
+                let obj = env.obj_stack.pop () .unwrap ();
+                obj_vec.push (obj);
+            }
+            let obj_vec = obj_vec_rev (&obj_vec);
             env.obj_stack.push (Vect::make (&obj_vec));
         }
     }
@@ -1436,7 +1444,6 @@
         vect: Ptr <Vect>,
     ) -> Ptr <JoVec> {
         let sexp_list = vect_to_list (vect);
-        let sexp_list = list_reverse (sexp_list);
         let counter = list_size (sexp_list.dup ());
         let jojo = sexp_list_compile (
             env, static_scope, sexp_list);
@@ -1508,11 +1515,7 @@
         vect: Ptr <Obj>,
     ) -> Ptr <Obj> {
         let vect = Vect::cast (vect);
-        let obj_vec = vect.obj_vec
-            .clone ()
-            .into_iter ()
-            .rev ()
-            .collect::<ObjVec> ();
+        let obj_vec = obj_vec_rev (&vect.obj_vec);
         Vect::make (&obj_vec)
     }
     fn unit_vect (
@@ -2164,9 +2167,8 @@
         static_scope: &StaticScope,
         sexp_list: Ptr <Obj>,
     ) -> Ptr <JoVec> {
-        let jojo = new_jojo ();
         if null_p (&sexp_list) {
-            jojo
+            new_jojo ()
         } else {
             assert! (cons_p (&sexp_list));
             let head_jojo = sexp_compile (
@@ -2531,6 +2533,34 @@
           let sexp = car (body);
           sexp_qoute_compile (env, sexp)
       }
+      struct CollectListJo {
+          counter: usize,
+      }
+
+      impl Jo for CollectListJo {
+          fn exe (&self, env: &mut Env, _: Ptr <Scope>) {
+              let mut list = null ();
+              for _ in 0..self.counter {
+                  let obj = env.obj_stack.pop () .unwrap ();
+                  list = cons (obj, list)
+              }
+              env.obj_stack.push (list);
+          }
+      }
+      fn k_list (
+          env: &mut Env,
+          static_scope: &StaticScope,
+          body: Ptr <Obj>,
+      ) -> Ptr <JoVec> {
+          let sexp_list = body;
+          let counter = list_size (sexp_list.dup ());
+          let jojo = sexp_list_compile (
+              env, static_scope, sexp_list);
+          let ending_jojo = jojo! [
+              CollectListJo { counter },
+          ];
+          jojo_append (&jojo, &ending_jojo)
+      }
       fn k_note (
           _env: &mut Env,
           _static_scope: &StaticScope,
@@ -2653,7 +2683,7 @@
         // env.define_keyword ("macro", k_macro);
         // env.define_keyword ("case", k_case);
         env.define_keyword ("quote", k_quote);
-        // env.define_keyword ("*", k_list);
+        env.define_keyword ("*", k_list);
         env.define_keyword ("note", k_note);
         env.define_keyword ("assert", k_assert);
         // env.define_keyword ("if", k_if);
