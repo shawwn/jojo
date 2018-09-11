@@ -2807,6 +2807,62 @@
           println! ("sexp : {}", sexp_repr (env, sexp.dup ()));
           env.obj_stack.push (sexp);
       }
+      fn sexp_list_and (
+          env: &mut Env,
+          sexp_list: Ptr <Obj>,
+      ) -> Ptr <Obj> {
+          if null_p (&sexp_list) {
+              Sym::make ("true")
+          } else if null_p (&(cdr (sexp_list.dup ()))) {
+              car (sexp_list)
+          } else {
+              let head = car (sexp_list.dup ());
+              let rest = cdr (sexp_list);
+              cons (
+                  Sym::make ("if"),
+                  cons (
+                      cons (Sym::make ("not"), unit_list (head)),
+                      cons (
+                          Sym::make ("false"),
+                          unit_list (sexp_list_and (env, rest)))))
+          }
+      }
+      fn m_and (
+          env: &mut Env,
+          arg: &ObjDic,
+      ) {
+          let body = arg_idx (arg, 0);
+          let sexp = sexp_list_and (env, body);
+          env.obj_stack.push (sexp);
+      }
+      fn sexp_list_or (
+          env: &mut Env,
+          sexp_list: Ptr <Obj>,
+      ) -> Ptr <Obj> {
+          if null_p (&sexp_list) {
+              Sym::make ("false")
+          } else if null_p (&(cdr (sexp_list.dup ()))) {
+              car (sexp_list)
+          } else {
+              let head = car (sexp_list.dup ());
+              let rest = cdr (sexp_list);
+              cons (
+                  Sym::make ("if"),
+                  cons (
+                      head,
+                      cons (
+                          Sym::make ("true"),
+                          unit_list (sexp_list_or (env, rest)))))
+          }
+      }
+      fn m_or (
+          env: &mut Env,
+          arg: &ObjDic,
+      ) {
+          let body = arg_idx (arg, 0);
+          let sexp = sexp_list_or (env, body);
+          env.obj_stack.push (sexp);
+      }
     fn arg_idx (arg_dic: &ObjDic, index: usize) -> Ptr <Obj> {
         let entry = arg_dic.idx (index);
         if let Some (value) = &entry.value {
@@ -2889,8 +2945,8 @@
         env.define_keyword ("when", k_when);
         env.define_prim_macro ("let", m_let);
         // env.define_prim_macro ("quasiquote", m_quasiquote);
-        // env.define_prim_macro ("and", m_and);
-        // env.define_prim_macro ("or", m_or);
+        env.define_prim_macro ("and", m_and);
+        env.define_prim_macro ("or", m_or);
         // env.define_prim_macro ("cond", m_cond);
     }
     fn expose_misc (env: &mut Env) {

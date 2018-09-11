@@ -3,8 +3,6 @@
 
 * [todo-stack]
 
-  - (and) & (or)
-
   - (cond)
 
   - dict-t
@@ -4185,9 +4183,84 @@
 
 *** [todo] (quasiquote)
 
-*** [todo] (and)
+*** (and)
 
-*** [todo] (or)
+***** sexp_list_and
+
+      #+begin_src rust
+      fn sexp_list_and (
+          env: &mut Env,
+          sexp_list: Ptr <Obj>,
+      ) -> Ptr <Obj> {
+          if null_p (&sexp_list) {
+              Sym::make ("true")
+          } else if null_p (&(cdr (sexp_list.dup ()))) {
+              car (sexp_list)
+          } else {
+              let head = car (sexp_list.dup ());
+              let rest = cdr (sexp_list);
+              cons (
+                  Sym::make ("if"),
+                  cons (
+                      cons (Sym::make ("not"), unit_list (head)),
+                      cons (
+                          Sym::make ("false"),
+                          unit_list (sexp_list_and (env, rest)))))
+          }
+      }
+      #+end_src
+
+***** m_and
+
+      #+begin_src rust
+      fn m_and (
+          env: &mut Env,
+          arg: &ObjDic,
+      ) {
+          let body = arg_idx (arg, 0);
+          let sexp = sexp_list_and (env, body);
+          env.obj_stack.push (sexp);
+      }
+      #+end_src
+
+*** (or)
+***** sexp_list_or
+
+      #+begin_src rust
+      fn sexp_list_or (
+          env: &mut Env,
+          sexp_list: Ptr <Obj>,
+      ) -> Ptr <Obj> {
+          if null_p (&sexp_list) {
+              Sym::make ("false")
+          } else if null_p (&(cdr (sexp_list.dup ()))) {
+              car (sexp_list)
+          } else {
+              let head = car (sexp_list.dup ());
+              let rest = cdr (sexp_list);
+              cons (
+                  Sym::make ("if"),
+                  cons (
+                      head,
+                      cons (
+                          Sym::make ("true"),
+                          unit_list (sexp_list_or (env, rest)))))
+          }
+      }
+      #+end_src
+
+***** m_or
+
+      #+begin_src rust
+      fn m_or (
+          env: &mut Env,
+          arg: &ObjDic,
+      ) {
+          let body = arg_idx (arg, 0);
+          let sexp = sexp_list_or (env, body);
+          env.obj_stack.push (sexp);
+      }
+      #+end_src
 
 *** [todo] (cond)
 
@@ -4323,8 +4396,8 @@
         env.define_keyword ("when", k_when);
         env.define_prim_macro ("let", m_let);
         // env.define_prim_macro ("quasiquote", m_quasiquote);
-        // env.define_prim_macro ("and", m_and);
-        // env.define_prim_macro ("or", m_or);
+        env.define_prim_macro ("and", m_and);
+        env.define_prim_macro ("or", m_or);
         // env.define_prim_macro ("cond", m_cond);
     }
     #+end_src
