@@ -7071,7 +7071,6 @@
           auto body = obj_map ["body"];
           env.obj_stack.push (vect_list_cond (env, body));
       }
-
       #+end_src
 
 * expose

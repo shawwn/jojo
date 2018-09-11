@@ -2863,6 +2863,42 @@
           let sexp = sexp_list_or (env, body);
           env.obj_stack.push (sexp);
       }
+      fn vect_list_cond (
+          env: &mut Env,
+          vect_list: Ptr <Obj>,
+      ) -> Ptr <Obj> {
+          assert! (! null_p (&vect_list));
+          let head = car (vect_list.dup ());
+          let rest = cdr (vect_list);
+          let list = vect_to_list (head);
+          let question = car (list.dup ());
+          let answer = cons (Sym::make ("do"), cdr (list));
+          if (null_p (&rest)) {
+              if (sym_sexp_as_str_p (&question, "else")) {
+                  answer
+              } else {
+                  let result = null ();
+                  let result = cons (answer, result);
+                  let result = cons (question, result);
+                  let result = cons (Sym::make ("when"), result);
+                  result
+              }
+          } else {
+              let result = unit_list (vect_list_cond (env, rest));
+              let result = cons (answer, result);
+              let result = cons (question, result);
+              let result = cons (Sym::make ("if"), result);
+              result
+          }
+      }
+      fn m_cond (
+          env: &mut Env,
+          arg: &ObjDic,
+      ) {
+          let body = arg_idx (arg, 0);
+          let sexp = vect_list_cond (env, body);
+          env.obj_stack.push (sexp);
+      }
     fn arg_idx (arg_dic: &ObjDic, index: usize) -> Ptr <Obj> {
         let entry = arg_dic.idx (index);
         if let Some (value) = &entry.value {
@@ -2947,7 +2983,7 @@
         // env.define_prim_macro ("quasiquote", m_quasiquote);
         env.define_prim_macro ("and", m_and);
         env.define_prim_macro ("or", m_or);
-        // env.define_prim_macro ("cond", m_cond);
+        env.define_prim_macro ("cond", m_cond);
     }
     fn expose_misc (env: &mut Env) {
         env.define_prim ("repr", vec! ["obj"], |env, arg| {
