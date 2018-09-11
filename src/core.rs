@@ -2530,7 +2530,7 @@
       }
 
 
-      fn sexp_qoute_compile (
+      fn sexp_quote_compile (
           _env: &mut Env,
           sexp: Ptr <Obj>,
       ) -> Ptr <JoVec> {
@@ -2546,7 +2546,7 @@
           assert! (cons_p (&body));
           assert! (null_p (&(cdr (body.dup ()))));
           let sexp = car (body);
-          sexp_qoute_compile (env, sexp)
+          sexp_quote_compile (env, sexp)
       }
       type JojoMap = HashMap <Tag, Ptr <JoVec>>;
       struct CaseJo {

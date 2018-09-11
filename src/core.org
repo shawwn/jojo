@@ -3808,10 +3808,10 @@
 
 *** (quote)
 
-***** sexp_qoute_compile
+***** sexp_quote_compile
 
       #+begin_src rust
-      fn sexp_qoute_compile (
+      fn sexp_quote_compile (
           _env: &mut Env,
           sexp: Ptr <Obj>,
       ) -> Ptr <JoVec> {
@@ -3832,7 +3832,7 @@
           assert! (cons_p (&body));
           assert! (null_p (&(cdr (body.dup ()))));
           let sexp = car (body);
-          sexp_qoute_compile (env, sexp)
+          sexp_quote_compile (env, sexp)
       }
       #+end_src
 
@@ -4180,6 +4180,12 @@
       #+end_src
 
 *** [todo] (quasiquote)
+
+***** sexp_quote_and_unquote
+
+***** sexp_list_quote_and_unquote
+
+***** m_quasiquote
 
 *** (and)
 

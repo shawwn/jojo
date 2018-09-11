@@ -497,12 +497,36 @@
           return name;
       }
       name_t
+      name_t2p (name_t type_name)
+      {
+          auto name = type_name;
+          auto size = name.size ();
+          assert (size > 2);
+          assert (name [size - 1] == 't');
+          assert (name [size - 2] == '-');
+          name.pop_back ();
+          name += 'p';
+          return name;
+      }
+      name_t
       name_c2t (name_t data_name)
       {
           auto name = data_name;
           auto size = name.size ();
           assert (size > 2);
           assert (name [size - 1] == 'c');
+          assert (name [size - 2] == '-');
+          name.pop_back ();
+          name += 't';
+          return name;
+      }
+      name_t
+      name_p2t (name_t pred_name)
+      {
+          auto name = pred_name;
+          auto size = name.size ();
+          assert (size > 2);
+          assert (name [size - 1] == 'p');
           assert (name [size - 2] == '-');
           name.pop_back ();
           name += 't';
@@ -640,7 +664,7 @@
         return lhs->eq (rhs);
     }
     shared_ptr <obj_t>
-    find_obj (env_t &env, name_t name)
+    find_obj_from_name (env_t &env, name_t name)
     {
         auto string_vector = string_split (name, '.');
         assert (string_vector.size () > 0);
@@ -873,7 +897,7 @@
       tag_t macro_tag        = 14;
       tag_t top_keyword_tag  = 15;
       tag_t sym_tag          = 16;
-      tag_t none_tag         = 17;
+      tag_t none_tag      = 17;
       tag_t some_tag         = 18;
       void
       init_tagged_box_vector (env_t &env)
@@ -1165,15 +1189,27 @@
         return true;
     }
     shared_ptr <type_o>
-    find_type (env_t &env, name_t name)
+    find_type_from_prefix (env_t &env, name_t prefix)
     {
-        auto it = env.box_map.find (name);
+        auto string_vector = string_split (prefix, '.');
+        assert (string_vector.size () > 0);
+        auto top = string_vector [0];
+        auto it = env.box_map.find (top + "-t");
         if (it != env.box_map.end ()) {
             auto box = it->second;
             if (box->empty_p) return nullptr;
             auto obj = box->obj;
             if (obj->tag != type_tag) return nullptr;
             auto type = as_type (obj);
+            auto begin = string_vector.begin () + 1;
+            auto end = string_vector.end ();
+            for (auto it = begin; it != end; it++) {
+                auto field = *it;
+                field += "-t";
+                auto obj = type->obj_map [field];
+                if (obj->tag != type_tag) return nullptr;
+                type = as_type (obj);
+            }
             return type;
         }
         return nullptr;
@@ -1181,26 +1217,27 @@
     void
     assign (
         env_t &env,
-        name_t type_name,
+        name_t prefix,
         name_t name,
         shared_ptr <obj_t> obj)
     {
-        if (type_name == "") {
+        if (prefix == "") {
             define (env, name, obj);
             return;
         }
-        auto type = find_type (env, type_name);
+        auto type = find_type_from_prefix (env, prefix);
         if (type) {
             type->obj_map [name] = obj;
         } else {
             cout << "- fatal error : assign fail" << "\n";
-            cout << "  unknown type_name : " << type_name << "\n";
+            cout << "  unknown prefix : " << prefix << "\n";
             exit (1);
         }
     }
     void
-    define_type_with_super (
+    assign_type (
         env_t &env,
+        name_t prefix,
         name_t type_name,
         tag_t tag_of_type,
         tag_vector_t super_tag_vector)
@@ -1212,14 +1249,14 @@
         auto box = box_of_tag (env, tag_of_type);
         box->obj = type;
         box->empty_p = false;
-        define (env, type_name, type);
+        assign (env, prefix, type_name, type);
     }
     void
     define_type (env_t &env, name_t name)
     {
         auto type_name = name;
         auto tag_of_type = tagging (env, name);
-        define_type_with_super (env, type_name, tag_of_type, {});
+        assign_type (env, "", type_name, tag_of_type, {});
     }
     shared_ptr <type_o>
     type_of (env_t &env, shared_ptr <obj_t> obj)
@@ -1297,8 +1334,9 @@
         }
     }
     void
-    define_data (
+    assign_data (
         env_t &env,
+        name_t prefix,
         name_t data_name,
         tag_t tag_of_type,
         name_vector_t name_vector)
@@ -1307,7 +1345,7 @@
             tag_of_type,
             name_vector,
             obj_map_t ());
-        define (env, data_name, data);
+        assign (env, prefix, data_name, data);
     }
     void
     data_o::apply (env_t &env, size_t arity)
@@ -2765,7 +2803,7 @@
         }
     }
     bool
-    env_eq (env_t &lhs, env_t &rhs)
+    eq_env_p (env_t &lhs, env_t &rhs)
     {
         return false;
     }
@@ -2774,7 +2812,7 @@
     {
         if (this->tag != obj->tag) return false;
         auto that = static_pointer_cast <module_o> (obj);
-        return env_eq (this->module_env, that->module_env);
+        return eq_env_p (this->module_env, that->module_env);
     }
     string
     module_o::repr (env_t &env)
@@ -3271,7 +3309,7 @@
             if (! sym_p (head)) return false;
             auto sym = as_sym (head);
             auto name = sym->sym;
-            auto found = find_obj (env, name);
+            auto found = find_obj_from_name (env, name);
             if (! found) return false;
             auto obj = sexp_eval (env, head);
             return macro_p (obj);
@@ -3565,76 +3603,76 @@
             return jojo_append (head_jojo, body_jojo);
         }
     }
-    using top_keyword_fn = function
-        <void (env_t &, shared_ptr <obj_t>)>;
-    struct top_keyword_o: obj_t
-    {
-        top_keyword_fn fn;
-        top_keyword_o (top_keyword_fn fn);
-        bool eq (shared_ptr <obj_t> obj);
-    };
-    top_keyword_o::
-    top_keyword_o (top_keyword_fn fn)
-    {
-        this->tag = top_keyword_tag;
-        this->fn = fn;
-    }
-    bool
-    top_keyword_o::eq (shared_ptr <obj_t> obj)
-    {
-        if (this->tag != obj->tag) return false;
-        return this != obj.get ();
-    }
-    bool
-    top_keyword_p (shared_ptr <obj_t> a)
-    {
-        return a->tag == top_keyword_tag;
-    }
-    void
-    define_top_keyword (env_t &env, name_t name, top_keyword_fn fn)
-    {
-        define (env, name, make_shared <top_keyword_o> (fn));
-    }
-    bool
-    top_keyword_sexp_p (env_t &env, shared_ptr <obj_t> sexp)
-    {
-        if (! cons_p (sexp)) return false;
-        if (! sym_p ((car (sexp)))) return false;
-        auto head = as_sym (car (sexp));
-        auto name = head->sym;
-        auto it = env.box_map.find (name);
-        if (it != env.box_map.end ()) {
-            auto box = it->second;
-            if (box->empty_p) return false;
-            if (top_keyword_p (box->obj)) return true;
-            else return false;
-        } else {
-            return false;
-        }
-    }
-    top_keyword_fn
-    top_keyword_fn_from_name (env_t &env, name_t name)
-    {
-        auto it = env.box_map.find (name);
-        if (it != env.box_map.end ()) {
-            auto box = it->second;
-            if (box->empty_p) {
-                cout << "- fatal error: top_keyword_fn_from_name fail\n";
-                exit (1);
-            }
-            if (top_keyword_p (box->obj)) {
-                auto top_keyword = static_pointer_cast <top_keyword_o>
-                    (box->obj);
-                return top_keyword->fn;
-            } else {
-                cout << "- fatal error: top_keyword_fn_from_name fail\n";
-                exit (1);
-            };
-        } else {
-            cout << "- fatal error: top_keyword_fn_from_name fail\n";
-            exit (1);
-        }
-    }
+      using top_keyword_fn = function
+          <void (env_t &, shared_ptr <obj_t>)>;
+      struct top_keyword_o: obj_t
+      {
+          top_keyword_fn fn;
+          top_keyword_o (top_keyword_fn fn);
+          bool eq (shared_ptr <obj_t> obj);
+      };
+      top_keyword_o::
+      top_keyword_o (top_keyword_fn fn)
+      {
+          this->tag = top_keyword_tag;
+          this->fn = fn;
+      }
+      bool
+      top_keyword_o::eq (shared_ptr <obj_t> obj)
+      {
+          if (this->tag != obj->tag) return false;
+          return this != obj.get ();
+      }
+      bool
+      top_keyword_p (shared_ptr <obj_t> a)
+      {
+          return a->tag == top_keyword_tag;
+      }
+      void
+      define_top_keyword (env_t &env, name_t name, top_keyword_fn fn)
+      {
+          define (env, name, make_shared <top_keyword_o> (fn));
+      }
+      bool
+      top_keyword_sexp_p (env_t &env, shared_ptr <obj_t> sexp)
+      {
+          if (! cons_p (sexp)) return false;
+          if (! sym_p ((car (sexp)))) return false;
+          auto head = as_sym (car (sexp));
+          auto name = head->sym;
+          auto it = env.box_map.find (name);
+          if (it != env.box_map.end ()) {
+              auto box = it->second;
+              if (box->empty_p) return false;
+              if (top_keyword_p (box->obj)) return true;
+              else return false;
+          } else {
+              return false;
+          }
+      }
+      top_keyword_fn
+      top_keyword_fn_from_name (env_t &env, name_t name)
+      {
+          auto it = env.box_map.find (name);
+          if (it != env.box_map.end ()) {
+              auto box = it->second;
+              if (box->empty_p) {
+                  cout << "- fatal error: top_keyword_fn_from_name fail\n";
+                  exit (1);
+              }
+              if (top_keyword_p (box->obj)) {
+                  auto top_keyword = static_pointer_cast <top_keyword_o>
+                      (box->obj);
+                  return top_keyword->fn;
+              } else {
+                  cout << "- fatal error: top_keyword_fn_from_name fail\n";
+                  exit (1);
+              };
+          } else {
+              cout << "- fatal error: top_keyword_fn_from_name fail\n";
+              exit (1);
+          }
+      }
     void
     jojo_run (
         env_t &env,
@@ -3759,7 +3797,7 @@
         top_sexp_list_run (env, sexp_list);
     }
     shared_ptr <str_o>
-    code_from_module_path (path_t module_path)
+    code_from_module_path (env_t &env, path_t module_path)
     {
         auto input_file = ifstream (module_path);
         auto buffer = stringstream ();
@@ -3815,32 +3853,31 @@
         }
         env.module_path = module_path;
         expose_core (env);
-        auto code = code_from_module_path (env.module_path);
+        auto code = code_from_module_path (env, env.module_path);
         code_run (env, code);
         return env;
     }
-      name_t
-      prefix_of_word (string str)
-      {
-          auto string_vector = string_split (str, '.');
-          assert (string_vector.size () > 0);
-          if (string_vector.size () == 1)
-              return "";
-          else {
-              assert (string_vector.size () == 2);
-              string_vector.pop_back ();
-              return string_vector_join (string_vector, '.');
-          }
-      }
-      name_t
-      name_of_word (string str)
-      {
-          auto string_vector = string_split (str, '.');
-          assert (string_vector.size () > 0);
-          return string_vector [string_vector.size () - 1];
-      }
+    name_t
+    prefix_of_string (string str)
+    {
+        auto string_vector = string_split (str, '.');
+        assert (string_vector.size () > 0);
+        if (string_vector.size () == 1)
+            return "";
+        else {
+            string_vector.pop_back ();
+            return string_vector_join (string_vector, '.');
+        }
+    }
+    name_t
+    name_of_string (string str)
+    {
+        auto string_vector = string_split (str, '.');
+        assert (string_vector.size () > 0);
+        return string_vector [string_vector.size () - 1];
+    }
       bool
-      assign_data_p (shared_ptr <obj_t> body)
+      assign_data_p (env_t &env, shared_ptr <obj_t> body)
       {
           if (! cons_p (body))
               return false;
@@ -3866,24 +3903,26 @@
       tk_assign_data (env_t &env, shared_ptr <obj_t> body)
       {
           auto head = as_sym (car (body));
-          auto type_name = head->sym;
+          auto prefix = prefix_of_string (head->sym);
+          auto type_name = name_of_string (head->sym);
           auto data_name = name_t2c (type_name);
+          auto pred_name = name_t2p (type_name);
           auto tag_of_type = tagging (env, head->sym);
           auto rest = cdr (body);
-          auto data_body = cdr (car (rest));
+          auto data_body = cdr ((car (rest)));
           auto name_vect = list_to_vect (data_body);
           auto name_vector = name_vector_t ();
           for (auto obj: name_vect->obj_vector) {
               auto sym = as_sym (obj);
               name_vector.push_back (sym->sym);
           }
-          define_type_with_super (
-              env, type_name, tag_of_type, {});
-          define_data (
-              env, data_name, tag_of_type, name_vector);
+          assign_type
+              (env, prefix, type_name, tag_of_type, {});
+          assign_data
+              (env, prefix, data_name, tag_of_type, name_vector);
       }
       bool
-      assign_lambda_sugar_p (shared_ptr <obj_t> body)
+      assign_lambda_sugar_p (env_t &env, shared_ptr <obj_t> body)
       {
           if (! cons_p (body))
               return false;
@@ -3892,7 +3931,7 @@
           return true;
       }
       shared_ptr <obj_t>
-      assign_lambda_desugar (shared_ptr <obj_t> body)
+      assign_lambda_desugar (env_t &env, shared_ptr <obj_t> body)
       {
           auto head = car (body);
           auto name = car (head);
@@ -3907,7 +3946,7 @@
           return cons_c (name, lambda_body);
       }
       shared_ptr <obj_t>
-      sexp_patch_self (shared_ptr <obj_t> sexp)
+      sexp_patch_self (env_t &env, shared_ptr <obj_t> sexp)
       {
           auto this_str = make_sym ("self");
           obj_vector_t obj_vector = { this_str };
@@ -3924,26 +3963,27 @@
           auto rest = cdr (body);
           assert (null_p (cdr (rest)));
           auto sexp = car (rest);
-          auto name = name_of_word (head->sym);
-          auto prefix = prefix_of_word (head->sym);
+          auto name = name_of_string (head->sym);
+          auto prefix = prefix_of_string (head->sym);
           if (prefix != "")
-              sexp = sexp_patch_self (sexp);
+              sexp = sexp_patch_self (env, sexp);
           auto obj = sexp_eval (env, sexp);
           assign (env, prefix, name, obj);
       }
-      void
-      tk_assign (env_t &env, shared_ptr <obj_t> body)
-      {
-          if (assign_data_p (body)) {
-              tk_assign_data (env, body);
-          } else if (assign_lambda_sugar_p (body)) {
-              tk_assign_value (env, assign_lambda_desugar (body));
-          } else {
-              tk_assign_value (env, body);
-          }
-      }
+    void
+    tk_assign (env_t &env, shared_ptr <obj_t> body)
+    {
+        if (assign_data_p (env, body))
+            tk_assign_data (env, body);
+        else if (assign_lambda_sugar_p (env, body))
+            tk_assign_value (env, assign_lambda_desugar (env, body));
+        else
+            tk_assign_value (env, body);
+    }
       bool
-      assign_sexp_p (shared_ptr <obj_t> sexp)
+      assign_sexp_p (
+          env_t &env,
+          shared_ptr <obj_t> sexp)
       {
           if (! cons_p (sexp)) return false;
           auto head = car (sexp);
@@ -3953,27 +3993,31 @@
           return true;
       }
       shared_ptr <obj_t>
-      assign_sexp_normalize (shared_ptr <obj_t> sexp)
+      assign_sexp_normalize (
+          env_t &env,
+          shared_ptr <obj_t> sexp)
       {
           auto head = car (sexp);
           auto body = cdr (sexp);
-          if (assign_lambda_sugar_p (body))
+          if (assign_lambda_sugar_p (env, body))
               return cons_c (
                   head,
-                  assign_lambda_desugar (body));
+                  assign_lambda_desugar (env, body));
           else
               return sexp;
       }
       shared_ptr <obj_t>
-      do_body_trans (shared_ptr <obj_t> body)
+      do_body_trans (
+        env_t &env,
+        shared_ptr <obj_t> body)
       {
           if (null_p (body)) return body;
           auto sexp = car (body);
           auto rest = cdr (body);
           if (null_p (rest))
               return body;
-          else if (assign_sexp_p (sexp)) {
-              sexp = assign_sexp_normalize (sexp);
+          else if (assign_sexp_p (env, sexp)) {
+              sexp = assign_sexp_normalize (env, sexp);
               auto obj_vector = obj_vector_t ();
               obj_vector.push_back (cdr (sexp));
               auto let_sexp = cons_c (
@@ -3984,7 +4028,7 @@
               return unit_list (let_sexp);
           } else {
               auto drop = unit_list (make_sym ("drop"));
-              body = do_body_trans (rest);
+              body = do_body_trans (env, rest);
               body = cons_c (drop, body);
               body = cons_c (sexp, body);
               return body;
@@ -3997,7 +4041,7 @@
           shared_ptr <obj_t> body)
       {
           body = sexp_list_prefix_assign (body);
-          body = do_body_trans (body);
+          body = do_body_trans (env, body);
           return sexp_list_compile (env, static_scope, body);
       }
         struct lambda_jo_t: jo_t
@@ -4242,7 +4286,7 @@
           return jojo_append (head_jojo, rest_jojo);
       }
       shared_ptr <jojo_t>
-      sexp_qoute_compile (
+      sexp_quote_compile (
           env_t &env,
           shared_ptr <obj_t> sexp)
       {
@@ -4261,7 +4305,7 @@
           assert (cons_p (body));
           assert (null_p (cdr (body)));
           auto sexp = car (body);
-          return sexp_qoute_compile (env, sexp);
+          return sexp_quote_compile (env, sexp);
       }
         struct collect_list_jo_t: jo_t
         {

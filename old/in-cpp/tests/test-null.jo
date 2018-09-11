@@ -5,7 +5,7 @@
 
 (= null null-c)
 
-(= (null-t.cons x)
+(= (null.cons x)
    (cons-c x null-c))
 
 (assert (eq (null.cons null)
