@@ -2859,14 +2859,40 @@
           let jojo = sexp_compile (
               env, &static_scope, cons (Sym::make ("do"), rest));
           jojo! [
-              LambdaJo  {
+              LambdaJo {
                   arg_dic: Ptr::new (Dic::from (name_vec)),
                   jojo,
               }
           ]
       }
+      pub struct MacroMakerJo;
 
-
+      impl Jo for MacroMakerJo {
+          fn exe (&self, env: &mut Env, _scope: Ptr <Scope>) {
+              let obj = env.obj_stack.pop () .unwrap ();
+              if Closure::p (&obj) {
+                  let mac = Ptr::new (Macro { obj });
+                  env.obj_stack.push (mac);
+              } else {
+                  eprintln! ("- MacroMakerJo::exe");
+                  eprintln! ("  obj is not closure");
+                  eprintln! ("  can only make macro from closure");
+                  eprintln! ("  obj : {}", obj.repr (env));
+                  panic! ("jojo fatal error!");
+              }
+          }
+      }
+      fn k_macro (
+          env: &mut Env,
+          static_scope: &StaticScope,
+          body: Ptr <Obj>,
+      ) -> Ptr <JoVec> {
+          let lambda_jojo = k_lambda (env, static_scope, body);
+          let ending_jojo = jojo! [
+              MacroMakerJo { }
+          ];
+          jojo_append (&lambda_jojo, &ending_jojo)
+      }
       fn sexp_quote_compile (
           _env: &mut Env,
           sexp: Ptr <Obj>,
@@ -3452,7 +3478,7 @@
         env.define_top_keyword ("=", tk_assign);
         env.define_keyword ("do", k_do);
         env.define_keyword ("lambda", k_lambda);
-        // env.define_keyword ("macro", k_macro);
+        env.define_keyword ("macro", k_macro);
         env.define_keyword ("case", k_case);
         env.define_keyword ("quote", k_quote);
         env.define_keyword ("*", k_list);
