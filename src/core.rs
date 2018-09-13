@@ -11,20 +11,18 @@
     use std::env;
     use dic::Dic;
     use token;
-  pub type Ptr <T> = Arc <T>;
-
   pub type Name = String;
 
-  pub type ObjCell = Ptr <Mutex <Option <Ptr <Obj>>>>;
+  pub type ObjCell = Arc <Mutex <Option <Arc <Obj>>>>;
   pub type ObjCellDic = Dic <ObjCell>;
-  pub type ObjId = Weak <Mutex <Option <Ptr <Obj>>>>;
+  pub type ObjId = Weak <Mutex <Option <Arc <Obj>>>>;
 
   pub type Tag = usize; // index in to TypeDic
 
-  pub type ObjDic = Dic <Ptr <Obj>>;
-  pub type TypeDic = Dic <Ptr <Type>>;
+  pub type ObjDic = Dic <Arc <Obj>>;
+  pub type TypeDic = Dic <Arc <Type>>;
 
-  pub type ObjStack = Vec <Ptr <Obj>>;
+  pub type ObjStack = Vec <Arc <Obj>>;
   pub type FrameStack = Vec <Box <Frame>>;
 
   pub type Scope = Vec <ObjDic>; // index from end
@@ -33,8 +31,8 @@
   pub type CharVec = Vec <char>;
   pub type NameVec = Vec <Name>;
   pub type TagVec = Vec <Tag>;
-  pub type ObjVec = Vec <Ptr <Obj>>;
-  pub type JoVec = Vec <Ptr <Jo>>;
+  pub type ObjVec = Vec <Arc <Obj>>;
+  pub type JoVec = Vec <Arc <Jo>>;
       fn vec_peek <T> (vec: &Vec <T>, index: usize) -> &T {
             let back_index = vec.len () - index - 1;
             &vec [back_index]
@@ -120,10 +118,10 @@
       pub fn scope_extend (
           scope: &Scope,
           obj_dic: ObjDic,
-      ) -> Ptr <Scope> {
+      ) -> Arc <Scope> {
           let mut obj_dic_vec = scope.clone ();
           obj_dic_vec.push (obj_dic);
-          Ptr::new (obj_dic_vec)
+          Arc::new (obj_dic_vec)
       }
       pub fn scope_eq (
           lhs: &Scope,
@@ -133,17 +131,17 @@
            lhs.iter () .zip (rhs.iter ())
            .all (|p| obj_dic_eq (p.0, p.1)))
       }
-      fn new_jojo () -> Ptr <JoVec> {
+      fn new_jojo () -> Arc <JoVec> {
           let jo_vec = JoVec::new ();
-          Ptr::new (jo_vec)
+          Arc::new (jo_vec)
       }
       fn jojo_append (
           ante: &JoVec,
           succ: &JoVec,
-      ) -> Ptr <JoVec> {
+      ) -> Arc <JoVec> {
           let mut jo_vec = ante.clone ();
           jo_vec.append (&mut succ.clone ());
-          Ptr::new (jo_vec)
+          Arc::new (jo_vec)
       }
       pub fn jojo_eq (
           lhs: &JoVec,
@@ -224,39 +222,39 @@
       pub trait Dup {
          fn dup (&self) -> Self;
       }
-      impl Dup for Ptr <Obj> {
+      impl Dup for Arc <Obj> {
           fn dup (&self) -> Self {
-              Ptr::clone (self)
+              Arc::clone (self)
           }
       }
-      impl Dup for Ptr <Type> {
+      impl Dup for Arc <Type> {
           fn dup (&self) -> Self {
-              Ptr::clone (self)
+              Arc::clone (self)
           }
       }
-      // impl Dup for Ptr <Type> {
+      // impl Dup for Arc <Type> {
       //     fn dup (&self) -> Self {
-      //         Ptr::clone (self)
+      //         Arc::clone (self)
       //     }
       // }
-      impl Dup for Ptr <Jo> {
+      impl Dup for Arc <Jo> {
           fn dup (&self) -> Self {
-              Ptr::clone (self)
+              Arc::clone (self)
           }
       }
-      impl Dup for Ptr <Scope> {
+      impl Dup for Arc <Scope> {
           fn dup (&self) -> Self {
-              Ptr::clone (self)
+              Arc::clone (self)
           }
       }
-      impl Dup for Ptr <JoVec> {
+      impl Dup for Arc <JoVec> {
           fn dup (&self) -> Self {
-              Ptr::clone (self)
+              Arc::clone (self)
           }
       }
-      impl Dup for Ptr <ObjDic> {
+      impl Dup for Arc <ObjDic> {
           fn dup (&self) -> Self {
-              Ptr::clone (self)
+              Arc::clone (self)
           }
       }
       macro_rules! impl_tag {
@@ -267,14 +265,14 @@
                       $tag
                   }
 
-                  pub fn cast (obj: Ptr <Obj>) -> Ptr <Self> {
+                  pub fn cast (obj: Arc <Obj>) -> Arc <Self> {
                       assert! (Self::p (&obj));
                       unsafe {
                           obj_to::<Self> (obj)
                       }
                   }
 
-                  pub fn p (x: &Ptr <Obj>) -> bool {
+                  pub fn p (x: &Arc <Obj>) -> bool {
                       let tag = x.tag ();
                       (Self::tag () == tag)
                   }
@@ -283,15 +281,15 @@
       macro_rules! jojo {
           ( $( $x:expr ),* $(,)* ) => {{
               let jo_vec: JoVec = vec! [
-                  $( Ptr::new ($x) ),*
+                  $( Arc::new ($x) ),*
               ];
-              Ptr::new (jo_vec)
+              Arc::new (jo_vec)
           }};
       }
       macro_rules! frame {
           ( $( $x:expr ),* $(,)* ) => {{
               let jo_vec: JoVec = vec! [
-                  $( Ptr::new ($x) ),*
+                  $( Arc::new ($x) ),*
               ];
               Frame::make (jo_vec)
           }};
@@ -350,15 +348,15 @@
         pub fn define (
             &mut self,
             name: &str,
-            obj: Ptr <Obj>,
+            obj: Arc <Obj>,
         ) -> ObjId {
             if let Some (obj_cell) = self.obj_cell_dic.get (name) {
                 let mut obj_ptr = obj_cell.lock () .unwrap ();
                 *obj_ptr = Some (obj);
-                Ptr::downgrade (&obj_cell)
+                Arc::downgrade (&obj_cell)
             } else {
-                let obj_cell = Ptr::new (Mutex::new (Some (obj)));
-                let id = Ptr::downgrade (&obj_cell);
+                let obj_cell = Arc::new (Mutex::new (Some (obj)));
+                let id = Arc::downgrade (&obj_cell);
                 self.obj_cell_dic.ins (name, Some (obj_cell));
                 id
             }
@@ -368,7 +366,7 @@
         pub fn find_obj (
             &self,
             name: &str,
-        ) -> Option <Ptr <Obj>> {
+        ) -> Option <Arc <Obj>> {
             if let Some (obj_cell) = self.obj_cell_dic.get (name) {
                 if let Some (ref obj) = *obj_cell.lock () .unwrap () {
                     Some (obj.dup ())
@@ -384,7 +382,7 @@
         pub fn find_type (
             &mut self,
             name: &str,
-        ) -> Option <Ptr <Type>> {
+        ) -> Option <Arc <Type>> {
             if let Some (typ) = self.type_dic.get (name) {
                 Some (typ.dup ())
             } else {
@@ -395,28 +393,28 @@
     fn method_dic_extend (
         obj_dic: &ObjDic,
         name: &str,
-        obj: Ptr <Obj>,
-    ) -> Ptr <ObjDic> {
+        obj: Arc <Obj>,
+    ) -> Arc <ObjDic> {
         let mut obj_dic = obj_dic.clone ();
         if obj_dic.has_name (name) {
             obj_dic.set (name, Some (obj));
         } else {
             obj_dic.ins (name, Some (obj));
         }
-        Ptr::new (obj_dic)
+        Arc::new (obj_dic)
     }
     impl Env {
         pub fn assign (
             &mut self,
             type_name: &str,
             name: &str,
-            obj: Ptr <Obj>,
+            obj: Arc <Obj>,
         ) {
             if type_name == "" {
                 self.define (name, obj);
             } else {
                 if let Some (typ) = self.find_type (type_name) {
-                    let new_typ = Ptr::new (Type  {
+                    let new_typ = Arc::new (Type  {
                         method_dic: method_dic_extend (
                             &typ.method_dic, name, obj),
                         tag_of_type: typ.tag_of_type,
@@ -437,7 +435,7 @@
         pub fn define_type (
             &mut self,
             name: &str,
-            typ: Ptr <Type>,
+            typ: Arc <Type>,
         ) -> Tag {
             self.type_dic.ins (name, Some (typ))
         }
@@ -453,8 +451,8 @@
     }
     pub struct Frame {
         pub index: usize,
-        pub jojo: Ptr <JoVec>,
-        pub scope: Ptr <Scope>,
+        pub jojo: Arc <JoVec>,
+        pub scope: Arc <Scope>,
     }
     fn frame_eq (
         lhs: &Frame,
@@ -468,22 +466,22 @@
         pub fn make (jo_vec: JoVec) -> Box <Frame> {
             Box::new (Frame {
                 index: 0,
-                jojo: Ptr::new (jo_vec),
-                scope: Ptr::new (Scope::new ()),
+                jojo: Arc::new (jo_vec),
+                scope: Arc::new (Scope::new ()),
             })
         }
     }
     pub trait Obj {
         fn tag (&self) -> Tag;
 
-        fn obj_dic (&self) -> Option <Ptr <ObjDic>> { None }
+        fn obj_dic (&self) -> Option <Arc <ObjDic>> { None }
 
-        fn eq (&self, _other: Ptr <Obj>) -> bool { false }
+        fn eq (&self, _other: Arc <Obj>) -> bool { false }
 
         fn get (
             &self,
             name: &str,
-        ) -> Option <Ptr <Obj>> {
+        ) -> Option <Arc <Obj>> {
             if let Some (obj_dic) = self.obj_dic () {
                 if let Some (obj) = obj_dic.get (name) {
                     Some (obj.dup ())
@@ -499,7 +497,7 @@
             &self,
             env: &Env,
             name: &str,
-        ) -> Option <Ptr <Obj>> {
+        ) -> Option <Arc <Obj>> {
             let tag = self.tag ();
             let entry = env.type_dic.idx (tag);
             if let Some (typ) = &entry.value {
@@ -513,7 +511,7 @@
             &self,
             env: &Env,
             name: &str,
-        ) -> Option <Ptr <Obj>> {
+        ) -> Option <Arc <Obj>> {
             if let Some (obj) = self.get (name) {
                 Some (obj)
             } else {
@@ -548,30 +546,30 @@
     }
     /// Before cast an obj to T, caller must check that
     ///   the obj has the tag of T.
-    unsafe fn obj_to <T: Obj> (obj: Ptr <Obj>) -> Ptr <T> {
-        let obj_ptr = Ptr::into_raw (obj);
+    unsafe fn obj_to <T: Obj> (obj: Arc <Obj>) -> Arc <T> {
+        let obj_ptr = Arc::into_raw (obj);
         let obj_ptr = obj_ptr as *const Obj as *const T;
-        Ptr::from_raw (obj_ptr)
+        Arc::from_raw (obj_ptr)
     }
     pub fn obj_eq (
-        lhs: &Ptr <Obj>,
-        rhs: &Ptr <Obj>,
+        lhs: &Arc <Obj>,
+        rhs: &Arc <Obj>,
     ) -> bool {
         lhs.eq (rhs.dup ())
     }
     pub trait Jo {
-        fn exe (&self, env: &mut Env, scope: Ptr <Scope>);
+        fn exe (&self, env: &mut Env, scope: Arc <Scope>);
 
         fn repr (&self, _env: &Env) -> String {
             "#<unknown-jo>".to_string ()
         }
     }
     pub fn jo_eq (
-        lhs: Ptr <Jo>,
-        rhs: Ptr <Jo>,
+        lhs: Arc <Jo>,
+        rhs: Arc <Jo>,
     ) -> bool {
-        let lhs_ptr = Ptr::into_raw (lhs);
-        let rhs_ptr = Ptr::into_raw (rhs);
+        let lhs_ptr = Arc::into_raw (lhs);
+        let rhs_ptr = Arc::into_raw (rhs);
         lhs_ptr == rhs_ptr
     }
     pub struct RefJo {
@@ -579,7 +577,7 @@
     }
 
     impl Jo for RefJo {
-        fn exe (&self, env: &mut Env, _: Ptr <Scope>) {
+        fn exe (&self, env: &mut Env, _: Arc <Scope>) {
             let obj_cell = self.id .upgrade () .unwrap ();
             let mutex_guard = obj_cell.lock () .unwrap ();
             if let Some (ref obj) = *mutex_guard {
@@ -596,7 +594,7 @@
     }
 
     impl Jo for TypeRefJo {
-        fn exe (&self, env: &mut Env, _: Ptr <Scope>) {
+        fn exe (&self, env: &mut Env, _: Arc <Scope>) {
             let entry = env.type_dic.idx (self.tag);
             if let Some (typ) = &entry.value {
                 env.obj_stack.push (typ.dup ());
@@ -614,7 +612,7 @@
     }
 
     impl Jo for LocalRefJo {
-        fn exe (&self, env: &mut Env, scope: Ptr <Scope>) {
+        fn exe (&self, env: &mut Env, scope: Arc <Scope>) {
             let obj_dic = vec_peek (&scope, self.level);
             let entry = obj_dic.idx (self.index);
             if let Some (ref obj) = entry.value {
@@ -633,7 +631,7 @@
     }
 
     impl Jo for ApplyJo {
-        fn exe (&self, env: &mut Env, _: Ptr <Scope>) {
+        fn exe (&self, env: &mut Env, _: Arc <Scope>) {
             let obj = env.obj_stack.pop () .unwrap ();
             obj.apply (env, self.arity);
         }
@@ -641,12 +639,12 @@
     pub struct ApplyToArgDictJo;
 
     impl Jo for ApplyToArgDictJo {
-        fn exe (&self, env: &mut Env, _: Ptr <Scope>) {
+        fn exe (&self, env: &mut Env, _: Arc <Scope>) {
             let obj = env.obj_stack.pop () .unwrap ();
             obj.apply_to_arg_dict (env);
         }
     }
-    fn method_p (obj: &Ptr <Obj>) -> bool {
+    fn method_p (obj: &Arc <Obj>) -> bool {
         if Closure::p (&obj) {
             let closure = Closure::cast (obj.dup ());
             if closure.arg_dic.len () == 0 {
@@ -661,14 +659,14 @@
         }
     }
     fn method_merge_self (
-        method: Ptr <Obj>,
-        self_obj: Ptr <Obj>,
-    ) -> Ptr <Closure> {
+        method: Arc <Obj>,
+        self_obj: Arc <Obj>,
+    ) -> Arc <Closure> {
         let method = Closure::cast (method);
         let mut arg_dic = (*method.arg_dic).clone ();
         arg_dic.idx_set_value (0, Some (self_obj));
-        Ptr::new (Closure {
-            arg_dic: Ptr::new (arg_dic),
+        Arc::new (Closure {
+            arg_dic: Arc::new (arg_dic),
             jojo: method.jojo.dup (),
             scope: method.scope.dup (),
         })
@@ -678,7 +676,7 @@
     }
 
     impl Jo for DotJo {
-        fn exe (&self, env: &mut Env, _: Ptr <Scope>) {
+        fn exe (&self, env: &mut Env, _: Arc <Scope>) {
             let obj = env.obj_stack.pop () .unwrap ();
             let dot = obj.dot (env, &self.name) .unwrap ();
             if method_p (&dot) {
@@ -689,13 +687,13 @@
         }
     }
     pub struct LambdaJo {
-        arg_dic: Ptr <ObjDic>,
-        jojo: Ptr <JoVec>,
+        arg_dic: Arc <ObjDic>,
+        jojo: Arc <JoVec>,
     }
 
     impl Jo for LambdaJo {
-        fn exe (&self, env: &mut Env, scope: Ptr <Scope>) {
-            env.obj_stack.push (Ptr::new (Closure {
+        fn exe (&self, env: &mut Env, scope: Arc <Scope>) {
+            env.obj_stack.push (Arc::new (Closure {
                 arg_dic: self.arg_dic.dup (),
                 jojo: self.jojo.dup (),
                 scope: scope.dup (),
@@ -703,16 +701,16 @@
         }
     }
     pub struct LitJo {
-        obj: Ptr <Obj>,
+        obj: Arc <Obj>,
     }
 
     impl Jo for LitJo {
-        fn exe (&self, env: &mut Env, _: Ptr <Scope>) {
+        fn exe (&self, env: &mut Env, _: Arc <Scope>) {
             env.obj_stack.push (self.obj.dup ());
         }
     }
     pub struct Type {
-        method_dic: Ptr <ObjDic>,
+        method_dic: Arc <ObjDic>,
         tag_of_type: Tag,
         super_tag_vec: TagVec,
     }
@@ -722,11 +720,11 @@
     impl Obj for Type {
         fn tag (&self) -> Tag { TYPE_T }
 
-        fn obj_dic (&self) -> Option <Ptr <ObjDic>> {
+        fn obj_dic (&self) -> Option <Arc <ObjDic>> {
             Some (self.method_dic.dup ())
         }
 
-        fn eq (&self, other: Ptr <Obj>) -> bool {
+        fn eq (&self, other: Arc <Obj>) -> bool {
             if self.tag () != other.tag () {
                 false
             } else {
@@ -737,21 +735,21 @@
         }
     }
     pub fn type_eq (
-        lhs: &Ptr <Type>,
-        rhs: &Ptr <Type>,
+        lhs: &Arc <Type>,
+        rhs: &Arc <Type>,
     ) -> bool {
         lhs.eq (rhs.dup ())
     }
     impl Type {
-        fn make (tag: Tag) -> Ptr <Type> {
-            Ptr::new (Type {
-                method_dic: Ptr::new (ObjDic::new ()),
+        fn make (tag: Tag) -> Arc <Type> {
+            Arc::new (Type {
+                method_dic: Arc::new (ObjDic::new ()),
                 tag_of_type: tag,
                 super_tag_vec: TagVec::new (),
             })
         }
     }
-    fn type_of (env: &Env, obj: Ptr <Obj>) -> Ptr <Type> {
+    fn type_of (env: &Env, obj: Arc <Obj>) -> Arc <Type> {
         let tag = obj.tag ();
         let entry = env.type_dic.idx (tag);
         if let Some (typ) = &entry.value {
@@ -765,17 +763,17 @@
     }
     pub struct Data {
         tag_of_type: Tag,
-        field_dic: Ptr <ObjDic>,
+        field_dic: Arc <ObjDic>,
     }
 
     impl Obj for Data {
         fn tag (&self) -> Tag { self.tag_of_type }
 
-        fn obj_dic (&self) -> Option <Ptr <ObjDic>> {
+        fn obj_dic (&self) -> Option <Arc <ObjDic>> {
             Some (self.field_dic.dup ())
         }
 
-        fn eq (&self, other: Ptr <Obj>) -> bool {
+        fn eq (&self, other: Arc <Obj>) -> bool {
             if self.tag () != other.tag () {
                 false
             } else {
@@ -790,25 +788,25 @@
     impl Data {
         fn make (
             tag: Tag,
-            vec: Vec <(&str, Ptr <Obj>)>,
-        ) -> Ptr <Data> {
-            Ptr::new (Data {
+            vec: Vec <(&str, Arc <Obj>)>,
+        ) -> Arc <Data> {
+            Arc::new (Data {
                 tag_of_type: tag,
-                field_dic: Ptr::new (Dic::from (vec)),
+                field_dic: Arc::new (Dic::from (vec)),
             })
         }
     }
     impl Data {
-        fn unit (tag: Tag) -> Ptr <Data> {
-            Ptr::new (Data {
+        fn unit (tag: Tag) -> Arc <Data> {
+            Arc::new (Data {
                 tag_of_type: tag,
-                field_dic: Ptr::new (ObjDic::new ()),
+                field_dic: Arc::new (ObjDic::new ()),
             })
         }
     }
     pub struct DataCons {
         tag_of_type: Tag,
-        field_dic: Ptr <ObjDic>,
+        field_dic: Arc <ObjDic>,
     }
 
     impl_tag! (DataCons, DATA_CONS_T);
@@ -816,11 +814,11 @@
     impl Obj for DataCons {
         fn tag (&self) -> Tag { DATA_CONS_T }
 
-        fn obj_dic (&self) -> Option <Ptr <ObjDic>> {
+        fn obj_dic (&self) -> Option <Arc <ObjDic>> {
             Some (self.field_dic.dup ())
         }
 
-        fn eq (&self, other: Ptr <Obj>) -> bool {
+        fn eq (&self, other: Arc <Obj>) -> bool {
             if self.tag () != other.tag () {
                 false
             } else {
@@ -844,14 +842,14 @@
             let field_dic = obj_dic_pick_up (
                 env, &self.field_dic, arity);
             if arity == lack {
-                env.obj_stack.push (Ptr::new (Data {
+                env.obj_stack.push (Arc::new (Data {
                     tag_of_type,
-                    field_dic: Ptr::new (field_dic),
+                    field_dic: Arc::new (field_dic),
                 }));
             } else {
-                env.obj_stack.push (Ptr::new (DataCons {
+                env.obj_stack.push (Arc::new (DataCons {
                     tag_of_type,
-                    field_dic: Ptr::new (field_dic),
+                    field_dic: Arc::new (field_dic),
                 }));
             }
         }
@@ -860,27 +858,27 @@
         pub fn make (
             tag: Tag,
             vec: Vec <String>,
-        ) -> Ptr <DataCons> {
-            Ptr::new (DataCons {
+        ) -> Arc <DataCons> {
+            Arc::new (DataCons {
                 tag_of_type: tag,
-                field_dic: Ptr::new (Dic::from (vec)),
+                field_dic: Arc::new (Dic::from (vec)),
             })
         }
     }
     impl DataCons {
         pub fn unit (
             tag: Tag,
-        ) -> Ptr <DataCons> {
-            Ptr::new (DataCons {
+        ) -> Arc <DataCons> {
+            Arc::new (DataCons {
                 tag_of_type: tag,
-                field_dic: Ptr::new (ObjDic::new ()),
+                field_dic: Arc::new (ObjDic::new ()),
             })
         }
     }
     pub struct Closure {
-        arg_dic: Ptr <ObjDic>,
-        jojo: Ptr <JoVec>,
-        scope: Ptr <Scope>,
+        arg_dic: Arc <ObjDic>,
+        jojo: Arc <JoVec>,
+        scope: Arc <Scope>,
     }
 
     impl_tag! (Closure, CLOSURE_T);
@@ -888,11 +886,11 @@
     impl Obj for Closure {
         fn tag (&self) -> Tag { CLOSURE_T }
 
-        fn obj_dic (&self) -> Option <Ptr <ObjDic>> {
+        fn obj_dic (&self) -> Option <Arc <ObjDic>> {
             Some (self.arg_dic.dup ())
         }
 
-        fn eq (&self, other: Ptr <Obj>) -> bool {
+        fn eq (&self, other: Arc <Obj>) -> bool {
             if self.tag () != other.tag () {
                 false
             } else {
@@ -922,8 +920,8 @@
                         &self.scope, arg_dic),
                 }));
             } else {
-                env.obj_stack.push (Ptr::new (Closure {
-                    arg_dic: Ptr::new (arg_dic),
+                env.obj_stack.push (Arc::new (Closure {
+                    arg_dic: Arc::new (arg_dic),
                     jojo: self.jojo.dup (),
                     scope: self.scope.dup (),
                 }));
@@ -950,7 +948,7 @@
     impl Obj for Prim {
         fn tag (&self) -> Tag { PRIM_T }
 
-        fn eq (&self, other: Ptr <Obj>) -> bool {
+        fn eq (&self, other: Arc <Obj>) -> bool {
             if self.tag () != other.tag () {
                 false
             } else {
@@ -975,7 +973,7 @@
             if arity == lack {
                 fun (env, &arg_dic);
             } else {
-                env.obj_stack.push (Ptr::new (Prim {
+                env.obj_stack.push (Arc::new (Prim {
                     arg_dic,
                     fun,
                 }));
@@ -992,7 +990,7 @@
             let arg_vec = name_vec. iter ()
                 .map (|x| x.to_string ())
                 .collect::<NameVec> ();
-            self.define (name, Ptr::new (Prim {
+            self.define (name, Arc::new (Prim {
                 arg_dic: Dic::from (arg_vec),
                 fun,
             }))
@@ -1060,7 +1058,7 @@
     impl Obj for True {
         fn tag (&self) -> Tag { TRUE_T }
 
-        fn eq (&self, other: Ptr <Obj>) -> bool {
+        fn eq (&self, other: Arc <Obj>) -> bool {
             if self.tag () != other.tag () {
                 false
             } else {
@@ -1069,8 +1067,8 @@
         }
     }
     impl True {
-        fn make () -> Ptr <True> {
-            Ptr::new (True {})
+        fn make () -> Arc <True> {
+            Arc::new (True {})
         }
     }
     pub struct False;
@@ -1080,7 +1078,7 @@
     impl Obj for False {
         fn tag (&self) -> Tag { FALSE_T }
 
-        fn eq (&self, other: Ptr <Obj>) -> bool {
+        fn eq (&self, other: Arc <Obj>) -> bool {
             if self.tag () != other.tag () {
                 false
             } else {
@@ -1089,23 +1087,23 @@
         }
     }
     impl False {
-        fn make () -> Ptr <False> {
-            Ptr::new (False {})
+        fn make () -> Arc <False> {
+            Arc::new (False {})
         }
     }
-    pub fn true_p (x: &Ptr <Obj>) -> bool {
+    pub fn true_p (x: &Arc <Obj>) -> bool {
         let tag = x.tag ();
         (TRUE_T == tag)
     }
 
-    pub fn false_p (x: &Ptr <Obj>) -> bool {
+    pub fn false_p (x: &Arc <Obj>) -> bool {
         let tag = x.tag ();
         (FALSE_T == tag)
     }
-    pub fn not (x: Ptr <Obj>) -> Ptr <Obj> {
+    pub fn not (x: Arc <Obj>) -> Arc <Obj> {
         make_bool (false_p (&x))
     }
-    pub fn make_bool (b: bool) -> Ptr <Obj> {
+    pub fn make_bool (b: bool) -> Arc <Obj> {
         if b {
             True::make ()
         }
@@ -1120,7 +1118,7 @@
     impl Obj for Str {
         fn tag (&self) -> Tag { STR_T }
 
-        fn eq (&self, other: Ptr <Obj>) -> bool {
+        fn eq (&self, other: Arc <Obj>) -> bool {
             if self.tag () != other.tag () {
                 false
             } else {
@@ -1130,27 +1128,27 @@
         }
     }
     impl Str {
-        fn make (str: &str) -> Ptr <Str> {
-            Ptr::new (Str { str: String::from (str) })
+        fn make (str: &str) -> Arc <Str> {
+            Arc::new (Str { str: String::from (str) })
         }
     }
-    fn str_length (str: Ptr <Obj>) -> Ptr <Num> {
+    fn str_length (str: Arc <Obj>) -> Arc <Num> {
         let str = Str::cast (str);
         Num::make (str.str.len () as f64)
     }
     fn str_append (
-        ante: Ptr <Obj>,
-        succ: Ptr <Obj>,
-    ) -> Ptr <Str> {
+        ante: Arc <Obj>,
+        succ: Arc <Obj>,
+    ) -> Arc <Str> {
         let ante = Str::cast (ante);
         let succ = Str::cast (succ);
         Str::make (&format! ("{}{}", ante.str, succ.str))
     }
     fn str_slice (
-        str: Ptr <Obj>,
-        begin: Ptr <Obj>,
-        end: Ptr <Obj>,
-    ) -> Ptr <Str> {
+        str: Arc <Obj>,
+        begin: Arc <Obj>,
+        end: Arc <Obj>,
+    ) -> Arc <Str> {
         let str = Str::cast (str);
         let begin = Num::cast (begin);
         let end = Num::cast (end);
@@ -1161,15 +1159,15 @@
         Str::make (&slice .iter () .collect::<String> ())
     }
     fn str_ref (
-        str: Ptr <Obj>,
-        index: Ptr <Obj>,
-    ) -> Ptr <Str> {
+        str: Arc <Obj>,
+        index: Arc <Obj>,
+    ) -> Arc <Str> {
         str_slice (str, index.dup (), inc (index))
     }
-    fn str_head (str: Ptr <Obj>) -> Ptr <Str> {
+    fn str_head (str: Arc <Obj>) -> Arc <Str> {
         str_ref (str, Num::make (0.0))
     }
-    fn str_rest (str: Ptr <Obj>) -> Ptr <Str> {
+    fn str_rest (str: Arc <Obj>) -> Arc <Str> {
         let len = str_length (str.dup ());
         str_slice (str, Num::make (1.0), len)
     }
@@ -1180,7 +1178,7 @@
     impl Obj for Sym {
         fn tag (&self) -> Tag { SYM_T }
 
-        fn eq (&self, other: Ptr <Obj>) -> bool {
+        fn eq (&self, other: Arc <Obj>) -> bool {
             if self.tag () != other.tag () {
                 false
             } else {
@@ -1190,27 +1188,27 @@
         }
     }
     impl Sym {
-        fn make (str: &str) -> Ptr <Sym> {
-            Ptr::new (Sym { sym: String::from (str) })
+        fn make (str: &str) -> Arc <Sym> {
+            Arc::new (Sym { sym: String::from (str) })
         }
     }
-    fn sym_length (sym: Ptr <Obj>) -> Ptr <Num> {
+    fn sym_length (sym: Arc <Obj>) -> Arc <Num> {
         let sym = Sym::cast (sym);
         Num::make (sym.sym.len () as f64)
     }
     fn sym_append (
-        ante: Ptr <Obj>,
-        succ: Ptr <Obj>,
-    ) -> Ptr <Sym> {
+        ante: Arc <Obj>,
+        succ: Arc <Obj>,
+    ) -> Arc <Sym> {
         let ante = Sym::cast (ante);
         let succ = Sym::cast (succ);
         Sym::make (&format! ("{}{}", ante.sym, succ.sym))
     }
     fn sym_slice (
-        sym: Ptr <Obj>,
-        begin: Ptr <Obj>,
-        end: Ptr <Obj>,
-    ) -> Ptr <Sym> {
+        sym: Arc <Obj>,
+        begin: Arc <Obj>,
+        end: Arc <Obj>,
+    ) -> Arc <Sym> {
         let sym = Sym::cast (sym);
         let begin = Num::cast (begin);
         let end = Num::cast (end);
@@ -1221,15 +1219,15 @@
         Sym::make (&slice .iter () .collect::<String> ())
     }
     fn sym_ref (
-        sym: Ptr <Obj>,
-        index: Ptr <Obj>,
-    ) -> Ptr <Sym> {
+        sym: Arc <Obj>,
+        index: Arc <Obj>,
+    ) -> Arc <Sym> {
         sym_slice (sym, index.dup (), inc (index))
     }
-    fn sym_head (sym: Ptr <Obj>) -> Ptr <Sym> {
+    fn sym_head (sym: Arc <Obj>) -> Arc <Sym> {
         sym_ref (sym, Num::make (0.0))
     }
-    fn sym_rest (sym: Ptr <Obj>) -> Ptr <Sym> {
+    fn sym_rest (sym: Arc <Obj>) -> Arc <Sym> {
         let len = sym_length (sym.dup ());
         sym_slice (sym, Num::make (1.0), len)
     }
@@ -1240,7 +1238,7 @@
     impl Obj for Num {
         fn tag (&self) -> Tag { NUM_T }
 
-        fn eq (&self, other: Ptr <Obj>) -> bool {
+        fn eq (&self, other: Arc <Obj>) -> bool {
             if self.tag () != other.tag () {
                 false
             } else {
@@ -1254,225 +1252,225 @@
         }
     }
     impl Num {
-        fn make (num: f64) -> Ptr <Num> {
-            Ptr::new (Num { num })
+        fn make (num: f64) -> Arc <Num> {
+            Arc::new (Num { num })
         }
     }
-      fn inc (x: Ptr <Obj>) -> Ptr <Num> {
+      fn inc (x: Arc <Obj>) -> Arc <Num> {
           let x = Num::cast (x);
           Num::make (x.num + 1.0)
       }
-      fn dec (x: Ptr <Obj>) -> Ptr <Num> {
+      fn dec (x: Arc <Obj>) -> Arc <Num> {
           let x = Num::cast (x);
           Num::make (x.num - 1.0)
       }
-      fn add (x: Ptr <Obj>, y: Ptr <Obj>) -> Ptr <Num> {
+      fn add (x: Arc <Obj>, y: Arc <Obj>) -> Arc <Num> {
           let x = Num::cast (x);
           let y = Num::cast (y);
           Num::make (x.num + y.num)
       }
-      fn sub (x: Ptr <Obj>, y: Ptr <Obj>) -> Ptr <Num> {
+      fn sub (x: Arc <Obj>, y: Arc <Obj>) -> Arc <Num> {
           let x = Num::cast (x);
           let y = Num::cast (y);
           Num::make (x.num - y.num)
       }
-      fn mul (x: Ptr <Obj>, y: Ptr <Obj>) -> Ptr <Num> {
+      fn mul (x: Arc <Obj>, y: Arc <Obj>) -> Arc <Num> {
           let x = Num::cast (x);
           let y = Num::cast (y);
           Num::make (x.num * y.num)
       }
-      fn div (x: Ptr <Obj>, y: Ptr <Obj>) -> Ptr <Num> {
+      fn div (x: Arc <Obj>, y: Arc <Obj>) -> Arc <Num> {
           let x = Num::cast (x);
           let y = Num::cast (y);
           Num::make (x.num / y.num)
       }
-      fn num_mod (x: Ptr <Obj>, y: Ptr <Obj>) -> Ptr <Num> {
+      fn num_mod (x: Arc <Obj>, y: Arc <Obj>) -> Arc <Num> {
           let x = Num::cast (x);
           let y = Num::cast (y);
           Num::make (x.num % y.num)
       }
-      fn max (x: Ptr <Obj>, y: Ptr <Obj>) -> Ptr <Num> {
+      fn max (x: Arc <Obj>, y: Arc <Obj>) -> Arc <Num> {
           let x = Num::cast (x);
           let y = Num::cast (y);
           Num::make (x.num.max (y.num))
       }
-      fn min (x: Ptr <Obj>, y: Ptr <Obj>) -> Ptr <Num> {
+      fn min (x: Arc <Obj>, y: Arc <Obj>) -> Arc <Num> {
           let x = Num::cast (x);
           let y = Num::cast (y);
           Num::make (x.num.min (y.num))
       }
 
-      fn abs (x: Ptr <Obj>) -> Ptr <Num> {
+      fn abs (x: Arc <Obj>) -> Arc <Num> {
           let x = Num::cast (x);
           Num::make (x.num.abs ())
       }
-      fn neg (x: Ptr <Obj>) -> Ptr <Num> {
+      fn neg (x: Arc <Obj>) -> Arc <Num> {
           let x = Num::cast (x);
           Num::make (- x.num)
       }
-      fn pow (x: Ptr <Obj>, y: Ptr <Obj>) -> Ptr <Num> {
+      fn pow (x: Arc <Obj>, y: Arc <Obj>) -> Arc <Num> {
           let x = Num::cast (x);
           let y = Num::cast (y);
           Num::make (x.num.powf (y.num))
       }
-      fn mul_add (x: Ptr <Obj>, y: Ptr <Obj>, z: Ptr <Obj>) -> Ptr <Num> {
+      fn mul_add (x: Arc <Obj>, y: Arc <Obj>, z: Arc <Obj>) -> Arc <Num> {
           let x = Num::cast (x);
           let y = Num::cast (y);
           let z = Num::cast (z);
           Num::make (x.num.mul_add (y.num, z.num))
       }
-      fn reciprocal (x: Ptr <Obj>) -> Ptr <Num> {
+      fn reciprocal (x: Arc <Obj>) -> Arc <Num> {
           let x = Num::cast (x);
           Num::make (x.num.recip ())
       }
-      fn sqrt (x: Ptr <Obj>) -> Ptr <Num> {
+      fn sqrt (x: Arc <Obj>) -> Arc <Num> {
           let x = Num::cast (x);
           Num::make (x.num.sqrt ())
       }
-      fn cbrt (x: Ptr <Obj>) -> Ptr <Num> {
+      fn cbrt (x: Arc <Obj>) -> Arc <Num> {
           let x = Num::cast (x);
           Num::make (x.num.cbrt ())
       }
-      fn hypot (x: Ptr <Obj>, y: Ptr <Obj>) -> Ptr <Num> {
+      fn hypot (x: Arc <Obj>, y: Arc <Obj>) -> Arc <Num> {
           let x = Num::cast (x);
           let y = Num::cast (y);
           Num::make (x.num.hypot (y.num))
       }
-      fn lt (x: Ptr <Obj>, y: Ptr <Obj>) -> Ptr <Obj> {
+      fn lt (x: Arc <Obj>, y: Arc <Obj>) -> Arc <Obj> {
           let x = Num::cast (x);
           let y = Num::cast (y);
           make_bool (x.num < y.num)
       }
-      fn gt (x: Ptr <Obj>, y: Ptr <Obj>) -> Ptr <Obj> {
+      fn gt (x: Arc <Obj>, y: Arc <Obj>) -> Arc <Obj> {
           let x = Num::cast (x);
           let y = Num::cast (y);
           make_bool (x.num > y.num)
       }
-      fn lteq (x: Ptr <Obj>, y: Ptr <Obj>) -> Ptr <Obj> {
+      fn lteq (x: Arc <Obj>, y: Arc <Obj>) -> Arc <Obj> {
           let x = Num::cast (x);
           let y = Num::cast (y);
           make_bool (x.num <= y.num)
       }
-      fn gteq (x: Ptr <Obj>, y: Ptr <Obj>) -> Ptr <Obj> {
+      fn gteq (x: Arc <Obj>, y: Arc <Obj>) -> Arc <Obj> {
           let x = Num::cast (x);
           let y = Num::cast (y);
           make_bool (x.num >= y.num)
       }
-      fn even_p (x: Ptr <Obj>) -> Ptr <Obj> {
+      fn even_p (x: Arc <Obj>) -> Arc <Obj> {
           let x = Num::cast (x);
           make_bool (x.num % 2.0 == 0.0)
       }
-      fn odd_p (x: Ptr <Obj>) -> Ptr <Obj> {
+      fn odd_p (x: Arc <Obj>) -> Arc <Obj> {
           let x = Num::cast (x);
           make_bool (x.num % 2.0 == 1.0)
       }
-      fn num_integer_part (x: Ptr <Obj>) -> Ptr <Num> {
+      fn num_integer_part (x: Arc <Obj>) -> Arc <Num> {
           let x = Num::cast (x);
           Num::make (x.num.trunc ())
       }
-      fn num_fractional_part (x: Ptr <Obj>) -> Ptr <Num> {
+      fn num_fractional_part (x: Arc <Obj>) -> Arc <Num> {
           let x = Num::cast (x);
           Num::make (x.num.fract ())
       }
-      fn num_sign (x: Ptr <Obj>) -> Ptr <Num> {
+      fn num_sign (x: Arc <Obj>) -> Arc <Num> {
           let x = Num::cast (x);
           Num::make (x.num.signum ())
       }
-      fn num_floor (x: Ptr <Obj>) -> Ptr <Num> {
+      fn num_floor (x: Arc <Obj>) -> Arc <Num> {
           let x = Num::cast (x);
           Num::make (x.num.floor ())
       }
-      fn num_ceil (x: Ptr <Obj>) -> Ptr <Num> {
+      fn num_ceil (x: Arc <Obj>) -> Arc <Num> {
           let x = Num::cast (x);
           Num::make (x.num.ceil ())
       }
-      fn num_round (x: Ptr <Obj>) -> Ptr <Num> {
+      fn num_round (x: Arc <Obj>) -> Arc <Num> {
           let x = Num::cast (x);
           Num::make (x.num.round ())
       }
-      fn num_sin (x: Ptr <Obj>) -> Ptr <Num> {
+      fn num_sin (x: Arc <Obj>) -> Arc <Num> {
           let x = Num::cast (x);
           Num::make (x.num.sin ())
       }
-      fn num_cos (x: Ptr <Obj>) -> Ptr <Num> {
+      fn num_cos (x: Arc <Obj>) -> Arc <Num> {
           let x = Num::cast (x);
           Num::make (x.num.cos ())
       }
-      fn num_tan (x: Ptr <Obj>) -> Ptr <Num> {
+      fn num_tan (x: Arc <Obj>) -> Arc <Num> {
           let x = Num::cast (x);
           Num::make (x.num.tan ())
       }
-      fn num_asin (x: Ptr <Obj>) -> Ptr <Num> {
+      fn num_asin (x: Arc <Obj>) -> Arc <Num> {
           let x = Num::cast (x);
           Num::make (x.num.asin ())
       }
-      fn num_acos (x: Ptr <Obj>) -> Ptr <Num> {
+      fn num_acos (x: Arc <Obj>) -> Arc <Num> {
           let x = Num::cast (x);
           Num::make (x.num.acos ())
       }
-      fn num_atan (x: Ptr <Obj>) -> Ptr <Num> {
+      fn num_atan (x: Arc <Obj>) -> Arc <Num> {
           let x = Num::cast (x);
           Num::make (x.num.atan ())
       }
-      fn num_atan2 (x: Ptr <Obj>, y: Ptr <Obj>) -> Ptr <Num> {
+      fn num_atan2 (x: Arc <Obj>, y: Arc <Obj>) -> Arc <Num> {
           let x = Num::cast (x);
           let y = Num::cast (y);
           Num::make (x.num.atan2 (y.num))
       }
-      fn num_sinh (x: Ptr <Obj>) -> Ptr <Num> {
+      fn num_sinh (x: Arc <Obj>) -> Arc <Num> {
           let x = Num::cast (x);
           Num::make (x.num.sinh ())
       }
-      fn num_cosh (x: Ptr <Obj>) -> Ptr <Num> {
+      fn num_cosh (x: Arc <Obj>) -> Arc <Num> {
           let x = Num::cast (x);
           Num::make (x.num.cosh ())
       }
-      fn num_tanh (x: Ptr <Obj>) -> Ptr <Num> {
+      fn num_tanh (x: Arc <Obj>) -> Arc <Num> {
           let x = Num::cast (x);
           Num::make (x.num.tanh ())
       }
-      fn num_asinh (x: Ptr <Obj>) -> Ptr <Num> {
+      fn num_asinh (x: Arc <Obj>) -> Arc <Num> {
           let x = Num::cast (x);
           Num::make (x.num.asinh ())
       }
-      fn num_acosh (x: Ptr <Obj>) -> Ptr <Num> {
+      fn num_acosh (x: Arc <Obj>) -> Arc <Num> {
           let x = Num::cast (x);
           Num::make (x.num.acosh ())
       }
-      fn num_atanh (x: Ptr <Obj>) -> Ptr <Num> {
+      fn num_atanh (x: Arc <Obj>) -> Arc <Num> {
           let x = Num::cast (x);
           Num::make (x.num.atanh ())
       }
-      fn num_exp (x: Ptr <Obj>) -> Ptr <Num> {
+      fn num_exp (x: Arc <Obj>) -> Arc <Num> {
           let x = Num::cast (x);
           Num::make (x.num.exp ())
       }
-      fn num_exp2 (x: Ptr <Obj>) -> Ptr <Num> {
+      fn num_exp2 (x: Arc <Obj>) -> Arc <Num> {
           let x = Num::cast (x);
           Num::make (x.num.exp2 ())
       }
-      fn num_exp_m1 (x: Ptr <Obj>) -> Ptr <Num> {
+      fn num_exp_m1 (x: Arc <Obj>) -> Arc <Num> {
           let x = Num::cast (x);
           Num::make (x.num.exp_m1 ())
       }
-      fn num_ln (x: Ptr <Obj>) -> Ptr <Num> {
+      fn num_ln (x: Arc <Obj>) -> Arc <Num> {
           let x = Num::cast (x);
           Num::make (x.num.ln ())
       }
-      fn num_ln_1p (x: Ptr <Obj>) -> Ptr <Num> {
+      fn num_ln_1p (x: Arc <Obj>) -> Arc <Num> {
           let x = Num::cast (x);
           Num::make (x.num.ln_1p ())
       }
-      fn num_log (x: Ptr <Obj>, y: Ptr <Obj>) -> Ptr <Num> {
+      fn num_log (x: Arc <Obj>, y: Arc <Obj>) -> Arc <Num> {
           let x = Num::cast (x);
           let y = Num::cast (y);
           Num::make (x.num.log (y.num))
       }
-      fn num_log2 (x: Ptr <Obj>) -> Ptr <Num> {
+      fn num_log2 (x: Arc <Obj>) -> Arc <Num> {
           let x = Num::cast (x);
           Num::make (x.num.log2 ())
       }
-      fn num_log10 (x: Ptr <Obj>) -> Ptr <Num> {
+      fn num_log10 (x: Arc <Obj>) -> Arc <Num> {
           let x = Num::cast (x);
           Num::make (x.num.log10 ())
       }
@@ -1483,7 +1481,7 @@
     impl Obj for Null {
         fn tag (&self) -> Tag { NULL_T }
 
-        fn eq (&self, other: Ptr <Obj>) -> bool {
+        fn eq (&self, other: Arc <Obj>) -> bool {
             if self.tag () != other.tag () {
                 false
             } else {
@@ -1492,16 +1490,16 @@
         }
     }
     impl Null {
-        fn make () -> Ptr <Null> {
-            Ptr::new (Null {})
+        fn make () -> Arc <Null> {
+            Arc::new (Null {})
         }
     }
-    pub fn null () -> Ptr <Obj> {
+    pub fn null () -> Arc <Obj> {
        Null::make ()
     }
     pub struct Cons {
-        car: Ptr <Obj>,
-        cdr: Ptr <Obj>,
+        car: Arc <Obj>,
+        cdr: Arc <Obj>,
     }
 
     impl_tag! (Cons, CONS_T);
@@ -1509,14 +1507,14 @@
     impl Obj for Cons {
         fn tag (&self) -> Tag { CONS_T }
 
-        fn obj_dic (&self) -> Option <Ptr <ObjDic>> {
+        fn obj_dic (&self) -> Option <Arc <ObjDic>> {
             let mut obj_dic = ObjDic::new ();
             obj_dic.ins ("car", Some (self.car.dup ()));
             obj_dic.ins ("cdr", Some (self.cdr.dup ()));
-            Some (Ptr::new (obj_dic))
+            Some (Arc::new (obj_dic))
         }
 
-        fn eq (&self, other: Ptr <Obj>) -> bool {
+        fn eq (&self, other: Arc <Obj>) -> bool {
             if self.tag () != other.tag () {
                 false
             } else {
@@ -1527,46 +1525,46 @@
         }
 
         // fn repr (&self, env: &Env) -> String {
-        //     sexp_repr (env, Ptr::new (Cons {
+        //     sexp_repr (env, Arc::new (Cons {
         //         car: self.car.dup (),
         //         cdr: self.cdr.dup (),
         //     }))
         // }
     }
     impl Cons {
-        fn make (car: Ptr <Obj>, cdr: Ptr <Obj>) -> Ptr <Cons> {
-            Ptr::new (Cons { car, cdr })
+        fn make (car: Arc <Obj>, cdr: Arc <Obj>) -> Arc <Cons> {
+            Arc::new (Cons { car, cdr })
         }
     }
-    pub fn cons (car: Ptr <Obj>, cdr: Ptr <Obj>) -> Ptr <Obj> {
+    pub fn cons (car: Arc <Obj>, cdr: Arc <Obj>) -> Arc <Obj> {
         Cons::make (car, cdr)
     }
-    pub fn null_p (x: &Ptr <Obj>) -> bool {
+    pub fn null_p (x: &Arc <Obj>) -> bool {
         let tag = x.tag ();
         (NULL_T == tag)
     }
-    pub fn cons_p (x: &Ptr <Obj>) -> bool {
+    pub fn cons_p (x: &Arc <Obj>) -> bool {
         let tag = x.tag ();
         (CONS_T == tag)
     }
-    pub fn car (cons: Ptr <Obj>) -> Ptr <Obj> {
+    pub fn car (cons: Arc <Obj>) -> Arc <Obj> {
         assert_eq! (CONS_T, cons.tag ());
         cons.get ("car") .unwrap ()
     }
-    pub fn cdr (cons: Ptr <Obj>) -> Ptr <Obj> {
+    pub fn cdr (cons: Arc <Obj>) -> Arc <Obj> {
         assert_eq! (CONS_T, cons.tag ());
         cons.get ("cdr") .unwrap ()
     }
-    pub fn list_p (x: &Ptr <Obj>) -> bool {
+    pub fn list_p (x: &Arc <Obj>) -> bool {
         (null_p (x) ||
          cons_p (x))
     }
-    fn car_as_sym (cons: Ptr <Obj>) -> Ptr <Sym> {
+    fn car_as_sym (cons: Arc <Obj>) -> Arc <Sym> {
         assert! (cons_p (&cons));
         let head = car (cons);
         Sym::cast (head)
     }
-    fn list_size (mut list: Ptr <Obj>) -> usize {
+    fn list_size (mut list: Arc <Obj>) -> usize {
         assert! (list_p (&list));
         let mut size = 0;
         while ! null_p (&list) {
@@ -1575,11 +1573,11 @@
         }
         size
     }
-    fn list_length (list: Ptr <Obj>) -> Ptr <Num> {
+    fn list_length (list: Arc <Obj>) -> Arc <Num> {
         assert! (list_p (&list));
         Num::make (list_size (list) as f64)
     }
-    fn list_reverse (mut list: Ptr <Obj>) -> Ptr <Obj> {
+    fn list_reverse (mut list: Arc <Obj>) -> Arc <Obj> {
         assert! (list_p (&list));
         let mut rev = null ();
         while ! null_p (&list) {
@@ -1590,9 +1588,9 @@
         rev
     }
     fn list_reverse_append (
-        ante: Ptr <Obj>,
-        succ: Ptr <Obj>,
-    ) -> Ptr <Obj> {
+        ante: Arc <Obj>,
+        succ: Arc <Obj>,
+    ) -> Arc <Obj> {
         let mut list = ante;
         let mut result = succ;
         while ! null_p (&list) {
@@ -1603,12 +1601,12 @@
         result
     }
     fn list_append (
-        ante: Ptr <Obj>,
-        succ: Ptr <Obj>,
-    ) -> Ptr <Obj> {
+        ante: Arc <Obj>,
+        succ: Arc <Obj>,
+    ) -> Arc <Obj> {
         list_reverse_append (list_reverse (ante), succ)
     }
-    pub fn unit_list (obj: Ptr <Obj>) -> Ptr <Obj> {
+    pub fn unit_list (obj: Arc <Obj>) -> Arc <Obj> {
         cons (obj, null ())
     }
     pub struct JNone;
@@ -1618,7 +1616,7 @@
     impl Obj for JNone {
         fn tag (&self) -> Tag { NONE_T }
 
-        fn eq (&self, other: Ptr <Obj>) -> bool {
+        fn eq (&self, other: Arc <Obj>) -> bool {
             if self.tag () != other.tag () {
                 false
             } else {
@@ -1627,15 +1625,15 @@
         }
     }
     impl JNone {
-        fn make () -> Ptr <JNone> {
-            Ptr::new (JNone {})
+        fn make () -> Arc <JNone> {
+            Arc::new (JNone {})
         }
     }
-    pub fn none () -> Ptr <JNone> {
+    pub fn none () -> Arc <JNone> {
         JNone::make ()
     }
     pub struct JSome {
-        value: Ptr <Obj>,
+        value: Arc <Obj>,
     }
 
     impl_tag! (JSome, SOME_T);
@@ -1643,13 +1641,13 @@
     impl Obj for JSome {
         fn tag (&self) -> Tag { SOME_T }
 
-        fn obj_dic (&self) -> Option <Ptr <ObjDic>> {
+        fn obj_dic (&self) -> Option <Arc <ObjDic>> {
             let mut obj_dic = ObjDic::new ();
             obj_dic.ins ("value", Some (self.value.dup ()));
-            Some (Ptr::new (obj_dic))
+            Some (Arc::new (obj_dic))
         }
 
-        fn eq (&self, other: Ptr <Obj>) -> bool {
+        fn eq (&self, other: Arc <Obj>) -> bool {
             if self.tag () != other.tag () {
                 false
             } else {
@@ -1659,14 +1657,14 @@
         }
     }
     impl JSome {
-        fn make (value: Ptr <Obj>) -> Ptr <JSome> {
-            Ptr::new (JSome { value })
+        fn make (value: Arc <Obj>) -> Arc <JSome> {
+            Arc::new (JSome { value })
         }
     }
-    pub fn some (value: Ptr <Obj>) -> Ptr <JSome> {
+    pub fn some (value: Arc <Obj>) -> Arc <JSome> {
         JSome::make (value)
     }
-    pub fn option_p (x: &Ptr <Obj>) -> bool {
+    pub fn option_p (x: &Arc <Obj>) -> bool {
         let tag = x.tag ();
         (NONE_T == tag ||
          SOME_T == tag)
@@ -1678,7 +1676,7 @@
     impl Obj for Vect {
         fn tag (&self) -> Tag { VECT_T }
 
-        fn eq (&self, other: Ptr <Obj>) -> bool {
+        fn eq (&self, other: Arc <Obj>) -> bool {
             if self.tag () != other.tag () {
                 false
             } else {
@@ -1688,11 +1686,11 @@
         }
     }
     impl Vect {
-        fn make (obj_vec: &ObjVec) -> Ptr <Vect> {
-            Ptr::new (Vect { obj_vec: obj_vec.clone () })
+        fn make (obj_vec: &ObjVec) -> Arc <Vect> {
+            Arc::new (Vect { obj_vec: obj_vec.clone () })
         }
     }
-    pub fn vect_to_list (vect: Ptr <Obj>) -> Ptr <Obj> {
+    pub fn vect_to_list (vect: Arc <Obj>) -> Arc <Obj> {
         let vect = Vect::cast (vect);
         let obj_vec = &vect.obj_vec;
         let mut result = null ();
@@ -1701,7 +1699,7 @@
         }
         result
     }
-    fn list_to_vect (mut list: Ptr <Obj>) -> Ptr <Vect> {
+    fn list_to_vect (mut list: Arc <Obj>) -> Arc <Vect> {
         let mut obj_vec = ObjVec::new ();
         while cons_p (&list) {
             obj_vec.push (car (list.dup ()));
@@ -1714,7 +1712,7 @@
     }
 
     impl Jo for CollectVectJo {
-        fn exe (&self, env: &mut Env, _: Ptr <Scope>) {
+        fn exe (&self, env: &mut Env, _: Arc <Scope>) {
             let mut obj_vec = ObjVec::new ();
             for _ in 0..self.counter {
                 let obj = env.obj_stack.pop () .unwrap ();
@@ -1727,8 +1725,8 @@
     fn vect_compile (
         env: &mut Env,
         static_scope: &StaticScope,
-        vect: Ptr <Vect>,
-    ) -> Ptr <JoVec> {
+        vect: Arc <Vect>,
+    ) -> Arc <JoVec> {
         let sexp_list = vect_to_list (vect);
         let counter = list_size (sexp_list.dup ());
         let jojo = sexp_list_compile (
@@ -1738,7 +1736,7 @@
         ];
         jojo_append (&jojo, &ending_jojo)
     }
-    fn name_vect_to_name_vec (name_vect: Ptr <Vect>) -> NameVec {
+    fn name_vect_to_name_vec (name_vect: Arc <Vect>) -> NameVec {
         name_vect.obj_vec .iter ()
             .map (|x| {
                 let sym = Sym::cast (x.dup ());
@@ -1746,14 +1744,14 @@
             })
             .collect::<NameVec> ()
     }
-    fn vect_length (vect: Ptr <Obj>) -> Ptr <Obj> {
+    fn vect_length (vect: Arc <Obj>) -> Arc <Obj> {
         let vect = Vect::cast (vect);
         Num::make (vect.obj_vec.len () as f64)
     }
     fn vect_append (
-        ante: Ptr <Obj>,
-        succ: Ptr <Obj>,
-    ) -> Ptr <Obj> {
+        ante: Arc <Obj>,
+        succ: Arc <Obj>,
+    ) -> Arc <Obj> {
         let ante = Vect::cast (ante);
         let succ = Vect::cast (succ);
         let mut ante_obj_vec = ante.obj_vec.clone ();
@@ -1762,10 +1760,10 @@
         Vect::make (&ante_obj_vec)
     }
     fn vect_slice (
-        vect: Ptr <Obj>,
-        begin: Ptr <Obj>,
-        end: Ptr <Obj>,
-    ) -> Ptr <Obj> {
+        vect: Arc <Obj>,
+        begin: Arc <Obj>,
+        end: Arc <Obj>,
+    ) -> Arc <Obj> {
         let vect = Vect::cast (vect);
         let begin = Num::cast (begin);
         let end = Num::cast (end);
@@ -1775,9 +1773,9 @@
         Vect::make (&obj_vec)
     }
     fn vect_ref (
-        vect: Ptr <Obj>,
-        index: Ptr <Obj>,
-    ) -> Ptr <Obj> {
+        vect: Arc <Obj>,
+        index: Arc <Obj>,
+    ) -> Arc <Obj> {
         let vect = Vect::cast (vect);
         let index = Num::cast (index);
         let index = index.num as usize;
@@ -1785,34 +1783,34 @@
         obj.dup ()
     }
     fn vect_head (
-        vect: Ptr <Obj>,
-    ) -> Ptr <Obj> {
+        vect: Arc <Obj>,
+    ) -> Arc <Obj> {
         let index = Num::make (0.0);
         vect_ref (vect, index)
     }
     fn vect_rest (
-        vect: Ptr <Obj>,
-    ) -> Ptr <Obj> {
+        vect: Arc <Obj>,
+    ) -> Arc <Obj> {
         let begin = Num::make (1.0);
         let end = vect_length (vect.dup ());
         vect_slice (vect, begin, end)
     }
     fn vect_reverse (
-        vect: Ptr <Obj>,
-    ) -> Ptr <Vect> {
+        vect: Arc <Obj>,
+    ) -> Arc <Vect> {
         let vect = Vect::cast (vect);
         let obj_vec = obj_vec_rev (&vect.obj_vec);
         Vect::make (&obj_vec)
     }
     fn unit_vect (
-        obj: Ptr <Obj>,
-    ) -> Ptr <Obj> {
+        obj: Arc <Obj>,
+    ) -> Arc <Obj> {
         let mut obj_vec = ObjVec::new ();
         obj_vec.push (obj);
         Vect::make (&obj_vec)
     }
     pub struct Dict {
-        pub obj_dic: Ptr <ObjDic>,
+        pub obj_dic: Arc <ObjDic>,
     }
 
     impl_tag! (Dict, DICT_T);
@@ -1820,11 +1818,11 @@
     impl Obj for Dict {
         fn tag (&self) -> Tag { DICT_T }
 
-        fn obj_dic (&self) -> Option <Ptr <ObjDic>> {
+        fn obj_dic (&self) -> Option <Arc <ObjDic>> {
             Some (self.obj_dic.dup ())
         }
 
-        fn eq (&self, other: Ptr <Obj>) -> bool {
+        fn eq (&self, other: Arc <Obj>) -> bool {
             if self.tag () != other.tag () {
                 false
             } else {
@@ -1834,8 +1832,8 @@
         }
     }
     impl Dict {
-        fn make (obj_dic: &ObjDic) -> Ptr <Dict> {
-            Ptr::new (Dict { obj_dic: Ptr::new (obj_dic.clone ()) })
+        fn make (obj_dic: &ObjDic) -> Arc <Dict> {
+            Arc::new (Dict { obj_dic: Arc::new (obj_dic.clone ()) })
         }
     }
     struct CollectDictJo {
@@ -1843,7 +1841,7 @@
     }
 
     impl Jo for CollectDictJo {
-        fn exe (&self, env: &mut Env, _: Ptr <Scope>) {
+        fn exe (&self, env: &mut Env, _: Arc <Scope>) {
             let mut obj_dic = ObjDic::new ();
             for _ in 0..self.counter {
                 // note the order!
@@ -1859,8 +1857,8 @@
     fn dict_compile (
         env: &mut Env,
         static_scope: &StaticScope,
-        dict: Ptr <Dict>,
-    ) -> Ptr <JoVec> {
+        dict: Arc <Dict>,
+    ) -> Arc <JoVec> {
         let sexp_list = dict_to_flat_list_reverse (dict);
         let counter = list_size (sexp_list.dup ());
         let counter = counter / 2;
@@ -1871,7 +1869,7 @@
         ];
         jojo_append (&jojo, &ending_jojo)
     }
-    pub fn dict_to_list_reverse (dict: Ptr <Obj>) -> Ptr <Obj> {
+    pub fn dict_to_list_reverse (dict: Arc <Obj>) -> Arc <Obj> {
         let dict = Dict::cast (dict);
         let mut list = null ();
         let obj_dic = &dict.obj_dic;
@@ -1883,12 +1881,12 @@
         }
         list
     }
-    pub fn dict_to_list (dict: Ptr <Obj>) -> Ptr <Obj> {
+    pub fn dict_to_list (dict: Arc <Obj>) -> Arc <Obj> {
         let dict = Dict::cast (dict);
         let list = dict_to_list_reverse (dict);
         list_reverse (list)
     }
-    fn list_to_dict (mut list: Ptr <Obj>) -> Ptr <Dict> {
+    fn list_to_dict (mut list: Arc <Obj>) -> Arc <Dict> {
         assert! (list_p (&list));
         let mut obj_dic = ObjDic::new ();
         while ! null_p (&list) {
@@ -1901,7 +1899,7 @@
         }
         Dict::make (&obj_dic)
     }
-    fn dict_to_flat_list_reverse (dict: Ptr <Obj>) -> Ptr <Obj> {
+    fn dict_to_flat_list_reverse (dict: Arc <Obj>) -> Arc <Obj> {
         let dict = Dict::cast (dict);
         let mut list = null ();
         for kv in dict.obj_dic.iter () {
@@ -1914,11 +1912,11 @@
         }
         list
     }
-    fn dict_length (dict: Ptr <Obj>) -> Ptr <Num> {
+    fn dict_length (dict: Arc <Obj>) -> Arc <Num> {
         let dict = Dict::cast (dict);
         Num::make (dict.obj_dic.len () as f64)
     }
-    fn dict_key_list_reverse (dict: Ptr <Obj>) -> Ptr <Obj> {
+    fn dict_key_list_reverse (dict: Arc <Obj>) -> Arc <Obj> {
         let dict = Dict::cast (dict);
         let mut list = null ();
         for name in dict.obj_dic.keys () {
@@ -1927,7 +1925,7 @@
         }
         list
     }
-    fn dict_value_list_reverse (dict: Ptr <Obj>) -> Ptr <Obj> {
+    fn dict_value_list_reverse (dict: Arc <Obj>) -> Arc <Obj> {
         let dict = Dict::cast (dict);
         let mut list = null ();
         for value in dict.obj_dic.values () {
@@ -1935,17 +1933,17 @@
         }
         list
     }
-    fn dict_key_list (dict: Ptr <Obj>) -> Ptr <Obj> {
+    fn dict_key_list (dict: Arc <Obj>) -> Arc <Obj> {
         list_reverse (dict_key_list_reverse (dict))
     }
-    fn dict_value_list (dict: Ptr <Obj>) -> Ptr <Obj> {
+    fn dict_value_list (dict: Arc <Obj>) -> Arc <Obj> {
         list_reverse (dict_value_list_reverse (dict))
     }
     fn dict_insert (
-        dict: Ptr <Obj>,
-        key: Ptr <Obj>,
-        value: Ptr <Obj>,
-    ) -> Ptr <Obj> {
+        dict: Arc <Obj>,
+        key: Arc <Obj>,
+        value: Arc <Obj>,
+    ) -> Arc <Obj> {
         let dict = Dict::cast (dict);
         let key = Sym::cast (key);
         let name = &key.sym;
@@ -1958,9 +1956,9 @@
         Dict::make (&obj_dic)
     }
     fn dict_merge (
-        ante: Ptr <Obj>,
-        succ: Ptr <Obj>,
-    ) -> Ptr <Obj> {
+        ante: Arc <Obj>,
+        succ: Arc <Obj>,
+    ) -> Arc <Obj> {
         let ante = Dict::cast (ante);
         let succ = Dict::cast (succ);
         let mut obj_dic = (*ante.obj_dic).clone ();
@@ -1976,9 +1974,9 @@
         Dict::make (&obj_dic)
     }
     fn dict_find (
-        dict: Ptr <Obj>,
-        key: Ptr <Obj>,
-    ) -> Ptr <Obj> {
+        dict: Arc <Obj>,
+        key: Arc <Obj>,
+    ) -> Arc <Obj> {
         let dict = Dict::cast (dict);
         let key = Sym::cast (key);
         let name = &key.sym;
@@ -1988,7 +1986,7 @@
             none ()
         }
     }
-    pub fn parse_sexp (token: &token::Token) -> Ptr <Obj> {
+    pub fn parse_sexp (token: &token::Token) -> Arc <Obj> {
         match token {
             token::Token::List { token_vec, .. } => parse_sexp_list (token_vec),
             token::Token::Vect { token_vec, .. } => parse_sexp_vect (token_vec),
@@ -2001,7 +1999,7 @@
             token::Token::Sym { sym, .. } => Sym::make (sym),
         }
     }
-    pub fn parse_sexp_list (token_vec: &token::TokenVec) -> Ptr <Obj> {
+    pub fn parse_sexp_list (token_vec: &token::TokenVec) -> Arc <Obj> {
         let mut list = null ();
         token_vec
             .iter ()
@@ -2012,7 +2010,7 @@
             });
         list
     }
-    pub fn parse_sexp_vect (token_vec: &token::TokenVec) -> Ptr <Obj> {
+    pub fn parse_sexp_vect (token_vec: &token::TokenVec) -> Arc <Obj> {
         let obj_vec = token_vec
             .iter ()
             .map (parse_sexp)
@@ -2020,9 +2018,9 @@
         Vect::make (&obj_vec)
     }
     fn sexp_list_prefix_assign_with_last_sexp (
-        sexp_list: Ptr <Obj>,
-        last_sexp: Ptr <Obj>,
-    ) -> Ptr <Obj> {
+        sexp_list: Arc <Obj>,
+        last_sexp: Arc <Obj>,
+    ) -> Arc <Obj> {
         if null_p (&sexp_list) {
             unit_list (last_sexp)
         } else {
@@ -2047,7 +2045,7 @@
             }
         }
     }
-    pub fn sexp_list_prefix_assign (sexp_list: Ptr <Obj>) -> Ptr <Obj> {
+    pub fn sexp_list_prefix_assign (sexp_list: Arc <Obj>) -> Arc <Obj> {
         if null_p (&sexp_list) {
             sexp_list
         } else {
@@ -2056,7 +2054,7 @@
                 car (sexp_list))
         }
     }
-    pub fn parse_sexp_dict (token_vec: &token::TokenVec) -> Ptr <Obj> {
+    pub fn parse_sexp_dict (token_vec: &token::TokenVec) -> Arc <Obj> {
         let mut sexp_list = parse_sexp_list (token_vec);
         sexp_list = sexp_list_prefix_assign (sexp_list);
         let mut obj_dic = ObjDic::new ();
@@ -2070,7 +2068,7 @@
         }
         Dict::make (&obj_dic)
     }
-    pub fn sexp_repr (env: &Env, sexp: Ptr <Obj>) -> String {
+    pub fn sexp_repr (env: &Env, sexp: Arc <Obj>) -> String {
         if (null_p (&sexp)) {
             format! ("()")
         } else if (cons_p (&sexp)) {
@@ -2100,7 +2098,7 @@
             sexp.repr (env)
         }
     }
-    pub fn sexp_list_repr (env: &Env, sexp_list: Ptr <Obj>) -> String {
+    pub fn sexp_list_repr (env: &Env, sexp_list: Arc <Obj>) -> String {
         if null_p (&sexp_list) {
             format! ("")
         } else if null_p (&cdr (sexp_list.dup ())) {
@@ -2115,7 +2113,7 @@
                      sexp_list_repr (env, cdr (sexp_list)))
         }
     }
-    fn sym_sexp_as_str_p (sexp: &Ptr <Obj>, str: &str) -> bool {
+    fn sym_sexp_as_str_p (sexp: &Arc <Obj>, str: &str) -> bool {
         if ! Sym::p (&sexp) {
             false
         } else {
@@ -2126,8 +2124,8 @@
     pub type KeywordFn = fn (
         env: &mut Env,
         static_scope: &StaticScope,
-        body: Ptr <Obj>,
-    ) -> Ptr <JoVec>;
+        body: Arc <Obj>,
+    ) -> Arc <JoVec>;
     pub fn keyword_fn_eq (
         lhs: &KeywordFn,
         rhs: &KeywordFn,
@@ -2143,7 +2141,7 @@
     impl Obj for Keyword {
         fn tag (&self) -> Tag { KEYWORD_T }
 
-        fn eq (&self, other: Ptr <Obj>) -> bool {
+        fn eq (&self, other: Arc <Obj>) -> bool {
             if self.tag () != other.tag () {
                 false
             } else {
@@ -2153,8 +2151,8 @@
         }
     }
     impl Keyword {
-        fn make (fun: KeywordFn) -> Ptr <Keyword> {
-            Ptr::new (Keyword {
+        fn make (fun: KeywordFn) -> Arc <Keyword> {
+            Arc::new (Keyword {
                 fun,
             })
         }
@@ -2162,7 +2160,7 @@
     fn find_keyword (
         env: &Env,
         name: &str,
-    ) -> Option <Ptr <Keyword>> {
+    ) -> Option <Arc <Keyword>> {
         if let Some (obj) = env.find_obj (name) {
             if Keyword::p (&obj) {
                 let keyword = Keyword::cast (obj.dup ());
@@ -2174,7 +2172,7 @@
             None
         }
     }
-    fn keyword_sexp_p (env: &Env, sexp: &Ptr <Obj>) -> bool {
+    fn keyword_sexp_p (env: &Env, sexp: &Arc <Obj>) -> bool {
         if ! cons_p (&sexp) {
             return false;
         }
@@ -2194,8 +2192,8 @@
     fn keyword_compile (
         env: &mut Env,
         static_scope: &StaticScope,
-        sexp: Ptr <Obj>,
-    ) -> Ptr <JoVec> {
+        sexp: Arc <Obj>,
+    ) -> Arc <JoVec> {
         let sym = car_as_sym (sexp.dup ());
         let name = &sym.sym;
         let keyword = find_keyword (env, name) .unwrap ();
@@ -2212,7 +2210,7 @@
         }
     }
     struct Macro {
-        obj: Ptr <Obj>,
+        obj: Arc <Obj>,
     }
 
     impl_tag! (Macro, MACRO_T);
@@ -2220,7 +2218,7 @@
     impl Obj for Macro {
         fn tag (&self) -> Tag { MACRO_T }
 
-        fn eq (&self, other: Ptr <Obj>) -> bool {
+        fn eq (&self, other: Arc <Obj>) -> bool {
             if self.tag () != other.tag () {
                 false
             } else {
@@ -2232,7 +2230,7 @@
     fn find_macro (
         env: &Env,
         name: &str,
-    ) -> Option <Ptr <Macro>> {
+    ) -> Option <Arc <Macro>> {
         if let Some (obj) = env.find_obj (name) {
             if Macro::p (&obj) {
                 let mac = Macro::cast (obj.dup ());
@@ -2244,7 +2242,7 @@
             None
         }
     }
-    fn macro_sexp_p (env: &Env, sexp: &Ptr <Obj>) -> bool {
+    fn macro_sexp_p (env: &Env, sexp: &Arc <Obj>) -> bool {
         if ! cons_p (&sexp) {
             return false;
         }
@@ -2263,8 +2261,8 @@
     }
     fn macro_eval (
         env: &mut Env,
-        sexp: Ptr <Obj>,
-    ) -> Ptr <Obj> {
+        sexp: Arc <Obj>,
+    ) -> Arc <Obj> {
         let sym = car_as_sym (sexp.dup ());
         let name = &sym.sym;
         let mac = find_macro (env, name) .unwrap ();
@@ -2278,8 +2276,8 @@
     fn macro_compile (
         env: &mut Env,
         static_scope: &StaticScope,
-        sexp: Ptr <Obj>,
-    ) -> Ptr <JoVec> {
+        sexp: Arc <Obj>,
+    ) -> Arc <JoVec> {
         let new_sexp = macro_eval (env, sexp);
         sexp_compile (env, static_scope, new_sexp)
     }
@@ -2290,8 +2288,8 @@
             fun: PrimFn,
         ) -> ObjId {
             let arg_dic = Dic::from (vec! [ "body" ]);
-            let obj = Ptr::new (Prim { arg_dic, fun });
-            let mac = Ptr::new (Macro { obj });
+            let obj = Arc::new (Prim { arg_dic, fun });
+            let mac = Arc::new (Macro { obj });
             self.define (name, mac)
         }
     }
@@ -2323,8 +2321,8 @@
     fn lit_compile (
         _env: &Env,
         _static_scope: &StaticScope,
-        sexp: Ptr <Obj>,
-    ) -> Ptr <JoVec> {
+        sexp: Arc <Obj>,
+    ) -> Arc <JoVec> {
         jojo! [
             LitJo { obj: sexp },
         ]
@@ -2337,7 +2335,7 @@
           env: &mut Env,
           static_scope: &StaticScope,
           word: &str,
-      ) -> Ptr <JoVec> {
+      ) -> Arc <JoVec> {
           let mut iter = word.split ('.');
           let name = iter.next () .unwrap ();
           let head_jojo = if name == "" {
@@ -2348,7 +2346,7 @@
           };
           let mut jo_vec = JoVec::new ();
           for name in iter {
-              let jo = Ptr::new (DotJo { name: String::from (name) });
+              let jo = Arc::new (DotJo { name: String::from (name) });
               jo_vec.push (jo);
           }
           jojo_append (&head_jojo, &jo_vec)
@@ -2360,7 +2358,7 @@
           env: &mut Env,
           _: &StaticScope,
           name: &str,
-      ) -> Ptr <JoVec> {
+      ) -> Arc <JoVec> {
           if let Some (tag) = env.type_dic.get_index (name) {
               jojo! [ TypeRefJo { tag } ]
           } else {
@@ -2373,7 +2371,7 @@
           env: &mut Env,
           static_scope: &StaticScope,
           name: &str,
-      ) -> Ptr <JoVec> {
+      ) -> Arc <JoVec> {
           if let Some (static_ref) = static_scope.get (name) {
               jojo! [
                   LocalRefJo {
@@ -2383,11 +2381,11 @@
               ]
           } else {
               if let Some (obj_cell) = env.obj_cell_dic.get (name) {
-                  let id = Ptr::downgrade (obj_cell);
+                  let id = Arc::downgrade (obj_cell);
                   jojo! [ RefJo { id } ]
               } else {
-                  let obj_cell: ObjCell = Ptr::new (Mutex::new (None));
-                  let id = Ptr::downgrade (&obj_cell);
+                  let obj_cell: ObjCell = Arc::new (Mutex::new (None));
+                  let id = Arc::downgrade (&obj_cell);
                   env.obj_cell_dic.ins (name, Some (obj_cell));
                   jojo! [ RefJo { id } ]
               }
@@ -2396,8 +2394,8 @@
       fn sym_compile (
           env: &mut Env,
           static_scope: &StaticScope,
-          sym: Ptr <Sym>,
-      ) -> Ptr <JoVec> {
+          sym: Arc <Sym>,
+      ) -> Arc <JoVec> {
           let word = &sym.sym;
           if dot_in_word_p (word) {
               dot_in_word_compile (env, static_scope, word)
@@ -2409,7 +2407,7 @@
       }
       fn apply_to_arg_dict_sexp_p (
           _env: &Env,
-          sexp: &Ptr <Obj>,
+          sexp: &Arc <Obj>,
       ) -> bool {
           if ! cons_p (sexp) {
               return false;
@@ -2429,7 +2427,7 @@
           }
           return false;
       }
-      fn sexp_list_assign_to_pair (sexp_list: Ptr <Obj>) -> Ptr <Obj> {
+      fn sexp_list_assign_to_pair (sexp_list: Arc <Obj>) -> Arc <Obj> {
           if null_p (& sexp_list) {
               sexp_list
           } else {
@@ -2437,7 +2435,7 @@
                       sexp_list_assign_to_pair (cdr (sexp_list)))
           }
       }
-      fn sexp_list_to_dict (sexp_list: Ptr <Obj>) -> Ptr <Dict> {
+      fn sexp_list_to_dict (sexp_list: Arc <Obj>) -> Arc <Dict> {
           list_to_dict (
               sexp_list_assign_to_pair (
                   sexp_list_prefix_assign (sexp_list)))
@@ -2445,8 +2443,8 @@
       pub fn apply_to_arg_dict_compile (
           env: &mut Env,
           static_scope: &StaticScope,
-          sexp: Ptr <Obj>,
-      ) -> Ptr <JoVec> {
+          sexp: Arc <Obj>,
+      ) -> Arc <JoVec> {
           let head = car (sexp.dup ());
           let body = cdr (sexp);
           let jojo = jojo! [
@@ -2463,7 +2461,7 @@
           (word.len () >= 1 &&
            word.starts_with ("."))
       }
-      fn arity_of_body (mut body: Ptr <Obj>) -> usize {
+      fn arity_of_body (mut body: Arc <Obj>) -> usize {
           assert! (list_p (&body));
           let mut arity = 0;
           while ! null_p (&body) {
@@ -2487,15 +2485,15 @@
       }
       fn apply_sexp_p (
           _env: &Env,
-          sexp: &Ptr <Obj>,
+          sexp: &Arc <Obj>,
       ) -> bool {
           cons_p (sexp)
       }
       pub fn apply_compile (
           env: &mut Env,
           static_scope: &StaticScope,
-          sexp: Ptr <Obj>,
-      ) -> Ptr <JoVec> {
+          sexp: Arc <Obj>,
+      ) -> Arc <JoVec> {
           let head = car (sexp.dup ());
           let body = cdr (sexp);
           let arity = arity_of_body (body.dup ());
@@ -2511,8 +2509,8 @@
     pub fn sexp_compile (
         env: &mut Env,
         static_scope: &StaticScope,
-        sexp: Ptr <Obj>,
-    ) -> Ptr <JoVec> {
+        sexp: Arc <Obj>,
+    ) -> Arc <JoVec> {
         if Str::p (&sexp) || Num::p (&sexp) {
             lit_compile (env, static_scope, sexp)
         } else if Sym::p (&sexp) {
@@ -2541,8 +2539,8 @@
     pub fn sexp_list_compile (
         env: &mut Env,
         static_scope: &StaticScope,
-        sexp_list: Ptr <Obj>,
-    ) -> Ptr <JoVec> {
+        sexp_list: Arc <Obj>,
+    ) -> Arc <JoVec> {
         if null_p (&sexp_list) {
             new_jojo ()
         } else {
@@ -2556,7 +2554,7 @@
     }
     // struct Module {
     //     module_env: Env,
-    //     obj_dic: Ptr <ObjDic>,
+    //     obj_dic: Arc <ObjDic>,
     // }
 
     // impl_tag! (Module, MODULE_T);
@@ -2564,11 +2562,11 @@
     // impl Obj for Module {
     //     fn tag (&self) -> Tag { MODULE_T }
 
-    //     fn obj_dic (&self) -> Option <Ptr <ObjDic>> {
+    //     fn obj_dic (&self) -> Option <Arc <ObjDic>> {
     //         Some (self.obj_dic.dup ())
     //     }
 
-    //     fn eq (&self, other: Ptr <Obj>) -> bool {
+    //     fn eq (&self, other: Arc <Obj>) -> bool {
     //         if self.tag () != other.tag () {
     //             false
     //         } else {
@@ -2578,14 +2576,14 @@
     //     }
     // }
     // impl Module {
-    //     pub fn make (module_env: Env) -> Ptr <Module> {
-    //         let obj_dic = Ptr::new (module_env.obj_dic.clone ());
-    //         Ptr::new (Module { module_env, obj_dic })
+    //     pub fn make (module_env: Env) -> Arc <Module> {
+    //         let obj_dic = Arc::new (module_env.obj_dic.clone ());
+    //         Arc::new (Module { module_env, obj_dic })
     //     }
     // }
     pub type TopKeywordFn = fn (
         env: &mut Env,
-        body: Ptr <Obj>,
+        body: Arc <Obj>,
     );
     pub fn top_keyword_fn_eq (
         lhs: &TopKeywordFn,
@@ -2602,7 +2600,7 @@
     impl Obj for TopKeyword {
         fn tag (&self) -> Tag { TOP_KEYWORD_T }
 
-        fn eq (&self, other: Ptr <Obj>) -> bool {
+        fn eq (&self, other: Arc <Obj>) -> bool {
             if self.tag () != other.tag () {
                 false
             } else {
@@ -2612,8 +2610,8 @@
         }
     }
     impl TopKeyword {
-        fn make (fun: TopKeywordFn) -> Ptr <TopKeyword> {
-            Ptr::new (TopKeyword {
+        fn make (fun: TopKeywordFn) -> Arc <TopKeyword> {
+            Arc::new (TopKeyword {
                 fun,
             })
         }
@@ -2621,7 +2619,7 @@
     fn find_top_keyword (
         env: &Env,
         name: &str,
-    ) -> Option <Ptr <TopKeyword>> {
+    ) -> Option <Arc <TopKeyword>> {
         if let Some (obj) = env.find_obj (name) {
             if TopKeyword::p (&obj) {
                 let top_keyword = TopKeyword::cast (obj.dup ());
@@ -2633,7 +2631,7 @@
             None
         }
     }
-    fn top_keyword_sexp_p (env: &Env, sexp: &Ptr <Obj>) -> bool {
+    fn top_keyword_sexp_p (env: &Env, sexp: &Arc <Obj>) -> bool {
         if ! cons_p (&sexp) {
             return false;
         }
@@ -2662,13 +2660,13 @@
     fn jojo_run (
         env: &mut Env,
         scope: &Scope,
-        jojo: Ptr <JoVec>,
+        jojo: Arc <JoVec>,
     ) {
         let base = env.frame_stack.len ();
         let frame = Frame {
             index: 0,
             jojo,
-            scope: Ptr::new (scope.clone ()),
+            scope: Arc::new (scope.clone ()),
         };
         env.frame_stack.push (Box::new (frame));
         env.run_with_base (base);
@@ -2676,14 +2674,14 @@
     fn jojo_eval (
         env: &mut Env,
         scope: &Scope,
-        jojo: Ptr <JoVec>,
-    ) -> Ptr <Obj> {
+        jojo: Arc <JoVec>,
+    ) -> Arc <Obj> {
         jojo_run (env, scope, jojo);
         env.obj_stack.pop () .unwrap ()
     }
     fn jojo_run_in_new_frame (
         env: &mut Env,
-        jojo: Ptr <JoVec>,
+        jojo: Arc <JoVec>,
     ) {
         let base = env.frame_stack.len ();
         let jo_vec = (*jojo).clone ();
@@ -2692,14 +2690,14 @@
     }
     fn jojo_eval_in_new_frame (
         env: &mut Env,
-        jojo: Ptr <JoVec>,
-    ) -> Ptr <Obj> {
+        jojo: Arc <JoVec>,
+    ) -> Arc <Obj> {
         jojo_run_in_new_frame (env, jojo);
         env.obj_stack.pop () .unwrap ()
     }
     fn sexp_run (
         env: &mut Env,
-        sexp: Ptr <Obj>,
+        sexp: Arc <Obj>,
     ) {
         if top_keyword_sexp_p (env, &sexp) {
             eprintln! ("- sexp_run");
@@ -2715,7 +2713,7 @@
     }
     fn sexp_list_run (
         env: &mut Env,
-        sexp_list: Ptr <Obj>,
+        sexp_list: Arc <Obj>,
     ) {
         if cons_p (&sexp_list) {
             sexp_run (env, car (sexp_list.dup ()));
@@ -2724,8 +2722,8 @@
     }
     fn sexp_eval (
         env: &mut Env,
-        sexp: Ptr <Obj>,
-    ) -> Ptr <Obj> {
+        sexp: Arc <Obj>,
+    ) -> Arc <Obj> {
         let size_before = env.obj_stack.len ();
         sexp_run (env, sexp.dup ());
         let size_after = env.obj_stack.len ();
@@ -2742,7 +2740,7 @@
     }
     fn top_sexp_run (
         env: &mut Env,
-        sexp: Ptr <Obj>,
+        sexp: Arc <Obj>,
     ) {
         if top_keyword_sexp_p (env, &sexp) {
             let sym = car_as_sym (sexp.dup ());
@@ -2759,7 +2757,7 @@
     }
     fn top_sexp_list_run_without_infix_assign (
         env: &mut Env,
-        sexp_list: Ptr <Obj>,
+        sexp_list: Arc <Obj>,
     ) {
         if cons_p (&sexp_list) {
             top_sexp_run (env, car (sexp_list.dup ()));
@@ -2769,7 +2767,7 @@
     }
     fn top_sexp_list_run (
         env: &mut Env,
-        sexp_list: Ptr <Obj>,
+        sexp_list: Arc <Obj>,
     ) {
         top_sexp_list_run_without_infix_assign (
             env, sexp_list_prefix_assign (sexp_list));
@@ -2787,7 +2785,7 @@
           let vec = word.split ('.') .collect::<Vec <&str>> ();
           vec [vec.len () - 1] .to_string ()
       }
-      fn assign_data_p (body: &Ptr <Obj>) -> bool {
+      fn assign_data_p (body: &Arc <Obj>) -> bool {
           (cons_p (&body) &&
            Sym::p (&car (body.dup ())) &&
            cons_p (&cdr (body.dup ())) &&
@@ -2803,7 +2801,7 @@
       }
       fn tk_assign_data (
           env: &mut Env,
-          body: Ptr <Obj>,
+          body: Arc <Obj>,
       ) {
           let sym = car_as_sym (body.dup ());
           let type_name = sym.sym.clone ();
@@ -2816,11 +2814,11 @@
           env.define_type (&type_name, Type::make (tag));
           env.define (&data_name, DataCons::make (tag, name_vec));
       }
-      fn assign_lambda_sugar_p (body: &Ptr <Obj>) -> bool {
+      fn assign_lambda_sugar_p (body: &Arc <Obj>) -> bool {
           (cons_p (&body) &&
            cons_p (&car (body.dup ())))
       }
-      fn assign_lambda_desugar (body: Ptr <Obj>) -> Ptr <Obj> {
+      fn assign_lambda_desugar (body: Arc <Obj>) -> Arc <Obj> {
           let head = car (body.dup ());
           let name = car (head.dup ());
           let arg_list = cdr (head);
@@ -2832,7 +2830,7 @@
       }
       fn tk_assign_value (
           env: &mut Env,
-          body: Ptr <Obj>,
+          body: Arc <Obj>,
       ) {
           let sym = car_as_sym (body.dup ());
           let name = name_of_word (&sym.sym);
@@ -2846,7 +2844,7 @@
       }
       fn tk_assign (
           env: &mut Env,
-          body: Ptr <Obj>,
+          body: Arc <Obj>,
       ) {
           if assign_data_p (&body) {
               tk_assign_data (env, body);
@@ -2856,11 +2854,11 @@
               tk_assign_value (env, body);
           }
       }
-      fn assign_sexp_p (sexp: &Ptr <Obj>) -> bool {
+      fn assign_sexp_p (sexp: &Arc <Obj>) -> bool {
           (cons_p (sexp) &&
            sym_sexp_as_str_p (&car (sexp.dup ()), "="))
       }
-      fn assign_sexp_normalize (sexp: Ptr <Obj>) -> Ptr <Obj> {
+      fn assign_sexp_normalize (sexp: Arc <Obj>) -> Arc <Obj> {
           let head = car (sexp.dup ());
           let body = cdr (sexp.dup ());
           if assign_lambda_sugar_p (&body) {
@@ -2869,7 +2867,7 @@
               sexp
           }
       }
-      fn do_body_trans (body: Ptr <Obj>) -> Ptr <Obj> {
+      fn do_body_trans (body: Arc <Obj>) -> Arc <Obj> {
           if null_p (&body) {
               return body;
           }
@@ -2893,8 +2891,8 @@
       fn k_do (
           env: &mut Env,
           static_scope: &StaticScope,
-          mut body: Ptr <Obj>,
-      ) -> Ptr <JoVec> {
+          mut body: Arc <Obj>,
+      ) -> Arc <JoVec> {
           body = sexp_list_prefix_assign (body.dup ());
           body = do_body_trans (body.dup ());
           sexp_list_compile (env, static_scope, body)
@@ -2902,8 +2900,8 @@
       fn k_lambda (
           env: &mut Env,
           old_static_scope: &StaticScope,
-          body: Ptr <Obj>,
-      ) -> Ptr <JoVec> {
+          body: Arc <Obj>,
+      ) -> Arc <JoVec> {
           let head = car (body.dup ());
           assert! (Vect::p (&head));
           let name_vect = Vect::cast (head);
@@ -2915,7 +2913,7 @@
               env, &static_scope, cons (Sym::make ("do"), rest));
           jojo! [
               LambdaJo {
-                  arg_dic: Ptr::new (Dic::from (name_vec)),
+                  arg_dic: Arc::new (Dic::from (name_vec)),
                   jojo,
               }
           ]
@@ -2923,10 +2921,10 @@
       struct MacroMakerJo;
 
       impl Jo for MacroMakerJo {
-          fn exe (&self, env: &mut Env, _scope: Ptr <Scope>) {
+          fn exe (&self, env: &mut Env, _scope: Arc <Scope>) {
               let obj = env.obj_stack.pop () .unwrap ();
               if Closure::p (&obj) {
-                  let mac = Ptr::new (Macro { obj });
+                  let mac = Arc::new (Macro { obj });
                   env.obj_stack.push (mac);
               } else {
                   eprintln! ("- MacroMakerJo::exe");
@@ -2940,8 +2938,8 @@
       fn k_macro (
           env: &mut Env,
           static_scope: &StaticScope,
-          body: Ptr <Obj>,
-      ) -> Ptr <JoVec> {
+          body: Arc <Obj>,
+      ) -> Arc <JoVec> {
           let lambda_jojo = k_lambda (env, static_scope, body);
           let ending_jojo = jojo! [
               MacroMakerJo { }
@@ -2950,8 +2948,8 @@
       }
       fn sexp_quote_compile (
           _env: &mut Env,
-          sexp: Ptr <Obj>,
-      ) -> Ptr <JoVec> {
+          sexp: Arc <Obj>,
+      ) -> Arc <JoVec> {
           jojo! [
               LitJo { obj: sexp }
           ]
@@ -2959,21 +2957,21 @@
       fn k_quote (
           env: &mut Env,
           _static_scope: &StaticScope,
-          body: Ptr <Obj>,
-      ) -> Ptr <JoVec> {
+          body: Arc <Obj>,
+      ) -> Arc <JoVec> {
           assert! (cons_p (&body));
           assert! (null_p (&cdr (body.dup ())));
           let sexp = car (body);
           sexp_quote_compile (env, sexp)
       }
-      type JojoMap = HashMap <Tag, Ptr <JoVec>>;
+      type JojoMap = HashMap <Tag, Arc <JoVec>>;
       struct CaseJo {
           jojo_map: JojoMap,
-          default_jojo: Option <Ptr <JoVec>>,
+          default_jojo: Option <Arc <JoVec>>,
       }
 
       impl Jo for CaseJo {
-          fn exe (&self, env: &mut Env, scope: Ptr <Scope>) {
+          fn exe (&self, env: &mut Env, scope: Arc <Scope>) {
               let obj = env.obj_stack.pop () .unwrap ();
               let tag = obj.tag ();
               if let Some (jojo) = self.jojo_map.get (&tag) {
@@ -3000,10 +2998,10 @@
       pub fn case_compile (
           env: &mut Env,
           static_scope: &StaticScope,
-          mut body: Ptr <Obj>,
-      ) -> Ptr <JoVec> {
+          mut body: Arc <Obj>,
+      ) -> Arc <JoVec> {
           let mut jojo_map = JojoMap::new ();
-          let mut default_jojo: Option <Ptr <JoVec>> = None;
+          let mut default_jojo: Option <Arc <JoVec>> = None;
           while ! null_p (&body) {
               let clause = car (body.dup ());
               let sym = car_as_sym (clause.dup ());
@@ -3033,8 +3031,8 @@
       fn k_case (
           env: &mut Env,
           static_scope: &StaticScope,
-          body: Ptr <Obj>,
-      ) -> Ptr <JoVec> {
+          body: Arc <Obj>,
+      ) -> Arc <JoVec> {
           let head = car (body.dup ());
           let rest = cdr (body);
           let head_jojo = sexp_compile (env, static_scope, head);
@@ -3046,7 +3044,7 @@
       }
 
       impl Jo for CollectListJo {
-          fn exe (&self, env: &mut Env, _: Ptr <Scope>) {
+          fn exe (&self, env: &mut Env, _: Arc <Scope>) {
               let mut list = null ();
               for _ in 0..self.counter {
                   let obj = env.obj_stack.pop () .unwrap ();
@@ -3058,8 +3056,8 @@
       fn k_list (
           env: &mut Env,
           static_scope: &StaticScope,
-          body: Ptr <Obj>,
-      ) -> Ptr <JoVec> {
+          body: Arc <Obj>,
+      ) -> Arc <JoVec> {
           let sexp_list = body;
           let counter = list_size (sexp_list.dup ());
           let jojo = sexp_list_compile (
@@ -3072,19 +3070,19 @@
       fn k_note (
           _env: &mut Env,
           _static_scope: &StaticScope,
-          body: Ptr <Obj>,
-      ) -> Ptr <JoVec> {
+          body: Arc <Obj>,
+      ) -> Arc <JoVec> {
           jojo! [
               LitJo { obj: cons (Sym::make ("note"), body) },
           ]
       }
       struct AssertJo {
-          body: Ptr <Obj>,
-          jojo: Ptr <JoVec>,
+          body: Arc <Obj>,
+          jojo: Arc <JoVec>,
       }
 
       impl Jo for AssertJo {
-          fn exe (&self, env: &mut Env, scope: Ptr <Scope>) {
+          fn exe (&self, env: &mut Env, scope: Arc <Scope>) {
               let base = env.frame_stack.len ();
               env.frame_stack.push (Box::new (Frame {
                   index: 0,
@@ -3107,21 +3105,21 @@
       fn k_assert (
           env: &mut Env,
           static_scope: &StaticScope,
-          body: Ptr <Obj>,
-      ) -> Ptr <JoVec> {
+          body: Arc <Obj>,
+      ) -> Arc <JoVec> {
           let jojo = sexp_list_compile (env, &static_scope, body.dup ());
           jojo! [
               AssertJo { body, jojo }
           ]
       }
       struct IfJo {
-          pred_jojo: Ptr <JoVec>,
-          then_jojo: Ptr <JoVec>,
-          else_jojo: Ptr <JoVec>,
+          pred_jojo: Arc <JoVec>,
+          then_jojo: Arc <JoVec>,
+          else_jojo: Arc <JoVec>,
       }
 
       impl Jo for IfJo {
-          fn exe (&self, env: &mut Env, scope: Ptr <Scope>) {
+          fn exe (&self, env: &mut Env, scope: Arc <Scope>) {
               let result = jojo_eval (env, &scope, self.pred_jojo.dup ());
               if true_p (&result) {
                   env.frame_stack.push (Box::new (Frame {
@@ -3145,8 +3143,8 @@
       fn k_if (
           env: &mut Env,
           static_scope: &StaticScope,
-          body: Ptr <Obj>,
-      ) -> Ptr <JoVec> {
+          body: Arc <Obj>,
+      ) -> Arc <JoVec> {
           let size = list_size (body.dup ());
           assert! (size == 3);
           let pred_sexp = car (body.dup ());
@@ -3164,12 +3162,12 @@
           ]
       }
       struct WhenJo {
-          pred_jojo: Ptr <JoVec>,
-          then_jojo: Ptr <JoVec>,
+          pred_jojo: Arc <JoVec>,
+          then_jojo: Arc <JoVec>,
       }
 
       impl Jo for WhenJo {
-          fn exe (&self, env: &mut Env, scope: Ptr <Scope>) {
+          fn exe (&self, env: &mut Env, scope: Arc <Scope>) {
               let result = jojo_eval (env, &scope, self.pred_jojo.dup ());
               if true_p (&result) {
                   env.frame_stack.push (Box::new (Frame {
@@ -3189,8 +3187,8 @@
       fn k_when (
           env: &mut Env,
           static_scope: &StaticScope,
-          body: Ptr <Obj>,
-      ) -> Ptr <JoVec> {
+          body: Arc <Obj>,
+      ) -> Arc <JoVec> {
           let size = list_size (body.dup ());
           assert! (size == 2);
           let pred_sexp = car (body.dup ());
@@ -3226,8 +3224,8 @@
       }
       fn sexp_quote_and_unquote (
           env: &Env,
-          sexp: Ptr <Obj>,
-      ) -> Ptr <Obj> {
+          sexp: Arc <Obj>,
+      ) -> Arc <Obj> {
           if Str::p (&sexp) || Num::p (&sexp) {
               sexp
           } else if Sym::p (&sexp) {
@@ -3261,8 +3259,8 @@
       }
       fn sexp_list_quote_and_unquote (
           env: &Env,
-          sexp_list: Ptr <Obj>,
-      ) -> Ptr <Obj> {
+          sexp_list: Arc <Obj>,
+      ) -> Arc <Obj> {
           if null_p (&sexp_list) {
               unit_list (Sym::make ("*"))
           } else {
@@ -3302,8 +3300,8 @@
       }
       fn sexp_list_and (
           env: &mut Env,
-          sexp_list: Ptr <Obj>,
-      ) -> Ptr <Obj> {
+          sexp_list: Arc <Obj>,
+      ) -> Arc <Obj> {
           if null_p (&sexp_list) {
               Sym::make ("true")
           } else if null_p (&cdr (sexp_list.dup ())) {
@@ -3330,8 +3328,8 @@
       }
       fn sexp_list_or (
           env: &mut Env,
-          sexp_list: Ptr <Obj>,
-      ) -> Ptr <Obj> {
+          sexp_list: Arc <Obj>,
+      ) -> Arc <Obj> {
           if null_p (&sexp_list) {
               Sym::make ("false")
           } else if null_p (&cdr (sexp_list.dup ())) {
@@ -3358,8 +3356,8 @@
       }
       fn vect_list_cond (
           env: &mut Env,
-          vect_list: Ptr <Obj>,
-      ) -> Ptr <Obj> {
+          vect_list: Arc <Obj>,
+      ) -> Arc <Obj> {
           assert! (! null_p (&vect_list));
           let head = car (vect_list.dup ());
           let rest = cdr (vect_list);
@@ -3392,7 +3390,7 @@
           let sexp = vect_list_cond (env, body);
           env.obj_stack.push (sexp);
       }
-    fn arg_idx (arg_dic: &ObjDic, index: usize) -> Ptr <Obj> {
+    fn arg_idx (arg_dic: &ObjDic, index: usize) -> Arc <Obj> {
         let entry = arg_dic.idx (index);
         if let Some (value) = &entry.value {
             value.dup ()
@@ -3649,7 +3647,7 @@
             env
         }
     }
-    fn assert_pop (env: &mut Env, obj: Ptr <Obj>) {
+    fn assert_pop (env: &mut Env, obj: Arc <Obj>) {
         let pop = env.obj_stack.pop () .unwrap ();
         assert! (obj_eq (&obj, &pop));
     }
@@ -3690,7 +3688,7 @@
         env.frame_stack.push (frame! [
             RefJo { id: bye.clone () },
             RefJo { id: world.clone () },
-            LambdaJo { arg_dic: Ptr::new (Dic::from (vec! [ "x", "y" ])),
+            LambdaJo { arg_dic: Arc::new (Dic::from (vec! [ "x", "y" ])),
                        jojo: jojo! [
                            LocalRefJo { level: 0, index: 1 },
                            LocalRefJo { level: 0, index: 0 },
@@ -3710,7 +3708,7 @@
         env.frame_stack.push (frame! [
             RefJo { id: bye.clone () },
             RefJo { id: world.clone () },
-            LambdaJo { arg_dic: Ptr::new (Dic::from (vec! [ "x", "y" ])),
+            LambdaJo { arg_dic: Arc::new (Dic::from (vec! [ "x", "y" ])),
                        jojo: jojo! [
                            LocalRefJo { level: 0, index: 1 },
                            LocalRefJo { level: 0, index: 0 },
@@ -3806,7 +3804,7 @@
         let world = env.define (
             "world", Str::make ("world"));
         let swap = env.define (
-            "swap", Ptr::new (Prim {
+            "swap", Arc::new (Prim {
                 arg_dic: Dic::from (vec! [ "x", "y" ]),
                 fun: |env, arg_dic| {
                     let x = arg_dic.get ("x") .unwrap () .dup ();
