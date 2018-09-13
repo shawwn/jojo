@@ -1,8 +1,12 @@
     use std::sync::Arc;
+    use std::sync::Weak;
     use std::sync::Mutex;
+
     use std::collections::HashMap;
+
     use std::path::Path;
     use std::path::PathBuf;
+
     use std::fs;
     use std::env;
     use dic::Dic;
@@ -11,10 +15,13 @@
 
   pub type Name = String;
 
-  pub type Id = usize; // index in to ObjDic
-  pub type ObjDic = Dic <Ptr <Obj>>;
+  pub type ObjCell = Ptr <Mutex <Option <Ptr <Obj>>>>;
+  pub type ObjCellDic = Dic <ObjCell>;
+  pub type ObjId = Weak <Mutex <Option <Ptr <Obj>>>>;
 
   pub type Tag = usize; // index in to TypeDic
+
+  pub type ObjDic = Dic <Ptr <Obj>>;
   pub type TypeDic = Dic <Ptr <Type>>;
 
   pub type ObjStack = Vec <Ptr <Obj>>;
@@ -193,7 +200,6 @@
       pub const TOP_KEYWORD_T     : Tag = 16;
       pub const NONE_T            : Tag = 17;
       pub const SOME_T            : Tag = 18;
-      pub const DYNAMIC_TRUNK_T   : Tag = 19;
       fn init_type_dic (env: &mut Env) {
           preserve_tag (env, CLOSURE_T         , "closure-t");
           preserve_tag (env, TYPE_T            , "type-t");
@@ -214,7 +220,6 @@
           preserve_tag (env, TOP_KEYWORD_T     , "top-keyword-t");
           preserve_tag (env, NONE_T            , "none-t");
           preserve_tag (env, SOME_T            , "some-t");
-          preserve_tag (env, DYNAMIC_TRUNK_T   , "dynamic-trunk-t");
       }
       pub trait Dup {
          fn dup (&self) -> Self;
@@ -292,7 +297,7 @@
           }};
       }
     pub struct Env {
-        pub obj_dic: ObjDic,
+        pub obj_cell_dic: ObjCellDic,
         pub type_dic: TypeDic,
         pub obj_stack: ObjStack,
         pub frame_stack: FrameStack,
@@ -303,7 +308,7 @@
     impl Env {
         pub fn new () -> Env {
             let mut env = Env {
-                obj_dic: ObjDic::new (),
+                obj_cell_dic: ObjCellDic::new (),
                 type_dic: TypeDic::new (),
                 obj_stack: ObjStack::new (),
                 frame_stack: FrameStack::new (),
@@ -346,39 +351,35 @@
             &mut self,
             name: &str,
             obj: Ptr <Obj>,
-        ) -> Id {
-            if self.obj_dic.has_name (name) {
-                self.obj_dic.set (name, Some (obj));
-                self.obj_dic.get_index (name) .unwrap ()
+        ) -> ObjId {
+            if let Some (obj_cell) = self.obj_cell_dic.get (name) {
+                let mut obj_ptr = obj_cell.lock () .unwrap ();
+                *obj_ptr = Some (obj);
+                Ptr::downgrade (&obj_cell)
             } else {
-               self.obj_dic.ins (name, Some (obj))
+                let obj_cell = Ptr::new (Mutex::new (Some (obj)));
+                let id = Ptr::downgrade (&obj_cell);
+                self.obj_cell_dic.ins (name, Some (obj_cell));
+                id
             }
         }
     }
-
-    // impl Env {
-    //     pub fn define (
-    //         &mut self,
-    //         name: &str,
-    //         obj: Ptr <Obj>,
-    //     ) -> Id {
-    //         if self.obj_dic.has_name (name) {
-    //             if let Some (old_obj) = self.obj_dic.get (name) {
-    //                 eprintln! ("- Env::define");
-    //                 eprintln! ("  re-defining a name is not allowed");
-    //                 eprintln! ("  name : {}", name);
-    //                 eprintln! ("  old obj : {}", old_obj.repr (self));
-    //                 eprintln! ("  new obj : {}", obj.repr (self));
-    //                 panic! ("jojo fatal error!");
-    //             } else {
-    //                 self.obj_dic.set (name, Some (obj));
-    //             }
-    //             self.obj_dic.get_index (name) .unwrap ()
-    //         } else {
-    //            self.obj_dic.ins (name, Some (obj))
-    //         }
-    //     }
-    // }
+    impl Env {
+        pub fn find_obj (
+            &self,
+            name: &str,
+        ) -> Option <Ptr <Obj>> {
+            if let Some (obj_cell) = self.obj_cell_dic.get (name) {
+                if let Some (ref obj) = *obj_cell.lock () .unwrap () {
+                    Some (obj.dup ())
+                } else {
+                    None
+                }
+            } else {
+                None
+            }
+        }
+    }
     impl Env {
         pub fn find_type (
             &mut self,
@@ -445,7 +446,7 @@
         lhs: &Env,
         rhs: &Env,
     ) -> bool {
-        (obj_dic_eq (&lhs.obj_dic, &rhs.obj_dic) &&
+        ( // [todo] obj_dic_eq (&lhs.obj_dic, &rhs.obj_dic) &&
          type_dic_eq (&lhs.type_dic, &rhs.type_dic) &&
          obj_stack_eq (&lhs.obj_stack, &rhs.obj_stack) &&
          frame_stack_eq (&lhs.frame_stack, &rhs.frame_stack))
@@ -574,18 +575,18 @@
         lhs_ptr == rhs_ptr
     }
     pub struct RefJo {
-        id: Id,
+        id: ObjId,
     }
 
     impl Jo for RefJo {
         fn exe (&self, env: &mut Env, _: Ptr <Scope>) {
-            let entry = env.obj_dic.idx (self.id);
-            if let Some (obj) = &entry.value {
+            let obj_cell = self.id .upgrade () .unwrap ();
+            let mutex_guard = obj_cell.lock () .unwrap ();
+            if let Some (ref obj) = *mutex_guard {
                 env.obj_stack.push (obj.dup ());
             } else {
                 eprintln! ("- RefJo::exe");
-                eprintln! ("  undefined name : {}", entry.name);
-                eprintln! ("  id : {}", self.id);
+                eprintln! ("  undefined id");
                 panic! ("jojo fatal error!");
             }
         }
@@ -987,7 +988,7 @@
             name: &str,
             name_vec: Vec <&str>,
             fun: PrimFn,
-        ) -> Id {
+        ) -> ObjId {
             let arg_vec = name_vec. iter ()
                 .map (|x| x.to_string ())
                 .collect::<NameVec> ();
@@ -2162,8 +2163,8 @@
         env: &Env,
         name: &str,
     ) -> Option <Ptr <Keyword>> {
-        if let Some (obj) = env.obj_dic.get (name) {
-            if Keyword::p (obj) {
+        if let Some (obj) = env.find_obj (name) {
+            if Keyword::p (&obj) {
                 let keyword = Keyword::cast (obj.dup ());
                 Some (keyword)
             } else {
@@ -2206,7 +2207,7 @@
             &mut self,
             name: &str,
             fun: KeywordFn,
-        ) -> Id {
+        ) -> ObjId {
             self.define (name, Keyword::make (fun))
         }
     }
@@ -2232,8 +2233,8 @@
         env: &Env,
         name: &str,
     ) -> Option <Ptr <Macro>> {
-        if let Some (obj) = env.obj_dic.get (name) {
-            if Macro::p (obj) {
+        if let Some (obj) = env.find_obj (name) {
+            if Macro::p (&obj) {
                 let mac = Macro::cast (obj.dup ());
                 Some (mac)
             } else {
@@ -2287,7 +2288,7 @@
             &mut self,
             name: &str,
             fun: PrimFn,
-        ) -> Id {
+        ) -> ObjId {
             let arg_dic = Dic::from (vec! [ "body" ]);
             let obj = Ptr::new (Prim { arg_dic, fun });
             let mac = Ptr::new (Macro { obj });
@@ -2381,12 +2382,14 @@
                   }
               ]
           } else {
-              if let Some (id) = env.obj_dic.get_index (name) {
+              if let Some (obj_cell) = env.obj_cell_dic.get (name) {
+                  let id = Ptr::downgrade (obj_cell);
                   jojo! [ RefJo { id } ]
               } else {
-                  jojo! [
-                      RefJo { id: env.obj_dic.ins (name, None) }
-                  ]
+                  let obj_cell: ObjCell = Ptr::new (Mutex::new (None));
+                  let id = Ptr::downgrade (&obj_cell);
+                  env.obj_cell_dic.ins (name, Some (obj_cell));
+                  jojo! [ RefJo { id } ]
               }
           }
       }
@@ -2551,35 +2554,35 @@
             jojo_append (&head_jojo, &body_jojo)
         }
     }
-    struct Module {
-        module_env: Env,
-        obj_dic: Ptr <ObjDic>,
-    }
+    // struct Module {
+    //     module_env: Env,
+    //     obj_dic: Ptr <ObjDic>,
+    // }
 
-    impl_tag! (Module, MODULE_T);
+    // impl_tag! (Module, MODULE_T);
 
-    impl Obj for Module {
-        fn tag (&self) -> Tag { MODULE_T }
+    // impl Obj for Module {
+    //     fn tag (&self) -> Tag { MODULE_T }
 
-        fn obj_dic (&self) -> Option <Ptr <ObjDic>> {
-            Some (self.obj_dic.dup ())
-        }
+    //     fn obj_dic (&self) -> Option <Ptr <ObjDic>> {
+    //         Some (self.obj_dic.dup ())
+    //     }
 
-        fn eq (&self, other: Ptr <Obj>) -> bool {
-            if self.tag () != other.tag () {
-                false
-            } else {
-                let other = Module::cast (other);
-                (env_eq (&self.module_env, &other.module_env))
-            }
-        }
-    }
-    impl Module {
-        pub fn make (module_env: Env) -> Ptr <Module> {
-            let obj_dic = Ptr::new (module_env.obj_dic.clone ());
-            Ptr::new (Module { module_env, obj_dic })
-        }
-    }
+    //     fn eq (&self, other: Ptr <Obj>) -> bool {
+    //         if self.tag () != other.tag () {
+    //             false
+    //         } else {
+    //             let other = Module::cast (other);
+    //             (env_eq (&self.module_env, &other.module_env))
+    //         }
+    //     }
+    // }
+    // impl Module {
+    //     pub fn make (module_env: Env) -> Ptr <Module> {
+    //         let obj_dic = Ptr::new (module_env.obj_dic.clone ());
+    //         Ptr::new (Module { module_env, obj_dic })
+    //     }
+    // }
     pub type TopKeywordFn = fn (
         env: &mut Env,
         body: Ptr <Obj>,
@@ -2619,8 +2622,8 @@
         env: &Env,
         name: &str,
     ) -> Option <Ptr <TopKeyword>> {
-        if let Some (obj) = env.obj_dic.get (name) {
-            if TopKeyword::p (obj) {
+        if let Some (obj) = env.find_obj (name) {
+            if TopKeyword::p (&obj) {
                 let top_keyword = TopKeyword::cast (obj.dup ());
                 Some (top_keyword)
             } else {
@@ -2652,7 +2655,7 @@
             &mut self,
             name: &str,
             fun: TopKeywordFn,
-        ) -> Id {
+        ) -> ObjId {
             self.define (name, TopKeyword::make (fun))
         }
     }
@@ -3545,14 +3548,14 @@
         env.define_prim_macro ("cond", m_cond);
     }
     fn expose_module (env: &mut Env) {
-        env.define_prim ("import", vec! ["path"], |env, arg| {
-            let path = Str::cast (arg_idx (arg, 0));
-            let path = Path::new (&path.str);
-            let module_path = respect_module_path (env, &path);
-            let module_env = Env::from_module_path (&module_path);
-            let module = Module::make (module_env);
-            env.obj_stack.push (module);
-        });
+        // env.define_prim ("import", vec! ["path"], |env, arg| {
+        //     let path = Str::cast (arg_idx (arg, 0));
+        //     let path = Path::new (&path.str);
+        //     let module_path = respect_module_path (env, &path);
+        //     let module_env = Env::from_module_path (&module_path);
+        //     let module = Module::make (module_env);
+        //     env.obj_stack.push (module);
+        // });
     }
     fn expose_misc (env: &mut Env) {
         env.define_prim ("repr", vec! ["obj"], |env, arg| {
@@ -3660,9 +3663,9 @@
             "world", Str::make ("world"));
 
         env.frame_stack.push (frame! [
-            RefJo { id: world },
-            RefJo { id: bye },
-            RefJo { id: world },
+            RefJo { id: world.clone () },
+            RefJo { id: bye.clone () },
+            RefJo { id: world.clone () },
         ]);
 
         env.run ();
@@ -3685,8 +3688,8 @@
             "world", Str::make ("world"));
 
         env.frame_stack.push (frame! [
-            RefJo { id: bye },
-            RefJo { id: world },
+            RefJo { id: bye.clone () },
+            RefJo { id: world.clone () },
             LambdaJo { arg_dic: Ptr::new (Dic::from (vec! [ "x", "y" ])),
                        jojo: jojo! [
                            LocalRefJo { level: 0, index: 1 },
@@ -3705,8 +3708,8 @@
         // curry
 
         env.frame_stack.push (frame! [
-            RefJo { id: bye },
-            RefJo { id: world },
+            RefJo { id: bye.clone () },
+            RefJo { id: world.clone () },
             LambdaJo { arg_dic: Ptr::new (Dic::from (vec! [ "x", "y" ])),
                        jojo: jojo! [
                            LocalRefJo { level: 0, index: 1 },
@@ -3733,11 +3736,11 @@
                     Str::make ("world")));
 
         env.frame_stack.push (frame! [
-            RefJo { id: last_cry },
+            RefJo { id: last_cry.clone () },
             DotJo { name: String::from ("cdr") },
-            RefJo { id: last_cry },
+            RefJo { id: last_cry.clone () },
             DotJo { name: String::from ("car") },
-            RefJo { id: last_cry },
+            RefJo { id: last_cry.clone () },
         ]);
 
         env.run ();
@@ -3766,9 +3769,9 @@
             ]));
 
         env.frame_stack.push (frame! [
-            RefJo { id: bye },
-            RefJo { id: world },
-            RefJo { id: cons },
+            RefJo { id: bye.clone () },
+            RefJo { id: world.clone () },
+            RefJo { id: cons.clone () },
             ApplyJo { arity: 2 },
             DotJo { name: String::from ("car") },
         ]);
@@ -3781,9 +3784,9 @@
         // curry
 
         env.frame_stack.push (frame! [
-            RefJo { id: bye },
-            RefJo { id: world },
-            RefJo { id: cons },
+            RefJo { id: bye.clone () },
+            RefJo { id: world.clone () },
+            RefJo { id: cons.clone () },
             ApplyJo { arity: 1 },
             ApplyJo { arity: 1 },
             DotJo { name: String::from ("car") }
@@ -3814,9 +3817,9 @@
             }));
 
         env.frame_stack.push (frame! [
-            RefJo { id: bye },
-            RefJo { id: world },
-            RefJo { id: swap },
+            RefJo { id: bye.clone () },
+            RefJo { id: world.clone () },
+            RefJo { id: swap.clone () },
             ApplyJo { arity: 2 }
         ]);
 
@@ -3830,9 +3833,9 @@
         // curry
 
         env.frame_stack.push (frame! [
-            RefJo { id: bye },
-            RefJo { id: world },
-            RefJo { id: swap },
+            RefJo { id: bye.clone () },
+            RefJo { id: world.clone () },
+            RefJo { id: swap.clone () },
             ApplyJo { arity: 1 },
             ApplyJo { arity: 1 }
         ]);
