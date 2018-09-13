@@ -2570,6 +2570,9 @@
             }
         }
     }
+    fn import (module_path: Ptr <Obj>) -> Ptr <Obj> {
+        unimplemented! ()
+    }
     pub type TopKeywordFn = fn (
         env: &mut Env,
         body: Ptr <Obj>,
@@ -3534,6 +3537,9 @@
         env.define_prim_macro ("or", m_or);
         env.define_prim_macro ("cond", m_cond);
     }
+    fn expose_module (env: &mut Env) {
+        define_prim! (env, "import", ["module-path"], import);
+    }
     fn expose_misc (env: &mut Env) {
         env.define_prim ("repr", vec! ["obj"], |env, arg| {
             let obj = arg_idx (arg, 0);
@@ -3571,7 +3577,7 @@
         // expose_top_keyword (env);
         // expose_keyword (env);
         // expose_system (env);
-        // expose_module (env);
+        expose_module (env);
         expose_syntax (env);
         expose_stack (env);
         expose_misc (env);
