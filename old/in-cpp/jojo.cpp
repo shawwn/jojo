@@ -3922,7 +3922,7 @@
               (env, prefix, data_name, tag_of_type, name_vector);
       }
       bool
-      assign_lambda_sugar_p (env_t &env, shared_ptr <obj_t> body)
+      assign_lambda_sugar_p (shared_ptr <obj_t> body)
       {
           if (! cons_p (body))
               return false;
@@ -3931,7 +3931,7 @@
           return true;
       }
       shared_ptr <obj_t>
-      assign_lambda_desugar (env_t &env, shared_ptr <obj_t> body)
+      assign_lambda_desugar (shared_ptr <obj_t> body)
       {
           auto head = car (body);
           auto name = car (head);
@@ -3974,15 +3974,13 @@
     {
         if (assign_data_p (env, body))
             tk_assign_data (env, body);
-        else if (assign_lambda_sugar_p (env, body))
-            tk_assign_value (env, assign_lambda_desugar (env, body));
+        else if (assign_lambda_sugar_p (body))
+            tk_assign_value (env, assign_lambda_desugar (body));
         else
             tk_assign_value (env, body);
     }
       bool
-      assign_sexp_p (
-          env_t &env,
-          shared_ptr <obj_t> sexp)
+      assign_sexp_p (shared_ptr <obj_t> sexp)
       {
           if (! cons_p (sexp)) return false;
           auto head = car (sexp);
@@ -3993,21 +3991,19 @@
       }
       shared_ptr <obj_t>
       assign_sexp_normalize (
-          env_t &env,
           shared_ptr <obj_t> sexp)
       {
           auto head = car (sexp);
           auto body = cdr (sexp);
-          if (assign_lambda_sugar_p (env, body))
+          if (assign_lambda_sugar_p (body))
               return cons_c (
                   head,
-                  assign_lambda_desugar (env, body));
+                  assign_lambda_desugar (body));
           else
               return sexp;
       }
       shared_ptr <obj_t>
       do_body_trans (
-        env_t &env,
         shared_ptr <obj_t> body)
       {
           if (null_p (body)) return body;
@@ -4015,8 +4011,8 @@
           auto rest = cdr (body);
           if (null_p (rest))
               return body;
-          else if (assign_sexp_p (env, sexp)) {
-              sexp = assign_sexp_normalize (env, sexp);
+          else if (assign_sexp_p (sexp)) {
+              sexp = assign_sexp_normalize (sexp);
               auto obj_vector = obj_vector_t ();
               obj_vector.push_back (cdr (sexp));
               auto let_sexp = cons_c (
@@ -4027,7 +4023,7 @@
               return unit_list (let_sexp);
           } else {
               auto drop = unit_list (make_sym ("drop"));
-              body = do_body_trans (env, rest);
+              body = do_body_trans (rest);
               body = cons_c (drop, body);
               body = cons_c (sexp, body);
               return body;
@@ -4040,7 +4036,7 @@
           shared_ptr <obj_t> body)
       {
           body = sexp_list_prefix_assign (body);
-          body = do_body_trans (env, body);
+          body = do_body_trans (body);
           return sexp_list_compile (env, static_scope, body);
       }
         struct lambda_jo_t: jo_t

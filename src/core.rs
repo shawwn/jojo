@@ -2776,10 +2776,10 @@
       }
       fn assign_data_p (body: &Ptr <Obj>) -> bool {
           (cons_p (&body) &&
-           Sym::p (&(car (body.dup ()))) &&
-           cons_p (&(cdr (body.dup ()))) &&
-           cons_p (&(car (cdr (body.dup ())))) &&
-           sym_sexp_as_str_p (&(car (car (cdr (body.dup ())))), "data"))
+           Sym::p (&car (body.dup ())) &&
+           cons_p (&cdr (body.dup ())) &&
+           cons_p (&car (cdr (body.dup ()))) &&
+           sym_sexp_as_str_p (&car (car (cdr (body.dup ()))), "data"))
       }
       fn name_t2c (name: &str) -> String {
           let mut name = name.to_string ();
@@ -2805,7 +2805,7 @@
       }
       fn assign_lambda_sugar_p (body: &Ptr <Obj>) -> bool {
           (cons_p (&body) &&
-           cons_p (&(car (body.dup ()))))
+           cons_p (&car (body.dup ())))
       }
       fn assign_lambda_desugar (body: Ptr <Obj>) -> Ptr <Obj> {
           let head = car (body.dup ());
@@ -2843,6 +2843,19 @@
               tk_assign_value (env, body);
           }
       }
+      fn assign_sexp_p (sexp: &Ptr <Obj>) -> bool {
+          (cons_p (sexp) &&
+           sym_sexp_as_str_p (&car (sexp.dup ()), "="))
+      }
+      fn assign_sexp_normalize (sexp: Ptr <Obj>) -> Ptr <Obj> {
+          let head = car (sexp.dup ());
+          let body = cdr (sexp.dup ());
+          if assign_lambda_sugar_p (&body) {
+              cons (head, assign_lambda_desugar (body))
+          } else {
+              sexp
+          }
+      }
       fn do_body_trans (body: Ptr <Obj>) -> Ptr <Obj> {
           if null_p (&body) {
               return body;
@@ -2850,13 +2863,18 @@
           let sexp = car (body.dup ());
           let rest = cdr (body.dup ());
           if null_p (&rest) {
-              return body;
+              body
+          } else if (assign_sexp_p (&sexp)) {
+              let sexp = assign_sexp_normalize (sexp);
+              let mut obj_vec = ObjVec::new ();
+              obj_vec.push (cdr (sexp));
+              unit_list (cons (
+                  Sym::make ("let"),
+                  cons (Vect::make (&obj_vec),
+                        rest)))
           } else {
-              let drop = unit_list (Sym::make ("drop"));
-              let body = do_body_trans (rest);
-              let body = cons (drop, body);
-              let body = cons (sexp, body);
-              return body;
+              cons (sexp, cons (unit_list (Sym::make ("drop")),
+                                do_body_trans (rest)))
           }
       }
       fn k_do (
@@ -2931,7 +2949,7 @@
           body: Ptr <Obj>,
       ) -> Ptr <JoVec> {
           assert! (cons_p (&body));
-          assert! (null_p (&(cdr (body.dup ()))));
+          assert! (null_p (&cdr (body.dup ())));
           let sexp = car (body);
           sexp_quote_compile (env, sexp)
       }
@@ -3219,7 +3237,7 @@
               if sym_sexp_as_str_p (&head, "unquote") {
                   let rest = cdr (sexp.dup ());
                   assert! (cons_p (&rest));
-                  assert! (null_p (&(cdr (rest.dup ()))));
+                  assert! (null_p (&cdr (rest.dup ())));
                   car (rest)
               } else {
                   sexp_list_quote_and_unquote (
@@ -3238,12 +3256,12 @@
               assert! (cons_p (&sexp_list));
               let mut sexp = car (sexp_list.dup ());
               if cons_p (&sexp)
-                  && sym_sexp_as_str_p (&(car (sexp.dup ())),
+                  && sym_sexp_as_str_p (&car (sexp.dup ()),
                                         "unquote-splicing")
               {
                   let rest = cdr (sexp);
                   assert! (cons_p (&rest));
-                  assert! (null_p (&(cdr (rest.dup ()))));
+                  assert! (null_p (&cdr (rest.dup ())));
                   sexp = car (rest);
               } else {
                   sexp = cons (
@@ -3264,7 +3282,7 @@
       ) {
           let body = arg_idx (arg, 0);
           assert! (cons_p (&body));
-          assert! (null_p (&(cdr (body.dup ()))));
+          assert! (null_p (&cdr (body.dup ())));
           let sexp = car (body);
           let new_sexp = sexp_quote_and_unquote (env, sexp);
           env.obj_stack.push (new_sexp);
@@ -3275,7 +3293,7 @@
       ) -> Ptr <Obj> {
           if null_p (&sexp_list) {
               Sym::make ("true")
-          } else if null_p (&(cdr (sexp_list.dup ()))) {
+          } else if null_p (&cdr (sexp_list.dup ())) {
               car (sexp_list)
           } else {
               let head = car (sexp_list.dup ());
@@ -3303,7 +3321,7 @@
       ) -> Ptr <Obj> {
           if null_p (&sexp_list) {
               Sym::make ("false")
-          } else if null_p (&(cdr (sexp_list.dup ()))) {
+          } else if null_p (&cdr (sexp_list.dup ())) {
               car (sexp_list)
           } else {
               let head = car (sexp_list.dup ());
