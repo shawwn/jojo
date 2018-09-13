@@ -4975,7 +4975,7 @@
                       (make_num (pow (x->num, y->num)));
               });
           define_prim (
-              env, { "expe", "x" },
+              env, { "num-exp", "x" },
               [] (env_t &env, obj_map_t &obj_map)
               {
                   auto x = as_num (obj_map ["x"]);
@@ -4983,7 +4983,7 @@
                       (make_num (exp (x->num)));
               });
           define_prim (
-              env, { "exp2", "x" },
+              env, { "num-exp2", "x" },
               [] (env_t &env, obj_map_t &obj_map)
               {
                   auto x = as_num (obj_map ["x"]);
@@ -4991,7 +4991,7 @@
                       (make_num (exp2 (x->num)));
               });
           define_prim (
-              env, { "expm1", "x" },
+              env, { "num-expm1", "x" },
               [] (env_t &env, obj_map_t &obj_map)
               {
                   auto x = as_num (obj_map ["x"]);
@@ -4999,7 +4999,7 @@
                       (make_num (expm1 (x->num)));
               });
           define_prim (
-              env, { "loge", "x" },
+              env, { "num-ln", "x" },
               [] (env_t &env, obj_map_t &obj_map)
               {
                   auto x = as_num (obj_map ["x"]);
@@ -5007,7 +5007,7 @@
                       (make_num (log (x->num)));
               });
           define_prim (
-              env, { "log10", "x" },
+              env, { "num-log10", "x" },
               [] (env_t &env, obj_map_t &obj_map)
               {
                   auto x = as_num (obj_map ["x"]);
@@ -5015,7 +5015,7 @@
                       (make_num (log10 (x->num)));
               });
           define_prim (
-              env, { "log2", "x" },
+              env, { "num-log2", "x" },
               [] (env_t &env, obj_map_t &obj_map)
               {
                   auto x = as_num (obj_map ["x"]);
@@ -5023,7 +5023,7 @@
                       (make_num (log2 (x->num)));
               });
           define_prim (
-              env, { "log1p", "x" },
+              env, { "num-log1p", "x" },
               [] (env_t &env, obj_map_t &obj_map)
               {
                   auto x = as_num (obj_map ["x"]);
@@ -5035,7 +5035,7 @@
       expose_num_trigonometry (env_t &env)
       {
           define_prim (
-              env, { "sin", "x" },
+              env, { "num-sin", "x" },
               [] (env_t &env, obj_map_t &obj_map)
               {
                   auto x = as_num (obj_map ["x"]);
@@ -5043,7 +5043,7 @@
                       (make_num (sin (x->num)));
               });
           define_prim (
-              env, { "cos", "x" },
+              env, { "num-cos", "x" },
               [] (env_t &env, obj_map_t &obj_map)
               {
                   auto x = as_num (obj_map ["x"]);
@@ -5051,7 +5051,7 @@
                       (make_num (cos (x->num)));
               });
           define_prim (
-              env, { "tan", "x" },
+              env, { "num-tan", "x" },
               [] (env_t &env, obj_map_t &obj_map)
               {
                   auto x = as_num (obj_map ["x"]);
@@ -5059,7 +5059,7 @@
                       (make_num (tan (x->num)));
               });
           define_prim (
-              env, { "asin", "x" },
+              env, { "num-asin", "x" },
               [] (env_t &env, obj_map_t &obj_map)
               {
                   auto x = as_num (obj_map ["x"]);
@@ -5067,7 +5067,7 @@
                       (make_num (asin (x->num)));
               });
           define_prim (
-              env, { "acos", "x" },
+              env, { "num-acos", "x" },
               [] (env_t &env, obj_map_t &obj_map)
               {
                   auto x = as_num (obj_map ["x"]);
@@ -5075,7 +5075,7 @@
                       (make_num (acos (x->num)));
               });
           define_prim (
-              env, { "atan", "x" },
+              env, { "num-atan", "x" },
               [] (env_t &env, obj_map_t &obj_map)
               {
                   auto x = as_num (obj_map ["x"]);
@@ -5083,7 +5083,7 @@
                       (make_num (atan (x->num)));
               });
           define_prim (
-              env, { "atan2", "x", "y" },
+              env, { "num-atan2", "x", "y" },
               [] (env_t &env, obj_map_t &obj_map)
               {
                   auto x = as_num (obj_map ["x"]);
@@ -5092,7 +5092,7 @@
                       (make_num (atan2 (x->num, y->num)));
               });
           define_prim (
-              env, { "sinh", "x" },
+              env, { "num-sinh", "x" },
               [] (env_t &env, obj_map_t &obj_map)
               {
                   auto x = as_num (obj_map ["x"]);
@@ -5100,7 +5100,7 @@
                       (make_num (sinh (x->num)));
               });
           define_prim (
-              env, { "cosh", "x" },
+              env, { "num-cosh", "x" },
               [] (env_t &env, obj_map_t &obj_map)
               {
                   auto x = as_num (obj_map ["x"]);
@@ -5108,7 +5108,7 @@
                       (make_num (cosh (x->num)));
               });
           define_prim (
-              env, { "tanh", "x" },
+              env, { "num-tanh", "x" },
               [] (env_t &env, obj_map_t &obj_map)
               {
                   auto x = as_num (obj_map ["x"]);
@@ -5116,7 +5116,7 @@
                       (make_num (tanh (x->num)));
               });
           define_prim (
-              env, { "asinh", "x" },
+              env, { "num-asinh", "x" },
               [] (env_t &env, obj_map_t &obj_map)
               {
                   auto x = as_num (obj_map ["x"]);
@@ -5124,7 +5124,7 @@
                       (make_num (asinh (x->num)));
               });
           define_prim (
-              env, { "acosh", "x" },
+              env, { "num-acosh", "x" },
               [] (env_t &env, obj_map_t &obj_map)
               {
                   auto x = as_num (obj_map ["x"]);
@@ -5132,7 +5132,7 @@
                       (make_num (acosh (x->num)));
               });
           define_prim (
-              env, { "atanh", "x" },
+              env, { "num-atanh", "x" },
               [] (env_t &env, obj_map_t &obj_map)
               {
                   auto x = as_num (obj_map ["x"]);
