@@ -175,45 +175,47 @@
           let index = env.type_dic.ins (name, Some (Type::make (tag)));
           assert_eq! (tag, index);
       }
-      pub const CLOSURE_T      : Tag = 0;
-      pub const TYPE_T         : Tag = 1;
-      pub const TRUE_T         : Tag = 2;
-      pub const FALSE_T        : Tag = 3;
-      pub const DATA_CONS_T    : Tag = 4;
-      pub const PRIM_T         : Tag = 5;
-      pub const NUM_T          : Tag = 6;
-      pub const STR_T          : Tag = 7;
-      pub const SYM_T          : Tag = 8;
-      pub const NULL_T         : Tag = 9;
-      pub const CONS_T         : Tag = 10;
-      pub const VECT_T         : Tag = 11;
-      pub const DICT_T         : Tag = 12;
-      pub const MODULE_T       : Tag = 13;
-      pub const KEYWORD_T      : Tag = 14;
-      pub const MACRO_T        : Tag = 15;
-      pub const TOP_KEYWORD_T  : Tag = 16;
-      pub const NONE_T      : Tag = 17;
-      pub const SOME_T         : Tag = 18;
+      pub const CLOSURE_T         : Tag = 0;
+      pub const TYPE_T            : Tag = 1;
+      pub const TRUE_T            : Tag = 2;
+      pub const FALSE_T           : Tag = 3;
+      pub const DATA_CONS_T       : Tag = 4;
+      pub const PRIM_T            : Tag = 5;
+      pub const NUM_T             : Tag = 6;
+      pub const STR_T             : Tag = 7;
+      pub const SYM_T             : Tag = 8;
+      pub const NULL_T            : Tag = 9;
+      pub const CONS_T            : Tag = 10;
+      pub const VECT_T            : Tag = 11;
+      pub const DICT_T            : Tag = 12;
+      pub const MODULE_T          : Tag = 13;
+      pub const KEYWORD_T         : Tag = 14;
+      pub const MACRO_T           : Tag = 15;
+      pub const TOP_KEYWORD_T     : Tag = 16;
+      pub const NONE_T            : Tag = 17;
+      pub const SOME_T            : Tag = 18;
+      pub const DYNAMIC_TRUNK_T   : Tag = 19;
       fn init_type_dic (env: &mut Env) {
-          preserve_tag (env, CLOSURE_T      , "closure-t");
-          preserve_tag (env, TYPE_T         , "type-t");
-          preserve_tag (env, TRUE_T         , "true-t");
-          preserve_tag (env, FALSE_T        , "false-t");
-          preserve_tag (env, DATA_CONS_T    , "data-cons-t");
-          preserve_tag (env, PRIM_T         , "prim-t");
-          preserve_tag (env, NUM_T          , "num-t");
-          preserve_tag (env, STR_T          , "str-t");
-          preserve_tag (env, SYM_T          , "sym-t");
-          preserve_tag (env, NULL_T         , "null-t");
-          preserve_tag (env, CONS_T         , "cons-t");
-          preserve_tag (env, VECT_T         , "vect-t");
-          preserve_tag (env, DICT_T         , "dict-t");
-          preserve_tag (env, MODULE_T       , "module-t");
-          preserve_tag (env, KEYWORD_T      , "keyword-t");
-          preserve_tag (env, MACRO_T        , "macro-t");
-          preserve_tag (env, TOP_KEYWORD_T  , "top-keyword-t");
-          preserve_tag (env, NONE_T         , "none-t");
-          preserve_tag (env, SOME_T         , "some-t");
+          preserve_tag (env, CLOSURE_T         , "closure-t");
+          preserve_tag (env, TYPE_T            , "type-t");
+          preserve_tag (env, TRUE_T            , "true-t");
+          preserve_tag (env, FALSE_T           , "false-t");
+          preserve_tag (env, DATA_CONS_T       , "data-cons-t");
+          preserve_tag (env, PRIM_T            , "prim-t");
+          preserve_tag (env, NUM_T             , "num-t");
+          preserve_tag (env, STR_T             , "str-t");
+          preserve_tag (env, SYM_T             , "sym-t");
+          preserve_tag (env, NULL_T            , "null-t");
+          preserve_tag (env, CONS_T            , "cons-t");
+          preserve_tag (env, VECT_T            , "vect-t");
+          preserve_tag (env, DICT_T            , "dict-t");
+          preserve_tag (env, MODULE_T          , "module-t");
+          preserve_tag (env, KEYWORD_T         , "keyword-t");
+          preserve_tag (env, MACRO_T           , "macro-t");
+          preserve_tag (env, TOP_KEYWORD_T     , "top-keyword-t");
+          preserve_tag (env, NONE_T            , "none-t");
+          preserve_tag (env, SOME_T            , "some-t");
+          preserve_tag (env, DYNAMIC_TRUNK_T   , "dynamic-trunk-t");
       }
       pub trait Dup {
          fn dup (&self) -> Self;
@@ -347,22 +349,37 @@
             obj: Ptr <Obj>,
         ) -> Id {
             if self.obj_dic.has_name (name) {
-                if let Some (old_obj) = self.obj_dic.get (name) {
-                    eprintln! ("- Env::define");
-                    eprintln! ("  re-defining a name is not allowed");
-                    eprintln! ("  name : {}", name);
-                    eprintln! ("  old obj : {}", old_obj.repr (self));
-                    eprintln! ("  new obj : {}", obj.repr (self));
-                    panic! ("jojo fatal error!");
-                } else {
-                    self.obj_dic.set (name, Some (obj));
-                }
+                self.obj_dic.set (name, Some (obj));
                 self.obj_dic.get_index (name) .unwrap ()
             } else {
                self.obj_dic.ins (name, Some (obj))
             }
         }
     }
+
+    // impl Env {
+    //     pub fn define (
+    //         &mut self,
+    //         name: &str,
+    //         obj: Ptr <Obj>,
+    //     ) -> Id {
+    //         if self.obj_dic.has_name (name) {
+    //             if let Some (old_obj) = self.obj_dic.get (name) {
+    //                 eprintln! ("- Env::define");
+    //                 eprintln! ("  re-defining a name is not allowed");
+    //                 eprintln! ("  name : {}", name);
+    //                 eprintln! ("  old obj : {}", old_obj.repr (self));
+    //                 eprintln! ("  new obj : {}", obj.repr (self));
+    //                 panic! ("jojo fatal error!");
+    //             } else {
+    //                 self.obj_dic.set (name, Some (obj));
+    //             }
+    //             self.obj_dic.get_index (name) .unwrap ()
+    //         } else {
+    //            self.obj_dic.ins (name, Some (obj))
+    //         }
+    //     }
+    // }
     impl Env {
         pub fn find_type (
             &mut self,
@@ -600,7 +617,7 @@
         fn exe (&self, env: &mut Env, scope: Ptr <Scope>) {
             let obj_dic = vec_peek (&scope, self.level);
             let entry = obj_dic.idx (self.index);
-            if let Some (obj) = &entry.value {
+            if let Some (ref obj) = entry.value {
                 env.obj_stack.push (obj.dup ());
             } else {
                 eprintln! ("- LocalRefJo::exe");
@@ -1508,6 +1525,13 @@
                  obj_eq (&self.cdr, &other.cdr))
             }
         }
+
+        // fn repr (&self, env: &Env) -> String {
+        //     sexp_repr (env, Ptr::new (Cons {
+        //         car: self.car.dup (),
+        //         cdr: self.cdr.dup (),
+        //     }))
+        // }
     }
     impl Cons {
         fn make (car: Ptr <Obj>, cdr: Ptr <Obj>) -> Ptr <Cons> {
@@ -2865,7 +2889,7 @@
               }
           ]
       }
-      pub struct MacroMakerJo;
+      struct MacroMakerJo;
 
       impl Jo for MacroMakerJo {
           fn exe (&self, env: &mut Env, _scope: Ptr <Scope>) {
@@ -3023,7 +3047,7 @@
               LitJo { obj: cons (Sym::make ("note"), body) },
           ]
       }
-      pub struct AssertJo {
+      struct AssertJo {
           body: Ptr <Obj>,
           jojo: Ptr <JoVec>,
       }
@@ -3160,12 +3184,12 @@
           let mut sexp = cons (Sym::make ("do"), rest);
           for binding in &binding_vect.obj_vec {
               let name = car (binding.dup ());
-              let obj = car (cdr (binding.dup ()));
+              let obj_sexp = car (cdr (binding.dup ()));
               sexp = cons (
                   cons (Sym::make ("lambda"),
                         cons (unit_vect (name),
                               unit_list (sexp))),
-                  unit_list (obj));
+                  unit_list (obj_sexp));
           }
           env.obj_stack.push (sexp);
       }

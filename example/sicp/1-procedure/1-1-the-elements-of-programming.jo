@@ -85,7 +85,7 @@ circumference
 
 ;; 1-1-8 Procedures as Black-Box Abstractions
 
-(square x) = (expe (double (loge x)))
+(square x) = (expe (double (num-log x)))
 (double x) = (add x x)
 (square (sqrt 1000))
 
