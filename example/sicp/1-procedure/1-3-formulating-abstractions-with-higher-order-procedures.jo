@@ -194,19 +194,19 @@
         term (next a) next b
         filter))))
 
-(= section-1-2
-   (import "1-2-procedures-and-the-processes-they-generate.jo"))
+;; (= section-1-2
+;;    (import "1-2-procedures-and-the-processes-they-generate.jo"))
 
-(= prime-p section-1-2.prime-p)
+;; (= prime-p section-1-2.prime-p)
 
-(= (sum-prime-square a b)
-   (filtered-accumulate
-    add 0
-    identity a inc b
-    prime-p))
+;; (= (sum-prime-square a b)
+;;    (filtered-accumulate
+;;     add 0
+;;     identity a inc b
+;;     prime-p))
 
-(assert (eq (sum-prime-square 0 10)
-            (add 1 (add 2 (add 3 (add 5 7))))))
+;; (assert (eq (sum-prime-square 0 10)
+;;             (add 1 (add 2 (add 3 (add 5 7))))))
 
 ;; 1-3-2 Constructing Procedures Using Lambda
 

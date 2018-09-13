@@ -3,13 +3,13 @@
 
 * [todo-stack]
 
+  - (import)
+
   - Prim::apply_to_arg_dict
 
   - Closure::apply_to_arg_dict
 
   - DataCons::apply_to_arg_dict
-
-  - (import)
 
   - (>) -- with stack operations
 
@@ -3960,6 +3960,14 @@
             }
         }
     }
+    #+end_src
+
+*** [todo] import
+
+    #+begin_src rust
+    // fn import (module_path: Ptr <Obj>) -> Ptr <Obj> {
+    //
+    // }
     #+end_src
 
 * top_keyword
