@@ -1,5 +1,5 @@
-    // use std::rc::Rc;
     use std::sync::Arc;
+    use std::sync::Mutex;
     use std::collections::HashMap;
     use std::path::Path;
     use std::path::PathBuf;
@@ -7,7 +7,6 @@
     use std::env;
     use dic::Dic;
     use token;
-  // pub type Ptr <T> = Rc <T>;
   pub type Ptr <T> = Arc <T>;
 
   pub type Name = String;
@@ -2554,12 +2553,17 @@
     }
     struct Module {
         module_env: Env,
+        obj_dic: Ptr <ObjDic>,
     }
 
     impl_tag! (Module, MODULE_T);
 
     impl Obj for Module {
         fn tag (&self) -> Tag { MODULE_T }
+
+        fn obj_dic (&self) -> Option <Ptr <ObjDic>> {
+            Some (self.obj_dic.dup ())
+        }
 
         fn eq (&self, other: Ptr <Obj>) -> bool {
             if self.tag () != other.tag () {
@@ -2570,8 +2574,11 @@
             }
         }
     }
-    fn import (module_path: Ptr <Obj>) -> Ptr <Obj> {
-        unimplemented! ()
+    impl Module {
+        pub fn make (module_env: Env) -> Ptr <Module> {
+            let obj_dic = Ptr::new (module_env.obj_dic.clone ());
+            Ptr::new (Module { module_env, obj_dic })
+        }
     }
     pub type TopKeywordFn = fn (
         env: &mut Env,
@@ -3538,7 +3545,14 @@
         env.define_prim_macro ("cond", m_cond);
     }
     fn expose_module (env: &mut Env) {
-        define_prim! (env, "import", ["module-path"], import);
+        env.define_prim ("import", vec! ["path"], |env, arg| {
+            let path = Str::cast (arg_idx (arg, 0));
+            let path = Path::new (&path.str);
+            let module_path = respect_module_path (env, &path);
+            let module_env = Env::from_module_path (&module_path);
+            let module = Module::make (module_env);
+            env.obj_stack.push (module);
+        });
     }
     fn expose_misc (env: &mut Env) {
         env.define_prim ("repr", vec! ["obj"], |env, arg| {
@@ -3617,6 +3631,7 @@
             path.to_path_buf ()
         } else {
             let mut path_buf = env.module_path.clone ();
+            path_buf.pop ();
             path_buf.push (path);
             path_buf
         }
@@ -3626,7 +3641,7 @@
             let mut env = Env::new ();
             env.module_path = respect_current_dir (&env, module_path);
             expose_core (&mut env);
-            let code = code_from_module_path (module_path);
+            let code = code_from_module_path (&env.module_path);
             code_run (&mut env, &code);
             env
         }
