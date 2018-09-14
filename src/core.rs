@@ -17,8 +17,6 @@
   pub type ObjCellDic = Dic <ObjCell>;
   pub type ObjId = Weak <Mutex <Option <Arc <Obj>>>>;
 
-  pub type Tag = usize; // index in to TypeDic
-
   pub type ObjDic = Dic <Arc <Obj>>;
   pub type TypeDic = Dic <Arc <Type>>;
 
@@ -151,65 +149,76 @@
            lhs.iter () .zip (rhs.iter ())
            .all (|p| frame_eq (&p.0, &p.1)))
       }
+      #[derive(Clone)]
+      #[derive(Debug)]
+      #[derive(PartialEq)]
+      #[derive(Eq)]
+      #[derive(Hash)]
+      pub struct Tag {
+          module_path: PathBuf,
+          index: usize,
+      }
       pub fn name_of_tag (
           env: &Env,
           tag: Tag,
       ) -> Name {
-          if tag >= env.obj_cell_dic.len () {
-              format! ("#<unknown-tag:{}>", tag.to_string ())
+          if tag.index >= env.obj_cell_dic.len () {
+              format! ("#<unknown-tag:{}>", tag.index.to_string ())
           } else {
-              let entry = env.obj_cell_dic.idx (tag);
+              let entry = env.obj_cell_dic.idx (tag.index);
               entry.name.clone ()
           }
       }
-      fn preserve_tag (
+      fn preserve_index (
           env: &mut Env,
-          tag: Tag,
+          index: usize,
           name: &str,
       ) {
-          let index = env.obj_cell_dic.len ();
+          let next_index = env.obj_cell_dic.len ();
+          let module_path = PathBuf::new ();
+          let tag = Tag { module_path, index };
           env.define (name, Type::make (tag));
-          assert_eq! (tag, index);
+          assert_eq! (index, next_index);
       }
-      pub const CLOSURE_T         : Tag = 0;
-      pub const TYPE_T            : Tag = 1;
-      pub const TRUE_T            : Tag = 2;
-      pub const FALSE_T           : Tag = 3;
-      pub const DATA_CONS_T       : Tag = 4;
-      pub const PRIM_T            : Tag = 5;
-      pub const NUM_T             : Tag = 6;
-      pub const STR_T             : Tag = 7;
-      pub const SYM_T             : Tag = 8;
-      pub const NULL_T            : Tag = 9;
-      pub const CONS_T            : Tag = 10;
-      pub const VECT_T            : Tag = 11;
-      pub const DICT_T            : Tag = 12;
-      pub const MODULE_T          : Tag = 13;
-      pub const KEYWORD_T         : Tag = 14;
-      pub const MACRO_T           : Tag = 15;
-      pub const TOP_KEYWORD_T     : Tag = 16;
-      pub const NONE_T            : Tag = 17;
-      pub const SOME_T            : Tag = 18;
+      pub const CLOSURE_T         : usize = 0;
+      pub const TYPE_T            : usize = 1;
+      pub const TRUE_T            : usize = 2;
+      pub const FALSE_T           : usize = 3;
+      pub const DATA_CONS_T       : usize = 4;
+      pub const PRIM_T            : usize = 5;
+      pub const NUM_T             : usize = 6;
+      pub const STR_T             : usize = 7;
+      pub const SYM_T             : usize = 8;
+      pub const NULL_T            : usize = 9;
+      pub const CONS_T            : usize = 10;
+      pub const VECT_T            : usize = 11;
+      pub const DICT_T            : usize = 12;
+      pub const MODULE_T          : usize = 13;
+      pub const KEYWORD_T         : usize = 14;
+      pub const MACRO_T           : usize = 15;
+      pub const TOP_KEYWORD_T     : usize = 16;
+      pub const NONE_T            : usize = 17;
+      pub const SOME_T            : usize = 18;
       fn init_prim_type (env: &mut Env) {
-          preserve_tag (env, CLOSURE_T         , "closure-t");
-          preserve_tag (env, TYPE_T            , "type-t");
-          preserve_tag (env, TRUE_T            , "true-t");
-          preserve_tag (env, FALSE_T           , "false-t");
-          preserve_tag (env, DATA_CONS_T       , "data-cons-t");
-          preserve_tag (env, PRIM_T            , "prim-t");
-          preserve_tag (env, NUM_T             , "num-t");
-          preserve_tag (env, STR_T             , "str-t");
-          preserve_tag (env, SYM_T             , "sym-t");
-          preserve_tag (env, NULL_T            , "null-t");
-          preserve_tag (env, CONS_T            , "cons-t");
-          preserve_tag (env, VECT_T            , "vect-t");
-          preserve_tag (env, DICT_T            , "dict-t");
-          preserve_tag (env, MODULE_T          , "module-t");
-          preserve_tag (env, KEYWORD_T         , "keyword-t");
-          preserve_tag (env, MACRO_T           , "macro-t");
-          preserve_tag (env, TOP_KEYWORD_T     , "top-keyword-t");
-          preserve_tag (env, NONE_T            , "none-t");
-          preserve_tag (env, SOME_T            , "some-t");
+          preserve_index (env, CLOSURE_T         , "closure-t");
+          preserve_index (env, TYPE_T            , "type-t");
+          preserve_index (env, TRUE_T            , "true-t");
+          preserve_index (env, FALSE_T           , "false-t");
+          preserve_index (env, DATA_CONS_T       , "data-cons-t");
+          preserve_index (env, PRIM_T            , "prim-t");
+          preserve_index (env, NUM_T             , "num-t");
+          preserve_index (env, STR_T             , "str-t");
+          preserve_index (env, SYM_T             , "sym-t");
+          preserve_index (env, NULL_T            , "null-t");
+          preserve_index (env, CONS_T            , "cons-t");
+          preserve_index (env, VECT_T            , "vect-t");
+          preserve_index (env, DICT_T            , "dict-t");
+          preserve_index (env, MODULE_T          , "module-t");
+          preserve_index (env, KEYWORD_T         , "keyword-t");
+          preserve_index (env, MACRO_T           , "macro-t");
+          preserve_index (env, TOP_KEYWORD_T     , "top-keyword-t");
+          preserve_index (env, NONE_T            , "none-t");
+          preserve_index (env, SOME_T            , "some-t");
       }
       pub trait Dup {
          fn dup (&self) -> Self;
@@ -249,12 +258,15 @@
               Arc::clone (self)
           }
       }
-      macro_rules! impl_tag {
-          ( $type:ty, $tag:expr ) => {
+      macro_rules! impl_core_type {
+          ( $type:ty, $index:expr ) => {
               impl $type {
 
                   pub fn tag () -> Tag {
-                      $tag
+                      Tag {
+                          module_path: PathBuf::new (),
+                          index: $index,
+                      }
                   }
 
                   pub fn cast (obj: Arc <Obj>) -> Arc <Self> {
@@ -413,8 +425,8 @@
                     let new_typ = Arc::new (Type  {
                         method_dic: method_dic_extend (
                             &typ.method_dic, name, obj),
-                        tag_of_type: typ.tag_of_type,
-                        super_tag_vec: typ.super_tag_vec.clone (),
+                        tag_of_type: typ.tag_of_type.clone (),
+                        // super_tag_vec: typ.super_tag_vec.clone (),
                     });
                     self.define (type_name, new_typ);
                 } else {
@@ -477,7 +489,7 @@
             name: &str,
         ) -> Option <Arc <Obj>> {
             let tag = self.tag ();
-            if let Some (typ) = env.idx_obj (tag) {
+            if let Some (typ) = env.idx_obj (tag.index) {
                 typ.get (name)
             } else {
                 None
@@ -672,13 +684,13 @@
     pub struct Type {
         method_dic: Arc <ObjDic>,
         tag_of_type: Tag,
-        super_tag_vec: TagVec,
+        // super_tag_vec: TagVec,
     }
 
-    impl_tag! (Type, TYPE_T);
+    impl_core_type! (Type, TYPE_T);
 
     impl Obj for Type {
-        fn tag (&self) -> Tag { TYPE_T }
+        fn tag (&self) -> Tag { Type::tag () }
 
         fn obj_dic (&self) -> Option <Arc <ObjDic>> {
             Some (self.method_dic.dup ())
@@ -689,8 +701,9 @@
                 false
             } else {
                 let other = Type::cast (other);
-                (self.tag_of_type == other.tag_of_type &&
-                 self.super_tag_vec == other.super_tag_vec)
+                // (self.tag_of_type == other.tag_of_type &&
+                //  self.super_tag_vec == other.super_tag_vec)
+                (self.tag_of_type == other.tag_of_type)
             }
         }
     }
@@ -705,18 +718,18 @@
             Arc::new (Type {
                 method_dic: Arc::new (ObjDic::new ()),
                 tag_of_type: tag,
-                super_tag_vec: TagVec::new (),
+                // super_tag_vec: TagVec::new (),
             })
         }
     }
     fn type_of (env: &Env, obj: Arc <Obj>) -> Arc <Type> {
         let tag = obj.tag ();
-        if let Some (typ) = env.idx_obj (tag) {
+        if let Some (typ) = env.idx_obj (tag.index) {
             Type::cast (typ)
         } else {
             eprintln! ("- type_of");
             eprintln! ("  obj : {}", obj.repr (env));
-            eprintln! ("  tag : {}", tag);
+            eprintln! ("  tag : {:?}", tag);
             panic! ("jojo fatal error!");
         }
     }
@@ -726,7 +739,7 @@
     }
 
     impl Obj for Data {
-        fn tag (&self) -> Tag { self.tag_of_type }
+        fn tag (&self) -> Tag { self.tag_of_type.clone () }
 
         fn obj_dic (&self) -> Option <Arc <ObjDic>> {
             Some (self.field_dic.dup ())
@@ -744,34 +757,15 @@
             }
         }
     }
-    impl Data {
-        fn make (
-            tag: Tag,
-            vec: Vec <(&str, Arc <Obj>)>,
-        ) -> Arc <Data> {
-            Arc::new (Data {
-                tag_of_type: tag,
-                field_dic: Arc::new (Dic::from (vec)),
-            })
-        }
-    }
-    impl Data {
-        fn unit (tag: Tag) -> Arc <Data> {
-            Arc::new (Data {
-                tag_of_type: tag,
-                field_dic: Arc::new (ObjDic::new ()),
-            })
-        }
-    }
     pub struct DataCons {
         tag_of_type: Tag,
         field_dic: Arc <ObjDic>,
     }
 
-    impl_tag! (DataCons, DATA_CONS_T);
+    impl_core_type! (DataCons, DATA_CONS_T);
 
     impl Obj for DataCons {
-        fn tag (&self) -> Tag { DATA_CONS_T }
+        fn tag (&self) -> Tag { Self::tag () }
 
         fn obj_dic (&self) -> Option <Arc <ObjDic>> {
             Some (self.field_dic.dup ())
@@ -797,7 +791,7 @@
                 eprintln! ("  lack : {}", lack);
                 panic! ("jojo fatal error!");
             }
-            let tag_of_type = self.tag_of_type;
+            let tag_of_type = self.tag_of_type.clone ();
             let field_dic = obj_dic_pick_up (
                 env, &self.field_dic, arity);
             if arity == lack {
@@ -840,10 +834,10 @@
         scope: Arc <Scope>,
     }
 
-    impl_tag! (Closure, CLOSURE_T);
+    impl_core_type! (Closure, CLOSURE_T);
 
     impl Obj for Closure {
-        fn tag (&self) -> Tag { CLOSURE_T }
+        fn tag (&self) -> Tag { Self::tag () }
 
         fn obj_dic (&self) -> Option <Arc <ObjDic>> {
             Some (self.arg_dic.dup ())
@@ -902,10 +896,10 @@
         fun: PrimFn,
     }
 
-    impl_tag! (Prim, PRIM_T);
+    impl_core_type! (Prim, PRIM_T);
 
     impl Obj for Prim {
-        fn tag (&self) -> Tag { PRIM_T }
+        fn tag (&self) -> Tag { Self::tag () }
 
         fn eq (&self, other: Arc <Obj>) -> bool {
             if self.tag () != other.tag () {
@@ -1012,10 +1006,10 @@
     }
     pub struct True;
 
-    impl_tag! (True, TRUE_T);
+    impl_core_type! (True, TRUE_T);
 
     impl Obj for True {
-        fn tag (&self) -> Tag { TRUE_T }
+        fn tag (&self) -> Tag { Self::tag () }
 
         fn eq (&self, other: Arc <Obj>) -> bool {
             if self.tag () != other.tag () {
@@ -1032,10 +1026,10 @@
     }
     pub struct False;
 
-    impl_tag! (False, FALSE_T);
+    impl_core_type! (False, FALSE_T);
 
     impl Obj for False {
-        fn tag (&self) -> Tag { FALSE_T }
+        fn tag (&self) -> Tag { Self::tag () }
 
         fn eq (&self, other: Arc <Obj>) -> bool {
             if self.tag () != other.tag () {
@@ -1050,17 +1044,8 @@
             Arc::new (False {})
         }
     }
-    pub fn true_p (x: &Arc <Obj>) -> bool {
-        let tag = x.tag ();
-        (TRUE_T == tag)
-    }
-
-    pub fn false_p (x: &Arc <Obj>) -> bool {
-        let tag = x.tag ();
-        (FALSE_T == tag)
-    }
     pub fn not (x: Arc <Obj>) -> Arc <Obj> {
-        make_bool (false_p (&x))
+        make_bool (False::p (&x))
     }
     pub fn make_bool (b: bool) -> Arc <Obj> {
         if b {
@@ -1072,10 +1057,10 @@
     }
     pub struct Str { pub str: String }
 
-    impl_tag! (Str, STR_T);
+    impl_core_type! (Str, STR_T);
 
     impl Obj for Str {
-        fn tag (&self) -> Tag { STR_T }
+        fn tag (&self) -> Tag { Self::tag () }
 
         fn eq (&self, other: Arc <Obj>) -> bool {
             if self.tag () != other.tag () {
@@ -1132,10 +1117,10 @@
     }
     pub struct Sym { pub sym: String }
 
-    impl_tag! (Sym, SYM_T);
+    impl_core_type! (Sym, SYM_T);
 
     impl Obj for Sym {
-        fn tag (&self) -> Tag { SYM_T }
+        fn tag (&self) -> Tag { Self::tag () }
 
         fn eq (&self, other: Arc <Obj>) -> bool {
             if self.tag () != other.tag () {
@@ -1192,10 +1177,10 @@
     }
     pub struct Num { pub num: f64 }
 
-    impl_tag! (Num, NUM_T);
+    impl_core_type! (Num, NUM_T);
 
     impl Obj for Num {
-        fn tag (&self) -> Tag { NUM_T }
+        fn tag (&self) -> Tag { Self::tag () }
 
         fn eq (&self, other: Arc <Obj>) -> bool {
             if self.tag () != other.tag () {
@@ -1435,10 +1420,10 @@
       }
     pub struct Null;
 
-    impl_tag! (Null, NULL_T);
+    impl_core_type! (Null, NULL_T);
 
     impl Obj for Null {
-        fn tag (&self) -> Tag { NULL_T }
+        fn tag (&self) -> Tag { Self::tag () }
 
         fn eq (&self, other: Arc <Obj>) -> bool {
             if self.tag () != other.tag () {
@@ -1461,10 +1446,10 @@
         cdr: Arc <Obj>,
     }
 
-    impl_tag! (Cons, CONS_T);
+    impl_core_type! (Cons, CONS_T);
 
     impl Obj for Cons {
-        fn tag (&self) -> Tag { CONS_T }
+        fn tag (&self) -> Tag { Self::tag () }
 
         fn obj_dic (&self) -> Option <Arc <ObjDic>> {
             let mut obj_dic = ObjDic::new ();
@@ -1498,35 +1483,27 @@
     pub fn cons (car: Arc <Obj>, cdr: Arc <Obj>) -> Arc <Obj> {
         Cons::make (car, cdr)
     }
-    pub fn null_p (x: &Arc <Obj>) -> bool {
-        let tag = x.tag ();
-        (NULL_T == tag)
-    }
-    pub fn cons_p (x: &Arc <Obj>) -> bool {
-        let tag = x.tag ();
-        (CONS_T == tag)
-    }
     pub fn car (cons: Arc <Obj>) -> Arc <Obj> {
-        assert_eq! (CONS_T, cons.tag ());
+        assert! (Cons::p (&cons));
         cons.get ("car") .unwrap ()
     }
     pub fn cdr (cons: Arc <Obj>) -> Arc <Obj> {
-        assert_eq! (CONS_T, cons.tag ());
+        assert! (Cons::p (&cons));
         cons.get ("cdr") .unwrap ()
     }
     pub fn list_p (x: &Arc <Obj>) -> bool {
-        (null_p (x) ||
-         cons_p (x))
+        (Null::p (x) ||
+         Cons::p (x))
     }
     fn car_as_sym (cons: Arc <Obj>) -> Arc <Sym> {
-        assert! (cons_p (&cons));
+        assert! (Cons::p (&cons));
         let head = car (cons);
         Sym::cast (head)
     }
     fn list_size (mut list: Arc <Obj>) -> usize {
         assert! (list_p (&list));
         let mut size = 0;
-        while ! null_p (&list) {
+        while ! Null::p (&list) {
             size += 1;
             list = cdr (list);
         }
@@ -1539,7 +1516,7 @@
     fn list_reverse (mut list: Arc <Obj>) -> Arc <Obj> {
         assert! (list_p (&list));
         let mut rev = null ();
-        while ! null_p (&list) {
+        while ! Null::p (&list) {
             let obj = car (list.dup ());
             rev = cons (obj, rev);
             list = cdr (list);
@@ -1552,7 +1529,7 @@
     ) -> Arc <Obj> {
         let mut list = ante;
         let mut result = succ;
-        while ! null_p (&list) {
+        while ! Null::p (&list) {
             let obj = car (list.dup ());
             result = cons (obj, result);
             list = cdr (list);
@@ -1570,10 +1547,10 @@
     }
     pub struct JNone;
 
-    impl_tag! (JNone, NONE_T);
+    impl_core_type! (JNone, NONE_T);
 
     impl Obj for JNone {
-        fn tag (&self) -> Tag { NONE_T }
+        fn tag (&self) -> Tag { Self::tag () }
 
         fn eq (&self, other: Arc <Obj>) -> bool {
             if self.tag () != other.tag () {
@@ -1595,10 +1572,10 @@
         value: Arc <Obj>,
     }
 
-    impl_tag! (JSome, SOME_T);
+    impl_core_type! (JSome, SOME_T);
 
     impl Obj for JSome {
-        fn tag (&self) -> Tag { SOME_T }
+        fn tag (&self) -> Tag { Self::tag () }
 
         fn obj_dic (&self) -> Option <Arc <ObjDic>> {
             let mut obj_dic = ObjDic::new ();
@@ -1624,16 +1601,14 @@
         JSome::make (value)
     }
     pub fn option_p (x: &Arc <Obj>) -> bool {
-        let tag = x.tag ();
-        (NONE_T == tag ||
-         SOME_T == tag)
+        (JNone::p (&x) && JSome::p (&x))
     }
     pub struct Vect { pub obj_vec: ObjVec }
 
-    impl_tag! (Vect, VECT_T);
+    impl_core_type! (Vect, VECT_T);
 
     impl Obj for Vect {
-        fn tag (&self) -> Tag { VECT_T }
+        fn tag (&self) -> Tag { Self::tag () }
 
         fn eq (&self, other: Arc <Obj>) -> bool {
             if self.tag () != other.tag () {
@@ -1660,7 +1635,7 @@
     }
     fn list_to_vect (mut list: Arc <Obj>) -> Arc <Vect> {
         let mut obj_vec = ObjVec::new ();
-        while cons_p (&list) {
+        while Cons::p (&list) {
             obj_vec.push (car (list.dup ()));
             list = cdr (list);
         }
@@ -1772,10 +1747,10 @@
         pub obj_dic: Arc <ObjDic>,
     }
 
-    impl_tag! (Dict, DICT_T);
+    impl_core_type! (Dict, DICT_T);
 
     impl Obj for Dict {
-        fn tag (&self) -> Tag { DICT_T }
+        fn tag (&self) -> Tag { Self::tag () }
 
         fn obj_dic (&self) -> Option <Arc <ObjDic>> {
             Some (self.obj_dic.dup ())
@@ -1848,7 +1823,7 @@
     fn list_to_dict (mut list: Arc <Obj>) -> Arc <Dict> {
         assert! (list_p (&list));
         let mut obj_dic = ObjDic::new ();
-        while ! null_p (&list) {
+        while ! Null::p (&list) {
            let pair = car (list.dup ());
            let sym = car_as_sym (pair.dup ());
            let name = &sym.sym;
@@ -1980,7 +1955,7 @@
         sexp_list: Arc <Obj>,
         last_sexp: Arc <Obj>,
     ) -> Arc <Obj> {
-        if null_p (&sexp_list) {
+        if Null::p (&sexp_list) {
             unit_list (last_sexp)
         } else {
             let head = car (sexp_list.dup ());
@@ -2005,7 +1980,7 @@
         }
     }
     pub fn sexp_list_prefix_assign (sexp_list: Arc <Obj>) -> Arc <Obj> {
-        if null_p (&sexp_list) {
+        if Null::p (&sexp_list) {
             sexp_list
         } else {
             sexp_list_prefix_assign_with_last_sexp (
@@ -2017,7 +1992,7 @@
         let mut sexp_list = parse_sexp_list (token_vec);
         sexp_list = sexp_list_prefix_assign (sexp_list);
         let mut obj_dic = ObjDic::new ();
-        while (cons_p (&sexp_list)) {
+        while (Cons::p (&sexp_list)) {
             let sexp = car (sexp_list.dup ());
             let name = car (cdr (sexp.dup ()));
             let name = Sym::cast (name);
@@ -2028,9 +2003,9 @@
         Dict::make (&obj_dic)
     }
     pub fn sexp_repr (env: &Env, sexp: Arc <Obj>) -> String {
-        if (null_p (&sexp)) {
+        if (Null::p (&sexp)) {
             format! ("()")
-        } else if (cons_p (&sexp)) {
+        } else if (Cons::p (&sexp)) {
             format! ("({})", sexp_list_repr (env, sexp))
         } else if (Vect::p (&sexp)) {
             let v = Vect::cast (sexp);
@@ -2058,11 +2033,11 @@
         }
     }
     pub fn sexp_list_repr (env: &Env, sexp_list: Arc <Obj>) -> String {
-        if null_p (&sexp_list) {
+        if Null::p (&sexp_list) {
             format! ("")
-        } else if null_p (&cdr (sexp_list.dup ())) {
+        } else if Null::p (&cdr (sexp_list.dup ())) {
             sexp_repr (env, car (sexp_list))
-        } else if (! cons_p (&cdr (sexp_list.dup ()))) {
+        } else if (! Cons::p (&cdr (sexp_list.dup ()))) {
             format! ("{} . {}",
                      sexp_repr (env, car (sexp_list.dup ())),
                      sexp_repr (env, cdr (sexp_list)))
@@ -2095,10 +2070,10 @@
         fun: KeywordFn,
     }
 
-    impl_tag! (Keyword, KEYWORD_T);
+    impl_core_type! (Keyword, KEYWORD_T);
 
     impl Obj for Keyword {
-        fn tag (&self) -> Tag { KEYWORD_T }
+        fn tag (&self) -> Tag { Self::tag () }
 
         fn eq (&self, other: Arc <Obj>) -> bool {
             if self.tag () != other.tag () {
@@ -2132,7 +2107,7 @@
         }
     }
     fn keyword_sexp_p (env: &Env, sexp: &Arc <Obj>) -> bool {
-        if ! cons_p (&sexp) {
+        if ! Cons::p (&sexp) {
             return false;
         }
         let head = car (sexp.dup ());
@@ -2172,10 +2147,10 @@
         obj: Arc <Obj>,
     }
 
-    impl_tag! (Macro, MACRO_T);
+    impl_core_type! (Macro, MACRO_T);
 
     impl Obj for Macro {
-        fn tag (&self) -> Tag { MACRO_T }
+        fn tag (&self) -> Tag { Self::tag () }
 
         fn eq (&self, other: Arc <Obj>) -> bool {
             if self.tag () != other.tag () {
@@ -2202,7 +2177,7 @@
         }
     }
     fn macro_sexp_p (env: &Env, sexp: &Arc <Obj>) -> bool {
-        if ! cons_p (&sexp) {
+        if ! Cons::p (&sexp) {
             return false;
         }
         let head = car (sexp.dup ());
@@ -2350,13 +2325,13 @@
           _env: &Env,
           sexp: &Arc <Obj>,
       ) -> bool {
-          if ! cons_p (sexp) {
+          if ! Cons::p (sexp) {
               return false;
           }
           let mut body = sexp_list_prefix_assign (cdr (sexp.dup ()));
-          while ! null_p (&body) {
+          while ! Null::p (&body) {
               let head = car (body.dup ());
-              if cons_p (&head) {
+              if Cons::p (&head) {
                   let head_car = car (head);
                   if sym_sexp_as_str_p (&head_car, "=") {
                       return true;
@@ -2369,7 +2344,7 @@
           return false;
       }
       fn sexp_list_assign_to_pair (sexp_list: Arc <Obj>) -> Arc <Obj> {
-          if null_p (& sexp_list) {
+          if Null::p (& sexp_list) {
               sexp_list
           } else {
               cons (cdr (car (sexp_list.dup ())),
@@ -2405,7 +2380,7 @@
       fn arity_of_body (mut body: Arc <Obj>) -> usize {
           assert! (list_p (&body));
           let mut arity = 0;
-          while ! null_p (&body) {
+          while ! Null::p (&body) {
               let head = car (body.dup ());
               if ! Sym::p (&head) {
                   arity += 1;
@@ -2428,7 +2403,7 @@
           _env: &Env,
           sexp: &Arc <Obj>,
       ) -> bool {
-          cons_p (sexp)
+          Cons::p (sexp)
       }
       pub fn apply_compile (
           env: &mut Env,
@@ -2482,10 +2457,10 @@
         static_scope: &StaticScope,
         sexp_list: Arc <Obj>,
     ) -> Arc <JoVec> {
-        if null_p (&sexp_list) {
+        if Null::p (&sexp_list) {
             new_jojo ()
         } else {
-            assert! (cons_p (&sexp_list));
+            assert! (Cons::p (&sexp_list));
             let head_jojo = sexp_compile (
                 env, static_scope, car (sexp_list.dup ()));
             let body_jojo = sexp_list_compile (
@@ -2498,10 +2473,10 @@
     //     obj_dic: Arc <ObjDic>,
     // }
 
-    // impl_tag! (Module, MODULE_T);
+    // impl_core_type! (Module, MODULE_T);
 
     // impl Obj for Module {
-    //     fn tag (&self) -> Tag { MODULE_T }
+    //     fn tag (&self) -> Tag { Self::tag () }
 
     //     fn obj_dic (&self) -> Option <Arc <ObjDic>> {
     //         Some (self.obj_dic.dup ())
@@ -2536,10 +2511,10 @@
         fun: TopKeywordFn,
     }
 
-    impl_tag! (TopKeyword, TOP_KEYWORD_T);
+    impl_core_type! (TopKeyword, TOP_KEYWORD_T);
 
     impl Obj for TopKeyword {
-        fn tag (&self) -> Tag { TOP_KEYWORD_T }
+        fn tag (&self) -> Tag { Self::tag () }
 
         fn eq (&self, other: Arc <Obj>) -> bool {
             if self.tag () != other.tag () {
@@ -2573,7 +2548,7 @@
         }
     }
     fn top_keyword_sexp_p (env: &Env, sexp: &Arc <Obj>) -> bool {
-        if ! cons_p (&sexp) {
+        if ! Cons::p (&sexp) {
             return false;
         }
         let head = car (sexp.dup ());
@@ -2656,7 +2631,7 @@
         env: &mut Env,
         sexp_list: Arc <Obj>,
     ) {
-        if cons_p (&sexp_list) {
+        if Cons::p (&sexp_list) {
             sexp_run (env, car (sexp_list.dup ()));
             sexp_list_run (env, cdr (sexp_list));
         }
@@ -2700,7 +2675,7 @@
         env: &mut Env,
         sexp_list: Arc <Obj>,
     ) {
-        if cons_p (&sexp_list) {
+        if Cons::p (&sexp_list) {
             top_sexp_run (env, car (sexp_list.dup ()));
             top_sexp_list_run_without_infix_assign (
                 env, cdr (sexp_list));
@@ -2727,10 +2702,10 @@
           vec [vec.len () - 1] .to_string ()
       }
       fn assign_data_p (body: &Arc <Obj>) -> bool {
-          (cons_p (&body) &&
+          (Cons::p (&body) &&
            Sym::p (&car (body.dup ())) &&
-           cons_p (&cdr (body.dup ())) &&
-           cons_p (&car (cdr (body.dup ()))) &&
+           Cons::p (&cdr (body.dup ())) &&
+           Cons::p (&car (cdr (body.dup ()))) &&
            sym_sexp_as_str_p (&car (car (cdr (body.dup ()))), "data"))
       }
       fn name_t2c (name: &str) -> String {
@@ -2751,13 +2726,15 @@
           let data_body = cdr (car (rest));
           let name_vect = list_to_vect (data_body);
           let name_vec = name_vect_to_name_vec (name_vect);
-          let tag = env.obj_cell_dic.len ();
-          env.define (&type_name, Type::make (tag));
+          let index = env.obj_cell_dic.len ();
+          let module_path = env.module_path.clone ();
+          let tag = Tag { module_path, index };
+          env.define (&type_name, Type::make (tag.clone ()));
           env.define (&data_name, DataCons::make (tag, name_vec));
       }
       fn assign_lambda_sugar_p (body: &Arc <Obj>) -> bool {
-          (cons_p (&body) &&
-           cons_p (&car (body.dup ())))
+          (Cons::p (&body) &&
+           Cons::p (&car (body.dup ())))
       }
       fn assign_lambda_desugar (body: Arc <Obj>) -> Arc <Obj> {
           let head = car (body.dup ());
@@ -2778,7 +2755,7 @@
           let prefix = prefix_of_word (&sym.sym);
           let rest = cdr (body);
           let rest_cdr = cdr (rest.dup ());
-          assert! (null_p (&rest_cdr));
+          assert! (Null::p (&rest_cdr));
           let sexp = car (rest);
           let obj = sexp_eval (env, sexp);
           env.assign (&prefix, &name, obj);
@@ -2796,7 +2773,7 @@
           }
       }
       fn assign_sexp_p (sexp: &Arc <Obj>) -> bool {
-          (cons_p (sexp) &&
+          (Cons::p (sexp) &&
            sym_sexp_as_str_p (&car (sexp.dup ()), "="))
       }
       fn assign_sexp_normalize (sexp: Arc <Obj>) -> Arc <Obj> {
@@ -2809,12 +2786,12 @@
           }
       }
       fn do_body_trans (body: Arc <Obj>) -> Arc <Obj> {
-          if null_p (&body) {
+          if Null::p (&body) {
               return body;
           }
           let sexp = car (body.dup ());
           let rest = cdr (body.dup ());
-          if null_p (&rest) {
+          if Null::p (&rest) {
               body
           } else if (assign_sexp_p (&sexp)) {
               let sexp = assign_sexp_normalize (sexp);
@@ -2900,8 +2877,8 @@
           _static_scope: &StaticScope,
           body: Arc <Obj>,
       ) -> Arc <JoVec> {
-          assert! (cons_p (&body));
-          assert! (null_p (&cdr (body.dup ())));
+          assert! (Cons::p (&body));
+          assert! (Null::p (&cdr (body.dup ())));
           let sexp = car (body);
           sexp_quote_compile (env, sexp)
       }
@@ -2943,7 +2920,7 @@
       ) -> Arc <JoVec> {
           let mut jojo_map = JojoMap::new ();
           let mut default_jojo: Option <Arc <JoVec>> = None;
-          while ! null_p (&body) {
+          while ! Null::p (&body) {
               let clause = car (body.dup ());
               let sym = car_as_sym (clause.dup ());
               let rest = cdr (clause);
@@ -2955,7 +2932,7 @@
               } else {
                   if let Some (typ) = env.find_obj (type_name) {
                       let typ = Type::cast (typ);
-                      let tag = typ.tag_of_type;
+                      let tag = typ.tag_of_type.clone ();
                       let jojo = sexp_list_compile (env, static_scope, rest);
                       jojo_map.insert (tag, jojo);
                       body = cdr (body);
@@ -3033,7 +3010,7 @@
               }));
               env.run_with_base (base);
               let result = env.obj_stack.pop () .unwrap ();
-              if true_p (&result) {
+              if True::p (&result) {
                   return;
               } else {
                   // env.frame_stack_report ();
@@ -3063,13 +3040,13 @@
       impl Jo for IfJo {
           fn exe (&self, env: &mut Env, scope: Arc <Scope>) {
               let result = jojo_eval (env, &scope, self.pred_jojo.dup ());
-              if true_p (&result) {
+              if True::p (&result) {
                   env.frame_stack.push (Box::new (Frame {
                       index: 0,
                       jojo: self.then_jojo.dup (),
                       scope,
                   }));
-              } else if false_p (&result) {
+              } else if False::p (&result) {
                   env.frame_stack.push (Box::new (Frame {
                       index: 0,
                       jojo: self.else_jojo.dup (),
@@ -3111,13 +3088,13 @@
       impl Jo for WhenJo {
           fn exe (&self, env: &mut Env, scope: Arc <Scope>) {
               let result = jojo_eval (env, &scope, self.pred_jojo.dup ());
-              if true_p (&result) {
+              if True::p (&result) {
                   env.frame_stack.push (Box::new (Frame {
                       index: 0,
                       jojo: self.then_jojo.dup (),
                       scope,
                   }));
-              } else if false_p (&result) {
+              } else if False::p (&result) {
                   env.obj_stack.push (result);
               } else {
                   eprintln! ("- WhenJo::exe");
@@ -3173,7 +3150,7 @@
           } else if Sym::p (&sexp) {
               cons (Sym::make ("quote"),
                     unit_list (sexp))
-          } else if null_p (&sexp) {
+          } else if Null::p (&sexp) {
               cons (Sym::make ("quote"),
                     unit_list (sexp))
           } else if Vect::p (&sexp) {
@@ -3185,12 +3162,12 @@
               cons (Sym::make ("list-to-dict"),
                     unit_list (sexp_list_quote_and_unquote (env, list)))
           } else {
-              assert! (cons_p (&sexp));
+              assert! (Cons::p (&sexp));
               let head = car (sexp.dup ());
               if sym_sexp_as_str_p (&head, "unquote") {
                   let rest = cdr (sexp.dup ());
-                  assert! (cons_p (&rest));
-                  assert! (null_p (&cdr (rest.dup ())));
+                  assert! (Cons::p (&rest));
+                  assert! (Null::p (&cdr (rest.dup ())));
                   car (rest)
               } else {
                   sexp_list_quote_and_unquote (
@@ -3203,18 +3180,18 @@
           env: &Env,
           sexp_list: Arc <Obj>,
       ) -> Arc <Obj> {
-          if null_p (&sexp_list) {
+          if Null::p (&sexp_list) {
               unit_list (Sym::make ("*"))
           } else {
-              assert! (cons_p (&sexp_list));
+              assert! (Cons::p (&sexp_list));
               let mut sexp = car (sexp_list.dup ());
-              if cons_p (&sexp)
+              if Cons::p (&sexp)
                   && sym_sexp_as_str_p (&car (sexp.dup ()),
                                         "unquote-splicing")
               {
                   let rest = cdr (sexp);
-                  assert! (cons_p (&rest));
-                  assert! (null_p (&cdr (rest.dup ())));
+                  assert! (Cons::p (&rest));
+                  assert! (Null::p (&cdr (rest.dup ())));
                   sexp = car (rest);
               } else {
                   sexp = cons (
@@ -3234,8 +3211,8 @@
           arg: &ObjDic,
       ) {
           let body = arg_idx (arg, 0);
-          assert! (cons_p (&body));
-          assert! (null_p (&cdr (body.dup ())));
+          assert! (Cons::p (&body));
+          assert! (Null::p (&cdr (body.dup ())));
           let sexp = car (body);
           let new_sexp = sexp_quote_and_unquote (env, sexp);
           env.obj_stack.push (new_sexp);
@@ -3244,9 +3221,9 @@
           env: &mut Env,
           sexp_list: Arc <Obj>,
       ) -> Arc <Obj> {
-          if null_p (&sexp_list) {
+          if Null::p (&sexp_list) {
               Sym::make ("true")
-          } else if null_p (&cdr (sexp_list.dup ())) {
+          } else if Null::p (&cdr (sexp_list.dup ())) {
               car (sexp_list)
           } else {
               let head = car (sexp_list.dup ());
@@ -3272,9 +3249,9 @@
           env: &mut Env,
           sexp_list: Arc <Obj>,
       ) -> Arc <Obj> {
-          if null_p (&sexp_list) {
+          if Null::p (&sexp_list) {
               Sym::make ("false")
-          } else if null_p (&cdr (sexp_list.dup ())) {
+          } else if Null::p (&cdr (sexp_list.dup ())) {
               car (sexp_list)
           } else {
               let head = car (sexp_list.dup ());
@@ -3300,13 +3277,13 @@
           env: &mut Env,
           vect_list: Arc <Obj>,
       ) -> Arc <Obj> {
-          assert! (! null_p (&vect_list));
+          assert! (! Null::p (&vect_list));
           let head = car (vect_list.dup ());
           let rest = cdr (vect_list);
           let list = vect_to_list (head);
           let question = car (list.dup ());
           let answer = cons (Sym::make ("do"), cdr (list));
-          if (null_p (&rest)) {
+          if (Null::p (&rest)) {
               if (sym_sexp_as_str_p (&question, "else")) {
                   answer
               } else {
@@ -3703,7 +3680,7 @@
         let world = env.define (
             "world", Str::make ("world"));
         let cons = env.define (
-            "cons-c", DataCons::make (CONS_T, vec! [
+            "cons-c", DataCons::make (Cons::tag (), vec! [
                 String::from ("car"),
                 String::from ("cdr"),
             ]));
