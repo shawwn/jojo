@@ -464,6 +464,16 @@
     pub trait Obj {
         fn tag (&self) -> Tag;
 
+        fn typ (
+            &self,
+            env: &Env,
+        ) -> Arc <Type> {
+            let tag = self.tag ();
+            assert! (tag.module_path == PathBuf::new ());
+            let obj = env.idx_obj (tag.index) .unwrap ();
+            Type::cast (obj)
+        }
+
         fn obj_dic (&self) -> Option <Arc <ObjDic>> { None }
 
         fn eq (&self, _other: Arc <Obj>) -> bool { false }
@@ -488,12 +498,8 @@
             env: &Env,
             name: &str,
         ) -> Option <Arc <Obj>> {
-            let tag = self.tag ();
-            if let Some (typ) = env.idx_obj (tag.index) {
-                typ.get (name)
-            } else {
-                None
-            }
+            let typ = self.typ (env);
+            typ.get (name)
         }
 
         fn dot (
@@ -723,23 +729,31 @@
         }
     }
     fn type_of (env: &Env, obj: Arc <Obj>) -> Arc <Type> {
-        let tag = obj.tag ();
-        if let Some (typ) = env.idx_obj (tag.index) {
-            Type::cast (typ)
-        } else {
-            eprintln! ("- type_of");
-            eprintln! ("  obj : {}", obj.repr (env));
-            eprintln! ("  tag : {:?}", tag);
-            panic! ("jojo fatal error!");
-        }
+        obj.typ (env)
     }
     pub struct Data {
         tag_of_type: Tag,
+        typ_id: ObjId,
         field_dic: Arc <ObjDic>,
     }
 
     impl Obj for Data {
         fn tag (&self) -> Tag { self.tag_of_type.clone () }
+
+        fn typ (
+            &self,
+            _env: &Env,
+        ) -> Arc <Type> {
+            let obj_cell = self.typ_id .upgrade () .unwrap ();
+            let mutex_guard = obj_cell .lock () .unwrap ();
+            if let Some (ref obj) = *mutex_guard {
+                Type::cast (obj.dup ())
+            } else {
+                eprintln! ("- Data::typ");
+                eprintln! ("  empty cell");
+                panic! ("jojo fatal error!");
+            }
+        }
 
         fn obj_dic (&self) -> Option <Arc <ObjDic>> {
             Some (self.field_dic.dup ())
@@ -759,6 +773,7 @@
     }
     pub struct DataCons {
         tag_of_type: Tag,
+        typ_id: ObjId,
         field_dic: Arc <ObjDic>,
     }
 
@@ -792,16 +807,19 @@
                 panic! ("jojo fatal error!");
             }
             let tag_of_type = self.tag_of_type.clone ();
+            let typ_id = self.typ_id.clone ();
             let field_dic = obj_dic_pick_up (
                 env, &self.field_dic, arity);
             if arity == lack {
                 env.obj_stack.push (Arc::new (Data {
                     tag_of_type,
+                    typ_id,
                     field_dic: Arc::new (field_dic),
                 }));
             } else {
                 env.obj_stack.push (Arc::new (DataCons {
                     tag_of_type,
+                    typ_id,
                     field_dic: Arc::new (field_dic),
                 }));
             }
@@ -810,21 +828,13 @@
     impl DataCons {
         pub fn make (
             tag: Tag,
+            typ_id: ObjId,
             vec: Vec <String>,
         ) -> Arc <DataCons> {
             Arc::new (DataCons {
                 tag_of_type: tag,
+                typ_id,
                 field_dic: Arc::new (Dic::from (vec)),
-            })
-        }
-    }
-    impl DataCons {
-        pub fn unit (
-            tag: Tag,
-        ) -> Arc <DataCons> {
-            Arc::new (DataCons {
-                tag_of_type: tag,
-                field_dic: Arc::new (ObjDic::new ()),
             })
         }
     }
@@ -2729,8 +2739,10 @@
           let index = env.obj_cell_dic.len ();
           let module_path = env.module_path.clone ();
           let tag = Tag { module_path, index };
-          env.define (&type_name, Type::make (tag.clone ()));
-          env.define (&data_name, DataCons::make (tag, name_vec));
+          let typ_id = env.define (
+              &type_name, Type::make (tag.clone ()));
+          env.define (
+              &data_name, DataCons::make (tag, typ_id, name_vec));
       }
       fn assign_lambda_sugar_p (body: &Arc <Obj>) -> bool {
           (Cons::p (&body) &&
@@ -3679,8 +3691,14 @@
             "bye", Str::make ("bye"));
         let world = env.define (
             "world", Str::make ("world"));
+        let tag = Tag {
+            module_path: PathBuf::new (),
+            index: env.obj_cell_dic.len (),
+        };
+        let typ_id = env.define (
+            "cont-t", Type::make (tag));
         let cons = env.define (
-            "cons-c", DataCons::make (Cons::tag (), vec! [
+            "cons-c", DataCons::make (Cons::tag (), typ_id, vec! [
                 String::from ("car"),
                 String::from ("cdr"),
             ]));
