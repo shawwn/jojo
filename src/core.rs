@@ -106,15 +106,6 @@
            .all (|p| ((p.0).0 == (p.1).0 &&
                       obj_eq (& (p.0).1, & (p.1).1))))
       }
-      fn type_dic_eq (
-          lhs: &TypeDic,
-          rhs: &TypeDic,
-      ) -> bool {
-          (lhs.len () == rhs.len () &&
-           lhs.iter () .zip (rhs.iter ())
-           .all (|p| ((p.0).0 == (p.1).0 &&
-                      type_eq (& (p.0).1, & (p.1).1))))
-      }
       pub fn scope_extend (
           scope: &Scope,
           obj_dic: ObjDic,
@@ -164,10 +155,10 @@
           env: &Env,
           tag: Tag,
       ) -> Name {
-          if tag >= env.type_dic.len () {
+          if tag >= env.obj_cell_dic.len () {
               format! ("#<unknown-tag:{}>", tag.to_string ())
           } else {
-              let entry = env.type_dic.idx (tag);
+              let entry = env.obj_cell_dic.idx (tag);
               entry.name.clone ()
           }
       }
@@ -176,7 +167,8 @@
           tag: Tag,
           name: &str,
       ) {
-          let index = env.type_dic.ins (name, Some (Type::make (tag)));
+          let index = env.obj_cell_dic.len ();
+          env.define (name, Type::make (tag));
           assert_eq! (tag, index);
       }
       pub const CLOSURE_T         : Tag = 0;
@@ -198,7 +190,7 @@
       pub const TOP_KEYWORD_T     : Tag = 16;
       pub const NONE_T            : Tag = 17;
       pub const SOME_T            : Tag = 18;
-      fn init_type_dic (env: &mut Env) {
+      fn init_prim_type (env: &mut Env) {
           preserve_tag (env, CLOSURE_T         , "closure-t");
           preserve_tag (env, TYPE_T            , "type-t");
           preserve_tag (env, TRUE_T            , "true-t");
@@ -296,7 +288,6 @@
       }
     pub struct Env {
         pub obj_cell_dic: ObjCellDic,
-        pub type_dic: TypeDic,
         pub obj_stack: ObjStack,
         pub frame_stack: FrameStack,
         pub current_dir: PathBuf,
@@ -307,13 +298,12 @@
         pub fn new () -> Env {
             let mut env = Env {
                 obj_cell_dic: ObjCellDic::new (),
-                type_dic: TypeDic::new (),
                 obj_stack: ObjStack::new (),
                 frame_stack: FrameStack::new (),
                 current_dir: env::current_dir () .unwrap (),
                 module_path: PathBuf::new (),
             };
-            init_type_dic (&mut env);
+            init_prim_type (&mut env);
             env
         }
 
@@ -379,12 +369,17 @@
         }
     }
     impl Env {
-        pub fn find_type (
-            &mut self,
-            name: &str,
-        ) -> Option <Arc <Type>> {
-            if let Some (typ) = self.type_dic.get (name) {
-                Some (typ.dup ())
+        pub fn idx_obj (
+            &self,
+            index: usize,
+        ) -> Option <Arc <Obj>> {
+            let entry = self.obj_cell_dic.idx (index);
+            if let Some (obj_cell) = &entry.value {
+                if let Some (ref obj) = *obj_cell.lock () .unwrap () {
+                    Some (obj.dup ())
+                } else {
+                    None
+                }
             } else {
                 None
             }
@@ -413,14 +408,15 @@
             if type_name == "" {
                 self.define (name, obj);
             } else {
-                if let Some (typ) = self.find_type (type_name) {
+                if let Some (typ) = self.find_obj (type_name) {
+                    let typ = Type::cast (typ);
                     let new_typ = Arc::new (Type  {
                         method_dic: method_dic_extend (
                             &typ.method_dic, name, obj),
                         tag_of_type: typ.tag_of_type,
                         super_tag_vec: typ.super_tag_vec.clone (),
                     });
-                    self.type_dic.set (type_name, Some (new_typ));
+                    self.define (type_name, new_typ);
                 } else {
                     eprintln! ("- Env::assign");
                     eprintln! ("  unknown type_name : {}", type_name);
@@ -430,24 +426,6 @@
                 }
             }
         }
-    }
-    impl Env {
-        pub fn define_type (
-            &mut self,
-            name: &str,
-            typ: Arc <Type>,
-        ) -> Tag {
-            self.type_dic.ins (name, Some (typ))
-        }
-    }
-    fn env_eq (
-        lhs: &Env,
-        rhs: &Env,
-    ) -> bool {
-        ( // [todo] obj_dic_eq (&lhs.obj_dic, &rhs.obj_dic) &&
-         type_dic_eq (&lhs.type_dic, &rhs.type_dic) &&
-         obj_stack_eq (&lhs.obj_stack, &rhs.obj_stack) &&
-         frame_stack_eq (&lhs.frame_stack, &rhs.frame_stack))
     }
     pub struct Frame {
         pub index: usize,
@@ -499,8 +477,7 @@
             name: &str,
         ) -> Option <Arc <Obj>> {
             let tag = self.tag ();
-            let entry = env.type_dic.idx (tag);
-            if let Some (typ) = &entry.value {
+            if let Some (typ) = env.idx_obj (tag) {
                 typ.get (name)
             } else {
                 None
@@ -585,23 +562,6 @@
             } else {
                 eprintln! ("- RefJo::exe");
                 eprintln! ("  undefined id");
-                panic! ("jojo fatal error!");
-            }
-        }
-    }
-    pub struct TypeRefJo {
-        tag: Tag,
-    }
-
-    impl Jo for TypeRefJo {
-        fn exe (&self, env: &mut Env, _: Arc <Scope>) {
-            let entry = env.type_dic.idx (self.tag);
-            if let Some (typ) = &entry.value {
-                env.obj_stack.push (typ.dup ());
-            } else {
-                eprintln! ("- TypeRefJo::exe");
-                eprintln! ("  undefined name : {}", entry.name);
-                eprintln! ("  tag : {}", self.tag);
                 panic! ("jojo fatal error!");
             }
         }
@@ -751,9 +711,8 @@
     }
     fn type_of (env: &Env, obj: Arc <Obj>) -> Arc <Type> {
         let tag = obj.tag ();
-        let entry = env.type_dic.idx (tag);
-        if let Some (typ) = &entry.value {
-            typ.dup ()
+        if let Some (typ) = env.idx_obj (tag) {
+            Type::cast (typ)
         } else {
             eprintln! ("- type_of");
             eprintln! ("  obj : {}", obj.repr (env));
@@ -2351,22 +2310,6 @@
           }
           jojo_append (&head_jojo, &jo_vec)
       }
-      fn type_word_p (word: &str) -> bool {
-          word.ends_with ("-t")
-      }
-      fn type_ref_compile (
-          env: &mut Env,
-          _: &StaticScope,
-          name: &str,
-      ) -> Arc <JoVec> {
-          if let Some (tag) = env.type_dic.get_index (name) {
-              jojo! [ TypeRefJo { tag } ]
-          } else {
-              jojo! [
-                  TypeRefJo { tag: env.type_dic.ins (name, None) }
-              ]
-          }
-      }
       fn ref_compile (
           env: &mut Env,
           static_scope: &StaticScope,
@@ -2399,8 +2342,6 @@
           let word = &sym.sym;
           if dot_in_word_p (word) {
               dot_in_word_compile (env, static_scope, word)
-          } else if type_word_p (word) {
-              type_ref_compile (env, static_scope, word)
           } else {
               ref_compile (env, static_scope, word)
           }
@@ -2810,8 +2751,8 @@
           let data_body = cdr (car (rest));
           let name_vect = list_to_vect (data_body);
           let name_vec = name_vect_to_name_vec (name_vect);
-          let tag = env.type_dic.len ();
-          env.define_type (&type_name, Type::make (tag));
+          let tag = env.obj_cell_dic.len ();
+          env.define (&type_name, Type::make (tag));
           env.define (&data_name, DataCons::make (tag, name_vec));
       }
       fn assign_lambda_sugar_p (body: &Arc <Obj>) -> bool {
@@ -3012,7 +2953,8 @@
                   default_jojo = Some (jojo);
                   body = cdr (body);
               } else {
-                  if let Some (typ) = env.find_type (type_name) {
+                  if let Some (typ) = env.find_obj (type_name) {
+                      let typ = Type::cast (typ);
                       let tag = typ.tag_of_type;
                       let jojo = sexp_list_compile (env, static_scope, rest);
                       jojo_map.insert (tag, jojo);
