@@ -1,6 +1,0 @@
-(from os import name)
-(from sys import copyright)
-
-(begin
-  (assert name string?)
-  (assert copyright string?))

@@ -1,3 +1,0 @@
-(begin
-  (set 1 2 3 4 1 2 3)
-  set-length 4 eq?)

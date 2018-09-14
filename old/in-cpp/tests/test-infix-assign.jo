@@ -1,5 +1,0 @@
-x = 1
-(assert (eq x 1))
-
-(f) = 1
-(assert (eq (f) 1))

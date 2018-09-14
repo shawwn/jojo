@@ -1,9 +1,0 @@
-#!/bin/sh
-
-py.test
-
-cd tests/jojo
-for testfile in test-*.jo
-do
-    jojo $testfile
-done

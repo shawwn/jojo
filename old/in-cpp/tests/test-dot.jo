@@ -1,5 +1,0 @@
-(= null.list-of-one-null
-   (cons-c self self))
-
-(assert (eq null-c .list-of-one-null
-            (cons-c null-c null-c)))
