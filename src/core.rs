@@ -10,7 +10,7 @@
     use std::fs;
     use std::env;
     use dic::Dic;
-    use token;
+    use crate::token;
   pub type Name = String;
 
   pub type ObjCell = Arc <Mutex <Option <Arc <Obj>>>>;

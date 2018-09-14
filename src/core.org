@@ -54,7 +54,7 @@
 *** intern mod
 
     #+begin_src rust
-    use token;
+    use crate::token;
     #+end_src
 
 * datatype

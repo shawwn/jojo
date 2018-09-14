@@ -1,5 +1,3 @@
-extern crate jojo;
-
 use std::env;
 use std::path::Path;
 

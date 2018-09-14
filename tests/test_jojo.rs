@@ -1,5 +1,3 @@
-extern crate jojo;
-
 use std::fs;
 use std::io;
 use std::fs::DirEntry;
