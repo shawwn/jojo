@@ -5,6 +5,7 @@
 ------
 
 > DIO: THE WORLD is full of dynamic languages, we don't need anymore!
+
 > JOJO: Just ONE MORE!
 
 ------
