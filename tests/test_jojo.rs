@@ -33,6 +33,11 @@ fn run_all_scripts_in_dir (dir: &Path) -> io::Result <()> {
 }
 
 #[test]
+fn test_jojo_semantic () -> io::Result <()> {
+    run_all_scripts_in_dir (Path::new ("tests/jojo/semantic"))
+}
+
+#[test]
 fn test_jojo_datatype () -> io::Result <()> {
     run_all_scripts_in_dir (Path::new ("tests/jojo/datatype"))
 }
@@ -43,6 +48,6 @@ fn test_jojo_syntax () -> io::Result <()> {
 }
 
 #[test]
-fn test_jojo_semantic () -> io::Result <()> {
-    run_all_scripts_in_dir (Path::new ("tests/jojo/semantic"))
+fn test_jojo_module_system () -> io::Result <()> {
+    run_all_scripts_in_dir (Path::new ("tests/jojo/module-system"))
 }
