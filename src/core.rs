@@ -2478,35 +2478,50 @@
             jojo_append (&head_jojo, &body_jojo)
         }
     }
-    // struct Module {
-    //     module_env: Env,
-    //     obj_dic: Arc <ObjDic>,
-    // }
+    struct Module {
+        obj_cell_dic: ObjCellDic,
+        obj_dic: Arc <ObjDic>,
+        module_path: PathBuf,
+        current_dir: PathBuf,
+    }
 
-    // impl_core_type! (Module, MODULE_T);
+    impl_core_type! (Module, MODULE_T);
 
-    // impl Obj for Module {
-    //     fn tag (&self) -> Tag { Self::tag () }
+    impl Obj for Module {
+        fn tag (&self) -> Tag { Self::tag () }
 
-    //     fn obj_dic (&self) -> Option <Arc <ObjDic>> {
-    //         Some (self.obj_dic.dup ())
-    //     }
+        fn obj_dic (&self) -> Option <Arc <ObjDic>> {
+            Some (self.obj_dic.dup ())
+        }
 
-    //     fn eq (&self, other: Arc <Obj>) -> bool {
-    //         if self.tag () != other.tag () {
-    //             false
-    //         } else {
-    //             let other = Module::cast (other);
-    //             (env_eq (&self.module_env, &other.module_env))
-    //         }
-    //     }
-    // }
-    // impl Module {
-    //     pub fn make (module_env: Env) -> Arc <Module> {
-    //         let obj_dic = Arc::new (module_env.obj_dic.clone ());
-    //         Arc::new (Module { module_env, obj_dic })
-    //     }
-    // }
+        fn eq (&self, other: Arc <Obj>) -> bool {
+            if self.tag () != other.tag () {
+                false
+            } else {
+                let other = Module::cast (other);
+                (self.module_path == other.module_path)
+            }
+        }
+    }
+    impl Module {
+        pub fn make (module_env: Env) -> Arc <Module> {
+            let mut obj_dic = ObjDic::new ();
+            for kv in module_env.obj_cell_dic.iter () {
+                let name = kv.0;
+                let obj_cell = kv.1;
+                let mutex_guard = obj_cell .lock () .unwrap ();
+                if let Some (ref obj) = *mutex_guard {
+                    obj_dic.ins (name, Some (obj.dup ()));
+                }
+            }
+            Arc::new (Module {
+                obj_cell_dic: module_env.obj_cell_dic.clone (),
+                module_path: module_env.module_path.clone (),
+                current_dir: module_env.current_dir.clone (),
+                obj_dic: Arc::new (obj_dic),
+            })
+        }
+    }
     pub type TopKeywordFn = fn (
         env: &mut Env,
         body: Arc <Obj>,
@@ -3477,14 +3492,14 @@
         env.define_prim_macro ("cond", m_cond);
     }
     fn expose_module (env: &mut Env) {
-        // env.define_prim ("import", vec! ["path"], |env, arg| {
-        //     let path = Str::cast (arg_idx (arg, 0));
-        //     let path = Path::new (&path.str);
-        //     let module_path = respect_module_path (env, &path);
-        //     let module_env = Env::from_module_path (&module_path);
-        //     let module = Module::make (module_env);
-        //     env.obj_stack.push (module);
-        // });
+        env.define_prim ("import", vec! ["path"], |env, arg| {
+            let path = Str::cast (arg_idx (arg, 0));
+            let path = Path::new (&path.str);
+            let module_path = respect_module_path (env, &path);
+            let module_env = Env::from_module_path (&module_path);
+            let module = Module::make (module_env);
+            env.obj_stack.push (module);
+        });
     }
     fn expose_misc (env: &mut Env) {
         env.define_prim ("repr", vec! ["obj"], |env, arg| {
