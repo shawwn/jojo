@@ -8,3 +8,6 @@ license = "GPL-3.0"
 
 [dependencies]
 dic = "0.1.4"
+
+[build-dependencies]
+org-tangle = "0.1.0"

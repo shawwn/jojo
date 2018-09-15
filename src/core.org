@@ -3,6 +3,8 @@
 
 * [todo-stack]
 
+  - (module)
+
   - module cache
 
   - fix unified function call syntax -- (<type-t>.method ...)
@@ -3862,6 +3864,18 @@
             })
         }
     }
+    #+end_src
+
+*** [todo] make_module
+
+    #+begin_src rust
+    // make_module
+    #+end_src
+
+*** [todo] m_module
+
+    #+begin_src rust
+    // m_module
     #+end_src
 
 * top_keyword

@@ -8,7 +8,14 @@ name = "jojo"
 version = "0.1.4"
 dependencies = [
  "dic 0.1.4 (registry+https://github.com/rust-lang/crates.io-index)",
+ "org-tangle 0.1.0 (registry+https://github.com/rust-lang/crates.io-index)",
 ]
+
+[[package]]
+name = "org-tangle"
+version = "0.1.0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
 
 [metadata]
 "checksum dic 0.1.4 (registry+https://github.com/rust-lang/crates.io-index)" = "9ee019c3feeba421337361c759c03999f8f3e731fb915b0a0c51bb6a81a35e37"
+"checksum org-tangle 0.1.0 (registry+https://github.com/rust-lang/crates.io-index)" = "067b017be2eb1f7c9a4d9b33ec05c4c39a9a59d5ae68734693f98efdb5fd88ae"

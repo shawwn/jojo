@@ -4,7 +4,7 @@
 
 ------
 
-> DIO: THE WORLD is full of dynamic languages, we don't need anymore!
+> DIO: ZA WARUDO is full of dynamic languages, we don't need anymore!
 
 > JOJO: Just ONE MORE!
 
